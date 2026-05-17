@@ -19,12 +19,41 @@
 @media(prefers-color-scheme:dark){
   :root{--bg:#1e1e1c;--bg2:#2a2a28;--bg3:#323230;--text:#e8e6de;--text2:#9a9890;--text3:#6a6860;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);--brand-light:#0d3638;}
 }
+
+/* ── Auth хуудасны стиль ── */
+.auth-wrap{display:none;position:fixed;inset:0;background:var(--bg3);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.auth-wrap.show{display:flex}
+.auth-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:28px 24px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:20px}
+.auth-logo img{width:44px;height:44px;border-radius:10px}
+.auth-logo-name{font-size:20px;font-weight:700;color:var(--brand)}
+.auth-logo-sub{font-size:11px;color:var(--text3)}
+.auth-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:18px;text-align:center}
+.auth-fi{width:100%;font-size:14px;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;margin-bottom:10px;display:block}
+.auth-fi:focus{border-color:var(--brand)}
+.auth-btn{width:100%;padding:11px;font-size:14px;font-weight:600;border-radius:var(--radius);border:none;cursor:pointer;margin-bottom:10px}
+.auth-btn-p{background:var(--brand);color:#fff}
+.auth-btn-p:hover{background:var(--brand-dark)}
+.auth-btn-o{background:transparent;color:var(--brand);border:0.5px solid var(--brand)}
+.auth-btn-o:hover{background:var(--brand-light)}
+.auth-err{background:#FCEBEB;color:#A32D2D;border-radius:var(--radius);padding:8px 11px;font-size:12px;margin-bottom:10px;display:none}
+.auth-err.show{display:block}
+.auth-divider{text-align:center;font-size:12px;color:var(--text3);margin:4px 0 10px}
+.auth-lang-opt{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:0.5px solid var(--border)}
+.auth-lang-opt:last-child{border-bottom:none}
+.auth-lang-opt:hover{background:var(--brand-light);color:var(--brand)}
+.auth-user{font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;font-size:14px}
 .topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100}
 .brand{display:flex;align-items:center;gap:8px}
 .logo{width:30px;height:30px;border-radius:8px;background:#49b0b6;display:flex;align-items:center;justify-content:center}
 .brand-name{font-size:15px;font-weight:700;color:#49b0b6}
-.lang-bar{display:flex;gap:3px;flex-wrap:wrap}
+.lang-bar{position:relative}
+.lang-drop-item{display:block;width:100%;text-align:left;padding:8px 13px;font-size:13px;border-radius:0;border:none;border-bottom:0.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+.lang-drop-item:last-child{border-bottom:none}
+.lang-drop-item:hover{background:var(--brand-light);color:var(--brand)}
+.lang-drop-item.active{color:var(--brand);font-weight:600;background:var(--brand-light)}
 .lbtn{padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer}
 .lbtn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
 .nav{background:var(--bg);border-bottom:0.5px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:99}
@@ -136,7 +165,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
-<div class="topbar">
+<!-- ── LOGIN хуудас ── -->
+<div class="auth-wrap show" id="auth-login">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="data:image/png;base64,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" id="auth-logo-img" style="width:44px;height:44px;border-radius:10px;background:#49b0b6">
+      <div>
+        <div class="auth-logo-name">Möngö</div>
+        <div class="auth-logo-sub">Smart Finance</div>
+      </div>
+    </div>
+    <div class="auth-title" id="login-title">Нэвтрэх</div>
+    <!-- Хэлний сонголт -->
+    <div style="margin-bottom:14px">
+      <div onclick="tglAuthLang()" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;background:var(--bg2)">
+        <span id="auth-lang-cur" style="font-size:13px">🇲🇳 Монгол</span>
+        <span id="auth-lang-arrow" style="font-size:10px;color:var(--text3)">▼</span>
+      </div>
+      <div id="auth-lang-list" style="display:none;border:0.5px solid var(--border2);border-radius:var(--radius);margin-top:3px;overflow:hidden;background:var(--bg)">
+        <div class="auth-lang-opt" onclick="pickAuthLang('mn','🇲🇳 Монгол',this)">🇲🇳 Монгол</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('en','🇬🇧 English',this)">🇬🇧 English</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('zh','🇨🇳 中文',this)">🇨🇳 中文</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('ja','🇯🇵 日本語',this)">🇯🇵 日本語</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('ko','🇰🇷 한국어',this)">🇰🇷 한국어</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('ru','🇷🇺 Русский',this)">🇷🇺 Русский</div>
+        <div class="auth-lang-opt" onclick="pickAuthLang('de','🇩🇪 Deutsch',this)">🇩🇪 Deutsch</div>
+      </div>
+    </div>
+    <div class="auth-err" id="login-err"></div>
+    <input type="email" class="auth-fi" id="login-email" placeholder="Имэйл хаяг">
+    <input type="password" class="auth-fi" id="login-pass" placeholder="Нууц үг">
+    <button class="auth-btn auth-btn-p" onclick="doLogin()" id="login-btn">Нэвтрэх</button>
+    <div class="auth-divider" id="login-or">эсвэл</div>
+    <button class="auth-btn auth-btn-o" onclick="showRegister()" id="login-reg-btn">Шинэ бүртгэл үүсгэх</button>
+  </div>
+</div>
+
+<!-- ── REGISTER хуудас ── -->
+<div class="auth-wrap" id="auth-register">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="data:image/png;base64,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" id="auth-logo-img2" style="width:44px;height:44px;border-radius:10px;background:#49b0b6">
+      <div>
+        <div class="auth-logo-name">Möngö</div>
+        <div class="auth-logo-sub">Smart Finance</div>
+      </div>
+    </div>
+    <div class="auth-title" id="reg-title">Бүртгэл үүсгэх</div>
+    <div class="auth-err" id="reg-err"></div>
+    <input type="email" class="auth-fi" id="reg-email" placeholder="Имэйл хаяг">
+    <input type="password" class="auth-fi" id="reg-pass" placeholder="Нууц үг (6+ тэмдэгт)">
+    <input type="password" class="auth-fi" id="reg-pass2" placeholder="Нууц үг давтах">
+    <button class="auth-btn auth-btn-p" onclick="doRegister()" id="reg-btn">Бүртгүүлэх</button>
+    <div class="auth-divider" id="reg-or">эсвэл</div>
+    <button class="auth-btn auth-btn-o" onclick="showLogin()" id="reg-login-btn">Нэвтрэх хуудас руу буцах</button>
+  </div>
+</div>
+
+<!-- ── MAIN APP (нэвтэрсний дараа харагдана) ── -->
+<div id="app-root" style="display:none">
+
   <div class="brand">
     <div class="logo">      <img src="data:image/png;base64,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" width="30" height="30" style="border-radius:8px;display:block"></div>
     <span class="brand-name">Möngö</span><span style='font-size:10px;color:var(--text3);margin-left:4px;font-weight:400;letter-spacing:0.3px'>Smart Finance</span>
@@ -146,15 +234,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button onclick="exportData()" style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer" title="Backup">⬇</button>
     <label style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);color:var(--text2);cursor:pointer;line-height:1.8" title="Сэргээх">⬆<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
     <button onclick="clearData()" style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:#A32D2D;cursor:pointer" title="Устгах">🗑</button>
+    <span id="auth-user-email" class="auth-user" title="Нэвтэрсэн хэрэглэгч"></span>
+    <button onclick="doLogout()" style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer" title="Гарах">⏏</button>
   </div>
-  <div class="lang-bar">
-    <button class="lbtn active" onclick="setLang('mn',this)">🇲🇳</button>
-    <button class="lbtn" onclick="setLang('en',this)">🇬🇧</button>
-    <button class="lbtn" onclick="setLang('zh',this)">🇨🇳</button>
-    <button class="lbtn" onclick="setLang('ja',this)">🇯🇵</button>
-    <button class="lbtn" onclick="setLang('ko',this)">🇰🇷</button>
-    <button class="lbtn" onclick="setLang('ru',this)">🇷🇺</button>
-    <button class="lbtn" onclick="setLang('de',this)">🇩🇪</button>
+  <div class="lang-bar" style="position:relative">
+    <button onclick="tglLangDrop()" id="lang-drop-btn" style="padding:3px 10px;font-size:13px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px">
+      <span id="lang-flag-cur">🇲🇳</span>
+      <span style="font-size:9px" id="lang-drop-arrow">▼</span>
+    </button>
+    <div id="lang-drop-list" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;z-index:200;min-width:130px;box-shadow:0 4px 16px rgba(0,0,0,0.1)">
+      <button class="lbtn lang-drop-item active" onclick="setLangDrop('mn',this,'🇲🇳')">🇲🇳 Монгол</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('en',this,'🇬🇧')">🇬🇧 English</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('zh',this,'🇨🇳')">🇨🇳 中文</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('ja',this,'🇯🇵')">🇯🇵 日本語</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('ko',this,'🇰🇷')">🇰🇷 한국어</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('ru',this,'🇷🇺')">🇷🇺 Русский</button>
+      <button class="lbtn lang-drop-item" onclick="setLangDrop('de',this,'🇩🇪')">🇩🇪 Deutsch</button>
+    </div>
   </div>
 </div>
 
@@ -373,7 +469,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="invest-list"></div>
 </div>
 
-</div>
+</div><!-- /main -->
+</div><!-- /app-root -->
 
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -561,6 +658,36 @@ function txnsByMonth(){
   });
   return groups;
 }
+
+// ── Хэлний dropdown ──────────────────────────────────────────
+let langDropOpen=false;
+function tglLangDrop(){
+  langDropOpen=!langDropOpen;
+  document.getElementById('lang-drop-list').style.display=langDropOpen?'block':'none';
+  document.getElementById('lang-drop-arrow').textContent=langDropOpen?'▲':'▼';
+}
+function setLangDrop(l,btn,flag){
+  // Идэвхтэй item солих
+  document.querySelectorAll('.lang-drop-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Одоогийн тугийг шинэчлэх
+  document.getElementById('lang-flag-cur').textContent=flag;
+  // Dropdown хаах
+  document.getElementById('lang-drop-list').style.display='none';
+  document.getElementById('lang-drop-arrow').textContent='▼';
+  langDropOpen=false;
+  // Хэлийг тохируулах
+  setLang(l,btn);
+}
+// Dropdown-оос гадна дарахад хаана
+document.addEventListener('click',function(e){
+  const bar=document.querySelector('.lang-bar');
+  if(bar&&!bar.contains(e.target)&&langDropOpen){
+    langDropOpen=false;
+    document.getElementById('lang-drop-list').style.display='none';
+    document.getElementById('lang-drop-arrow').textContent='▼';
+  }
+});
 
 function setLang(l,btn){
   lang=l;L=LANGS[l];CS=CURR[l]||'$';
@@ -1658,8 +1785,206 @@ function fixNavTop(){
   if(tb&&nav)nav.style.top=tb.offsetHeight+'px';
 }
 window.addEventListener('resize',fixNavTop);
-// DOM бүрэн ачааллагдсаны дараа ажиллуулна
 requestAnimationFrame(fixNavTop);
+</script>
+
+<!-- ── Firebase Auth ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+// Firebase тохиргоо
+const firebaseConfig={
+  apiKey:"AIzaSyCRo7NqiN4D0VU-rPERjLkFEoE-3ieXb6A",
+  authDomain:"mongo-money-app.firebaseapp.com",
+  projectId:"mongo-money-app",
+  storageBucket:"mongo-money-app.firebasestorage.app",
+  messagingSenderId:"655482072646",
+  appId:"1:655482072646:web:16bb4fc31200ca83ef6447"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+// Persistence — хөтөч хаагаад ч нэвтэрсэн хэвээр байна
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+
+// ── Хэлний сонголт login хуудсанд ──
+let authLangOpen=false;
+function tglAuthLang(){
+  authLangOpen=!authLangOpen;
+  document.getElementById('auth-lang-list').style.display=authLangOpen?'block':'none';
+  document.getElementById('auth-lang-arrow').textContent=authLangOpen?'▲':'▼';
+}
+function pickAuthLang(l,label){
+  lang=l; L=LANGS[l]; CS=CURR[l]||'$';
+  document.querySelectorAll('.lbtn').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+l+"'"))
+      b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  document.getElementById('auth-lang-cur').textContent=label;
+  document.getElementById('auth-lang-list').style.display='none';
+  document.getElementById('auth-lang-arrow').textContent='▼';
+  authLangOpen=false;
+
+  // Хэл бүрийн орчуулга
+  const T={
+    mn:{loginTitle:'Нэвтрэх',loginBtn:'Нэвтрэх',regBtn:'Бүртгүүлэх',
+        toReg:'Шинэ бүртгэл үүсгэх',toLogin:'Нэвтрэх хуудас руу буцах',
+        regTitle:'Бүртгэл үүсгэх',
+        email:'Имэйл хаяг',pass:'Нууц үг',
+        pass6:'Нууц үг (6+ тэмдэгт)',pass2:'Нууц үг давтах',or:'эсвэл'},
+    en:{loginTitle:'Sign In',loginBtn:'Sign In',regBtn:'Create account',
+        toReg:'Create new account',toLogin:'Back to sign in',
+        regTitle:'Create account',
+        email:'Email address',pass:'Password',
+        pass6:'Password (6+ characters)',pass2:'Confirm password',or:'or'},
+    zh:{loginTitle:'登录',loginBtn:'登录',regBtn:'注册',
+        toReg:'创建新账户',toLogin:'返回登录',
+        regTitle:'创建账户',
+        email:'电子邮件',pass:'密码',
+        pass6:'密码（6位以上）',pass2:'确认密码',or:'或'},
+    ja:{loginTitle:'ログイン',loginBtn:'ログイン',regBtn:'登録',
+        toReg:'新しいアカウントを作成',toLogin:'ログインに戻る',
+        regTitle:'アカウント作成',
+        email:'メールアドレス',pass:'パスワード',
+        pass6:'パスワード（6文字以上）',pass2:'パスワード確認',or:'または'},
+    ko:{loginTitle:'로그인',loginBtn:'로그인',regBtn:'회원가입',
+        toReg:'새 계정 만들기',toLogin:'로그인으로 돌아가기',
+        regTitle:'계정 만들기',
+        email:'이메일 주소',pass:'비밀번호',
+        pass6:'비밀번호 (6자 이상)',pass2:'비밀번호 확인',or:'또는'},
+    ru:{loginTitle:'Войти',loginBtn:'Войти',regBtn:'Зарегистрироваться',
+        toReg:'Создать аккаунт',toLogin:'Вернуться ко входу',
+        regTitle:'Регистрация',
+        email:'Эл. почта',pass:'Пароль',
+        pass6:'Пароль (от 6 символов)',pass2:'Подтвердите пароль',or:'или'},
+    de:{loginTitle:'Anmelden',loginBtn:'Anmelden',regBtn:'Registrieren',
+        toReg:'Neues Konto erstellen',toLogin:'Zurück zur Anmeldung',
+        regTitle:'Konto erstellen',
+        email:'E-Mail-Adresse',pass:'Passwort',
+        pass6:'Passwort (min. 6 Zeichen)',pass2:'Passwort bestätigen',or:'oder'},
+  };
+  const t=T[l]||T.mn;
+  const s=(id,txt)=>{const e=document.getElementById(id);if(e)e.textContent=txt;};
+  const p=(id,txt)=>{const e=document.getElementById(id);if(e)e.placeholder=txt;};
+  s('login-title',t.loginTitle);
+  s('login-btn',t.loginBtn);
+  s('login-reg-btn',t.toReg);
+  s('login-or',t.or);
+  s('reg-title',t.regTitle);
+  s('reg-btn',t.regBtn);
+  s('reg-login-btn',t.toLogin);
+  s('reg-or',t.or);
+  p('login-email',t.email);
+  p('login-pass',t.pass);
+  p('reg-email',t.email);
+  p('reg-pass',t.pass6);
+  p('reg-pass2',t.pass2);
+}
+
+// Нэвтрэх/бүртгэл хуудас харуулах
+function showLogin(){
+  document.getElementById('auth-login').classList.add('show');
+  document.getElementById('auth-register').classList.remove('show');
+  document.getElementById('login-err').classList.remove('show');
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+}
+function showRegister(){
+  document.getElementById('auth-register').classList.add('show');
+  document.getElementById('auth-login').classList.remove('show');
+  document.getElementById('reg-err').classList.remove('show');
+  document.getElementById('reg-email').value='';
+  document.getElementById('reg-pass').value='';
+  document.getElementById('reg-pass2').value='';
+}
+
+// Нэвтрэх
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  if(!email||!pass){err.textContent='Имэйл болон нууц үгээ оруулна уу.';err.classList.add('show');return;}
+  btn.textContent='...';btn.disabled=true;
+  auth.signInWithEmailAndPassword(email,pass)
+    .catch(e=>{
+      err.textContent=authErrMsg(e.code);
+      err.classList.add('show');
+      btn.textContent='Нэвтрэх';btn.disabled=false;
+    });
+}
+
+// Бүртгүүлэх
+function doRegister(){
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  const err=document.getElementById('reg-err');
+  const btn=document.getElementById('reg-btn');
+  if(!email||!pass){err.textContent='Имэйл болон нууц үгээ оруулна уу.';err.classList.add('show');return;}
+  if(pass.length<6){err.textContent='Нууц үг 6-аас дээш тэмдэгт байх ёстой.';err.classList.add('show');return;}
+  if(pass!==pass2){err.textContent='Нууц үг таарахгүй байна.';err.classList.add('show');return;}
+  btn.textContent='...';btn.disabled=true;
+  auth.createUserWithEmailAndPassword(email,pass)
+    .catch(e=>{
+      err.textContent=authErrMsg(e.code);
+      err.classList.add('show');
+      btn.textContent='Бүртгүүлэх';btn.disabled=false;
+    });
+}
+
+// Гарах
+function doLogout(){
+  if(!confirm('Гарах уу?'))return;
+  auth.signOut();
+}
+
+// Firebase алдааны мессеж монголоор
+function authErrMsg(code){
+  const msgs={
+    'auth/user-not-found':'Бүртгэлгүй имэйл хаяг.',
+    'auth/wrong-password':'Нууц үг буруу байна.',
+    'auth/email-already-in-use':'Энэ имэйл аль хэдийн бүртгэлтэй байна.',
+    'auth/invalid-email':'Имэйл хаяг буруу байна.',
+    'auth/too-many-requests':'Хэт олон удаа оролдлоо. Түр хүлээнэ үү.',
+    'auth/network-request-failed':'Интернет холболтоо шалгана уу.',
+    'auth/invalid-credential':'Имэйл эсвэл нууц үг буруу байна.',
+  };
+  return msgs[code]||'Алдаа гарлаа. Дахин оролдоно уу.';
+}
+
+// Enter товчоор нэвтрэх
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus();});
+document.getElementById('reg-pass2').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+
+// Auth төлөв хянах — нэвтэрсэн эсэхийг автоматаар мэдэгдэнэ
+auth.onAuthStateChanged(user=>{
+  const appRoot=document.getElementById('app-root');
+  const loginPage=document.getElementById('auth-login');
+  const regPage=document.getElementById('auth-register');
+
+  if(user){
+    // Нэвтэрсэн — апп харуулна
+    loginPage.classList.remove('show');
+    regPage.classList.remove('show');
+    appRoot.style.display='block';
+
+    // Хэрэглэгчийн имэйл топбарт харуулна
+    const userEl=document.getElementById('auth-user-email');
+    if(userEl) userEl.textContent=user.email;
+
+    // localStorage key-г хэрэглэгч тус бүрт ялгана
+    window._authUid=user.uid;
+
+  } else {
+    // Нэвтрээгүй — login харуулна
+    appRoot.style.display='none';
+    loginPage.classList.add('show');
+    regPage.classList.remove('show');
+    window._authUid=null;
+  }
+});
 </script>
 </body>
 </html>
