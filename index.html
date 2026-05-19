@@ -1682,7 +1682,13 @@ function rDonut(type){
 }
 
 // ── localStorage ──────────────────────────────────────────────────────────
-const DB_KEY='mongo_v4';
+const DB_KEY_BASE='mongo_v4';
+let DB_KEY=DB_KEY_BASE; // нэвтрэхээс өмнө дефолт, нэвтэрсний дараа uid-тай болно
+
+function getDBKey(){
+  // uid байвал хэрэглэгч тус бүрт тусдаа key
+  return window._authUid ? `${DB_KEY_BASE}_${window._authUid}` : DB_KEY_BASE;
+}
 
 function saveData(){
   try{
@@ -1693,14 +1699,14 @@ function saveData(){
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
       bCatsExpSave,bCatsIncSave};
-    localStorage.setItem(DB_KEY,JSON.stringify(data));
+    localStorage.setItem(getDBKey(),JSON.stringify(data));
     showSaveIndicator();
   }catch(e){console.warn('Save error:',e);}
 }
 
 function loadData(){
   try{
-    const raw=localStorage.getItem(DB_KEY);
+    const raw=localStorage.getItem(getDBKey());
     if(!raw)return false;
     const data=JSON.parse(raw);
     if(data.txns)txns=data.txns;
@@ -1736,10 +1742,10 @@ function loadData(){
   }catch(e){console.warn('Load error:',e);return false;}
 }
 
-function clearData(){if(!confirm('Бүх өгөгдлийг устгах уу?'))return;localStorage.removeItem(DB_KEY);location.reload();}
+function clearData(){if(!confirm('Бүх өгөгдлийг устгах уу?'))return;localStorage.removeItem(getDBKey());location.reload();}
 
 function exportData(){
-  const raw=localStorage.getItem(DB_KEY);
+  const raw=localStorage.getItem(getDBKey());
   if(!raw){showToast('Хадгалсан өгөгдөл байхгүй');return;}
   const blob=new Blob([raw],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mongo-backup-'+new Date().toISOString().split('T')[0]+'.json';a.click();
@@ -1977,20 +1983,36 @@ auth.onAuthStateChanged(user=>{
   const regPage=document.getElementById('auth-register');
 
   if(user){
-    // Нэвтэрсэн — апп харуулна
     loginPage.classList.remove('show');
     regPage.classList.remove('show');
     appRoot.style.display='block';
 
-    // Хэрэглэгчийн имэйл топбарт харуулна
     const userEl=document.getElementById('auth-user-email');
     if(userEl) userEl.textContent=user.email;
 
-    // localStorage key-г хэрэглэгч тус бүрт ялгана
+    // Хэрэглэгч тус бүрт тусдаа uid — өгөгдлийг дахин ачаална
+    const prevUid=window._authUid;
     window._authUid=user.uid;
 
+    if(prevUid!==user.uid){
+      // Өөр хэрэглэгч нэвтэрсэн — өгөгдлийг цэвэрлэж дахин ачаална
+      txns=[];goals=[];debts=[];invests=[];budgets={};
+      lockedCats=new Set();
+      incCats=[{key:'salary',icon:'💰',color:'#43a047'},{key:'bonus',icon:'🎁',color:'#00acc1'},{key:'business',icon:'💼',color:'#1e88e5'},{key:'other_inc',icon:'📈',color:'#546e7a'}];
+      expCats=[{key:'food',icon:'🍽️',color:'#f4511e'},{key:'transport',icon:'🚗',color:'#fb8c00'},{key:'housing',icon:'🏠',color:'#00acc1'},{key:'education',icon:'📚',color:'#3949ab'},{key:'health',icon:'💊',color:'#e53935'},{key:'fun',icon:'🎉',color:'#d81b60'},{key:'clothes',icon:'👗',color:'#7cb342'},{key:'invest_cat',icon:'📈',color:'#8e24aa'},{key:'savings_cat',icon:'🏦',color:'#43a047'},{key:'loan_cat',icon:'💳',color:'#fb8c00'},{key:'household',icon:'🛒',color:'#6d4c41'},{key:'other_exp',icon:'💡',color:'#546e7a'}];
+      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#fb8c00',subs:[]},{key:'housing',icon:'🏠',color:'#00acc1',subs:[]},{key:'education',icon:'📚',color:'#3949ab',subs:[]},{key:'health',icon:'💊',color:'#e53935',subs:[]},{key:'fun',icon:'🎉',color:'#d81b60',subs:[]},{key:'clothes',icon:'👗',color:'#7cb342',subs:[]},{key:'invest_cat',icon:'📈',color:'#8e24aa',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43a047',subs:[]},{key:'loan_cat',icon:'💳',color:'#fb8c00',subs:[]},{key:'household',icon:'🛒',color:'#6d4c41',subs:[]},{key:'other_exp',icon:'💡',color:'#546e7a',subs:[]}];
+      bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+
+      // Тухайн хэрэглэгчийн өгөгдлийг ачаална
+      loadData();
+      rTIrow();rTCrow();rBIrow();rBCrow();
+      rInvSel('t-inv-type');rInvSel('i-type');
+      rCatSel();rTChips();rBList();rBMonthSel();
+      rGoals();rDebts();rInvests();rDash();applyLang();
+      updateBudgetTotal();
+      showToast('Өгөгдөл ачааллагдлаа ✓');
+    }
   } else {
-    // Нэвтрээгүй — login харуулна
     appRoot.style.display='none';
     loginPage.classList.add('show');
     regPage.classList.remove('show');
