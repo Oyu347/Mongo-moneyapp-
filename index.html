@@ -1906,6 +1906,9 @@ function showLogin(){
   document.getElementById('login-err').classList.remove('show');
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
+  // Товчийг буцаан идэвхжүүлнэ
+  const btn=document.getElementById('login-btn');
+  if(btn){btn.disabled=false;btn.textContent=LANGS[lang]?.loginTitle||'Нэвтрэх';}
 }
 function showRegister(){
   document.getElementById('auth-register').classList.add('show');
