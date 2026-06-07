@@ -35,6 +35,9 @@
 .pass-wrap .auth-fi{margin-bottom:0;padding-right:42px}
 .pass-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text2);padding:0;font-size:18px;line-height:1;opacity:0.6;transition:opacity .2s}
 .pass-eye:hover{opacity:1}
+.forgot-link{text-align:right;margin:-4px 0 10px;font-size:12px}
+.forgot-link a{color:var(--brand);cursor:pointer;text-decoration:none}
+.forgot-link a:hover{text-decoration:underline}
 .auth-btn{width:100%;padding:11px;font-size:14px;font-weight:600;border-radius:var(--radius);border:none;cursor:pointer;margin-bottom:10px}
 .auth-btn-p{background:var(--brand);color:#fff}
 .auth-btn-p:hover{background:var(--brand-dark)}
@@ -212,9 +215,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <input type="password" class="auth-fi" id="login-pass" placeholder="Нууц үг">
       <button type="button" class="pass-eye" onclick="togglePass('login-pass',this)" tabindex="-1">👁</button>
     </div>
+    <div class="forgot-link"><a onclick="showForgot()" id="login-forgot-link">Нууц үг мартсан?</a></div>
     <button class="auth-btn auth-btn-p" onclick="doLogin()" id="login-btn">Нэвтрэх</button>
     <div class="auth-divider" id="login-or">эсвэл</div>
     <button class="auth-btn auth-btn-o" onclick="showRegister()" id="login-reg-btn">Шинэ бүртгэл үүсгэх</button>
+  </div>
+</div>
+
+<!-- ── FORGOT PASSWORD хуудас ── -->
+<div class="auth-wrap" id="auth-forgot" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="" id="auth-logo-img3" style="width:44px;height:44px;border-radius:10px;background:#49b0b6">
+      <div>
+        <div class="auth-logo-name">Möngö</div>
+        <div class="auth-logo-sub">Smart Finance</div>
+      </div>
+    </div>
+    <div class="auth-title" id="forgot-title">Нууц үг сэргээх</div>
+    <div class="auth-err" id="forgot-err"></div>
+    <div class="auth-err" id="forgot-ok" style="background:var(--brand-light);color:var(--brand-dark);border-color:var(--brand)"></div>
+    <input type="email" class="auth-fi" id="forgot-email" placeholder="Имэйл хаяг">
+    <button class="auth-btn auth-btn-p" onclick="doForgot()" id="forgot-btn">Сэргээх имэйл илгээх</button>
+    <div class="auth-divider"></div>
+    <button class="auth-btn auth-btn-o" onclick="showLogin()" id="forgot-back-btn">Нэвтрэх хуудас руу буцах</button>
   </div>
 </div>
 
@@ -581,7 +605,7 @@ let openB=new Set(['food']),subSI={},subSC={};
 let budgetMonth=new Date().getMonth()+1;
 let budgetYear=new Date().getFullYear();
 let monthSelOpen=false;
-let budgetType='expense'; // 'income' or 'expense'
+let budgetType='income'; // 'income' or 'expense'
 let selSubcat=null; // currently selected sub-cat key/name for txn
 let subDropOpen=false;
 // Lock state: set of cat keys/names that are user-locked
@@ -1899,37 +1923,79 @@ function pickAuthLang(l,label){
         toReg:'Шинэ бүртгэл үүсгэх',toLogin:'Нэвтрэх хуудас руу буцах',
         regTitle:'Бүртгэл үүсгэх',
         email:'Имэйл хаяг',pass:'Нууц үг',
-        pass6:'Нууц үг (6+ тэмдэгт)',pass2:'Нууц үг давтах',or:'эсвэл'},
+        pass6:'Нууц үг (6+ тэмдэгт)',pass2:'Нууц үг давтах',or:'эсвэл',
+        forgotLink:'Нууц үг мартсан?',forgotTitle:'Нууц үг сэргээх',
+        forgotBtn:'Сэргээх имэйл илгээх',forgotBack:'Нэвтрэх хуудас руу буцах',
+        forgotEmail:'Бүртгэлтэй имэйл хаяг',
+        forgotOk:'Сэргээх имэйл илгээгдлээ! Имэйлээ шалгана уу.',
+        forgotNoUser:'Энэ имэйлтэй бүртгэл олдсонгүй.',
+        forgotFail:'Алдаа гарлаа. Дахин оролдоно уу.'},
     en:{loginTitle:'Sign In',loginBtn:'Sign In',regBtn:'Create account',
         toReg:'Create new account',toLogin:'Back to sign in',
         regTitle:'Create account',
         email:'Email address',pass:'Password',
-        pass6:'Password (6+ characters)',pass2:'Confirm password',or:'or'},
+        pass6:'Password (6+ characters)',pass2:'Confirm password',or:'or',
+        forgotLink:'Forgot password?',forgotTitle:'Reset Password',
+        forgotBtn:'Send reset email',forgotBack:'Back to sign in',
+        forgotEmail:'Registered email address',
+        forgotOk:'Reset email sent! Please check your inbox.',
+        forgotNoUser:'No account found with this email.',
+        forgotFail:'An error occurred. Please try again.'},
     zh:{loginTitle:'登录',loginBtn:'登录',regBtn:'注册',
         toReg:'创建新账户',toLogin:'返回登录',
         regTitle:'创建账户',
         email:'电子邮件',pass:'密码',
-        pass6:'密码（6位以上）',pass2:'确认密码',or:'或'},
+        pass6:'密码（6位以上）',pass2:'确认密码',or:'或',
+        forgotLink:'忘记密码?',forgotTitle:'重置密码',
+        forgotBtn:'发送重置邮件',forgotBack:'返回登录',
+        forgotEmail:'注册邮箱地址',
+        forgotOk:'重置邮件已发送！请查收邮件。',
+        forgotNoUser:'未找到该邮箱对应的账户。',
+        forgotFail:'发生错误，请重试。'},
     ja:{loginTitle:'ログイン',loginBtn:'ログイン',regBtn:'登録',
         toReg:'新しいアカウントを作成',toLogin:'ログインに戻る',
         regTitle:'アカウント作成',
         email:'メールアドレス',pass:'パスワード',
-        pass6:'パスワード（6文字以上）',pass2:'パスワード確認',or:'または'},
+        pass6:'パスワード（6文字以上）',pass2:'パスワード確認',or:'または',
+        forgotLink:'パスワードを忘れた方',forgotTitle:'パスワードのリセット',
+        forgotBtn:'リセットメールを送る',forgotBack:'ログインに戻る',
+        forgotEmail:'登録済みメールアドレス',
+        forgotOk:'リセットメールを送信しました！受信箱をご確認ください。',
+        forgotNoUser:'このメールアドレスのアカウントが見つかりません。',
+        forgotFail:'エラーが発生しました。もう一度お試しください。'},
     ko:{loginTitle:'로그인',loginBtn:'로그인',regBtn:'회원가입',
         toReg:'새 계정 만들기',toLogin:'로그인으로 돌아가기',
         regTitle:'계정 만들기',
         email:'이메일 주소',pass:'비밀번호',
-        pass6:'비밀번호 (6자 이상)',pass2:'비밀번호 확인',or:'또는'},
+        pass6:'비밀번호 (6자 이상)',pass2:'비밀번호 확인',or:'또는',
+        forgotLink:'비밀번호를 잊으셨나요?',forgotTitle:'비밀번호 재설정',
+        forgotBtn:'재설정 이메일 보내기',forgotBack:'로그인으로 돌아가기',
+        forgotEmail:'가입한 이메일 주소',
+        forgotOk:'재설정 이메일을 보냈습니다! 받은 편지함을 확인하세요.',
+        forgotNoUser:'해당 이메일로 등록된 계정이 없습니다.',
+        forgotFail:'오류가 발생했습니다. 다시 시도해 주세요.'},
     ru:{loginTitle:'Войти',loginBtn:'Войти',regBtn:'Зарегистрироваться',
         toReg:'Создать аккаунт',toLogin:'Вернуться ко входу',
         regTitle:'Регистрация',
         email:'Эл. почта',pass:'Пароль',
-        pass6:'Пароль (от 6 символов)',pass2:'Подтвердите пароль',or:'или'},
+        pass6:'Пароль (от 6 символов)',pass2:'Подтвердите пароль',or:'или',
+        forgotLink:'Забыли пароль?',forgotTitle:'Сброс пароля',
+        forgotBtn:'Отправить письмо',forgotBack:'Вернуться ко входу',
+        forgotEmail:'Зарегистрированный email',
+        forgotOk:'Письмо отправлено! Проверьте почту.',
+        forgotNoUser:'Аккаунт с таким email не найден.',
+        forgotFail:'Произошла ошибка. Попробуйте снова.'},
     de:{loginTitle:'Anmelden',loginBtn:'Anmelden',regBtn:'Registrieren',
         toReg:'Neues Konto erstellen',toLogin:'Zurück zur Anmeldung',
         regTitle:'Konto erstellen',
         email:'E-Mail-Adresse',pass:'Passwort',
-        pass6:'Passwort (min. 6 Zeichen)',pass2:'Passwort bestätigen',or:'oder'},
+        pass6:'Passwort (min. 6 Zeichen)',pass2:'Passwort bestätigen',or:'oder',
+        forgotLink:'Passwort vergessen?',forgotTitle:'Passwort zurücksetzen',
+        forgotBtn:'E-Mail senden',forgotBack:'Zurück zur Anmeldung',
+        forgotEmail:'Registrierte E-Mail-Adresse',
+        forgotOk:'E-Mail wurde gesendet! Bitte prüfen Sie Ihren Posteingang.',
+        forgotNoUser:'Kein Konto mit dieser E-Mail gefunden.',
+        forgotFail:'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'},
   };
   const t=T[l]||T.mn;
   const s=(id,txt)=>{const e=document.getElementById(id);if(e)e.textContent=txt;};
@@ -1937,16 +2003,21 @@ function pickAuthLang(l,label){
   s('login-title',t.loginTitle);
   s('login-btn',t.loginBtn);
   s('login-reg-btn',t.toReg);
+  s('login-forgot-link',t.forgotLink);
   s('login-or',t.or);
   s('reg-title',t.regTitle);
   s('reg-btn',t.regBtn);
   s('reg-login-btn',t.toLogin);
   s('reg-or',t.or);
+  s('forgot-title',t.forgotTitle);
+  s('forgot-btn',t.forgotBtn);
+  s('forgot-back-btn',t.forgotBack);
   p('login-email',t.email);
   p('login-pass',t.pass);
   p('reg-email',t.email);
   p('reg-pass',t.pass6);
   p('reg-pass2',t.pass2);
+  p('forgot-email',t.forgotEmail);
 }
 
 // Нэвтрэх/бүртгэл хуудас харуулах
@@ -1959,12 +2030,52 @@ function togglePass(id,btn){
 function showLogin(){
   document.getElementById('auth-login').classList.add('show');
   document.getElementById('auth-register').classList.remove('show');
+  document.getElementById('auth-forgot').style.display='none';
   document.getElementById('login-err').classList.remove('show');
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
-  // Товчийг буцаан идэвхжүүлнэ
   const btn=document.getElementById('login-btn');
   if(btn){btn.disabled=false;btn.textContent=LANGS[lang]?.loginTitle||'Нэвтрэх';}
+}
+function showForgot(){
+  const T=pickAuthLangT();
+  document.getElementById('auth-login').classList.remove('show');
+  document.getElementById('auth-register').classList.remove('show');
+  document.getElementById('auth-forgot').style.display='flex';
+  document.getElementById('forgot-email').value='';
+  document.getElementById('forgot-err').textContent='';
+  document.getElementById('forgot-err').classList.remove('show');
+  document.getElementById('forgot-ok').textContent='';
+  document.getElementById('forgot-ok').classList.remove('show');
+  const btn=document.getElementById('forgot-btn');
+  if(btn){btn.disabled=false;}
+}
+function pickAuthLangT(){
+  const T={mn:{forgotOk:'Сэргээх имэйл илгээгдлээ! Имэйлээ шалгана уу.',forgotNoUser:'Энэ имэйлтэй бүртгэл олдсонгүй.',forgotFail:'Алдаа гарлаа. Дахин оролдоно уу.'},en:{forgotOk:'Reset email sent! Please check your inbox.',forgotNoUser:'No account found with this email.',forgotFail:'An error occurred. Please try again.'},zh:{forgotOk:'重置邮件已发送！请查收邮件。',forgotNoUser:'未找到该邮箱对应的账户。',forgotFail:'发生错误，请重试。'},ja:{forgotOk:'リセットメールを送信しました！受信箱をご確認ください。',forgotNoUser:'このメールアドレスのアカウントが見つかりません。',forgotFail:'エラーが発生しました。もう一度お試しください。'},ko:{forgotOk:'재설정 이메일을 보냈습니다! 받은 편지함을 확인하세요.',forgotNoUser:'해당 이메일로 등록된 계정이 없습니다.',forgotFail:'오류가 발생했습니다. 다시 시도해 주세요.'},ru:{forgotOk:'Письмо отправлено! Проверьте почту.',forgotNoUser:'Аккаунт с таким email не найден.',forgotFail:'Произошла ошибка. Попробуйте снова.'},de:{forgotOk:'E-Mail wurde gesendet! Bitte prüfen Sie Ihren Posteingang.',forgotNoUser:'Kein Konto mit dieser E-Mail gefunden.',forgotFail:'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'}};
+  return T[lang]||T.mn;
+}
+function doForgot(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const errEl=document.getElementById('forgot-err');
+  const okEl=document.getElementById('forgot-ok');
+  const btn=document.getElementById('forgot-btn');
+  errEl.textContent=''; errEl.classList.remove('show');
+  okEl.textContent=''; okEl.classList.remove('show');
+  if(!email){errEl.textContent=(LANGS[lang]?.forgotNoUser||'Имэйл оруулна уу.');errEl.classList.add('show');return;}
+  btn.disabled=true;
+  auth.sendPasswordResetEmail(email)
+    .then(()=>{
+      const t=pickAuthLangT();
+      okEl.textContent=t.forgotOk;
+      okEl.classList.add('show');
+    })
+    .catch(err=>{
+      const t=pickAuthLangT();
+      if(err.code==='auth/user-not-found'){errEl.textContent=t.forgotNoUser;}
+      else{errEl.textContent=t.forgotFail;}
+      errEl.classList.add('show');
+      btn.disabled=false;
+    });
 }
 function showRegister(){
   document.getElementById('auth-register').classList.add('show');
