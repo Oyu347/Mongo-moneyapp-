@@ -1912,6 +1912,9 @@ function pickAuthLang(l,label){
       b.classList.add('active');
     else b.classList.remove('active');
   });
+  const flagMap={mn:'🇲🇳',en:'🇬🇧',zh:'🇨🇳',ja:'🇯🇵',ko:'🇰🇷',ru:'🇷🇺',de:'🇩🇪'};
+  const flagEl=document.getElementById('lang-flag-cur');
+  if(flagEl) flagEl.textContent=flagMap[l]||'🇲🇳';
   document.getElementById('auth-lang-cur').textContent=label;
   document.getElementById('auth-lang-list').style.display='none';
   document.getElementById('auth-lang-arrow').textContent='▼';
@@ -2039,6 +2042,13 @@ function showLogin(){
 }
 function showForgot(){
   const T=pickAuthLangT();
+  // Лого зургийг login хуудаснаас хуулах
+  const logoSrc=document.getElementById('auth-logo-img');
+  const logoSrc2=document.getElementById('auth-logo-img2');
+  const forgotLogo=document.getElementById('auth-logo-img3');
+  if(forgotLogo&&(logoSrc||logoSrc2)){
+    forgotLogo.src=(logoSrc||logoSrc2).src;
+  }
   document.getElementById('auth-login').classList.remove('show');
   document.getElementById('auth-register').classList.remove('show');
   document.getElementById('auth-forgot').style.display='flex';
