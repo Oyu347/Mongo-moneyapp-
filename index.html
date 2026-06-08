@@ -7,17 +7,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#ffffff;--bg2:#f5f0eb;--bg3:#fff9f5;
+  --bg:#ffffff;--bg2:#ffffff;--bg3:#fff9f5;
   --text:#1f1a16;--text2:#6e6059;--text3:#a89990;
-  --border:rgba(120,90,70,0.12);--border2:rgba(120,90,70,0.22);
+  --border:rgba(120,90,70,0.10);--border2:rgba(120,90,70,0.20);
   --radius:12px;--radius-lg:18px;--radius-xl:24px;
   --brand:#49b0b6;--brand-dark:#337a7f;--brand-light:#e0f5f6;
   --green:#1D9E75;--green-light:#E1F5EE;--green-dark:#085041;
   --red:#c0392b;--red-light:#fdecea;--red-dark:#7d1f16;
   --amber:#BA7517;--amber-light:#FAEEDA;--amber-dark:#633806;
-  --shadow-sm:0 2px 8px rgba(100,60,30,0.07);
-  --shadow:0 4px 20px rgba(100,60,30,0.10);
-  --shadow-lg:0 8px 32px rgba(100,60,30,0.13);
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
+  --shadow:0 4px 10px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.10);
 }
 @media(prefers-color-scheme:dark){
   :root{--bg:#1e1a17;--bg2:#272320;--bg3:#2f2b27;--text:#ede8e2;--text2:#9a9088;--text3:#6a6058;--border:rgba(255,220,180,0.1);--border2:rgba(255,220,180,0.18);--brand-light:#0d3628;--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow:0 4px 20px rgba(0,0,0,0.35);--shadow-lg:0 8px 32px rgba(0,0,0,0.4);}
@@ -32,7 +32,7 @@
 .auth-logo-name{font-size:20px;font-weight:700;color:var(--brand)}
 .auth-logo-sub{font-size:11px;color:var(--text3)}
 .auth-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;text-align:center}
-.auth-fi{width:100%;font-size:14px;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);outline:none;margin-bottom:10px;display:block;transition:border-color .2s,background .2s}
+.auth-fi{width:100%;font-size:14px;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);outline:none;margin-bottom:10px;display:block;transition:border-color .2s,background .2s}
 .auth-fi:focus{border-color:var(--brand);background:var(--bg)}
 .pass-wrap{position:relative;margin-bottom:10px}
 .pass-wrap .auth-fi{margin-bottom:0;padding-right:42px}
@@ -89,7 +89,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .metric-lbl{font-size:10px;margin-bottom:2px;opacity:.8}
 .metric-val{font-size:15px;font-weight:700}
 .form-row{display:flex;gap:7px;margin-bottom:7px;flex-wrap:wrap}
-.fi{flex:1;min-width:80px;font-size:13px;padding:8px 10px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);outline:none;transition:border-color .2s,background .2s}
+.fi{flex:1;min-width:80px;font-size:13px;padding:8px 10px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);outline:none;transition:border-color .2s,background .2s}
 .fi:focus{border-color:var(--brand);background:var(--bg)}
 .btn{padding:8px 14px;font-size:13px;border-radius:var(--radius);cursor:pointer;font-weight:600;border:1.5px solid var(--border2);background:transparent;color:var(--text);transition:all .15s}
 .btn:hover{background:var(--bg2)}
