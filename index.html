@@ -139,7 +139,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bheader{display:flex;align-items:center;gap:7px;padding:8px 12px;cursor:pointer;user-select:none}
 .bheader:hover{background:var(--bg3)}
 .bicon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.bbody{padding:9px 12px;border-top:1.5px solid var(--border2);background:var(--bg3)}
+.bbody{padding:9px 12px;border-top:1.5px solid var(--border2);background:var(--bg)}
 .chevron{font-size:10px;color:var(--text3);transition:transform .2s;flex-shrink:0}
 .chevron.open{transform:rotate(90deg)}
 .asr{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border2)}
@@ -934,13 +934,13 @@ function onCatChange(){
   document.getElementById('invest-extra').style.display='none';
 
   if(curType==='income'){
-    // Орлогын дэд ангилал — bCatsInc-аас авна
-    const subs=getIncCatSubs(v);
+    const incCat=bCatsInc.find(c=>cN(c)===v);
+    const subs=incCat?incCat.subs||[]:[];
     if(subs.length>0){
       const sw=document.getElementById('t-subcat-wrap');
       sw.style.display='block';
       document.getElementById('t-subcat-label').textContent=L.subcatPh||'Дэд ангилал сонгох';
-      rSubcatList(subs,v);
+      rSubcatList(subs,incCat.key||v,'income');
     }
     return;
   }
@@ -950,12 +950,13 @@ function onCatChange(){
   const iv=c&&isInv(c);
   document.getElementById('invest-auto-notice').style.display=iv?'flex':'none';
   document.getElementById('invest-extra').style.display=iv?'block':'none';
-  const subs=getExpCatSubs(v);
+  const expCat=bCatsExp.find(c=>cN(c)===v);
+  const subs=expCat?expCat.subs||[]:[];
   const sw=document.getElementById('t-subcat-wrap');
   if(subs.length>0){
     sw.style.display='block';
     document.getElementById('t-subcat-label').textContent=L.subcatPh||'Дэд ангилал сонгох';
-    rSubcatList(subs,v);
+    rSubcatList(subs,expCat.key||v,'expense');
   }
 }
 
@@ -965,16 +966,31 @@ function tglSubDrop(){
   document.getElementById('t-subcat-arrow').textContent=subDropOpen?'▲':'▼';
 }
 
-function rSubcatList(subs,catName){
+function rSubcatList(subs,catKey,catType){
   const el=document.getElementById('t-subcat-list');
-  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,'${(L.subcatPh||'—').replace(/'/g,"\\'")}','${catName}')">${L.subcatPh||'—'}</div>`+
-    subs.map(sb=>{const nm=cN(sb)||sb.key||'';return`<div class="subcat-opt${selSubcat===nm?' sel':''}" onclick="selectSubcat('${nm.replace(/'/g,"\\'")}','${nm.replace(/'/g,"\\'")}','${catName}')"><span style="width:8px;height:8px;border-radius:50%;background:${sb.color};display:inline-block"></span> ${nm}</div>`;}).join('');
+  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,null,null)">${L.subcatPh||'—'}</div>`+
+    subs.map(sb=>{
+      const nm=cN(sb);
+      const key=sb.key||nm;
+      const isSel=selSubcat===key;
+      return`<div class="subcat-opt${isSel?' sel':''}" onclick="selectSubcat('${key.replace(/'/g,"\\'")}','${catKey.replace(/'/g,"\\'")}','${catType}')"><span style="width:8px;height:8px;border-radius:50%;background:${sb.color};display:inline-block"></span> ${nm}</div>`;
+    }).join('');
 }
 
-function selectSubcat(val,label,catName){
-  selSubcat=val;subDropOpen=false;
-  document.getElementById('t-subcat-label').textContent=label||L.subcatPh;
-  document.getElementById('t-subcat-label').style.color=val?'var(--text)':'var(--text2)';
+function selectSubcat(key,catKey,catType){
+  selSubcat=key||null;
+  subDropOpen=false;
+  let label=L.subcatPh||'—';
+  if(key&&catKey){
+    const cats=catType==='income'?bCatsInc:bCatsExp;
+    const cat=cats.find(c=>(c.key===catKey)||(!c.key&&cN(c)===catKey));
+    const subs=cat?cat.subs||[]:[];
+    const sb=subs.find(s=>s.key===key);
+    if(sb)label=cN(sb);
+    else label=key;
+  }
+  document.getElementById('t-subcat-label').textContent=label;
+  document.getElementById('t-subcat-label').style.color=key?'var(--text)':'var(--text2)';
   document.getElementById('t-subcat-list').style.display='none';
   document.getElementById('t-subcat-arrow').textContent='▼';
 }
@@ -1278,9 +1294,17 @@ function uDash(){
 function tRow(t,del){
   const ci=getCatInfo(t.catName,t.type);
   const iv=t.type==='expense'&&expCats.find(c=>cN(c)===t.catName&&isInv(c));
-  // subcatName-г зөвхөн desc-тэй ижил биш үед харуулна
-  const showSub=t.subcatName&&t.subcatName!==t.desc;
-  const subLabel=showSub?`<span style="font-size:10px;background:var(--bg2);color:var(--text2);padding:1px 5px;border-radius:5px;margin-left:3px">${t.subcatName}</span>`:'';
+  // subcatName(key)-г харуулах нэр болгон орчуулна
+  let subcatDisplay=t.subcatName||'';
+  if(subcatDisplay){
+    const cats=t.type==='income'?bCatsInc:bCatsExp;
+    for(const cat of cats){
+      const sb=(cat.subs||[]).find(s=>s.key===subcatDisplay||(s.names&&Object.values(s.names).includes(subcatDisplay)));
+      if(sb){subcatDisplay=cN(sb);break;}
+    }
+  }
+  const showSub=subcatDisplay&&subcatDisplay!==t.desc;
+  const subLabel=showSub?`<span style="font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:5px;margin-left:3px">${subcatDisplay}</span>`:'';
   return`<div class="list-item">
     <div class="il">
       <span class="lbl1">${t.desc}</span>
