@@ -1820,6 +1820,10 @@ function loadData(){
     if(data.budgetMonth)budgetMonth=data.budgetMonth;
     if(data.budgetYear)budgetYear=data.budgetYear;
     if(data.budgetType)budgetType=data.budgetType;
+    // Товчийг budgetType-тэй синк хийнэ
+    document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active'));
+    const activeBtn=document.getElementById('btype-'+budgetType);
+    if(activeBtn)activeBtn.classList.add('active');
     if(data.lockedCats)lockedCats=new Set(data.lockedCats);
     if(data.incCatsCustom)incCats=[...incCats,...data.incCatsCustom];
     if(data.expCatsCustom)expCats=[...expCats,...data.expCatsCustom];
