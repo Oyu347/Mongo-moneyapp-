@@ -453,6 +453,132 @@ body::before{
   .auth-card{max-width:390px}
 }
 
+
+/* ─────────────────────────────────────────────────────────────
+   Readability + Brand Consistency Fix — v2
+   Keeps #49B0B6 as primary brand color and improves text contrast.
+───────────────────────────────────────────────────────────── */
+:root{
+  --text:#374151;
+  --text2:#6B7280;
+  --text3:#9CA3AF;
+  --brand:#49B0B6;
+  --brand-dark:#2C7F85;
+  --brand-light:#E6F7F8;
+}
+body{color:var(--text)}
+.card-title,.ctitle,.auth-title,.lbl1,.brand-name{color:var(--text)}
+.lbl2,.slbl,.metric-lbl,.month-hdr-sum,.auth-logo-sub{color:var(--text2)}
+.empty,.text-muted{color:var(--text3)}
+
+/* Primary buttons must stay visible */
+.btn.btn-p,
+.auth-btn.auth-btn-p,
+.modal-btn.modal-btn-ok{
+  background:linear-gradient(135deg,#49B0B6 0%,#349BA1 55%,#2C7F85 100%) !important;
+  color:#ffffff !important;
+  border-color:transparent !important;
+  box-shadow:0 10px 24px rgba(73,176,182,.28) !important;
+  font-weight:800;
+}
+.btn.btn-p:hover,
+.auth-btn.auth-btn-p:hover{
+  background:linear-gradient(135deg,#57BBC1 0%,#49B0B6 55%,#2C7F85 100%) !important;
+}
+.btn.btn-p:disabled,
+.auth-btn.auth-btn-p:disabled{
+  opacity:.58;
+  color:#ffffff !important;
+}
+
+/* Secondary buttons / icon buttons */
+.btn:not(.btn-p),
+.auth-btn.auth-btn-o,
+.lock-btn,
+.lbtn,
+.pb,
+.msb{
+  color:#374151 !important;
+  background:rgba(255,255,255,.72);
+}
+
+/* Segmented controls */
+.tt-btn,.btype-btn{
+  color:#6B7280 !important;
+  background:transparent !important;
+}
+.tt-btn.tt-i,
+.tt-btn.tt-e,
+.btype-btn.active{
+  background:linear-gradient(135deg,#49B0B6,#2C7F85) !important;
+  color:#ffffff !important;
+  box-shadow:0 8px 18px rgba(73,176,182,.24) !important;
+}
+
+/* Active chips / tabs / month buttons */
+.nav-btn.active,
+.pb.active,
+.msb.active{
+  background:linear-gradient(135deg,#49B0B6,#2C7F85) !important;
+  color:#ffffff !important;
+}
+.nav-btn:not(.active){color:#4B5563 !important}
+
+/* Form fields: placeholders and typed text */
+.fi,.auth-fi,select.fi,input.fi{
+  color:#374151 !important;
+  background:rgba(255,255,255,.88) !important;
+  border-color:rgba(73,176,182,.24) !important;
+}
+.fi::placeholder,.auth-fi::placeholder{
+  color:#9CA3AF !important;
+  opacity:1;
+}
+select.fi{color:#374151 !important}
+
+/* Small inline icon buttons in topbar */
+.topbar button,
+.topbar label{
+  color:#374151 !important;
+  background:rgba(255,255,255,.68) !important;
+  border-color:rgba(73,176,182,.18) !important;
+}
+#lang-drop-btn{
+  color:#374151 !important;
+}
+.lang-drop-item.active,
+.lang-drop-item:hover{
+  background:var(--brand-light) !important;
+  color:var(--brand-dark) !important;
+}
+
+/* Budget rows: keep arrows and labels visible */
+.chevron{color:#9CA3AF !important}
+.budget-total-bar span{color:#2C7F85 !important}
+.month-hdr-lbl{color:#2C7F85 !important}
+
+/* Mobile: make tiny round add buttons readable */
+button[onclick="addBudgetCat()"],
+button[onclick="addDebt()"],
+button[onclick="addInvest()"],
+button[onclick="addGoal()"],
+button[onclick="addTransaction()"]{
+  color:#ffffff !important;
+  min-width:48px;
+}
+
+@media(prefers-color-scheme:dark){
+  :root{--text:#F3F4F6;--text2:#CBD5E1;--text3:#94A3B8;--brand-dark:#74D7DC;--brand-light:#123B3F;}
+  .btn:not(.btn-p),.auth-btn.auth-btn-o,.lock-btn,.lbtn,.pb,.msb,.topbar button,.topbar label{
+    color:#F3F4F6 !important;
+    background:rgba(255,255,255,.06) !important;
+  }
+  .fi,.auth-fi,select.fi,input.fi{
+    color:#F3F4F6 !important;
+    background:rgba(255,255,255,.06) !important;
+  }
+}
+
 </style>
 </head>
 <body>
