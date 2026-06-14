@@ -2009,9 +2009,13 @@ function gSpent(catNm,subNm,month){
     return parseInt(parts[1])===month&&parseInt(parts[0])===budgetYear;
   }:_=>true;
   if(subNm){
+    // subNm нь дэлгэц дээр харагдах нэр байж болно, харин transaction дотор key хадгалагдсан байдаг.
+    const catObj=bCatsExp.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm);
+    const subObj=catObj?(catObj.subs||[]).find(s=>cN(s)===subNm||s.key===subNm||s.name===subNm):null;
+    const subKey=subObj?(subObj.key||subObj.name||subNm):subNm;
     return txns.filter(t=>{
       if(!matchTxnCat(t,catNm,'expense')||!filterM(t))return false;
-      return t.subcatName===subNm||(!t.subcatName&&t.desc===subNm);
+      return t.subcatName===subKey||t.subcatName===subNm||(!t.subcatName&&t.desc===subNm);
     }).reduce((s,t)=>s+t.amount,0);
   }
   return txns.filter(t=>matchTxnCat(t,catNm,'expense')&&filterM(t)).reduce((s,t)=>s+t.amount,0);
@@ -2102,7 +2106,11 @@ function rBProg(){
           const snm=cN(sb)||sb.key||'';
           const sv=getBudgetVal(bSubKey(cat,sb),mo);
           const ss=isIncomePlan
-            ?txns.filter(t=>t.type==='income'&&t.catName===nm&&(t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt((t.date||'').split('-')[1])===mo).reduce((a,t)=>a+t.amount,0)
+            ?txns.filter(t=>{
+              const ymd=(t.date||'').split('-');
+              const subKey=sb.key||sb.name||snm;
+              return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;
+            }).reduce((a,t)=>a+t.amount,0)
             :gSpent(nm,snm,mo);
           const subOver=!isIncomePlan&&ss>sv;
           const subOverAmt=subOver?ss-sv:0;
@@ -2394,8 +2402,30 @@ function getDBKey(){
 
 function saveData(){
   try{
-    const bCatsExpSave=bCatsExp.map(c=>({key:c.key||null,name:c.name||null,icon:c.icon,color:c.color,subs:(c.subs||[]).map(s=>({key:s.key||null,name:s.name||null,color:s.color}))}));
-    const bCatsIncSave=bCatsInc.map(c=>({key:c.key||null,name:c.name||null,icon:c.icon,color:c.color,subs:(c.subs||[]).map(s=>({key:s.key||null,name:s.name||null,color:s.color}))}));
+    const bCatsExpSave=bCatsExp.map(c=>({
+      key:c.key||null,
+      name:c.name||null,
+      icon:c.icon,
+      color:c.color,
+      subs:(c.subs||[]).map(s=>({
+        key:s.key||null,
+        name:s.name||null,
+        names:s.names||null,
+        color:s.color
+      }))
+    }));
+    const bCatsIncSave=bCatsInc.map(c=>({
+      key:c.key||null,
+      name:c.name||null,
+      icon:c.icon,
+      color:c.color,
+      subs:(c.subs||[]).map(s=>({
+        key:s.key||null,
+        name:s.name||null,
+        names:s.names||null,
+        color:s.color
+      }))
+    }));
     const data={txns,goals,debts,invests,budgets,lang,budgetMonth,budgetYear,budgetType,
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
