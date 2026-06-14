@@ -1783,7 +1783,6 @@ function addTransaction(){
   const catKey=catObj&&catObj.key?catObj.key:null;
   txns.unshift({id:Date.now(),desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType});
   if(curType==='expense'){
-    const g=goals.find(g=>g.name===catName||g.name===desc);if(g)g.saved=Math.max(0,(g.saved||0)-amount);
     const d=debts.find(d=>d.name===catName||d.name===desc);if(d)d.remaining=Math.max(0,d.remaining-amount);
     const cat=expCats.find(c=>cN(c)===catName);
     if(cat&&isInv(cat)){const tK=document.getElementById('t-inv-type').value;invests.unshift({id:Date.now()+1,name:desc,typeKey:tK,invested:amount,current:amount,date,autoAdded:true});rInvests();rDonut('inv');}
