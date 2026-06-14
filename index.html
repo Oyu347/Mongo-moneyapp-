@@ -2928,5 +2928,74 @@ auth.onAuthStateChanged(user=>{
 })();
 </script>
 
+
+<!-- Mongo v5 clock logo + curved glow border override -->
+<style>
+  /* Login card: reference-style bottom glow border following rounded corners */
+  .auth-card{
+    border-radius:36px !important;
+    border:1px solid rgba(255,255,255,.92) !important;
+    overflow:hidden !important;
+    position:relative !important;
+    box-shadow:0 28px 76px rgba(31,127,134,.16), 0 1px 0 rgba(255,255,255,.8) inset !important;
+  }
+  .auth-card::before{
+    height:0 !important;
+    background:transparent !important;
+  }
+  .auth-card::after{
+    content:"";
+    position:absolute;
+    left:30px;
+    right:30px;
+    bottom:0;
+    height:5px;
+    border-radius:999px;
+    background:linear-gradient(90deg,#7FE7DE 0%,#49B0B6 28%,#C9E77D 70%,#F4D447 100%);
+    box-shadow:0 -6px 18px rgba(73,176,182,.20), 0 0 18px rgba(244,212,71,.22);
+    pointer-events:none;
+  }
+  .auth-card .auth-logo{
+    position:relative;
+    z-index:1;
+  }
+  .auth-logo-name,
+  .brand-name{
+    background:linear-gradient(90deg,#5FD0D4 0%,#49B0B6 45%,#247D85 100%) !important;
+    -webkit-background-clip:text !important;
+    background-clip:text !important;
+    -webkit-text-fill-color:transparent !important;
+    color:#49B0B6 !important;
+    text-shadow:none !important;
+  }
+  .auth-logo img{
+    width:68px !important;
+    height:68px !important;
+    border-radius:19px !important;
+    box-shadow:0 16px 34px rgba(73,176,182,.24) !important;
+  }
+  .logo{background:transparent !important;box-shadow:none !important;}
+  .logo img{
+    width:42px !important;
+    height:42px !important;
+    border-radius:12px !important;
+    filter:drop-shadow(0 8px 14px rgba(73,176,182,.18));
+  }
+</style>
+<script>
+(function(){
+  const MONGO_LOGO_V5 = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%2282%22%20y1%3D%2258%22%20x2%3D%22430%22%20y2%3D%22456%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236AD3D7%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.50%22%20stop-color%3D%22%2349B0B6%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23257F87%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%22132%22%20y1%3D%22104%22%20x2%3D%22376%22%20y2%3D%22408%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF79A%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F4D447%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D5A51D%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22whiteHand%22%20x1%3D%22270%22%20y1%3D%22278%22%20x2%3D%22414%22%20y2%3D%22366%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFFFFF%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23EFFFFF%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-22%25%22%20y%3D%22-22%25%22%20width%3D%22144%25%22%20height%3D%22154%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2215%22%20stdDeviation%3D%2216%22%20flood-color%3D%22%230E5960%22%20flood-opacity%3D%22.24%22/%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%20%20%3Cfilter%20id%3D%22lift%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%227%22%20stdDeviation%3D%225%22%20flood-color%3D%22%230E5960%22%20flood-opacity%3D%22.28%22/%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%0A%20%20%3Crect%20x%3D%2244%22%20y%3D%2244%22%20width%3D%22424%22%20height%3D%22424%22%20rx%3D%22112%22%20fill%3D%22url%28%23bg%29%22%20filter%3D%22url%28%23shadow%29%22/%3E%0A%20%20%3Crect%20x%3D%2261%22%20y%3D%2261%22%20width%3D%22390%22%20height%3D%22390%22%20rx%3D%2298%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-opacity%3D%22.17%22%20stroke-width%3D%222%22/%3E%0A%0A%20%20%3C%21--%20full%20clock%20ring%3A%20money%20management%20time%20--%3E%0A%20%20%3Ccircle%20cx%3D%22256%22%20cy%3D%22256%22%20r%3D%22148%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2223%22%20filter%3D%22url%28%23lift%29%22/%3E%0A%0A%20%20%3C%21--%2012%20o%27clock%20growth%20hand%20--%3E%0A%20%20%3Cpath%20d%3D%22M256%20303V145%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2218%22%20stroke-linecap%3D%22round%22/%3E%0A%20%20%3Cpath%20d%3D%22M256%20111L226%20166H286L256%20111Z%22%20fill%3D%22url%28%23gold%29%22/%3E%0A%0A%20%20%3C%21--%20flow%20hand%20--%3E%0A%20%20%3Cpath%20d%3D%22M288%20283L392%20344%22%20fill%3D%22none%22%20stroke%3D%22url%28%23whiteHand%29%22%20stroke-width%3D%2218%22%20stroke-linecap%3D%22round%22/%3E%0A%20%20%3Cpath%20d%3D%22M420%20361L354%20358L386%20301L420%20361Z%22%20fill%3D%22%23FFFFFF%22/%3E%0A%0A%20%20%3C%21--%20center%20coin%20hub%20--%3E%0A%20%20%3Ccircle%20cx%3D%22256%22%20cy%3D%22272%22%20r%3D%2261%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2215%22%20filter%3D%22url%28%23lift%29%22/%3E%0A%20%20%3Ctext%20x%3D%22256%22%20y%3D%22296%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2268%22%20font-weight%3D%22800%22%20fill%3D%22%23F4D447%22%3E%24%3C/text%3E%0A%3C/svg%3E";
+  function applyMongoLogoV5(){
+    ["auth-logo-img","auth-logo-img2","auth-logo-img3"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.src=MONGO_LOGO_V5;
+    });
+    document.querySelectorAll(".logo img").forEach(function(el){ el.src=MONGO_LOGO_V5; });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",applyMongoLogoV5); else applyMongoLogoV5();
+  setTimeout(applyMongoLogoV5,500);
+})();
+</script>
+
 </body>
 </html>
