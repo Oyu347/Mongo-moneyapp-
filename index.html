@@ -781,6 +781,13 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .nav-btn{padding:9px 16px !important}
 }
 
+
+
+/* ── Income/Expense color restore + selected-color progress bars ── */
+.amt.amt-i{color:#1D9E75 !important;}
+.amt.amt-e{color:#E53935 !important;}
+.budget-over-amount{background:#FCEBEB;color:#A32D2D;padding:1px 6px;border-radius:10px;font-weight:800;}
+
 </style>
 </head>
 <body>
@@ -2040,25 +2047,25 @@ function tglBProg(key){
 
 // Хэтрэлтийн прогресс bar рендер хийх helper
 function overBar(tot,cb,col,isOver){
+  const basePct=Math.min(100, cb>0 ? (tot/cb*100) : 0);
   if(!isOver){
-    return`<div class="pbar" style="margin:0"><div class="pf" style="width:${Math.round(tot/cb*100)}%;background:${col}"></div></div>`;
+    return `<div class="pbar" style="margin:0;position:relative;overflow:hidden"><div class="pf" style="width:${basePct}%;background:${col}"></div></div>`;
   }
-  // Хэтэрсэн: 100% хүртэл тод, дараа нь тасархай улаан
-  const overPct=Math.round((tot-cb)/cb*100);
-  const overW=Math.min(overPct,40); // max 40% нэмэлт өргөн харуулна
-  return`<div style="position:relative;height:8px;border-radius:4px;background:#FCEBEB;margin:0;overflow:visible">
-    <div style="position:absolute;top:0;left:0;width:calc(100% * 0.8);height:100%;background:#e53935;border-radius:4px 0 0 4px"></div>
-    <div style="position:absolute;top:0;left:calc(100% * 0.8);width:calc(100% * 0.2);height:100%;background:#e5393566;border-radius:0 4px 4px 0;border-left:1.5px dashed #e53935"></div>
+  // Сонгосон өнгөөр 100% хүртэл, хэтэрсэн хэсгийг улаанаар ялгаж харуулна
+  return `<div style="display:flex;height:10px;border-radius:999px;background:#FCEBEB;overflow:hidden;margin:0">
+    <div style="width:82%;height:100%;background:${col}"></div>
+    <div style="width:18%;height:100%;background:linear-gradient(90deg,#F39A9A,#E53935);border-left:2px dashed rgba(163,45,45,.85)"></div>
   </div>`;
 }
 
 function overSubBar(ss,sv,sc,isOver){
+  const basePct=Math.min(100, sv>0 ? (ss/sv*100) : 0);
   if(!isOver){
-    return`<div class="pbar" style="height:5px;margin-left:12px"><div class="pf" style="width:${Math.round(ss/sv*100)}%;background:${sc}"></div></div>`;
+    return `<div class="pbar" style="height:5px;margin-left:12px;position:relative;overflow:hidden"><div class="pf" style="width:${basePct}%;background:${sc}"></div></div>`;
   }
-  return`<div style="position:relative;height:5px;border-radius:3px;background:#FCEBEB;margin:0 0 0 12px;overflow:visible">
-    <div style="position:absolute;top:0;left:0;width:calc(100% * 0.82);height:100%;background:#e53935;border-radius:3px 0 0 3px"></div>
-    <div style="position:absolute;top:0;left:calc(100% * 0.82);width:calc(100% * 0.18);height:100%;background:#e5393566;border-radius:0 3px 3px 0;border-left:1px dashed #e53935"></div>
+  return `<div style="display:flex;height:6px;border-radius:999px;background:#FCEBEB;overflow:hidden;margin:0 0 0 12px">
+    <div style="width:82%;height:100%;background:${sc}"></div>
+    <div style="width:18%;height:100%;background:linear-gradient(90deg,#F39A9A,#E53935);border-left:1px dashed rgba(163,45,45,.85)"></div>
   </div>`;
 }
 
@@ -2074,28 +2081,23 @@ function rBProg(){
     const catBudget=getBudgetVal(bk,mo);
     const subBudget=subs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
     const cb=catBudget+subBudget;
-    if(!cb)return'';
+    if(!cb)return '';
     const tot=isIncomePlan?gIncome(nm,mo):gSpent(nm,null,mo);
     const realPct=cb>0?Math.round(tot/cb*100):0;
-    const pct=Math.min(100,realPct);
     const isOver=!isIncomePlan&&tot>cb;
     const overAmt=isOver?tot-cb:0;
-    const col=isIncomePlan
-      ?(pct>=100?'#1D9E75':pct>=50?'#49b0b6':cat.color)
-      :(isOver?'#e53935':pct>=80?'#BA7517':cat.color);
+    const col=isIncomePlan?(realPct>=100?'#1D9E75':cat.color):cat.color;
     const hasSubs=subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).length>0;
     const isOpen=openBProg.has(bk);
-    const safeKey=bk.replace(/'/g,"\\'");
-    let h=`<div class="bblock" style="${isOver?'border-color:#e5393540':''}" >
+    const safeKey=bk.replace(/'/g,"\'");
+    return `<div class="bblock" style="${isOver?'border-color:#e5393540':''}">
       <div class="bheader" ${hasSubs?`onclick="tglBProg('${safeKey}')" style="cursor:pointer"`:'style="cursor:default"'}>
-        <div class="bicon" style="background:${isOver?'#FCEBEB':cat.color+'22'}">${cat.icon}</div>
+        <div class="bicon" style="background:${cat.color}22">${cat.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;flex-wrap:wrap">
-            <span style="font-size:12px;font-weight:600;color:${isOver?'#e53935':cat.color};flex:1">${nm}</span>
-            <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'}">
-              ${fmt(tot)} / ${fmt(cb)} (${realPct}%)
-            </span>
-            ${isOver?`<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:1px 6px;border-radius:10px;font-weight:500">+${fmt(overAmt)}</span>`:''}
+            <span style="font-size:12px;font-weight:800;color:${cat.color};flex:1">${nm}</span>
+            <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'};font-weight:${isOver?'800':'600'}">${fmt(tot)} / ${fmt(cb)} (${realPct}%)</span>
+            ${isOver?`<span class="budget-over-amount">+${fmt(overAmt)}</span>`:''}
           </div>
           ${overBar(tot,cb,col,isOver)}
         </div>
@@ -2115,23 +2117,19 @@ function rBProg(){
           const subOver=!isIncomePlan&&ss>sv;
           const subOverAmt=subOver?ss-sv:0;
           const subRealPct=sv>0?Math.round(ss/sv*100):0;
-          const sp=Math.min(100,subRealPct);
-          const sc=isIncomePlan
-            ?(sp>=100?'#1D9E75':sp>=50?'#49b0b6':sb.color)
-            :(subOver?'#e53935':sp>=80?'#BA7517':sb.color);
-          return`<div style="margin-bottom:8px">
+          const sc=isIncomePlan?(subRealPct>=100?'#1D9E75':sb.color):sb.color;
+          return `<div style="margin-bottom:8px">
             <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap">
-              <span style="width:7px;height:7px;border-radius:50%;background:${subOver?'#e53935':sb.color};display:inline-block;flex-shrink:0"></span>
-              <span style="font-size:12px;color:${subOver?'#e53935':sb.color};flex:1">${snm}</span>
-              <span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'}">${fmt(ss)} / ${fmt(sv)} (${subRealPct}%)</span>
-              ${subOver?`<span style="font-size:10px;background:#FCEBEB;color:#A32D2D;padding:1px 5px;border-radius:8px;font-weight:500">+${fmt(subOverAmt)}</span>`:''}
+              <span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span>
+              <span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span>
+              <span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${fmt(ss)} / ${fmt(sv)} (${subRealPct}%)</span>
+              ${subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}
             </div>
             ${overSubBar(ss,sv,sc,subOver)}
           </div>`;
         }).join('')}
       </div>`:''}
     </div>`;
-    return h;
   }).join('');
 }
 
@@ -2139,8 +2137,6 @@ function rBOv(){
   const el=document.getElementById('budget-overview');
   const mo=budgetMonth;const cats=bCatsExp;
   const has=cats.some(c=>getBudgetVal(bKeyFor(c),mo)>0||(c.subs||[]).some(s=>getBudgetVal(bSubKey(c,s),mo)>0));
-
-  // Сарын нэр + сонгогч
   const months=L.months||['1','2','3','4','5','6','7','8','9','10','11','12'];
   const moLabel=months[mo-1];
   const moNav=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -2148,27 +2144,24 @@ function rBOv(){
     <span style="font-size:12px;font-weight:600;color:var(--brand);flex:1;text-align:center">${moLabel}</span>
     <button onclick="dashChangeMo(1)" style="padding:2px 8px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer">›</button>
   </div>`;
-
   if(!has){el.innerHTML=moNav+`<div class="empty">${L.nobudget}</div>`;return;}
   el.innerHTML=moNav+cats.map(cat=>{
     const nm=cN(cat);const subs=cat.subs||[];
     const cb=getBudgetVal(bKeyFor(cat),mo)+subs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
-    if(!cb)return'';
+    if(!cb)return '';
     const sp=gSpent(nm,null,mo);
     const isOver=sp>cb;
     const realPct=cb>0?Math.round(sp/cb*100):0;
     const pct=Math.min(100,realPct);
-    const col=isOver?'#e53935':realPct>=80?'#BA7517':cat.color;
-    return`<div style="margin-bottom:7px">
-      <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
         <span>${cat.icon}</span>
-        <span style="font-size:12px;color:${isOver?'#e53935':cat.color};flex:1;font-weight:500">${nm}</span>
-        <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'};font-weight:${isOver?'600':'400'}">${realPct}%${isOver?` (+${fmt(sp-cb)})`:''}</span>
+        <span style="font-size:12px;color:${cat.color};flex:1;font-weight:800">${nm}</span>
+        <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'};font-weight:${isOver?'800':'600'}">${realPct}%${isOver?` (+${fmt(sp-cb)})`:''}</span>
       </div>
-      <div class="pbar" style="${isOver?'background:#FCEBEB':''}">
-        <div class="pf" style="width:${pct}%;background:${col}"></div>
-        ${isOver?`<div style="position:absolute;top:0;left:100%;width:0;height:100%;border-left:1.5px dashed #e53935"></div>`:''}
-      </div>
+      ${isOver
+        ? `<div style="display:flex;height:10px;border-radius:999px;background:#FCEBEB;overflow:hidden"><div style="width:82%;height:100%;background:${cat.color}"></div><div style="width:18%;height:100%;background:linear-gradient(90deg,#F39A9A,#E53935);border-left:2px dashed rgba(163,45,45,.85)"></div></div>`
+        : `<div class="pbar" style="position:relative;overflow:hidden"><div class="pf" style="width:${pct}%;background:${cat.color}"></div></div>`}
     </div>`;
   }).join('');
 }
