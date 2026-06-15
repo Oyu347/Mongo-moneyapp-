@@ -2126,11 +2126,7 @@ function uDash(){
   const dbt=debts.reduce((s,d)=>s+d.remaining,0);
   const tIn=invests.reduce((s,i)=>s+i.invested,0);
   const tCur=invests.reduce((s,i)=>s+i.current,0);
-  const totalSavings=goals.reduce((s,g)=>{
-    const manual=Math.max(0,g.saved||0);
-    const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((a,t)=>a+t.amount,0);
-    return s+manual+auto;
-  },0);
+  const totalSavings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0);
   document.getElementById('d-inc').textContent=fmt(inc);
   document.getElementById('d-exp').textContent=fmt(exp);
   document.getElementById('d-bal').textContent=fmt(inc-exp);
@@ -2420,14 +2416,21 @@ function dashChangeMo(dir){
   rBOv();
 }
 
+function getGoalAutoSaved(goal){
+  return txns
+    .filter(t=>t.type==='expense'&&(t.catName===goal.name||t.desc===goal.name||t.subcatName===goal.name))
+    .reduce((s,t)=>s+t.amount,0);
+}
+function getGoalEffectiveSaved(goal){
+  return Math.max(0,goal.saved||0)+getGoalAutoSaved(goal);
+}
+
 function rGoals(){
   const el=document.getElementById('goals-list');
   if(!goals.length){el.innerHTML=`<div class="empty">${L.goals}</div>`;return;}
   el.innerHTML=goals.map(g=>{
     const manualSaved=Math.max(0,g.saved||0);
-    // Зарлагаас автоматаар хасагдсан дүн
-    const autoPaid=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((s,t)=>s+t.amount,0);
-    // Нийт хуримтлал = гараар оруулсан + автоматаар нэмэгдсэн
+    const autoPaid=getGoalAutoSaved(g);
     const effectiveSaved=manualSaved+autoPaid;
     const pct=Math.min(100,g.target>0?Math.round(effectiveSaved/g.target*100):0);
     const hist=g.history||[];
@@ -2456,7 +2459,6 @@ function rGoals(){
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:600">${g.name}</div>
           <div style="font-size:12px;color:var(--brand);font-weight:600;margin-top:1px">${fmt(effectiveSaved)} / ${fmt(g.target)}${g.dead?` · ${g.dead}`:''}</div>
-          <!-- Задаргаа: гараар + автоматаар -->
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">
             ${manualSaved>0?`<span style="font-size:10px;color:var(--text2)">✏️ ${fmt(manualSaved)}</span>`:''}
             ${autoPaid>0?`<span style="font-size:10px;color:#1D9E75">⚡ ${L.autosave||'Автомат'}: ${fmt(autoPaid)}</span>`:''}
@@ -2464,11 +2466,9 @@ function rGoals(){
         </div>
         <button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button>
       </div>
-      <div class="pbar"><div class="pf" style="width:${pct}%;background:var(--brand)"></div></div>
-      <div style="display:flex;align-items:center;gap:7px;margin-top:8px">
-        <span style="font-size:11px;color:var(--text2)">✏️ ${L.update||'Шинэчлэх'}:</span>
-        <input type="text" value="${manualSaved>0?manualSaved.toLocaleString('en-US'):''}" placeholder="0" data-amt="1" class="fi" style="width:110px;font-size:12px;padding:4px 7px" inputmode="decimal" onchange="updGoal(${g.id},this.value)">
-        <span style="font-size:11px;color:var(--brand);font-weight:600">${pct}%</span>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
+        <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:var(--brand)"></div></div>
+        <span style="font-size:12px;color:var(--brand);font-weight:800;min-width:38px;text-align:right">${pct}%</span>
       </div>
       ${cumulHtml}
     </div>`;
