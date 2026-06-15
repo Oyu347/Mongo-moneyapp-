@@ -968,6 +968,54 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   box-shadow:0 13px 28px rgba(31,127,134,.28) !important;
 }
 
+
+
+/* ── Möngö V2.1 final polish: lighter header, softer depth, collapsible category manager ── */
+:root{
+  --v21-shadow-soft:0 8px 22px rgba(31,127,134,.085);
+  --v21-shadow-hover:0 14px 34px rgba(31,127,134,.115);
+  --v21-shadow-active:0 12px 26px rgba(31,127,134,.25);
+}
+/* Header logo balance: slightly smaller logo, fuller g descender */
+.topbar .logo{width:42px !important;height:42px !important;border-radius:14px !important;box-shadow:none !important;}
+.topbar .logo img{width:42px !important;height:42px !important;object-fit:contain !important;filter:drop-shadow(0 6px 12px rgba(31,127,134,.13)) !important;}
+.topbar .brand-name{font-size:20px !important;line-height:1.24 !important;padding-bottom:7px !important;margin-bottom:-6px !important;overflow:visible !important;}
+.auth-logo-name{line-height:1.24 !important;padding-bottom:7px !important;margin-bottom:-6px !important;overflow:visible !important;}
+/* Make MONEY FLOW SYSTEM tighter and cleaner */
+.brand-subtitle,.brand span[style*="font-size"],.auth-logo-sub{
+  letter-spacing:1.7px !important;
+  font-size:10px !important;
+  line-height:1.08 !important;
+  white-space:nowrap !important;
+}
+.auth-logo-sub{letter-spacing:1.55px !important;font-size:9.2px !important;}
+/* Cleaner navigation spacing and shadow */
+.nav{box-shadow:0 8px 22px rgba(31,127,134,.055) !important;}
+.nav-btn{box-shadow:0 5px 14px rgba(31,127,134,.075) !important;border-color:rgba(73,176,182,.14) !important;transition:transform .18s ease, box-shadow .18s ease, background .18s ease !important;}
+.nav-btn.active{box-shadow:var(--v21-shadow-active) !important;transform:scale(1.045) !important;}
+/* Premium but restrained shadows */
+.card,.ccrd,.inv-card,.bblock,.metric,.budget-total-bar{box-shadow:var(--v21-shadow-soft) !important;}
+.card:hover,.ccrd:hover,.inv-card:hover,.bblock:hover{box-shadow:var(--v21-shadow-hover) !important;}
+.type-toggle,.btype-toggle,.period-bar .pb,.month-sel .msb{box-shadow:0 5px 14px rgba(31,127,134,.075) !important;}
+.tt-btn.tt-i,.tt-btn.tt-e,.btype-btn.active,.pb.active,.msb.active{box-shadow:0 8px 20px rgba(73,176,182,.15) !important;}
+.fi,.auth-fi,select.fi,input.fi,textarea.fi{box-shadow:inset 0 1px 2px rgba(0,0,0,.025),0 5px 13px rgba(31,127,134,.055) !important;}
+.fi:focus,.auth-fi:focus{box-shadow:0 0 0 4px rgba(73,176,182,.13),0 10px 24px rgba(31,127,134,.12) !important;}
+/* Collapsible category manager in Budget */
+.budget-cat-card{position:relative;overflow:hidden !important;transition:box-shadow .2s ease, transform .2s ease !important;}
+.budget-cat-title{cursor:pointer;padding-right:42px;margin-bottom:13px !important;user-select:none;}
+.budget-cat-toggle{position:absolute;right:18px;top:17px;width:32px;height:32px;border-radius:999px;border:1px solid rgba(73,176,182,.18);background:rgba(255,255,255,.7);color:#6B7280;font-size:20px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 5px 12px rgba(31,127,134,.07);transition:transform .2s ease, background .2s ease;color:#2C7F85;}
+.budget-cat-card:not(.collapsed) .budget-cat-toggle{transform:rotate(180deg);background:rgba(73,176,182,.10);}
+.budget-cat-body{max-height:420px;opacity:1;transition:max-height .26s ease, opacity .18s ease, margin-top .2s ease;}
+.budget-cat-card.collapsed .budget-cat-body{max-height:0;opacity:0;overflow:hidden;margin-top:0;}
+.budget-cat-card.collapsed .budget-cat-title{margin-bottom:0 !important;}
+.budget-cat-card.collapsed{padding-bottom:16px !important;}
+@media(max-width:520px){
+  .topbar .logo,.topbar .logo img{width:40px !important;height:40px !important;}
+  .topbar .brand-name{font-size:19px !important;}
+  .brand-subtitle,.brand span[style*="font-size"]{letter-spacing:1.4px !important;font-size:9.4px !important;}
+  .nav-btn.active{transform:scale(1.035) !important;}
+}
+
 </style>
 </head>
 <body>
@@ -1201,11 +1249,14 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <span style="font-size:12px;font-weight:500;color:var(--brand-dark)" id="lbl-budget-total-lbl"></span>
     <span style="font-size:14px;font-weight:700;color:var(--brand-dark)" id="budget-total-val">0</span>
   </div>
-  <div class="card">
-    <div class="card-title" id="lbl-addbudgetcat"></div>
-    <div class="slbl" style="margin-bottom:4px" id="lbl-icon-b"></div><div class="irow" id="b-irow"></div>
-    <div class="slbl" style="margin-bottom:4px" id="lbl-color-b"></div><div class="crow" id="b-crow"></div>
-    <div class="add-row"><input type="text" class="fi" id="b-newcat"><button class="btn btn-p" style="font-size:11px;padding:4px 9px" onclick="addBudgetCat()" id="btn-addbcat"></button></div>
+  <div class="card budget-cat-card collapsed" id="budget-cat-card">
+    <div class="card-title budget-cat-title" id="lbl-addbudgetcat" onclick="toggleBudgetCatPanel()"></div>
+    <button class="budget-cat-toggle" type="button" onclick="toggleBudgetCatPanel()" aria-label="Toggle category manager">⌄</button>
+    <div class="budget-cat-body" id="budget-cat-body">
+      <div class="slbl" style="margin-bottom:4px" id="lbl-icon-b"></div><div class="irow" id="b-irow"></div>
+      <div class="slbl" style="margin-bottom:4px" id="lbl-color-b"></div><div class="crow" id="b-crow"></div>
+      <div class="add-row"><input type="text" class="fi" id="b-newcat"><button class="btn btn-p" style="font-size:11px;padding:4px 9px" onclick="addBudgetCat()" id="btn-addbcat"></button></div>
+    </div>
   </div>
   <div id="b-cats-list"></div>
   <button class="btn btn-p" style="margin-bottom:11px;width:100%" onclick="saveBudget()" id="btn-save"></button>
@@ -2054,7 +2105,16 @@ async function delInvest(id){
 function showTab(tab,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(btn){
+    btn.classList.add('active');
+    try{btn.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}catch(e){}
+  }
+}
+function toggleBudgetCatPanel(){
+  const card=document.getElementById('budget-cat-card');
+  if(!card)return;
+  card.classList.toggle('collapsed');
 }
 function rAll(){rTxns();rDash();rGoals();rDebts();}
 function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
