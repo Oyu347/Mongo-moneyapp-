@@ -1604,6 +1604,7 @@ const ICONS_PER_ROW=8;
 let irowOpenT=false,irowOpenB=false;
 function rTIrow(){
   const el=document.getElementById('t-irow');
+  if(!el) return; // Ангиллын тохиргоог Төсөв хэсэг рүү шилжүүлсэн тул гүйлгээний хуучин element байхгүй үед аппыг зогсоохгүй.
   const first=ICONS.slice(0,ICONS_PER_ROW),rest=ICONS.slice(ICONS_PER_ROW);
   const open=irowOpenT||rest.includes(sIcon.t);
   el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px">'+
@@ -1611,7 +1612,11 @@ function rTIrow(){
     '<div class="ic" style="font-size:10px;color:var(--text2);width:auto;padding:0 6px" onclick="irowOpenT=!irowOpenT;rTIrow()">'+(open?'▲':'▼')+'</div></div>'+
     (open?'<div style="display:flex;flex-wrap:wrap;gap:3px">'+rest.map(ic=>'<div class="ic'+(sIcon.t===ic?' sel':'')+'" onclick="sIcon.t=\''+ic+'\';rTIrow()">'+ic+'</div>').join('')+'</div>':'');
 }
-function rTCrow(){document.getElementById('t-crow').innerHTML=PAL.map(c=>`<div class="cp${sColor.t===c?' sel':''}" style="background:${c}" onclick="sColor.t='${c}';rTCrow()"></div>`).join('');}
+function rTCrow(){
+  const el=document.getElementById('t-crow');
+  if(!el) return; // Ангиллын тохиргоог Төсөв хэсэг рүү шилжүүлсэн тул хуучин element байхгүй үед алдаа гаргахгүй.
+  el.innerHTML=PAL.map(c=>`<div class="cp${sColor.t===c?' sel':''}" style="background:${c}" onclick="sColor.t='${c}';rTCrow()"></div>`).join('');
+}
 let chipsOpenT=false, chipsOpenI=false;
 
 function rTChips(){
