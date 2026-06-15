@@ -1088,6 +1088,26 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   font-weight:800;
 }
 
+
+
+/* ── V2.4 Transaction search + investment profit/loss contrast ── */
+.txn-title-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:10px !important;}
+.txn-title-row::before{flex:0 0 auto;}
+.txn-title-row #lbl-alltxns{flex:1;}
+.txn-search-btn{
+  width:42px;height:42px;border-radius:999px;border:1px solid rgba(73,176,182,.20);
+  background:rgba(255,255,255,.74);color:#2C7F85;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(31,127,134,.10);transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.txn-search-btn:hover,.txn-search-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 12px 24px rgba(31,127,134,.22);transform:translateY(-1px);}
+.txn-search-panel{display:flex;align-items:center;gap:8px;margin:4px 0 12px;padding:10px;border:1px solid rgba(73,176,182,.16);border-radius:22px;background:rgba(73,176,182,.06);}
+.txn-search-input{flex:1;margin:0 !important;min-height:40px !important;}
+.txn-search-empty{padding:18px 8px;text-align:center;color:var(--text3);font-size:12px;}
+.inv-positive{color:#08724F !important;}
+.inv-negative{color:#C53A32 !important;}
+.inv-neutral{color:#6B7280 !important;}
+
 </style>
 </head>
 <body>
@@ -1303,7 +1323,17 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       </div>
     </div>
   </div>
-  <div class="card"><div class="card-title" id="lbl-alltxns"></div><div id="all-txns"><div class="empty" id="lbl-notxn-t"></div></div></div>
+  <div class="card txn-search-card">
+    <div class="card-title txn-title-row">
+      <span id="lbl-alltxns"></span>
+      <button type="button" class="txn-search-btn" onclick="toggleTxnSearch()" aria-label="Search transactions">🔍</button>
+    </div>
+    <div id="txn-search-panel" class="txn-search-panel" style="display:none">
+      <input type="text" class="fi txn-search-input" id="txn-search-input" placeholder="Ангиллын нэрээр хайх..." oninput="setTxnSearch(this.value)">
+      <button type="button" class="btn btn-sm" onclick="clearTxnSearch()">×</button>
+    </div>
+    <div id="all-txns"><div class="empty" id="lbl-notxn-t"></div></div>
+  </div>
 </div>
 
 <!-- BUDGET -->
@@ -1513,6 +1543,8 @@ let monthSelOpen=false;
 let budgetType='income'; // 'income' or 'expense'
 let selSubcat=null; // currently selected sub-cat key/name for txn
 let subDropOpen=false;
+let txnSearchOpen=false;
+let txnSearchQuery='';
 // Lock state: set of cat keys/names that are user-locked
 let lockedCats=new Set();
 
@@ -1769,6 +1801,7 @@ function applyLang(){
     el.innerHTML=`<span class="nav-ico${extra}">${navIcons[id]}</span><span class="nav-label">${label}</span>`;
   });
   const tNewCat=document.getElementById('t-newcat'); if(tNewCat) tNewCat.placeholder=L.newcat;
+  const tsi=document.getElementById('txn-search-input'); if(tsi) tsi.placeholder=(L.selectSubcat||'Ангилал')+' / '+(L.desc||'тайлбар')+' хайх...';
   document.getElementById('b-newcat').placeholder=L.newcat;
   document.getElementById('t-desc').placeholder=L.descPh||L.desc;
   document.getElementById('g-name').placeholder=L.savingname;
@@ -1862,6 +1895,7 @@ function setType(t){
   document.getElementById('invest-auto-notice').style.display='none';
   document.getElementById('invest-extra').style.display='none';
   document.getElementById('t-subcat-wrap').style.display='none';
+  rTxns();
 }
 function gCats(){
   if(curType==='expense') return expCats;
@@ -2336,20 +2370,70 @@ function tglMore(grpId){
   if(btn)btn.style.display=hidden?'none':'inline-block';
 }
 
+function toggleTxnSearch(){
+  txnSearchOpen=!txnSearchOpen;
+  const panel=document.getElementById('txn-search-panel');
+  const btn=document.querySelector('.txn-search-btn');
+  if(panel)panel.style.display=txnSearchOpen?'flex':'none';
+  if(btn)btn.classList.toggle('active',txnSearchOpen);
+  if(txnSearchOpen){
+    const inp=document.getElementById('txn-search-input');
+    if(inp){
+      inp.placeholder=(L.selectSubcat||'Ангилал')+' / '+(L.desc||'тайлбар')+' хайх...';
+      setTimeout(()=>inp.focus(),80);
+    }
+  }
+  rTxns();
+}
+function setTxnSearch(v){txnSearchQuery=(v||'').trim().toLowerCase();rTxns();}
+function clearTxnSearch(){
+  txnSearchQuery='';
+  const inp=document.getElementById('txn-search-input');
+  if(inp)inp.value='';
+  rTxns();
+}
+function txnMatchesSearch(t){
+  if(!txnSearchOpen||!txnSearchQuery)return true;
+  if(t.type!==curType)return false;
+  const ci=getCatInfo(t.catName,t.type);
+  let sub='';
+  if(t.subcatName){
+    const cats=t.type==='income'?bCatsInc:bCatsExp;
+    const cat=cats.find(c=>cN(c)===t.catName||c.key===t.catKey||c.name===t.catName);
+    const sb=cat?(cat.subs||[]).find(s=>s.key===t.subcatName||cN(s)===t.subcatName||s.name===t.subcatName):null;
+    sub=sb?cN(sb):t.subcatName;
+  }
+  const hay=[t.catName,ci.key||'',cN(ci)||'',sub,t.desc].join(' ').toLowerCase();
+  return hay.includes(txnSearchQuery);
+}
 function rTxns(){
   const el=document.getElementById('all-txns');
-  if(!txns.length){el.innerHTML=`<div class="empty">${L.notxn}</div>`;return;}
-  const groups=txnsByMonth();
+  let source=txns;
+  if(txnSearchOpen&&txnSearchQuery){
+    source=txns.filter(txnMatchesSearch);
+  }
+  if(!source.length){
+    const label=(txnSearchOpen&&txnSearchQuery)?`${curType==='income'?L.income:L.expense} — ${L.notxn}`:L.notxn;
+    el.innerHTML=`<div class="txn-search-empty">${label}</div>`;
+    return;
+  }
+  const groups={};
+  [...source].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{
+    const ym=t.date?t.date.substring(0,7):'';
+    if(!groups[ym])groups[ym]=[];
+    groups[ym].push(t);
+  });
   let html='';
   Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{
     const parts=ym.split('-');const yr=parts[0];const mo=parseInt(parts[1])-1;
     const mLabel=L.months?L.months[mo]:ym;
     const items=groups[ym];
-    const grpId='tg_'+ym.replace('-','_');
+    const grpId='tg_'+ym.replace('-','_')+(txnSearchOpen?'_s':'');
     const inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
     const exp=items.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const modeLabel=(txnSearchOpen&&txnSearchQuery)?` · ${curType==='income'?L.income:L.expense}`:'';
     html+=`<div class="month-hdr" onclick="tglGroup('${grpId}')">
-      <div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${mLabel} ${yr}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(exp)}</span></div>
+      <div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${mLabel} ${yr}${modeLabel}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(exp)}</span></div>
       <span style="font-size:10px;color:var(--text3)" id="arr_${grpId}">▾</span>
     </div>
     <div id="${grpId}">${items.map(t=>tRow(t,true)).join('')}</div>
@@ -2640,8 +2724,12 @@ function rInvests(){
   const pnl=tCur-tIn;const pct2=tIn>0?(pnl/tIn)*100:0;
   document.getElementById('i-total-in').textContent=fmt(tIn);
   document.getElementById('i-total-cur').textContent=fmt(tCur);
-  document.getElementById('i-pnl-val').textContent=(pnl>=0?'+':'')+fmt(pnl);
-  document.getElementById('i-pct-val').textContent=fmtP(pct2);
+  const pnlVal=document.getElementById('i-pnl-val');
+  const pctVal=document.getElementById('i-pct-val');
+  pnlVal.textContent=(pnl>=0?'+':'')+fmt(pnl);
+  pctVal.textContent=fmtP(pct2);
+  pnlVal.className='metric-val '+(pnl>0?'inv-positive':pnl<0?'inv-negative':'inv-neutral');
+  pctVal.className='metric-val '+(pct2>0?'inv-positive':pct2<0?'inv-negative':'inv-neutral');
   const pc=document.getElementById('i-pnl-card');pc.style.background=pnl>=0?'#E1F5EE':'#FCEBEB';pc.querySelector('.metric-lbl').style.color=pnl>=0?'#085041':'#791F1F';pc.querySelector('.metric-val').style.color=pnl>=0?'#085041':'#791F1F';
   const pp=document.getElementById('i-pct-card');pp.style.background=pct2>=0?'#E1F5EE':'#FCEBEB';pp.querySelector('.metric-lbl').style.color=pct2>=0?'#085041':'#791F1F';pp.querySelector('.metric-val').style.color=pct2>=0?'#085041':'#791F1F';
   const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
@@ -2675,7 +2763,7 @@ function rInvests(){
       </div>
       <div style="display:flex;align-items:center;gap:7px">
         <span style="font-size:11px;color:var(--text2)">${L.curval}:</span>
-        <input type="text" value="${inv.current}" class="fi" style="width:115px;font-size:12px;padding:4px 7px" inputmode="decimal" onchange="updInvCur(${inv.id},this.value)">
+        <input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" style="width:115px;font-size:12px;padding:4px 7px" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)">
         <span class="tag ${pct3>=0?'gain':'loss'}">${fmtP(pct3)}</span>
       </div>
     </div>`;
@@ -3374,6 +3462,26 @@ auth.onAuthStateChanged(user=>{
   .budget-progress-card{background:linear-gradient(180deg,rgba(23,35,38,.94),rgba(23,35,38,.82))!important;}
 }
 
+
+
+/* ── V2.4 Transaction search + investment profit/loss contrast ── */
+.txn-title-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:10px !important;}
+.txn-title-row::before{flex:0 0 auto;}
+.txn-title-row #lbl-alltxns{flex:1;}
+.txn-search-btn{
+  width:42px;height:42px;border-radius:999px;border:1px solid rgba(73,176,182,.20);
+  background:rgba(255,255,255,.74);color:#2C7F85;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(31,127,134,.10);transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.txn-search-btn:hover,.txn-search-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 12px 24px rgba(31,127,134,.22);transform:translateY(-1px);}
+.txn-search-panel{display:flex;align-items:center;gap:8px;margin:4px 0 12px;padding:10px;border:1px solid rgba(73,176,182,.16);border-radius:22px;background:rgba(73,176,182,.06);}
+.txn-search-input{flex:1;margin:0 !important;min-height:40px !important;}
+.txn-search-empty{padding:18px 8px;text-align:center;color:var(--text3);font-size:12px;}
+.inv-positive{color:#08724F !important;}
+.inv-negative{color:#C53A32 !important;}
+.inv-neutral{color:#6B7280 !important;}
+
 </style>
 <script>
 (function(){
@@ -3493,6 +3601,26 @@ auth.onAuthStateChanged(user=>{
   .budget-progress-card .bheader{background:rgba(23,35,38,.92)!important;}
   .budget-progress-card{background:linear-gradient(180deg,rgba(23,35,38,.94),rgba(23,35,38,.82))!important;}
 }
+
+
+
+/* ── V2.4 Transaction search + investment profit/loss contrast ── */
+.txn-title-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:10px !important;}
+.txn-title-row::before{flex:0 0 auto;}
+.txn-title-row #lbl-alltxns{flex:1;}
+.txn-search-btn{
+  width:42px;height:42px;border-radius:999px;border:1px solid rgba(73,176,182,.20);
+  background:rgba(255,255,255,.74);color:#2C7F85;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(31,127,134,.10);transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.txn-search-btn:hover,.txn-search-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 12px 24px rgba(31,127,134,.22);transform:translateY(-1px);}
+.txn-search-panel{display:flex;align-items:center;gap:8px;margin:4px 0 12px;padding:10px;border:1px solid rgba(73,176,182,.16);border-radius:22px;background:rgba(73,176,182,.06);}
+.txn-search-input{flex:1;margin:0 !important;min-height:40px !important;}
+.txn-search-empty{padding:18px 8px;text-align:center;color:var(--text3);font-size:12px;}
+.inv-positive{color:#08724F !important;}
+.inv-negative{color:#C53A32 !important;}
+.inv-neutral{color:#6B7280 !important;}
 
 </style>
 <script>
