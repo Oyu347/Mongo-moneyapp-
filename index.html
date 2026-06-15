@@ -1108,6 +1108,70 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .inv-negative{color:#C53A32 !important;}
 .inv-neutral{color:#6B7280 !important;}
 
+
+
+/* ── Möngö V25 Premium Finance Dashboard ── */
+.premium-dash{
+  margin:12px 0 13px;
+}
+.pdash-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 2px 10px;
+}
+.pdash-title{
+  font-size:20px;font-weight:950;letter-spacing:-.04em;color:#374151;
+  display:flex;align-items:center;gap:9px;
+}
+.pdash-title:before{
+  content:"";width:12px;height:12px;border-radius:999px;
+  background:radial-gradient(circle at 35% 35%,#F7D24A 0 18%,#49B0B6 44%,rgba(73,176,182,.14) 55% 100%);
+  box-shadow:0 0 0 6px rgba(73,176,182,.08);
+}
+.pdash-sub{font-size:11px;color:#7B8794;font-weight:700;white-space:nowrap}
+.pdash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pdash-card{
+  position:relative;overflow:hidden;min-height:118px;padding:16px 15px;
+  border-radius:28px;border:1px solid rgba(255,255,255,.88);
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.76));
+  box-shadow:0 14px 34px rgba(31,127,134,.105);
+}
+.pdash-card:after{
+  content:"";position:absolute;right:-22px;top:-26px;width:90px;height:90px;border-radius:999px;
+  background:rgba(255,255,255,.44);
+}
+.pdash-card.wide{grid-column:1 / -1;min-height:112px}
+.pdash-k{font-size:11px;text-transform:uppercase;letter-spacing:.055em;font-weight:900;color:#6B7280;position:relative;z-index:1}
+.pdash-v{font-size:22px;font-weight:950;letter-spacing:-.055em;margin-top:7px;color:#1F2937;position:relative;z-index:1;line-height:1.08}
+.pdash-note{font-size:11px;color:#7B8794;margin-top:6px;font-weight:700;position:relative;z-index:1;line-height:1.35}
+.pdash-icon{position:absolute;right:14px;bottom:12px;font-size:28px;opacity:.22;z-index:1}
+.pdash-good{background:linear-gradient(145deg,rgba(225,245,238,.98),rgba(255,255,255,.76)) !important}
+.pdash-good .pdash-v,.pdash-good .pdash-note{color:#0F766E}
+.pdash-bad{background:linear-gradient(145deg,rgba(252,235,235,.98),rgba(255,255,255,.78)) !important}
+.pdash-bad .pdash-v,.pdash-bad .pdash-note{color:#B91C1C}
+.pdash-warn{background:linear-gradient(145deg,rgba(255,246,199,.98),rgba(255,255,255,.78)) !important}
+.pdash-warn .pdash-v,.pdash-warn .pdash-note{color:#B7791F}
+.pdash-teal{background:linear-gradient(145deg,rgba(232,248,248,.98),rgba(255,255,255,.76)) !important}
+.pdash-purple{background:linear-gradient(145deg,rgba(238,237,254,.98),rgba(255,255,255,.76)) !important}
+.pdash-bar{height:10px;background:rgba(73,176,182,.12);border-radius:999px;overflow:hidden;margin-top:12px;position:relative;z-index:1}
+.pdash-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);transition:width .35s ease}
+.pdash-score-ring{
+  width:54px;height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(#49B0B6 var(--score-deg,0deg), rgba(73,176,182,.12) 0);
+  position:absolute;right:14px;top:14px;z-index:1;
+}
+.pdash-score-ring:before{content:"";position:absolute;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.92)}
+.pdash-score-ring span{position:relative;font-size:12px;font-weight:950;color:#1F7F86}
+@media(max-width:520px){
+  .pdash-grid{gap:9px}
+  .pdash-card{min-height:108px;padding:14px 13px;border-radius:24px}
+  .pdash-v{font-size:19px}
+  .pdash-title{font-size:18px}
+  .pdash-sub{display:none}
+}
+@media(prefers-color-scheme:dark){
+  .pdash-title{color:#F3F4F6}.pdash-card{border-color:rgba(116,215,220,.12);background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.74))}.pdash-score-ring:before{background:#172326}.pdash-v{color:#F3F4F6}
+}
+
 </style>
 </head>
 <body>
@@ -1268,6 +1332,45 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <span style="font-size:12px;color:var(--text2)" id="lbl-from"></span><input type="date" class="fi" id="p-from">
     <span style="font-size:12px;color:var(--text2)" id="lbl-to"></span><input type="date" class="fi" id="p-to">
     <button class="btn btn-p" style="font-size:12px;padding:5px 10px" onclick="applyCustom()" id="btn-apply"></button>
+  </div>
+
+  <div class="premium-dash" id="premium-finance-dash">
+    <div class="pdash-head">
+      <div class="pdash-title" id="pdash-title">Premium Dashboard</div>
+      <div class="pdash-sub" id="pdash-sub">Money Flow System</div>
+    </div>
+    <div class="pdash-grid">
+      <div class="pdash-card pdash-teal" id="pdash-cashflow-card">
+        <div class="pdash-k" id="pdash-cashflow-lbl"></div>
+        <div class="pdash-v" id="pdash-cashflow-val">0</div>
+        <div class="pdash-note" id="pdash-cashflow-note"></div>
+        <div class="pdash-icon">💧</div>
+      </div>
+      <div class="pdash-card" id="pdash-save-card">
+        <div class="pdash-k" id="pdash-save-lbl"></div>
+        <div class="pdash-v" id="pdash-save-val">0%</div>
+        <div class="pdash-note" id="pdash-save-note"></div>
+        <div class="pdash-icon">🏦</div>
+      </div>
+      <div class="pdash-card pdash-purple" id="pdash-net-card">
+        <div class="pdash-k" id="pdash-net-lbl"></div>
+        <div class="pdash-v" id="pdash-net-val">0</div>
+        <div class="pdash-note" id="pdash-net-note"></div>
+        <div class="pdash-icon">💎</div>
+      </div>
+      <div class="pdash-card" id="pdash-score-card">
+        <div class="pdash-k" id="pdash-score-lbl"></div>
+        <div class="pdash-v" id="pdash-score-val">0 / 100</div>
+        <div class="pdash-note" id="pdash-score-note"></div>
+        <div class="pdash-score-ring" id="pdash-score-ring"><span id="pdash-score-small">0</span></div>
+      </div>
+      <div class="pdash-card wide pdash-teal" id="pdash-fire-card">
+        <div class="pdash-k" id="pdash-fire-lbl"></div>
+        <div class="pdash-v" id="pdash-fire-val">0%</div>
+        <div class="pdash-note" id="pdash-fire-note"></div>
+        <div class="pdash-bar"><div class="pdash-fill" id="pdash-fire-fill" style="width:0%"></div></div>
+      </div>
+    </div>
   </div>
   <div class="sgrid">
     <div class="metric" id="m-inc"><div class="metric-lbl" id="lbl-income"></div><div class="metric-val" id="d-inc">0</div></div>
@@ -2267,6 +2370,64 @@ function toggleBudgetCatPanel(){
 function rAll(){rTxns();rDash();rGoals();rDebts();}
 function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
 
+
+// ── Möngö V25 Premium Finance Dashboard logic ─────────────────────────────
+function pDashText(){
+  const d={
+    mn:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Хуримтлалын хувь',net:'Цэвэр хөрөнгө',score:'Санхүүгийн оноо',fire:'FIRE Progress',positive:'Эерэг мөнгөн урсгал',negative:'Сөрөг мөнгөн урсгал',good:'Маш сайн',ok:'Сайн',watch:'Анхаарах',netNote:'Хөрөнгө − Зээл',fireNote:'Санхүүгийн эрх чөлөөний ахиц',needData:'Илүү их өгөгдөл хэрэгтэй'},
+    en:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Savings rate',net:'Net worth',score:'Financial score',fire:'FIRE Progress',positive:'Positive money flow',negative:'Negative money flow',good:'Excellent',ok:'Good',watch:'Needs attention',netNote:'Assets − Loans',fireNote:'Financial independence progress',needData:'Needs more data'},
+    zh:{title:'高级仪表盘',sub:'Money Flow System',cashflow:'现金流',saveRate:'储蓄率',net:'净资产',score:'财务评分',fire:'FIRE进度',positive:'正向现金流',negative:'负向现金流',good:'优秀',ok:'良好',watch:'需关注',netNote:'资产 − 贷款',fireNote:'财务自由进度',needData:'需要更多数据'},
+    ja:{title:'プレミアムダッシュボード',sub:'Money Flow System',cashflow:'キャッシュフロー',saveRate:'貯蓄率',net:'純資産',score:'財務スコア',fire:'FIRE進捗',positive:'プラスの資金流',negative:'マイナスの資金流',good:'とても良い',ok:'良い',watch:'要注意',netNote:'資産 − ローン',fireNote:'経済的自立の進捗',needData:'データが必要'},
+    ko:{title:'프리미엄 대시보드',sub:'Money Flow System',cashflow:'현금흐름',saveRate:'저축률',net:'순자산',score:'재무 점수',fire:'FIRE 진행률',positive:'긍정적 현금흐름',negative:'부정적 현금흐름',good:'매우 좋음',ok:'좋음',watch:'주의 필요',netNote:'자산 − 대출',fireNote:'경제적 자유 진행률',needData:'데이터가 더 필요해요'},
+    ru:{title:'Премиум панель',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Норма сбережений',net:'Чистый капитал',score:'Финансовый балл',fire:'FIRE прогресс',positive:'Положительный поток',negative:'Отрицательный поток',good:'Отлично',ok:'Хорошо',watch:'Нужно внимание',netNote:'Активы − кредиты',fireNote:'Прогресс к финансовой свободе',needData:'Нужно больше данных'},
+    de:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Sparquote',net:'Nettovermögen',score:'Finanz-Score',fire:'FIRE Fortschritt',positive:'Positiver Geldfluss',negative:'Negativer Geldfluss',good:'Sehr gut',ok:'Gut',watch:'Achtung',netNote:'Vermögen − Kredite',fireNote:'Finanzielle-Freiheit-Fortschritt',needData:'Mehr Daten nötig'}
+  };
+  return d[lang]||d.mn;
+}
+function setPCardState(id,state){
+  const el=document.getElementById(id); if(!el)return;
+  el.classList.remove('pdash-good','pdash-bad','pdash-warn');
+  if(state)el.classList.add(state);
+}
+function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
+  const T=pDashText();
+  const cashflow=inc-exp;
+  const periodSavings=fT().filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
+  const saveRate=inc>0?Math.round((periodSavings/inc)*100):0;
+  const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
+  const debtRatio=inc>0?Math.min(100,Math.round((dbt/inc)*100)):dbt>0?100:0;
+  let budgetScore=70;
+  try{
+    const mo=new Date().getMonth()+1, yr=new Date().getFullYear();
+    const prevY=budgetYear; budgetYear=yr;
+    let planned=0, used=0;
+    bCatsExp.forEach(cat=>{const bk=bKeyFor(cat);planned+=getBudgetVal(bk,mo);used+=actualForBudget(cat,mo,'expense');(cat.subs||[]).forEach(sb=>{planned+=getBudgetVal(bSubKey(cat,sb),mo);used+=actualForSub(cat,sb,mo,'expense');});});
+    budgetYear=prevY;
+    budgetScore=planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
+  }catch(e){}
+  const cashScore=cashflow>=0?25:8;
+  const saveScore=Math.min(25,Math.max(0,saveRate));
+  const debtScore=Math.max(0,25-Math.round(debtRatio/8));
+  const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+debtScore+(budgetScore*0.25))));
+  const annualExpense=Math.max(exp*12,1);
+  const fireTarget=annualExpense*25;
+  const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
+
+  const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
+  setTxt('pdash-title',T.title); setTxt('pdash-sub',T.sub);
+  setTxt('pdash-cashflow-lbl',T.cashflow); setTxt('pdash-cashflow-val',fmt(cashflow)); setTxt('pdash-cashflow-note',cashflow>=0?T.positive:T.negative);
+  setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
+  setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
+  setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
+  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?T.fireNote:T.needData);
+  const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
+  const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
+  setPCardState('pdash-cashflow-card',cashflow>=0?'pdash-good':'pdash-bad');
+  setPCardState('pdash-save-card',saveRate>=20?'pdash-good':(saveRate>=10?'pdash-warn':'pdash-bad'));
+  setPCardState('pdash-net-card',netWorth>=0?'pdash-good':'pdash-bad');
+  setPCardState('pdash-score-card',score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad'));
+}
+
 function uDash(){
   const ft=fT();
   const inc=ft.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
@@ -2294,6 +2455,7 @@ function uDash(){
   mb.style.background=bv>=0?'#E1F5EE':'#FCEBEB';
   mb.querySelector('.metric-lbl').style.color=bv>=0?'#085041':'#791F1F';
   mb.querySelector('.metric-val').style.color=bv>=0?'#085041':'#791F1F';
+  updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings);
 }
 
 function tRow(t,del){
@@ -3482,6 +3644,70 @@ auth.onAuthStateChanged(user=>{
 .inv-negative{color:#C53A32 !important;}
 .inv-neutral{color:#6B7280 !important;}
 
+
+
+/* ── Möngö V25 Premium Finance Dashboard ── */
+.premium-dash{
+  margin:12px 0 13px;
+}
+.pdash-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 2px 10px;
+}
+.pdash-title{
+  font-size:20px;font-weight:950;letter-spacing:-.04em;color:#374151;
+  display:flex;align-items:center;gap:9px;
+}
+.pdash-title:before{
+  content:"";width:12px;height:12px;border-radius:999px;
+  background:radial-gradient(circle at 35% 35%,#F7D24A 0 18%,#49B0B6 44%,rgba(73,176,182,.14) 55% 100%);
+  box-shadow:0 0 0 6px rgba(73,176,182,.08);
+}
+.pdash-sub{font-size:11px;color:#7B8794;font-weight:700;white-space:nowrap}
+.pdash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pdash-card{
+  position:relative;overflow:hidden;min-height:118px;padding:16px 15px;
+  border-radius:28px;border:1px solid rgba(255,255,255,.88);
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.76));
+  box-shadow:0 14px 34px rgba(31,127,134,.105);
+}
+.pdash-card:after{
+  content:"";position:absolute;right:-22px;top:-26px;width:90px;height:90px;border-radius:999px;
+  background:rgba(255,255,255,.44);
+}
+.pdash-card.wide{grid-column:1 / -1;min-height:112px}
+.pdash-k{font-size:11px;text-transform:uppercase;letter-spacing:.055em;font-weight:900;color:#6B7280;position:relative;z-index:1}
+.pdash-v{font-size:22px;font-weight:950;letter-spacing:-.055em;margin-top:7px;color:#1F2937;position:relative;z-index:1;line-height:1.08}
+.pdash-note{font-size:11px;color:#7B8794;margin-top:6px;font-weight:700;position:relative;z-index:1;line-height:1.35}
+.pdash-icon{position:absolute;right:14px;bottom:12px;font-size:28px;opacity:.22;z-index:1}
+.pdash-good{background:linear-gradient(145deg,rgba(225,245,238,.98),rgba(255,255,255,.76)) !important}
+.pdash-good .pdash-v,.pdash-good .pdash-note{color:#0F766E}
+.pdash-bad{background:linear-gradient(145deg,rgba(252,235,235,.98),rgba(255,255,255,.78)) !important}
+.pdash-bad .pdash-v,.pdash-bad .pdash-note{color:#B91C1C}
+.pdash-warn{background:linear-gradient(145deg,rgba(255,246,199,.98),rgba(255,255,255,.78)) !important}
+.pdash-warn .pdash-v,.pdash-warn .pdash-note{color:#B7791F}
+.pdash-teal{background:linear-gradient(145deg,rgba(232,248,248,.98),rgba(255,255,255,.76)) !important}
+.pdash-purple{background:linear-gradient(145deg,rgba(238,237,254,.98),rgba(255,255,255,.76)) !important}
+.pdash-bar{height:10px;background:rgba(73,176,182,.12);border-radius:999px;overflow:hidden;margin-top:12px;position:relative;z-index:1}
+.pdash-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);transition:width .35s ease}
+.pdash-score-ring{
+  width:54px;height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(#49B0B6 var(--score-deg,0deg), rgba(73,176,182,.12) 0);
+  position:absolute;right:14px;top:14px;z-index:1;
+}
+.pdash-score-ring:before{content:"";position:absolute;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.92)}
+.pdash-score-ring span{position:relative;font-size:12px;font-weight:950;color:#1F7F86}
+@media(max-width:520px){
+  .pdash-grid{gap:9px}
+  .pdash-card{min-height:108px;padding:14px 13px;border-radius:24px}
+  .pdash-v{font-size:19px}
+  .pdash-title{font-size:18px}
+  .pdash-sub{display:none}
+}
+@media(prefers-color-scheme:dark){
+  .pdash-title{color:#F3F4F6}.pdash-card{border-color:rgba(116,215,220,.12);background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.74))}.pdash-score-ring:before{background:#172326}.pdash-v{color:#F3F4F6}
+}
+
 </style>
 <script>
 (function(){
@@ -3621,6 +3847,70 @@ auth.onAuthStateChanged(user=>{
 .inv-positive{color:#08724F !important;}
 .inv-negative{color:#C53A32 !important;}
 .inv-neutral{color:#6B7280 !important;}
+
+
+
+/* ── Möngö V25 Premium Finance Dashboard ── */
+.premium-dash{
+  margin:12px 0 13px;
+}
+.pdash-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 2px 10px;
+}
+.pdash-title{
+  font-size:20px;font-weight:950;letter-spacing:-.04em;color:#374151;
+  display:flex;align-items:center;gap:9px;
+}
+.pdash-title:before{
+  content:"";width:12px;height:12px;border-radius:999px;
+  background:radial-gradient(circle at 35% 35%,#F7D24A 0 18%,#49B0B6 44%,rgba(73,176,182,.14) 55% 100%);
+  box-shadow:0 0 0 6px rgba(73,176,182,.08);
+}
+.pdash-sub{font-size:11px;color:#7B8794;font-weight:700;white-space:nowrap}
+.pdash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pdash-card{
+  position:relative;overflow:hidden;min-height:118px;padding:16px 15px;
+  border-radius:28px;border:1px solid rgba(255,255,255,.88);
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.76));
+  box-shadow:0 14px 34px rgba(31,127,134,.105);
+}
+.pdash-card:after{
+  content:"";position:absolute;right:-22px;top:-26px;width:90px;height:90px;border-radius:999px;
+  background:rgba(255,255,255,.44);
+}
+.pdash-card.wide{grid-column:1 / -1;min-height:112px}
+.pdash-k{font-size:11px;text-transform:uppercase;letter-spacing:.055em;font-weight:900;color:#6B7280;position:relative;z-index:1}
+.pdash-v{font-size:22px;font-weight:950;letter-spacing:-.055em;margin-top:7px;color:#1F2937;position:relative;z-index:1;line-height:1.08}
+.pdash-note{font-size:11px;color:#7B8794;margin-top:6px;font-weight:700;position:relative;z-index:1;line-height:1.35}
+.pdash-icon{position:absolute;right:14px;bottom:12px;font-size:28px;opacity:.22;z-index:1}
+.pdash-good{background:linear-gradient(145deg,rgba(225,245,238,.98),rgba(255,255,255,.76)) !important}
+.pdash-good .pdash-v,.pdash-good .pdash-note{color:#0F766E}
+.pdash-bad{background:linear-gradient(145deg,rgba(252,235,235,.98),rgba(255,255,255,.78)) !important}
+.pdash-bad .pdash-v,.pdash-bad .pdash-note{color:#B91C1C}
+.pdash-warn{background:linear-gradient(145deg,rgba(255,246,199,.98),rgba(255,255,255,.78)) !important}
+.pdash-warn .pdash-v,.pdash-warn .pdash-note{color:#B7791F}
+.pdash-teal{background:linear-gradient(145deg,rgba(232,248,248,.98),rgba(255,255,255,.76)) !important}
+.pdash-purple{background:linear-gradient(145deg,rgba(238,237,254,.98),rgba(255,255,255,.76)) !important}
+.pdash-bar{height:10px;background:rgba(73,176,182,.12);border-radius:999px;overflow:hidden;margin-top:12px;position:relative;z-index:1}
+.pdash-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);transition:width .35s ease}
+.pdash-score-ring{
+  width:54px;height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(#49B0B6 var(--score-deg,0deg), rgba(73,176,182,.12) 0);
+  position:absolute;right:14px;top:14px;z-index:1;
+}
+.pdash-score-ring:before{content:"";position:absolute;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.92)}
+.pdash-score-ring span{position:relative;font-size:12px;font-weight:950;color:#1F7F86}
+@media(max-width:520px){
+  .pdash-grid{gap:9px}
+  .pdash-card{min-height:108px;padding:14px 13px;border-radius:24px}
+  .pdash-v{font-size:19px}
+  .pdash-title{font-size:18px}
+  .pdash-sub{display:none}
+}
+@media(prefers-color-scheme:dark){
+  .pdash-title{color:#F3F4F6}.pdash-card{border-color:rgba(116,215,220,.12);background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.74))}.pdash-score-ring:before{background:#172326}.pdash-v{color:#F3F4F6}
+}
 
 </style>
 <script>
