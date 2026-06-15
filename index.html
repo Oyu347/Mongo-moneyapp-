@@ -1066,6 +1066,28 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .budget-progress-card{background:linear-gradient(180deg,rgba(23,35,38,.94),rgba(23,35,38,.82))!important;}
 }
 
+
+/* ── Möngö V2.3 patch: unique budget colors + budgeted/unbudgeted amount contrast ── */
+.bblock .bicon{
+  background:var(--cat-soft-bg, rgba(73,176,182,.10)) !important;
+  border-color:var(--cat-soft-border, rgba(73,176,182,.22)) !important;
+}
+.bblock .bheader{
+  box-shadow:inset 0 0 0 1px var(--cat-soft-border, rgba(73,176,182,.12));
+}
+.amt-budgeted.amt-i{color:#12966E !important;font-weight:900 !important;}
+.amt-budgeted.amt-e{color:#D8433E !important;font-weight:900 !important;}
+.amt-unbudgeted.amt-i{color:#7BCDB0 !important;font-weight:800 !important;}
+.amt-unbudgeted.amt-e{color:#F09A94 !important;font-weight:800 !important;}
+.txn-budget-chip{
+  font-size:9px;
+  padding:1px 5px;
+  border-radius:999px;
+  background:rgba(107,114,128,.10);
+  color:#8B97A3;
+  font-weight:800;
+}
+
 </style>
 </head>
 <body>
@@ -1501,32 +1523,32 @@ let incCats=[
   {key:'other_inc',icon:'📈',color:'#64748B'}
 ];
 let expCats=[
-  {key:'food',icon:'🍽️',color:'#F97316'},
-  {key:'transport',icon:'🚗',color:'#F59E0B'},
-  {key:'housing',icon:'🏠',color:'#49B0B6'},
-  {key:'education',icon:'📚',color:'#6366F1'},
-  {key:'health',icon:'💊',color:'#EF4444'},
-  {key:'fun',icon:'🎉',color:'#EC4899'},
-  {key:'clothes',icon:'👗',color:'#84CC16'},
-  {key:'invest_cat',icon:'📈',color:'#8B5CF6'},
-  {key:'savings_cat',icon:'🏦',color:'#10B981'},
-  {key:'loan_cat',icon:'💳',color:'#F59E0B'},
-  {key:'household',icon:'🛒',color:'#8B5E3C'},
-  {key:'other_exp',icon:'💡',color:'#64748B'}
+  {key:'food',icon:'🍽️',color:'#F4511E'},
+  {key:'transport',icon:'🚗',color:'#FB8C00'},
+  {key:'housing',icon:'🏠',color:'#00ACC1'},
+  {key:'education',icon:'📚',color:'#3F51B5'},
+  {key:'health',icon:'💊',color:'#E91E63'},
+  {key:'fun',icon:'🎉',color:'#9C27B0'},
+  {key:'clothes',icon:'👗',color:'#7CB342'},
+  {key:'invest_cat',icon:'📈',color:'#5E35B1'},
+  {key:'savings_cat',icon:'🏦',color:'#43A047'},
+  {key:'loan_cat',icon:'💳',color:'#FFB300'},
+  {key:'household',icon:'🛒',color:'#795548'},
+  {key:'other_exp',icon:'💡',color:'#607D8B'}
 ];
 let bCatsExp=[
-  {key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#10B981'},{key:'fruits',color:'#84CC16'},{key:'meat',color:'#EF4444'},{key:'bread',color:'#F59E0B'}]},
-  {key:'transport',icon:'🚗',color:'#fb8c00',subs:[]},
-  {key:'housing',icon:'🏠',color:'#00acc1',subs:[]},
-  {key:'education',icon:'📚',color:'#3949ab',subs:[]},
-  {key:'health',icon:'💊',color:'#e53935',subs:[]},
-  {key:'fun',icon:'🎉',color:'#d81b60',subs:[]},
-  {key:'clothes',icon:'👗',color:'#7cb342',subs:[]},
-  {key:'invest_cat',icon:'📈',color:'#8e24aa',subs:[]},
-  {key:'savings_cat',icon:'🏦',color:'#43a047',subs:[]},
-  {key:'loan_cat',icon:'💳',color:'#fb8c00',subs:[]},
-  {key:'household',icon:'🛒',color:'#6d4c41',subs:[]},
-  {key:'other_exp',icon:'💡',color:'#546e7a',subs:[]}
+  {key:'food',icon:'🍽️',color:'#F4511E',subs:[{key:'vegs',color:'#10B981'},{key:'fruits',color:'#84CC16'},{key:'meat',color:'#D84315'},{key:'bread',color:'#F59E0B'}]},
+  {key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},
+  {key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},
+  {key:'education',icon:'📚',color:'#3F51B5',subs:[]},
+  {key:'health',icon:'💊',color:'#E91E63',subs:[]},
+  {key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},
+  {key:'clothes',icon:'👗',color:'#7CB342',subs:[]},
+  {key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},
+  {key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},
+  {key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},
+  {key:'household',icon:'🛒',color:'#795548',subs:[]},
+  {key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}
 ];
 let bCatsInc=[
   {key:'salary',icon:'💰',color:'#43a047',subs:[]},
@@ -1603,6 +1625,48 @@ function getBudgetVal(bKey,month){
 }
 function setBudgetVal(bKey,month,val){
   budgets[budgetYMKey(bKey,month)]=val;
+}
+function budgetYMKeyForYear(bKey,month,year){return `${year}_${month}_${bKey}`;}
+function getBudgetValForYear(bKey,month,year){
+  const ymk=budgetYMKeyForYear(bKey,month,year);
+  if(budgets[ymk]!==undefined) return budgets[ymk];
+  if(year===budgetYear && budgets[bKey]&&typeof budgets[bKey]==='object') return budgets[bKey][month]||0;
+  return 0;
+}
+function hexToRgba(hex,alpha){
+  const h=(hex||'#49B0B6').replace('#','');
+  const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
+  const r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function getSoftCatVars(color){
+  return `--cat-soft-bg:${hexToRgba(color,.13)};--cat-soft-border:${hexToRgba(color,.28)};`;
+}
+const DEFAULT_CAT_COLORS={
+  food:'#F4511E',transport:'#FB8C00',housing:'#00ACC1',education:'#3F51B5',health:'#E91E63',fun:'#9C27B0',
+  clothes:'#7CB342',invest_cat:'#5E35B1',savings_cat:'#43A047',loan_cat:'#FFB300',household:'#795548',other_exp:'#607D8B',
+  salary:'#43A047',bonus:'#00ACC1',business:'#1E88E5',other_inc:'#546E7A'
+};
+const DEFAULT_SUB_COLORS={vegs:'#10B981',fruits:'#84CC16',meat:'#D84315',bread:'#F59E0B'};
+function normalizeDefaultCatColors(){
+  [expCats,bCatsExp,incCats,bCatsInc].forEach(arr=>arr.forEach(c=>{
+    if(c.key&&DEFAULT_CAT_COLORS[c.key]) c.color=DEFAULT_CAT_COLORS[c.key];
+    (c.subs||[]).forEach(s=>{if(s.key&&DEFAULT_SUB_COLORS[s.key]) s.color=DEFAULT_SUB_COLORS[s.key];});
+  }));
+}
+function isTxnBudgeted(t){
+  if(!t||!t.date)return false;
+  const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
+  const cats=t.type==='income'?bCatsInc:bCatsExp;
+  const cat=cats.find(c=>(t.catKey&&c.key===t.catKey)||cN(c)===t.catName||c.key===t.catName||c.name===t.catName);
+  if(!cat)return false;
+  if(t.subcatName){
+    const sb=(cat.subs||[]).find(s=>s.key===t.subcatName||s.name===t.subcatName||cN(s)===t.subcatName);
+    if(sb) return getBudgetValForYear(bSubKey(cat,sb),mo,y)>0;
+  }
+  const main=getBudgetValForYear(bKeyFor(cat),mo,y);
+  const subTotal=(cat.subs||[]).reduce((sum,sb)=>sum+getBudgetValForYear(bSubKey(cat,sb),mo,y),0);
+  return (main+subTotal)>0;
 }
 
 // Txn grouped by month
@@ -1996,7 +2060,7 @@ function rBList(){
     const canDel=!iDef&&!isLocked;
     const subTotal=(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
     const tot=curBudget+subTotal;
-    return`<div class="bblock">
+    return`<div class="bblock" style="${getSoftCatVars(cat.color)}">
       <div class="bheader" onclick="tglB('${(cat.key||nm).replace(/'/g,"\\'")}')">
         <div class="bicon" style="background:${cat.color}22">${cat.icon}</div>
         <span style="font-size:13px;font-weight:600;color:${cat.color};flex:1">${nm}</span>
@@ -2212,15 +2276,18 @@ function tRow(t,del){
   }
   const showSub=subcatDisplay&&subcatDisplay!==t.desc;
   const subLabel=showSub?`<span style="font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:5px;margin-left:3px">${subcatDisplay}</span>`:'';
+  const budgeted=isTxnBudgeted(t);
+  const budgetChip=budgeted?'':`<span class="txn-budget-chip">${L.descPh||'Unbudgeted'}</span>`;
+  const amtClass=`amt amt-${t.type[0]} ${budgeted?'amt-budgeted':'amt-unbudgeted'}`;
   return`<div class="list-item">
     <div class="il">
       <span class="lbl1">${t.desc}</span>
       <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
         <span class="lbl2"><span>${ci.icon}</span> <span style="color:${ci.color}">${t.catName}</span>${subLabel} · ${t.date}</span>
-        ${iv?`<span style="font-size:9px;background:#e0f5f6;color:#337a7f;padding:1px 4px;border-radius:5px">📈 ${L.automark}</span>`:''}
+        ${iv?`<span style="font-size:9px;background:#e0f5f6;color:#337a7f;padding:1px 4px;border-radius:5px">📈 ${L.automark}</span>`:''}${budgetChip}
       </div>
     </div>
-    ${del?`<div class="ir"><span class="amt amt-${t.type[0]}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm btn-d" onclick="delTxn(${t.id})">✕</button></div>`:`<span class="amt amt-${t.type[0]}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
+    ${del?`<div class="ir"><span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm btn-d" onclick="delTxn(${t.id})">✕</button></div>`:`<span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
   </div>`;
 }
 
@@ -2380,12 +2447,12 @@ function rBProg(){
     const isOver=!isIncomePlan&&tot>cb;
     const overAmt=isOver?tot-cb:0;
     const col=isIncomePlan?(realPct>=100?'#1D9E75':cat.color):cat.color;
-    const softBg=cat.color+'18';
-    const softBorder=cat.color+'33';
+    const softBg=hexToRgba(cat.color,.14);
+    const softBorder=hexToRgba(cat.color,.30);
     const hasSubs=subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).length>0;
     const isOpen=openBProg.has(bk);
     const safeKey=bk.replace(/'/g,"\'");
-    return `<div class="bblock budget-progress-card${isOver?' is-over':''}" style="--budget-soft-bg:${softBg};--budget-soft-border:${softBorder};${isOver?'border-color:#e5393540':''}">
+    return `<div class="bblock budget-progress-card${isOver?' is-over':''}" style="--budget-soft-bg:${softBg};--budget-soft-border:${softBorder};${getSoftCatVars(cat.color)}${isOver?'border-color:#e5393540':''}">
       <div class="bheader" ${hasSubs?`onclick="tglBProg('${safeKey}')" style="cursor:pointer"`:'style="cursor:default"'}>
         <div class="bicon">${cat.icon}</div>
         <div style="flex:1;min-width:0">
@@ -2795,6 +2862,7 @@ function loadData(){
     }
     mergeBCats(data.bCatsExpSave,bCatsExp);
     mergeBCats(data.bCatsIncSave,bCatsInc);
+    normalizeDefaultCatColors();
     return true;
   }catch(e){console.warn('Load error:',e);return false;}
 }
@@ -2826,6 +2894,7 @@ function showToast(msg){
 
 // ── Init ──────────────────────────────────────────────────────────────────
 const hadData=loadData();
+normalizeDefaultCatColors();
 
 // Sync active lang button
 document.querySelectorAll('.lbtn').forEach(b=>{
@@ -3216,8 +3285,8 @@ auth.onAuthStateChanged(user=>{
       txns=[];goals=[];debts=[];invests=[];budgets={};
       lockedCats=new Set();
       incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
-      expCats=[{key:'food',icon:'🍽️',color:'#F97316'},{key:'transport',icon:'🚗',color:'#F59E0B'},{key:'housing',icon:'🏠',color:'#49B0B6'},{key:'education',icon:'📚',color:'#6366F1'},{key:'health',icon:'💊',color:'#EF4444'},{key:'fun',icon:'🎉',color:'#EC4899'},{key:'clothes',icon:'👗',color:'#84CC16'},{key:'invest_cat',icon:'📈',color:'#8B5CF6'},{key:'savings_cat',icon:'🏦',color:'#10B981'},{key:'loan_cat',icon:'💳',color:'#F59E0B'},{key:'household',icon:'🛒',color:'#8B5E3C'},{key:'other_exp',icon:'💡',color:'#64748B'}];
-      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#fb8c00',subs:[]},{key:'housing',icon:'🏠',color:'#00acc1',subs:[]},{key:'education',icon:'📚',color:'#3949ab',subs:[]},{key:'health',icon:'💊',color:'#e53935',subs:[]},{key:'fun',icon:'🎉',color:'#d81b60',subs:[]},{key:'clothes',icon:'👗',color:'#7cb342',subs:[]},{key:'invest_cat',icon:'📈',color:'#8e24aa',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43a047',subs:[]},{key:'loan_cat',icon:'💳',color:'#fb8c00',subs:[]},{key:'household',icon:'🛒',color:'#6d4c41',subs:[]},{key:'other_exp',icon:'💡',color:'#546e7a',subs:[]}];
+      expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
+      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
       bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
 
       // Тухайн хэрэглэгчийн өгөгдлийг ачаална
