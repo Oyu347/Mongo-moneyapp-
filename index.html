@@ -4,6 +4,7 @@ Möngö V28 Correct Latest Base
 Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
 Preserves: V22-V25 budget/search/dashboard improvements + V27 profile/material icons/header language.
 Adds: profile email fix, transaction subcategory selector UI, finance dashboard guide.
+V28.2: removes duplicate email row, moves Data after Help, adds Backup/Restore/Clear/Logout guide explanations.
 -->
 <html lang="mn">
 <head>
@@ -1641,9 +1642,12 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   </div>
   <div class="card">
     <div class="card-title" id="lbl-profile-account"></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-email"></div><div class="profile-value" id="profile-email-row"></div></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V27 Stable</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V28.2</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="lbl-profile-help"></div>
+    <div id="profile-help-list"></div>
   </div>
   <div class="card">
     <div class="card-title" id="lbl-profile-data"></div>
@@ -1653,10 +1657,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <button class="btn profile-danger" onclick="clearData()"><span class="material-symbols-rounded">delete</span><span id="lbl-profile-clear"></span></button>
       <button class="btn" onclick="doLogout()"><span class="material-symbols-rounded">logout</span><span id="lbl-profile-logout"></span></button>
     </div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="lbl-profile-help"></div>
-    <div id="profile-help-list"></div>
   </div>
 </div>
 
@@ -1739,6 +1739,17 @@ const V28_GUIDE_LANGS={
   de:{helpDashboard:'Was ist das Finanz-Dashboard?',helpDashboardA:'Das Finanz-Dashboard zeigt Geldfluss, Sparquote, Nettovermögen, Finanz-Score und Fortschritt zur finanziellen Freiheit an einem Ort. Geldfluss = Einnahmen − Ausgaben. Nettovermögen = Gesamtvermögen − Kredite. Der Score basiert auf Cashflow, Sparen, Schulden und Budgetleistung.'}
 };
 Object.keys(V28_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V28_GUIDE_LANGS[k]));
+const V282_GUIDE_LANGS={
+  mn:{helpDataProtect:'Өгөгдөл хамгаалах',helpDataProtectA:'Backup хийх нь таны бүх орлого, зарлага, төсөв, хуримтлал, зээл, хөрөнгийн мэдээллийг файл болгон хадгална. Restore хийх нь өмнө хадгалсан backup файлаа буцаан оруулж өгөгдлөө сэргээнэ. Өгөгдөл устгах нь апп доторх бүх мэдээллийг цэвэрлэнэ — backup байхгүй бол сэргээх боломжгүй. Гарах нь одоогийн бүртгэлээс гарах үйлдэл юм.',helpBackup:'Backup хийх гэж юу вэ?',helpBackupA:'Backup нь таны апп доторх бүх санхүүгийн мэдээллийг нэг файл болгон хадгална. Утас солих, браузер цэвэрлэх, апп дахин байрлуулах үед мэдээллээ алдахгүй байхад хэрэгтэй.',helpRestore:'Restore хийх гэж юу вэ?',helpRestoreA:'Restore нь өмнө хадгалсан backup файлаа сонгож, мэдээллээ буцаан сэргээх үйлдэл юм. Шинэ төхөөрөмж дээр өгөгдлөө үргэлжлүүлэн ашиглахад тохиромжтой.',helpClearData:'Өгөгдөл устгах гэж юу вэ?',helpClearDataA:'Өгөгдөл устгах нь тухайн хэрэглэгчийн хадгалсан орлого, зарлага, төсөв, хуримтлал, зээл, хөрөнгийн мэдээллийг апп дотроос цэвэрлэнэ. Устгахаасаа өмнө backup хийхийг зөвлөе.',helpSignOut:'Гарах гэж юу вэ?',helpSignOutA:'Гарах товч нь таныг одоогийн бүртгэлээс гаргана. Өгөгдөл устгахгүй, зөвхөн нэвтэрсэн төлөвөөс гарна.'},
+  en:{helpDataProtect:'Data protection',helpDataProtectA:'Backup saves all income, expenses, budgets, savings, loans, and assets into a file. Restore brings data back from a saved backup file. Clear data removes app data from this account — without backup it cannot be restored. Sign out only logs out of the current account.',helpBackup:'What is Backup?',helpBackupA:'Backup saves all app financial data into one file. It helps protect your data when changing phones, clearing the browser, or redeploying the app.',helpRestore:'What is Restore?',helpRestoreA:'Restore lets you choose a previously saved backup file and bring your data back, especially on a new device.',helpClearData:'What is Clear data?',helpClearDataA:'Clear data removes saved income, expenses, budgets, savings, loans, and assets from the app. Make a backup first if you may need the data later.',helpSignOut:'What is Sign out?',helpSignOutA:'Sign out logs you out of the current account. It does not delete your data.'},
+  zh:{helpDataProtect:'数据保护',helpDataProtectA:'备份会把收入、支出、预算、储蓄、贷款和资产保存成文件。恢复会从备份文件导入数据。清除数据会删除应用中的资料；没有备份将无法恢复。退出只会退出当前账户。',helpBackup:'什么是备份？',helpBackupA:'备份会把应用中的财务资料保存为一个文件，适合换手机、清理浏览器或重新部署应用前使用。',helpRestore:'什么是恢复？',helpRestoreA:'恢复是选择以前保存的备份文件，把数据重新导入应用。',helpClearData:'什么是清除数据？',helpClearDataA:'清除数据会删除收入、支出、预算、储蓄、贷款和资产等资料。建议先备份。',helpSignOut:'什么是退出？',helpSignOutA:'退出会登出当前账户，不会删除数据。'},
+  ja:{helpDataProtect:'データ保護',helpDataProtectA:'バックアップは収入、支出、予算、貯蓄、ローン、資産をファイルとして保存します。復元は保存したファイルからデータを戻します。データ削除はアプリ内データを消します。バックアップがない場合は戻せません。ログアウトはアカウントから出るだけです。',helpBackup:'バックアップとは？',helpBackupA:'バックアップはアプリ内の財務データを1つのファイルに保存します。端末変更やブラウザ整理、再配置前に便利です。',helpRestore:'復元とは？',helpRestoreA:'復元は以前保存したバックアップファイルを選び、データをアプリに戻す操作です。',helpClearData:'データ削除とは？',helpClearDataA:'データ削除は収入、支出、予算、貯蓄、ローン、資産を削除します。必要なら先にバックアップしてください。',helpSignOut:'ログアウトとは？',helpSignOutA:'ログアウトは現在のアカウントから出る操作です。データは削除されません。'},
+  ko:{helpDataProtect:'데이터 보호',helpDataProtectA:'백업은 수입, 지출, 예산, 저축, 대출, 자산 정보를 파일로 저장합니다. 복원은 저장한 백업 파일로 데이터를 되돌립니다. 데이터 삭제는 앱의 정보를 지웁니다. 백업이 없으면 복구할 수 없습니다. 로그아웃은 현재 계정에서 나가는 것입니다.',helpBackup:'백업이란?',helpBackupA:'백업은 앱의 모든 재무 데이터를 하나의 파일로 저장합니다. 기기 변경, 브라우저 정리, 앱 재배포 전에 유용합니다.',helpRestore:'복원이란?',helpRestoreA:'복원은 이전에 저장한 백업 파일을 선택해 데이터를 다시 가져오는 기능입니다.',helpClearData:'데이터 삭제란?',helpClearDataA:'데이터 삭제는 수입, 지출, 예산, 저축, 대출, 자산 정보를 앱에서 지웁니다. 먼저 백업하는 것을 권장합니다.',helpSignOut:'로그아웃이란?',helpSignOutA:'로그아웃은 현재 계정에서 나가는 기능입니다. 데이터는 삭제되지 않습니다.'},
+  ru:{helpDataProtect:'Защита данных',helpDataProtectA:'Backup сохраняет доходы, расходы, бюджеты, сбережения, кредиты и активы в файл. Restore восстанавливает данные из файла. Удаление данных очищает информацию в приложении; без backup восстановить её нельзя. Выход только завершает сеанс.',helpBackup:'Что такое Backup?',helpBackupA:'Backup сохраняет все финансовые данные приложения в один файл. Это полезно при смене телефона, очистке браузера или повторной публикации приложения.',helpRestore:'Что такое Restore?',helpRestoreA:'Restore позволяет выбрать ранее сохранённый backup-файл и вернуть данные в приложение.',helpClearData:'Что такое удаление данных?',helpClearDataA:'Удаление данных очищает доходы, расходы, бюджеты, сбережения, кредиты и активы. Перед удалением лучше сделать backup.',helpSignOut:'Что такое выход?',helpSignOutA:'Выход завершает текущий вход в аккаунт. Данные не удаляются.'},
+  de:{helpDataProtect:'Datenschutz',helpDataProtectA:'Backup speichert Einnahmen, Ausgaben, Budgets, Ersparnisse, Kredite und Vermögen in einer Datei. Wiederherstellen importiert Daten aus einer Backup-Datei. Daten löschen entfernt App-Daten; ohne Backup können sie nicht wiederhergestellt werden. Abmelden meldet nur das aktuelle Konto ab.',helpBackup:'Was ist Backup?',helpBackupA:'Backup speichert alle Finanzdaten der App in einer Datei. Das ist hilfreich beim Gerätewechsel, Browser-Cleanup oder erneuten Veröffentlichen der App.',helpRestore:'Was ist Wiederherstellen?',helpRestoreA:'Wiederherstellen lädt eine zuvor gespeicherte Backup-Datei und bringt die Daten zurück in die App.',helpClearData:'Was bedeutet Daten löschen?',helpClearDataA:'Daten löschen entfernt Einnahmen, Ausgaben, Budgets, Ersparnisse, Kredite und Vermögen aus der App. Vorher ein Backup machen.',helpSignOut:'Was ist Abmelden?',helpSignOutA:'Abmelden meldet dich vom aktuellen Konto ab. Daten werden nicht gelöscht.'}
+};
+Object.keys(V282_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V282_GUIDE_LANGS[k]));
+
 const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨🇳 中文',ja:'🇯🇵 日本語',ko:'🇰🇷 한국어',ru:'🇷🇺 Русский',de:'🇩🇪 Deutsch'};
 
 const ICOLS={stock:'#185FA5',crypto:'#BA7517',real:'#49b0b6',fund:'#1D9E75',bond:'#5F5E5A',gold:'#EF9F27',other:'#D4537E'};
@@ -2110,7 +2121,6 @@ function currentUserEmail(){
 function rProfile(){
   const email=currentUserEmail();
   const e1=document.getElementById('profile-email-main'); if(e1)e1.textContent=email;
-  const e2=document.getElementById('profile-email-row'); if(e2)e2.textContent=email;
   const lr=document.getElementById('profile-language-row'); if(lr)lr.textContent=V27_LANG_NAMES[lang]||'🇲🇳 Монгол';
   const list=document.getElementById('profile-help-list');
   if(list){
@@ -2121,7 +2131,12 @@ function rProfile(){
       [L.helpBudget,L.helpBudgetA],
       [L.helpSavings,L.helpSavingsA],
       [L.helpInvest,L.helpInvestA],
-      [L.helpScore,L.helpScoreA]
+      [L.helpScore,L.helpScoreA],
+      [L.helpDataProtect,L.helpDataProtectA],
+      [L.helpBackup,L.helpBackupA],
+      [L.helpRestore,L.helpRestoreA],
+      [L.helpClearData,L.helpClearDataA],
+      [L.helpSignOut,L.helpSignOutA]
     ];
     list.innerHTML=items.map((it,idx)=>`<div class="help-item${idx===0?' open':''}">
       <div class="help-q" onclick="this.parentElement.classList.toggle('open')"><span>${it[0]||''}</span><span class="material-symbols-rounded">expand_more</span></div>
@@ -2220,23 +2235,12 @@ function tglSubDrop(){
 
 function rSubcatList(subs,catKey,catType){
   const el=document.getElementById('t-subcat-list');
-  const wrap=document.getElementById('t-subcat-wrap');
-  const lab=document.getElementById('t-subcat-label');
-  if(lab)lab.textContent=L.subcatPh||'Дэд ангилал сонгох';
-  if(wrap){wrap.classList.remove('has-selection');wrap.classList.toggle('is-empty',!(subs&&subs.length));}
-  if(!el)return;
-  if(!subs||subs.length===0){
-    el.innerHTML='';
-    el.style.display='none';
-    const ar=document.getElementById('t-subcat-arrow'); if(ar)ar.textContent='▼';
-    return;
-  }
-  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,null,null)">${L.subcatPh||'Дэд ангилал сонгох'}</div>`+
+  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,null,null)">${L.subcatPh||'—'}</div>`+
     subs.map(sb=>{
       const nm=cN(sb);
       const key=sb.key||nm;
       const isSel=selSubcat===key;
-      return`<div class="subcat-opt${isSel?' sel':''}" onclick="selectSubcat('${key.replace(/'/g,"\'")}','${catKey.replace(/'/g,"\'")}','${catType}')"><span style="width:8px;height:8px;border-radius:50%;background:${sb.color};display:inline-block"></span> ${nm}</div>`;
+      return`<div class="subcat-opt${isSel?' sel':''}" onclick="selectSubcat('${key.replace(/'/g,"\\'")}','${catKey.replace(/'/g,"\\'")}','${catType}')"><span style="width:8px;height:8px;border-radius:50%;background:${sb.color};display:inline-block"></span> ${nm}</div>`;
     }).join('');
 }
 
