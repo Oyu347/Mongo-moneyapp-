@@ -1,18 +1,10 @@
 <!DOCTYPE html>
-<!--
-Möngö V28 Correct Latest Base
-Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
-Preserves: V22-V25 budget/search/dashboard improvements + V27 profile/material icons/header language.
-Adds: profile email fix, transaction subcategory selector UI, finance dashboard guide.
-V28.2: removes duplicate email row, moves Data after Help, adds Backup/Restore/Clear/Logout guide explanations.
--->
 <html lang="mn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Möngö — Smart Finance</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%2238%22%20y1%3D%2228%22%20x2%3D%22218%22%20y2%3D%22232%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2361CBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23227B82%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2255%22%20y1%3D%2248%22%20x2%3D%22202%22%20y2%3D%22208%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.42%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23C99A1D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%229%22%20stdDeviation%3D%227%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.25%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%20%20%3Cfilter%20id%3D%22soft%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%225%22%20stdDeviation%3D%224%22%20flood-color%3D%22%230B4F55%22%20flood-opacity%3D%220.28%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20x%3D%2212%22%20y%3D%2212%22%20width%3D%22232%22%20height%3D%22232%22%20rx%3D%2254%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M42%2016C66%209%20190%208%20216%2021%22%20fill%3D%22none%22%20stroke%3D%22%238BE5E3%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.45%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2282%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20139V73%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%2054L143%2080H113Z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M144%20144L160%20160%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M168%20152L174%20174L152%20168Z%22%20fill%3D%22%23FFFFFF%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22129%22%20r%3D%2236%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20filter%3D%22url%28%23soft%29%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22150%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2258%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%3C%2Fsvg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1180,80 +1172,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .pdash-title{color:#F3F4F6}.pdash-card{border-color:rgba(116,215,220,.12);background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.74))}.pdash-score-ring:before{background:#172326}.pdash-v{color:#F3F4F6}
 }
 
-/* ── Möngö V27 Stable Recovery: Header + Material Icons + Profile ── */
-.material-symbols-rounded{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;font-feature-settings:'liga';}
-.v27-topbar{flex-direction:row !important;align-items:center !important;justify-content:space-between !important;gap:10px !important;padding:8px 14px !important;}
-.v27-topbar .brand{min-width:0;display:flex !important;align-items:center !important;gap:8px !important;}
-.v27-topbar .brand span:last-child{display:block !important;font-size:10px !important;color:#8B97A3 !important;font-weight:800 !important;letter-spacing:1.55px !important;white-space:nowrap !important;line-height:1.05 !important;margin-left:0 !important;}
-.v27-lang-btn{min-width:52px;height:38px;border-radius:999px !important;border:1px solid rgba(73,176,182,.20) !important;background:rgba(255,255,255,.76) !important;color:#374151 !important;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 8px 20px rgba(31,127,134,.08);cursor:pointer;font-weight:900;}
-.v27-lang-list{display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff !important;border:1px solid rgba(73,176,182,.18);border-radius:18px;overflow:hidden;z-index:999;min-width:158px;box-shadow:0 18px 42px rgba(31,127,134,.18);}
-.v27-lang-list .lang-drop-item{color:#374151 !important;background:#fff !important;font-size:13px !important;font-weight:800 !important;padding:10px 13px !important;border-bottom:1px solid rgba(73,176,182,.10) !important;text-align:left !important;width:100% !important;}
-.v27-lang-list .lang-drop-item:hover,.v27-lang-list .lang-drop-item.active{color:#1F7F86 !important;background:#E8F8F8 !important;}
-.nav-btn .material-symbols-rounded{font-size:24px;line-height:1;color:inherit;}
-.nav-btn.active .material-symbols-rounded{color:#fff !important;}
-.profile-hero{background:linear-gradient(135deg,rgba(73,176,182,.16),rgba(247,210,74,.13)) !important;border:1px solid rgba(73,176,182,.18) !important;}
-.profile-avatar{width:54px;height:54px;border-radius:20px;background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px rgba(31,127,134,.22);flex-shrink:0;}
-.profile-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(73,176,182,.10);}
-.profile-row:last-child{border-bottom:none;}
-.profile-label{font-size:12px;color:#6B7280;font-weight:800;}
-.profile-value{font-size:13px;color:#374151;font-weight:900;text-align:right;word-break:break-word;}
-.help-item{border:1px solid rgba(73,176,182,.14);border-radius:18px;margin-bottom:8px;overflow:hidden;background:rgba(255,255,255,.55);}
-.help-q{padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-size:13px;font-weight:900;color:#374151;}
-.help-a{display:none;padding:0 13px 13px;color:#6B7280;font-size:12px;line-height:1.55;font-weight:650;}
-.help-item.open .help-a{display:block;}
-.help-item.open .help-q .material-symbols-rounded{transform:rotate(180deg);}
-.profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-.profile-actions .btn{width:100%;justify-content:center;display:flex;align-items:center;gap:6px;}
-.profile-danger{color:#A32D2D !important;border-color:rgba(163,45,45,.18) !important;background:#FFF4F4 !important;}
-@media(max-width:520px){.v27-topbar{padding:8px 12px !important;}.v27-topbar .brand span:last-child{font-size:9.2px !important;letter-spacing:1.25px !important;}.profile-actions{grid-template-columns:1fr;}.nav-btn .material-symbols-rounded{font-size:23px;}}
-@media(prefers-color-scheme:dark){.v27-lang-list{background:#172326 !important;border-color:rgba(116,215,220,.16);}.v27-lang-list .lang-drop-item{background:#172326 !important;color:#F3F4F6 !important;}.profile-value{color:#F3F4F6}.help-q{color:#F3F4F6}.help-item{background:rgba(255,255,255,.04);}}
-
-
-
-/* ── Möngö V28 correct base: transaction subcategory field + profile email visibility ── */
-.txn-entry-row{align-items:stretch !important;}
-.subcat-field-inline{
-  position:relative;
-  min-height:42px;
-  flex:1;
-  min-width:150px;
-  display:flex !important;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  cursor:pointer;
-  user-select:none;
-  margin:0 !important;
-  padding:8px 10px !important;
-}
-.subcat-field-inline .subcat-placeholder{
-  font-size:13px;
-  color:#9CA3AF;
-  font-weight:650;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.subcat-field-inline.has-selection .subcat-placeholder{
-  color:#374151;
-  font-weight:800;
-}
-.subcat-field-inline.is-empty{opacity:.72;}
-.subcat-field-inline.is-empty .subcat-placeholder{color:#9CA3AF;}
-.subcat-arrow{font-size:10px;color:#9CA3AF;flex-shrink:0;}
-.subcat-field-inline .subcat-dropdown{
-  position:absolute;
-  left:0;right:0;top:calc(100% + 5px);
-  z-index:220;
-  margin:0 !important;
-  max-height:220px;
-  overflow:auto;
-}
-#profile-email-main:empty::after,#profile-email-row:empty::after{content:'—';color:#9CA3AF;}
-@media(prefers-color-scheme:dark){
-  .subcat-field-inline.has-selection .subcat-placeholder{color:#F3F4F6;}
-  .subcat-field-inline .subcat-placeholder{color:#94A3B8;}
-}
 </style>
 </head>
 <body>
@@ -1348,25 +1266,43 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 <!-- ── MAIN APP (нэвтэрсний дараа харагдана) ── -->
 <div id="app-root" style="display:none">
 
-<div class="topbar v27-topbar">
-  <div class="brand">
+<div class="topbar" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 14px">
+  <!-- 1-р мөр: лого + өгөгдлийн товчнууд -->
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div class="brand">
       <div class="logo"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%2238%22%20y1%3D%2228%22%20x2%3D%22218%22%20y2%3D%22232%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2361CBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23227B82%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2255%22%20y1%3D%2248%22%20x2%3D%22202%22%20y2%3D%22208%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.42%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23C99A1D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%229%22%20stdDeviation%3D%227%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.25%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%20%20%3Cfilter%20id%3D%22soft%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%225%22%20stdDeviation%3D%224%22%20flood-color%3D%22%230B4F55%22%20flood-opacity%3D%220.28%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20x%3D%2212%22%20y%3D%2212%22%20width%3D%22232%22%20height%3D%22232%22%20rx%3D%2254%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M42%2016C66%209%20190%208%20216%2021%22%20fill%3D%22none%22%20stroke%3D%22%238BE5E3%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.45%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2282%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20139V73%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%2054L143%2080H113Z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M144%20144L160%20160%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M168%20152L174%20174L152%20168Z%22%20fill%3D%22%23FFFFFF%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22129%22%20r%3D%2236%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20filter%3D%22url%28%23soft%29%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22150%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2258%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%3C%2Fsvg%3E" width="30" height="30" style="border-radius:8px;display:block"></div>
       <span class="brand-name">Möngö</span>
-      <span style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">MONEY FLOW SYSTEM</span>
+      <span style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">Smart Finance</span>
     </div>
-  <div class="lang-bar" style="position:relative">
-    <button onclick="tglLangDrop()" id="lang-drop-btn" class="v27-lang-btn">
-      <span id="lang-flag-cur">🇲🇳</span>
-      <span style="font-size:9px" id="lang-drop-arrow">▼</span>
-    </button>
-    <div id="lang-drop-list" class="v27-lang-list">
-      <button class="lbtn lang-drop-item active" onclick="setLangDrop('mn',this,'🇲🇳')">🇲🇳 Монгол</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('en',this,'🇬🇧')">🇬🇧 English</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('zh',this,'🇨🇳')">🇨🇳 中文</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('ja',this,'🇯🇵')">🇯🇵 日本語</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('ko',this,'🇰🇷')">🇰🇷 한국어</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('ru',this,'🇷🇺')">🇷🇺 Русский</button>
-      <button class="lbtn lang-drop-item" onclick="setLangDrop('de',this,'🇩🇪')">🇩🇪 Deutsch</button>
+    <!-- Өгөгдлийн товчнууд: баруун дээр -->
+    <div style="display:flex;align-items:center;gap:4px">
+      <div id="save-dot" style="width:6px;height:6px;border-radius:50%;background:#49b0b6;opacity:0;transition:opacity 0.3s;flex-shrink:0"></div>
+      <button onclick="exportData()" style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer" title="Татах">⬇</button>
+      <label style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);color:var(--text2);cursor:pointer;line-height:1.8" title="Сэргээх">⬆<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+      <button onclick="clearData()" style="padding:3px 9px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:#A32D2D;cursor:pointer" title="Устгах">🗑</button>
+    </div>
+  </div>
+  <!-- 2-р мөр: имэйл + гарах (зүүн) | хэл (баруун) -->
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:4px">
+      <span id="auth-user-email" style="font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button onclick="doLogout()" style="padding:2px 8px;font-size:11px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer" title="Гарах">⏏</button>
+    </div>
+    <!-- Хэлний dropdown: баруун доор -->
+    <div class="lang-bar" style="position:relative">
+      <button onclick="tglLangDrop()" id="lang-drop-btn" style="padding:3px 10px;font-size:13px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px">
+        <span id="lang-flag-cur">🇲🇳</span>
+        <span style="font-size:9px" id="lang-drop-arrow">▼</span>
+      </button>
+      <div id="lang-drop-list" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;z-index:200;min-width:130px;box-shadow:0 4px 16px rgba(0,0,0,0.1)">
+        <button class="lbtn lang-drop-item active" onclick="setLangDrop('mn',this,'🇲🇳')">🇲🇳 Монгол</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('en',this,'🇬🇧')">🇬🇧 English</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('zh',this,'🇨🇳')">🇨🇳 中文</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('ja',this,'🇯🇵')">🇯🇵 日本語</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('ko',this,'🇰🇷')">🇰🇷 한국어</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('ru',this,'🇷🇺')">🇷🇺 Русский</button>
+        <button class="lbtn lang-drop-item" onclick="setLangDrop('de',this,'🇩🇪')">🇩🇪 Deutsch</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1378,7 +1314,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <button class="nav-btn" onclick="showTab('goals',this)" id="nav-goals"></button>
   <button class="nav-btn" onclick="showTab('debts',this)" id="nav-debts"></button>
   <button class="nav-btn" onclick="showTab('invest',this)" id="nav-invest"></button>
-  <button class="nav-btn" onclick="showTab('profile',this)" id="nav-profile"></button>
 </div>
 
 <div class="main">
@@ -1467,14 +1402,17 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <div id="invest-auto-notice" style="display:none" class="notice">
       <span style="font-size:14px">📈</span><span id="lbl-autoinvest"></span>
     </div>
-    <div class="form-row txn-entry-row">
-      <input type="hidden" id="t-desc">
-      <div id="t-subcat-wrap" class="fi subcat-field-inline" onclick="tglSubDrop()">
-        <span id="t-subcat-label" class="subcat-placeholder"></span>
-        <span id="t-subcat-arrow" class="subcat-arrow">▼</span>
-        <div id="t-subcat-list" style="display:none" class="subcat-dropdown"></div>
-      </div>
+    <div class="form-row">
+      <input type="text" class="fi" id="t-desc">
       <input type="text" class="fi" id="t-amount" placeholder="0" inputmode="decimal">
+    </div>
+    <!-- Sub-category selector (shown when expense cat has subs) -->
+    <div id="t-subcat-wrap" style="display:none;margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border:0.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;background:var(--bg)" onclick="tglSubDrop()" id="t-subcat-btn">
+        <span id="t-subcat-label" style="font-size:13px;color:var(--text2)"></span>
+        <span style="font-size:10px;color:var(--text3)" id="t-subcat-arrow">▼</span>
+      </div>
+      <div id="t-subcat-list" style="display:none" class="subcat-dropdown"></div>
     </div>
     <div class="form-row">
       <select class="fi" id="t-cat" onchange="onCatChange()"></select>
@@ -1628,38 +1566,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div id="invest-list"></div>
 </div>
 
-
-<!-- PROFILE -->
-<div id="tab-profile" class="section">
-  <div class="card profile-hero">
-    <div style="display:flex;align-items:center;gap:13px">
-      <div class="profile-avatar"><span class="material-symbols-rounded">account_circle</span></div>
-      <div style="min-width:0">
-        <div class="card-title" id="lbl-profile-title" style="margin-bottom:3px"></div>
-        <div id="profile-email-main" style="font-size:13px;color:var(--text2);font-weight:800;word-break:break-word"></div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="lbl-profile-account"></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V28.2</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="lbl-profile-help"></div>
-    <div id="profile-help-list"></div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="lbl-profile-data"></div>
-    <div class="profile-actions">
-      <button class="btn btn-p" onclick="exportData()"><span class="material-symbols-rounded">download</span><span id="lbl-profile-backup"></span></button>
-      <label class="btn" style="cursor:pointer"><span class="material-symbols-rounded">upload</span><span id="lbl-profile-restore"></span><input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
-      <button class="btn profile-danger" onclick="clearData()"><span class="material-symbols-rounded">delete</span><span id="lbl-profile-clear"></span></button>
-      <button class="btn" onclick="doLogout()"><span class="material-symbols-rounded">logout</span><span id="lbl-profile-logout"></span></button>
-    </div>
-  </div>
-</div>
-
 <!-- Custom confirm modal -->
 <div class="modal-wrap" id="custom-modal">
   <div class="modal-card">
@@ -1718,39 +1624,6 @@ const LANGS={
   ru:{dashboard:'Финансы',transactions:'Операции',budget:'Бюджет',goals:'Сбережения',debts:'Кредиты',invest:'Активы',income:'Доходы',expense:'Расходы',balance:'Баланс',totaldebt:'Общий долг',investlbl:'Инвестиции',savingslbl:'Сбережения',recent:'Последние транзакции',notxn:'Нет транзакций',budgetprog:'Прогресс бюджета',nobudget:'Бюджет не задан',inccat:'Категории доходов',expcat:'Категории расходов',savingscat:'Сбережения',debtcat:'Долги',investcat:'Инвестиции',addtxn:'Добавить транзакцию',inctoggle:'Доход',exptoggle:'Расход',autoinvest:'Категория инвестиций выбрана.',desc:'Описание',descPh:'Не запланировано',add:'Добавить',catconfig:'Категории',icon:'Иконка',color:'Цвет',newcat:'Новая категория...',alltxns:'Все транзакции',addbudgetcat:'Добавить категорию',save:'Сохранить',addsaving:'Добавить цель',savingname:'Название',deadline:'Срок',targetAmt:'Целевая сумма',currentSaved:'Текущие сбережения',savinginfo:'Расходы с таким именем автоматически обновляют прогресс.',adddebt:'Добавить долг',debtname:'Название',debtTotal:'Общая сумма',remaining:'Остаток',monthly:'Ежемесячно',interest:'Процент (%)',debtinfo:'Расходы с именем долга автоматически вычитаются.',addinvest:'Добавить инвестицию',investinfo:'Добавьте расход с категорией Инвестиции.',totalin:'Всего вложено',curval:'Текущая стоимость',pnl2:'Общая прибыль',returnlbl:'Доходность',update:'Обновить',invdetail:'Детали',from:'С:',to:'По:',apply:'Применить',w7:'7 дней',m1:'1 месяц',m3:'3 месяца',y1:'1 год',all:'Все',custom:'Выбрать',paid:'Вычтено',automark:'авто',autosave:'Через расход',paidpct:'Оплачено',total:'Итого',nodata:'Нет данных',invested:'Вложено',iname:'Название',investedAmt:'Сумма вложений',currentVal:'Текущая стоимость',investDate:'Дата',budgetmonth:'Месячный бюджет',cumul:'Накопленные сбережения',months:['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],budgetTypeTitle:'',btypeInc:'План доходов',btypeExp:'Бюджет расходов',budgetTotalLbl:'Общая сумма',monthlyNeed:'Нужно в месяц',subcatPh:'Выбрать подкатегорию',lock:'Заблокировать',unlock:'Разблокировать',confirmDel:'Удалить?',logoutConfirm:'Выйти?',cancel:'Отмена',ok:'OK',selectSubcat:'Подкатегория',addSubPh:'Добавить подкатегорию (на русском)'},
   de:{dashboard:'Finanzen',transactions:'Transaktionen',budget:'Budget',goals:'Ersparnisse',debts:'Kredite',invest:'Vermögen',income:'Einnahmen',expense:'Ausgaben',balance:'Saldo',totaldebt:'Gesamtschulden',investlbl:'Investitionen',savingslbl:'Ersparnisse',recent:'Letzte Transaktionen',notxn:'Keine Transaktionen',budgetprog:'Budgetfortschritt',nobudget:'Kein Budget',inccat:'Einnahmenkategorien',expcat:'Ausgabenkategorien',savingscat:'Ersparnisse',debtcat:'Schulden',investcat:'Investitionen',addtxn:'Transaktion hinzufügen',inctoggle:'Einnahme',exptoggle:'Ausgabe',autoinvest:'Investitionskategorie ausgewählt.',desc:'Beschreibung',descPh:'Nicht geplant',add:'Hinzufügen',catconfig:'Kategorien',icon:'Symbol',color:'Farbe',newcat:'Neue Kategorie...',alltxns:'Alle Transaktionen',addbudgetcat:'Kategorie hinzufügen',save:'Speichern',addsaving:'Sparziel',savingname:'Name',deadline:'Frist',targetAmt:'Zielbetrag',currentSaved:'Aktuell gespart',savinginfo:'Ausgaben mit gleichem Namen werden automatisch erfasst.',adddebt:'Schuld hinzufügen',debtname:'Name',debtTotal:'Gesamtbetrag',remaining:'Restbetrag',monthly:'Monatlich',interest:'Zinsen (%)',debtinfo:'Ausgaben werden automatisch abgezogen.',addinvest:'Investition',investinfo:'Ausgabe mit Investitionskategorie → automatisch erfasst.',totalin:'Gesamt investiert',curval:'Aktueller Wert',pnl2:'Gewinn/Verlust',returnlbl:'Rendite',update:'Aktualisieren',invdetail:'Details',from:'Von:',to:'Bis:',apply:'Anwenden',w7:'7 Tage',m1:'1 Monat',m3:'3 Monate',y1:'1 Jahr',all:'Alle',custom:'Anpassen',paid:'Abgezogen',automark:'auto',autosave:'Durch Ausgabe',paidpct:'Bezahlt',total:'Gesamt',nodata:'Keine Daten',invested:'Investiert',iname:'Name',budgetmonth:'Monatsbudget',cumul:'Kumulierte Ersparnisse',months:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],budgetTypeTitle:'',btypeInc:'Einnahmenplan',btypeExp:'Ausgabenbudget',budgetTotalLbl:'Gesamtbetrag',monthlyNeed:'Benötigt pro Monat',subcatPh:'Unterkategorie wählen',lock:'Sperren',unlock:'Entsperren',confirmDel:'Löschen?',logoutConfirm:'Abmelden?',cancel:'Abbrechen',ok:'OK',selectSubcat:'Unterkategorie',addSubPh:'Unterkategorie hinzufügen (auf Deutsch)'}
 };
-
-const V27_PROFILE_LANGS={
-  mn:{profile:'Профайл',profileTitle:'Миний профайл',profileAccount:'Миний бүртгэл',profileEmail:'Имэйл хаяг',profileLanguage:'Хэл',profileVersion:'Хувилбар',profileData:'Өгөгдөл',profileBackup:'Backup хийх',profileRestore:'Restore хийх',profileClear:'Өгөгдөл устгах',profileLogout:'Гарах',profileHelp:'Апп ашиглах заавар',helpIncome:'Орлого бүртгэх',helpIncomeA:'Гүйлгээ цэс рүү орж “Орлого”-г сонгоод тайлбар, дүн, ангилал, огноогоо оруулан нэмнэ.',helpExpense:'Зарлага бүртгэх',helpExpenseA:'Гүйлгээ цэсэнд “Зарлага”-г сонгож зардлын ангиллаа зөв сонговол төсөвтэй автоматаар харьцуулагдана.',helpBudget:'Төсөв ашиглах',helpBudgetA:'Төсөв цэс дээр сар, орлого/зарлагын төрлөө сонгоод ангилал бүрт төлөвлөсөн дүнгээ хадгална. Хэтэрсэн төсөв улаан хүрээтэй харагдана.',helpSavings:'Хуримтлал үүсгэх',helpSavingsA:'Хуримтлал цэс дээр зорилтот дүн, одоогийн хуримтлал, хугацаагаа оруулна. Сард хэд хэрэгтэйг автоматаар харуулна.',helpInvest:'Хөрөнгө бүртгэх',helpInvestA:'Хөрөнгө цэс дээр оруулсан дүн, одоогийн үнэ цэнээ оруулснаар ашиг/алдагдал болон өгөөж автоматаар өнгөөр ялгарна.',helpScore:'Санхүүгийн оноо',helpScoreA:'Санхүүгийн оноо нь мөнгөн урсгал, хуримтлал, өр, төсвийн гүйцэтгэлийн нийлбэр үнэлгээ юм.'},
-  en:{profile:'Profile',profileTitle:'My profile',profileAccount:'My account',profileEmail:'Email',profileLanguage:'Language',profileVersion:'Version',profileData:'Data',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Clear data',profileLogout:'Sign out',profileHelp:'How to use the app',helpIncome:'Add income',helpIncomeA:'Open Transactions, choose Income, then enter description, amount, category, and date.',helpExpense:'Add expense',helpExpenseA:'Choose Expense in Transactions. When the category matches a budget, it is compared automatically.',helpBudget:'Use budget',helpBudgetA:'In Budget, select month and income/expense type, then save planned amounts. Over-budget items show with a red border.',helpSavings:'Create savings goal',helpSavingsA:'In Savings, enter target, current amount, and deadline. The app shows the monthly amount needed.',helpInvest:'Track assets',helpInvestA:'In Assets, enter invested amount and current value. Profit/loss and return are color-coded automatically.',helpScore:'Financial score',helpScoreA:'The score combines money flow, savings, debt, and budget performance.'},
-  zh:{profile:'个人资料',profileTitle:'我的资料',profileAccount:'我的账户',profileEmail:'邮箱',profileLanguage:'语言',profileVersion:'版本',profileData:'数据',profileBackup:'备份',profileRestore:'恢复',profileClear:'清除数据',profileLogout:'退出',profileHelp:'使用指南',helpIncome:'添加收入',helpIncomeA:'进入交易，选择收入，填写说明、金额、类别和日期。',helpExpense:'添加支出',helpExpenseA:'在交易中选择支出，类别匹配预算时会自动比较。',helpBudget:'使用预算',helpBudgetA:'在预算中选择月份和类型并保存计划金额。超支项目会显示红色边框。',helpSavings:'建立储蓄目标',helpSavingsA:'在储蓄中输入目标、当前金额和期限，系统会显示每月需要金额。',helpInvest:'记录资产',helpInvestA:'在资产中输入投入金额和当前价值，盈亏和回报会自动用颜色区分。',helpScore:'财务评分',helpScoreA:'评分综合资金流、储蓄、债务和预算表现。'},
-  ja:{profile:'プロフィール',profileTitle:'マイプロフィール',profileAccount:'アカウント',profileEmail:'メール',profileLanguage:'言語',profileVersion:'バージョン',profileData:'データ',profileBackup:'バックアップ',profileRestore:'復元',profileClear:'データ削除',profileLogout:'ログアウト',profileHelp:'使い方',helpIncome:'収入を追加',helpIncomeA:'取引で収入を選び、説明・金額・カテゴリ・日付を入力します。',helpExpense:'支出を追加',helpExpenseA:'取引で支出を選びます。カテゴリが予算と一致すると自動比較されます。',helpBudget:'予算を使う',helpBudgetA:'予算で月と種類を選び、計画額を保存します。超過した項目は赤い枠で表示されます。',helpSavings:'貯蓄目標を作成',helpSavingsA:'目標額、現在額、期限を入力すると、毎月必要な額が表示されます。',helpInvest:'資産を記録',helpInvestA:'投資額と現在価値を入力すると、損益とリターンが色分けされます。',helpScore:'財務スコア',helpScoreA:'お金の流れ、貯蓄、借入、予算達成度を合わせた評価です。'},
-  ko:{profile:'프로필',profileTitle:'내 프로필',profileAccount:'내 계정',profileEmail:'이메일',profileLanguage:'언어',profileVersion:'버전',profileData:'데이터',profileBackup:'백업',profileRestore:'복원',profileClear:'데이터 삭제',profileLogout:'로그아웃',profileHelp:'앱 사용법',helpIncome:'수입 추가',helpIncomeA:'거래에서 수입을 선택하고 설명, 금액, 카테고리, 날짜를 입력합니다.',helpExpense:'지출 추가',helpExpenseA:'거래에서 지출을 선택합니다. 예산 카테고리와 일치하면 자동 비교됩니다.',helpBudget:'예산 사용',helpBudgetA:'예산에서 월과 유형을 선택하고 계획 금액을 저장합니다. 초과 예산은 빨간 테두리로 표시됩니다.',helpSavings:'저축 목표 만들기',helpSavingsA:'목표 금액, 현재 금액, 기한을 입력하면 월 필요 금액을 보여줍니다.',helpInvest:'자산 기록',helpInvestA:'투자 금액과 현재 가치를 입력하면 손익과 수익률이 색상으로 표시됩니다.',helpScore:'재무 점수',helpScoreA:'돈의 흐름, 저축, 부채, 예산 성과를 합산한 평가입니다.'},
-  ru:{profile:'Профиль',profileTitle:'Мой профиль',profileAccount:'Мой аккаунт',profileEmail:'Email',profileLanguage:'Язык',profileVersion:'Версия',profileData:'Данные',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Удалить данные',profileLogout:'Выйти',profileHelp:'Как пользоваться приложением',helpIncome:'Добавить доход',helpIncomeA:'Откройте Операции, выберите Доход, затем введите описание, сумму, категорию и дату.',helpExpense:'Добавить расход',helpExpenseA:'Выберите Расход. Если категория совпадает с бюджетом, она сравнивается автоматически.',helpBudget:'Использовать бюджет',helpBudgetA:'В Бюджете выберите месяц и тип, сохраните плановые суммы. Превышение бюджета отображается красной рамкой.',helpSavings:'Создать цель накоплений',helpSavingsA:'Введите цель, текущую сумму и срок. Приложение покажет нужную сумму в месяц.',helpInvest:'Учет активов',helpInvestA:'Введите вложенную сумму и текущую стоимость. Прибыль/убыток и доходность окрашиваются автоматически.',helpScore:'Финансовый балл',helpScoreA:'Балл объединяет денежный поток, сбережения, долг и выполнение бюджета.'},
-  de:{profile:'Profil',profileTitle:'Mein Profil',profileAccount:'Mein Konto',profileEmail:'E-Mail',profileLanguage:'Sprache',profileVersion:'Version',profileData:'Daten',profileBackup:'Backup',profileRestore:'Wiederherstellen',profileClear:'Daten löschen',profileLogout:'Abmelden',profileHelp:'App-Anleitung',helpIncome:'Einnahme hinzufügen',helpIncomeA:'Öffne Transaktionen, wähle Einnahme und gib Beschreibung, Betrag, Kategorie und Datum ein.',helpExpense:'Ausgabe hinzufügen',helpExpenseA:'Wähle Ausgabe. Wenn die Kategorie zum Budget passt, wird sie automatisch verglichen.',helpBudget:'Budget nutzen',helpBudgetA:'Wähle im Budget Monat und Typ und speichere geplante Beträge. Überschrittene Budgets haben einen roten Rahmen.',helpSavings:'Sparziel erstellen',helpSavingsA:'Gib Zielbetrag, aktuellen Betrag und Frist ein. Die App zeigt den nötigen Monatsbetrag.',helpInvest:'Vermögen erfassen',helpInvestA:'Gib investierten Betrag und aktuellen Wert ein. Gewinn/Verlust und Rendite werden farblich markiert.',helpScore:'Finanz-Score',helpScoreA:'Der Score kombiniert Geldfluss, Sparen, Schulden und Budgetleistung.'}
-};
-Object.keys(V27_PROFILE_LANGS).forEach(k=>Object.assign(LANGS[k],V27_PROFILE_LANGS[k]));
-const V28_GUIDE_LANGS={
-  mn:{helpDashboard:'Санхүүгийн самбар гэж юу вэ?',helpDashboardA:'Санхүүгийн самбар нь таны мөнгөн урсгал, хуримтлалын хувь, цэвэр хөрөнгө, санхүүгийн оноо, санхүүгийн эрх чөлөөний ахицыг нэг дор харуулна. Мөнгөн урсгал = орлого − зарлага. Цэвэр хөрөнгө = нийт хөрөнгө − нийт зээл. Санхүүгийн оноо нь мөнгөн урсгал, хуримтлал, өр, төсвийн гүйцэтгэлээс тооцогдоно.'},
-  en:{helpDashboard:'What is the finance dashboard?',helpDashboardA:'The finance dashboard shows money flow, savings rate, net worth, financial score, and financial freedom progress in one place. Money flow = income minus expense. Net worth = total assets minus total loans. The score is based on cashflow, savings, debt, and budget performance.'},
-  zh:{helpDashboard:'什么是财务看板？',helpDashboardA:'财务看板集中显示资金流、储蓄率、净资产、财务评分和财务自由进度。资金流=收入−支出。净资产=总资产−总贷款。评分基于资金流、储蓄、债务和预算表现。'},
-  ja:{helpDashboard:'財務ダッシュボードとは？',helpDashboardA:'財務ダッシュボードは、お金の流れ、貯蓄率、純資産、財務スコア、経済的自由の進捗をまとめて表示します。お金の流れ＝収入−支出。純資産＝総資産−ローン総額。スコアはお金の流れ、貯蓄、負債、予算達成度から算出されます。'},
-  ko:{helpDashboard:'재무 대시보드란?',helpDashboardA:'재무 대시보드는 돈의 흐름, 저축률, 순자산, 재무 점수, 경제적 자유 진행률을 한곳에 보여줍니다. 돈의 흐름 = 수입 − 지출. 순자산 = 총자산 − 총대출. 점수는 현금흐름, 저축, 부채, 예산 성과를 기준으로 계산됩니다.'},
-  ru:{helpDashboard:'Что такое финансовая панель?',helpDashboardA:'Финансовая панель показывает денежный поток, норму сбережений, чистый капитал, финансовый балл и прогресс финансовой свободы. Денежный поток = доходы − расходы. Чистый капитал = активы − кредиты. Балл рассчитывается по денежному потоку, сбережениям, долгу и бюджету.'},
-  de:{helpDashboard:'Was ist das Finanz-Dashboard?',helpDashboardA:'Das Finanz-Dashboard zeigt Geldfluss, Sparquote, Nettovermögen, Finanz-Score und Fortschritt zur finanziellen Freiheit an einem Ort. Geldfluss = Einnahmen − Ausgaben. Nettovermögen = Gesamtvermögen − Kredite. Der Score basiert auf Cashflow, Sparen, Schulden und Budgetleistung.'}
-};
-Object.keys(V28_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V28_GUIDE_LANGS[k]));
-const V282_GUIDE_LANGS={
-  mn:{helpDataProtect:'Өгөгдөл хамгаалах',helpDataProtectA:'Backup хийх нь таны бүх орлого, зарлага, төсөв, хуримтлал, зээл, хөрөнгийн мэдээллийг файл болгон хадгална. Restore хийх нь өмнө хадгалсан backup файлаа буцаан оруулж өгөгдлөө сэргээнэ. Өгөгдөл устгах нь апп доторх бүх мэдээллийг цэвэрлэнэ — backup байхгүй бол сэргээх боломжгүй. Гарах нь одоогийн бүртгэлээс гарах үйлдэл юм.',helpBackup:'Backup хийх гэж юу вэ?',helpBackupA:'Backup нь таны апп доторх бүх санхүүгийн мэдээллийг нэг файл болгон хадгална. Утас солих, браузер цэвэрлэх, апп дахин байрлуулах үед мэдээллээ алдахгүй байхад хэрэгтэй.',helpRestore:'Restore хийх гэж юу вэ?',helpRestoreA:'Restore нь өмнө хадгалсан backup файлаа сонгож, мэдээллээ буцаан сэргээх үйлдэл юм. Шинэ төхөөрөмж дээр өгөгдлөө үргэлжлүүлэн ашиглахад тохиромжтой.',helpClearData:'Өгөгдөл устгах гэж юу вэ?',helpClearDataA:'Өгөгдөл устгах нь тухайн хэрэглэгчийн хадгалсан орлого, зарлага, төсөв, хуримтлал, зээл, хөрөнгийн мэдээллийг апп дотроос цэвэрлэнэ. Устгахаасаа өмнө backup хийхийг зөвлөе.',helpSignOut:'Гарах гэж юу вэ?',helpSignOutA:'Гарах товч нь таныг одоогийн бүртгэлээс гаргана. Өгөгдөл устгахгүй, зөвхөн нэвтэрсэн төлөвөөс гарна.'},
-  en:{helpDataProtect:'Data protection',helpDataProtectA:'Backup saves all income, expenses, budgets, savings, loans, and assets into a file. Restore brings data back from a saved backup file. Clear data removes app data from this account — without backup it cannot be restored. Sign out only logs out of the current account.',helpBackup:'What is Backup?',helpBackupA:'Backup saves all app financial data into one file. It helps protect your data when changing phones, clearing the browser, or redeploying the app.',helpRestore:'What is Restore?',helpRestoreA:'Restore lets you choose a previously saved backup file and bring your data back, especially on a new device.',helpClearData:'What is Clear data?',helpClearDataA:'Clear data removes saved income, expenses, budgets, savings, loans, and assets from the app. Make a backup first if you may need the data later.',helpSignOut:'What is Sign out?',helpSignOutA:'Sign out logs you out of the current account. It does not delete your data.'},
-  zh:{helpDataProtect:'数据保护',helpDataProtectA:'备份会把收入、支出、预算、储蓄、贷款和资产保存成文件。恢复会从备份文件导入数据。清除数据会删除应用中的资料；没有备份将无法恢复。退出只会退出当前账户。',helpBackup:'什么是备份？',helpBackupA:'备份会把应用中的财务资料保存为一个文件，适合换手机、清理浏览器或重新部署应用前使用。',helpRestore:'什么是恢复？',helpRestoreA:'恢复是选择以前保存的备份文件，把数据重新导入应用。',helpClearData:'什么是清除数据？',helpClearDataA:'清除数据会删除收入、支出、预算、储蓄、贷款和资产等资料。建议先备份。',helpSignOut:'什么是退出？',helpSignOutA:'退出会登出当前账户，不会删除数据。'},
-  ja:{helpDataProtect:'データ保護',helpDataProtectA:'バックアップは収入、支出、予算、貯蓄、ローン、資産をファイルとして保存します。復元は保存したファイルからデータを戻します。データ削除はアプリ内データを消します。バックアップがない場合は戻せません。ログアウトはアカウントから出るだけです。',helpBackup:'バックアップとは？',helpBackupA:'バックアップはアプリ内の財務データを1つのファイルに保存します。端末変更やブラウザ整理、再配置前に便利です。',helpRestore:'復元とは？',helpRestoreA:'復元は以前保存したバックアップファイルを選び、データをアプリに戻す操作です。',helpClearData:'データ削除とは？',helpClearDataA:'データ削除は収入、支出、予算、貯蓄、ローン、資産を削除します。必要なら先にバックアップしてください。',helpSignOut:'ログアウトとは？',helpSignOutA:'ログアウトは現在のアカウントから出る操作です。データは削除されません。'},
-  ko:{helpDataProtect:'데이터 보호',helpDataProtectA:'백업은 수입, 지출, 예산, 저축, 대출, 자산 정보를 파일로 저장합니다. 복원은 저장한 백업 파일로 데이터를 되돌립니다. 데이터 삭제는 앱의 정보를 지웁니다. 백업이 없으면 복구할 수 없습니다. 로그아웃은 현재 계정에서 나가는 것입니다.',helpBackup:'백업이란?',helpBackupA:'백업은 앱의 모든 재무 데이터를 하나의 파일로 저장합니다. 기기 변경, 브라우저 정리, 앱 재배포 전에 유용합니다.',helpRestore:'복원이란?',helpRestoreA:'복원은 이전에 저장한 백업 파일을 선택해 데이터를 다시 가져오는 기능입니다.',helpClearData:'데이터 삭제란?',helpClearDataA:'데이터 삭제는 수입, 지출, 예산, 저축, 대출, 자산 정보를 앱에서 지웁니다. 먼저 백업하는 것을 권장합니다.',helpSignOut:'로그아웃이란?',helpSignOutA:'로그아웃은 현재 계정에서 나가는 기능입니다. 데이터는 삭제되지 않습니다.'},
-  ru:{helpDataProtect:'Защита данных',helpDataProtectA:'Backup сохраняет доходы, расходы, бюджеты, сбережения, кредиты и активы в файл. Restore восстанавливает данные из файла. Удаление данных очищает информацию в приложении; без backup восстановить её нельзя. Выход только завершает сеанс.',helpBackup:'Что такое Backup?',helpBackupA:'Backup сохраняет все финансовые данные приложения в один файл. Это полезно при смене телефона, очистке браузера или повторной публикации приложения.',helpRestore:'Что такое Restore?',helpRestoreA:'Restore позволяет выбрать ранее сохранённый backup-файл и вернуть данные в приложение.',helpClearData:'Что такое удаление данных?',helpClearDataA:'Удаление данных очищает доходы, расходы, бюджеты, сбережения, кредиты и активы. Перед удалением лучше сделать backup.',helpSignOut:'Что такое выход?',helpSignOutA:'Выход завершает текущий вход в аккаунт. Данные не удаляются.'},
-  de:{helpDataProtect:'Datenschutz',helpDataProtectA:'Backup speichert Einnahmen, Ausgaben, Budgets, Ersparnisse, Kredite und Vermögen in einer Datei. Wiederherstellen importiert Daten aus einer Backup-Datei. Daten löschen entfernt App-Daten; ohne Backup können sie nicht wiederhergestellt werden. Abmelden meldet nur das aktuelle Konto ab.',helpBackup:'Was ist Backup?',helpBackupA:'Backup speichert alle Finanzdaten der App in einer Datei. Das ist hilfreich beim Gerätewechsel, Browser-Cleanup oder erneuten Veröffentlichen der App.',helpRestore:'Was ist Wiederherstellen?',helpRestoreA:'Wiederherstellen lädt eine zuvor gespeicherte Backup-Datei und bringt die Daten zurück in die App.',helpClearData:'Was bedeutet Daten löschen?',helpClearDataA:'Daten löschen entfernt Einnahmen, Ausgaben, Budgets, Ersparnisse, Kredite und Vermögen aus der App. Vorher ein Backup machen.',helpSignOut:'Was ist Abmelden?',helpSignOutA:'Abmelden meldet dich vom aktuellen Konto ab. Daten werden nicht gelöscht.'}
-};
-Object.keys(V282_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V282_GUIDE_LANGS[k]));
-
-const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨🇳 中文',ja:'🇯🇵 日本語',ko:'🇰🇷 한국어',ru:'🇷🇺 Русский',de:'🇩🇪 Deutsch'};
 
 const ICOLS={stock:'#185FA5',crypto:'#BA7517',real:'#49b0b6',fund:'#1D9E75',bond:'#5F5E5A',gold:'#EF9F27',other:'#D4537E'};
 const IICONS={stock:'📈',crypto:'🪙',real:'🏢',fund:'💼',bond:'📄',gold:'🥇',other:'💡'};
@@ -1982,7 +1855,7 @@ function setLang(l,btn){
 function applyLang(){
   const m={
     'nav-dashboard':L.dashboard,'nav-transactions':L.transactions,'nav-budget':L.budget,
-    'nav-goals':L.goals,'nav-debts':L.debts,'nav-invest':L.invest,'nav-profile':L.profile,
+    'nav-goals':L.goals,'nav-debts':L.debts,'nav-invest':L.invest,
     'pb-7d':L.w7,'pb-1m':L.m1,'pb-3m':L.m3,'pb-1y':L.y1,'pb-all':L.all,'pb-custom':L.custom,
     'lbl-from':L.from,'lbl-to':L.to,'btn-apply':L.apply,
     'lbl-income':L.income,'lbl-expense':L.expense,'lbl-balance':L.balance,
@@ -2009,11 +1882,7 @@ function applyLang(){
     'btn-addinvest':L.add,'lbl-invdetail':L.invdetail,
     'lbl-i-invested-lbl':L.investedAmt||L.invested,
     'lbl-i-current-lbl':L.currentVal||L.curval,
-    'lbl-i-date-lbl':L.investDate||L.deadline,
-    'lbl-profile-title':L.profileTitle,'lbl-profile-account':L.profileAccount,'lbl-profile-email':L.profileEmail,
-    'lbl-profile-language':L.profileLanguage,'lbl-profile-version':L.profileVersion,'lbl-profile-data':L.profileData,
-    'lbl-profile-backup':L.profileBackup,'lbl-profile-restore':L.profileRestore,'lbl-profile-clear':L.profileClear,
-    'lbl-profile-logout':L.profileLogout,'lbl-profile-help':L.profileHelp
+    'lbl-i-date-lbl':L.investDate||L.deadline
   };
   Object.entries(m).forEach(([id,txt])=>{
     const el=document.getElementById(id);if(!el)return;
@@ -2021,20 +1890,19 @@ function applyLang(){
   });
   // Premium navigation: icon centered above translated label
   const navIcons={
-    'nav-dashboard':'bar_chart',
-    'nav-transactions':'sync_alt',
-    'nav-budget':'pie_chart',
-    'nav-goals':'savings',
-    'nav-debts':'credit_card',
-    'nav-invest':'trending_up',
-    'nav-profile':'account_circle'
+    'nav-dashboard':'📊',
+    'nav-transactions':'🔄',
+    'nav-budget':'◔',
+    'nav-goals':'💰',
+    'nav-debts':'💳',
+    'nav-invest':'📈'
   };
-  ['nav-dashboard','nav-transactions','nav-budget','nav-goals','nav-debts','nav-invest','nav-profile'].forEach(id=>{
+  ['nav-dashboard','nav-transactions','nav-budget','nav-goals','nav-debts','nav-invest'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return;
     const label=m[id]||el.textContent||'';
-    el.innerHTML=`<span class="material-symbols-rounded nav-ico">${navIcons[id]}</span><span class="nav-label">${label}</span>`;
+    const extra=id==='nav-budget'?' nav-ico-budget':'';
+    el.innerHTML=`<span class="nav-ico${extra}">${navIcons[id]}</span><span class="nav-label">${label}</span>`;
   });
-  rProfile();
   const tNewCat=document.getElementById('t-newcat'); if(tNewCat) tNewCat.placeholder=L.newcat;
   const tsi=document.getElementById('txn-search-input'); if(tsi) tsi.placeholder=(L.selectSubcat||'Ангилал')+' / '+(L.desc||'тайлбар')+' хайх...';
   document.getElementById('b-newcat').placeholder=L.newcat;
@@ -2104,48 +1972,6 @@ function updateBudgetTotal(){
   if(el)el.textContent=fmt(total);
 }
 
-
-function currentUserEmail(){
-  try{
-    const candidates=[
-      window._authEmail,
-      (typeof auth!=='undefined' && auth.currentUser && auth.currentUser.email) ? auth.currentUser.email : '',
-      localStorage.getItem('mongo_user_email'),
-      document.getElementById('auth-user-email')?.textContent,
-      document.getElementById('login-email')?.value,
-      document.getElementById('reg-email')?.value
-    ];
-    return (candidates.find(v=>String(v||'').trim()) || '—').trim();
-  }catch(e){return '—';}
-}
-function rProfile(){
-  const email=currentUserEmail();
-  const e1=document.getElementById('profile-email-main'); if(e1)e1.textContent=email;
-  const lr=document.getElementById('profile-language-row'); if(lr)lr.textContent=V27_LANG_NAMES[lang]||'🇲🇳 Монгол';
-  const list=document.getElementById('profile-help-list');
-  if(list){
-    const items=[
-      [L.helpDashboard,L.helpDashboardA],
-      [L.helpIncome,L.helpIncomeA],
-      [L.helpExpense,L.helpExpenseA],
-      [L.helpBudget,L.helpBudgetA],
-      [L.helpSavings,L.helpSavingsA],
-      [L.helpInvest,L.helpInvestA],
-      [L.helpScore,L.helpScoreA],
-      [L.helpDataProtect,L.helpDataProtectA],
-      [L.helpBackup,L.helpBackupA],
-      [L.helpRestore,L.helpRestoreA],
-      [L.helpClearData,L.helpClearDataA],
-      [L.helpSignOut,L.helpSignOutA]
-    ];
-    list.innerHTML=items.map((it,idx)=>`<div class="help-item${idx===0?' open':''}">
-      <div class="help-q" onclick="this.parentElement.classList.toggle('open')"><span>${it[0]||''}</span><span class="material-symbols-rounded">expand_more</span></div>
-      <div class="help-a">${it[1]||''}</div>
-    </div>`).join('');
-  }
-}
-
-
 // ── Period ────────────────────────────────────────────────────────────────
 function getPD(){
   const now=new Date();now.setHours(23,59,59,999);let from=new Date(0);
@@ -2199,19 +2025,19 @@ function getIncCatSubs(catDisplayName){
 function onCatChange(){
   const v=document.getElementById('t-cat').value;
   selSubcat=null;subDropOpen=false;
-  const sw=document.getElementById('t-subcat-wrap');
-  const lab=document.getElementById('t-subcat-label');
-  if(sw)sw.style.display='flex';
-  if(lab)lab.textContent=L.subcatPh||'Дэд ангилал сонгох';
-  document.getElementById('t-subcat-list').style.display='none';
-  document.getElementById('t-subcat-arrow').textContent='▼';
+  document.getElementById('t-subcat-wrap').style.display='none';
   document.getElementById('invest-auto-notice').style.display='none';
   document.getElementById('invest-extra').style.display='none';
 
   if(curType==='income'){
     const incCat=bCatsInc.find(c=>cN(c)===v);
     const subs=incCat?incCat.subs||[]:[];
-    rSubcatList(subs,incCat?(incCat.key||v):v,'income');
+    if(subs.length>0){
+      const sw=document.getElementById('t-subcat-wrap');
+      sw.style.display='block';
+      document.getElementById('t-subcat-label').textContent=L.subcatPh||'Дэд ангилал сонгох';
+      rSubcatList(subs,incCat.key||v,'income');
+    }
     return;
   }
 
@@ -2222,14 +2048,17 @@ function onCatChange(){
   document.getElementById('invest-extra').style.display=iv?'block':'none';
   const expCat=bCatsExp.find(c=>cN(c)===v);
   const subs=expCat?expCat.subs||[]:[];
-  rSubcatList(subs,expCat?(expCat.key||v):v,'expense');
+  const sw=document.getElementById('t-subcat-wrap');
+  if(subs.length>0){
+    sw.style.display='block';
+    document.getElementById('t-subcat-label').textContent=L.subcatPh||'Дэд ангилал сонгох';
+    rSubcatList(subs,expCat.key||v,'expense');
+  }
 }
 
 function tglSubDrop(){
-  const list=document.getElementById('t-subcat-list');
-  if(!list||!list.innerHTML.trim())return;
   subDropOpen=!subDropOpen;
-  list.style.display=subDropOpen?'block':'none';
+  document.getElementById('t-subcat-list').style.display=subDropOpen?'block':'none';
   document.getElementById('t-subcat-arrow').textContent=subDropOpen?'▲':'▼';
 }
 
@@ -2256,10 +2085,8 @@ function selectSubcat(key,catKey,catType){
     if(sb)label=cN(sb);
     else label=key;
   }
-  const lab=document.getElementById('t-subcat-label');
-  if(lab)lab.textContent=label;
-  const wrap=document.getElementById('t-subcat-wrap');
-  if(wrap)wrap.classList.toggle('has-selection',!!key);
+  document.getElementById('t-subcat-label').textContent=label;
+  document.getElementById('t-subcat-label').style.color=key?'var(--text)':'var(--text2)';
   document.getElementById('t-subcat-list').style.display='none';
   document.getElementById('t-subcat-arrow').textContent='▼';
 }
@@ -2440,8 +2267,8 @@ function addTransaction(){
     const sb=cat?(cat.subs||[]).find(s=>s.key===subcatKey):null;
     subcatDisplay=sb?cN(sb):subcatKey;
   }
-  const desc=descRaw||(subcatDisplay||catName);
-  if(!amount||amount<=0)return;
+  const desc=descRaw||(subcatDisplay||null);
+  if(!desc||!amount||amount<=0)return;
   const catObj=gCats().find(c=>cN(c)===catName);
   const catKey=catObj&&catObj.key?catObj.key:null;
   txns.unshift({id:Date.now(),desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType});
@@ -2453,8 +2280,7 @@ function addTransaction(){
   document.getElementById('t-desc').value='';
   document.getElementById('t-amount').value='';
   selSubcat=null;subDropOpen=false;
-  const subLabel=document.getElementById('t-subcat-label'); if(subLabel)subLabel.textContent=L.subcatPh||'Дэд ангилал сонгох';
-  const subWrap=document.getElementById('t-subcat-wrap'); if(subWrap)subWrap.classList.remove('has-selection');
+  document.getElementById('t-subcat-label').textContent=L.subcatPh||'Дэд ангилал сонгох';
   document.getElementById('t-subcat-list').style.display='none';
   saveData();rAll();
 }
@@ -2531,7 +2357,6 @@ function showTab(tab,btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  if(tab==='profile')rProfile();
   if(btn){
     btn.classList.add('active');
     try{btn.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}catch(e){}
@@ -2549,13 +2374,13 @@ function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEac
 // ── Möngö V25 Premium Finance Dashboard logic ─────────────────────────────
 function pDashText(){
   const d={
-    mn:{title:'Санхүүгийн самбар',sub:'Money Flow System',cashflow:'Мөнгөн урсгал',saveRate:'Хуримтлалын хувь',net:'Цэвэр хөрөнгө',score:'Санхүүгийн оноо',fire:'Санхүүгийн эрх чөлөө',positive:'Эерэг мөнгөн урсгал',negative:'Сөрөг мөнгөн урсгал',good:'Маш сайн',ok:'Сайн',watch:'Анхаарах',netNote:'Хөрөнгө − Зээл',fireNote:'Санхүүгийн эрх чөлөөний ахиц',needData:'Илүү их өгөгдөл хэрэгтэй'},
-    en:{title:'Finance Dashboard',sub:'Money Flow System',cashflow:'Money flow',saveRate:'Savings rate',net:'Net worth',score:'Financial score',fire:'Financial freedom progress',positive:'Positive money flow',negative:'Negative money flow',good:'Excellent',ok:'Good',watch:'Needs attention',netNote:'Assets − Loans',fireNote:'Progress toward financial freedom',needData:'Needs more data'},
-    zh:{title:'财务仪表盘',sub:'Money Flow System',cashflow:'资金流',saveRate:'储蓄率',net:'净资产',score:'财务评分',fire:'财务自由进度',positive:'正向资金流',negative:'负向资金流',good:'优秀',ok:'良好',watch:'需关注',netNote:'资产 − 贷款',fireNote:'财务自由进度',needData:'需要更多数据'},
-    ja:{title:'財務ダッシュボード',sub:'Money Flow System',cashflow:'お金の流れ',saveRate:'貯蓄率',net:'純資産',score:'財務スコア',fire:'経済的自由の進捗',positive:'プラスのお金の流れ',negative:'マイナスのお金の流れ',good:'とても良い',ok:'良い',watch:'要注意',netNote:'資産 − ローン',fireNote:'経済的自由への進捗',needData:'データが必要'},
-    ko:{title:'재무 대시보드',sub:'Money Flow System',cashflow:'돈의 흐름',saveRate:'저축률',net:'순자산',score:'재무 점수',fire:'경제적 자유 진행률',positive:'긍정적 돈의 흐름',negative:'부정적 돈의 흐름',good:'매우 좋음',ok:'좋음',watch:'주의 필요',netNote:'자산 − 대출',fireNote:'경제적 자유를 향한 진행률',needData:'데이터가 더 필요해요'},
-    ru:{title:'Финансовая панель',sub:'Money Flow System',cashflow:'Денежный поток',saveRate:'Норма сбережений',net:'Чистый капитал',score:'Финансовый балл',fire:'Прогресс к финансовой свободе',positive:'Положительный денежный поток',negative:'Отрицательный денежный поток',good:'Отлично',ok:'Хорошо',watch:'Нужно внимание',netNote:'Активы − кредиты',fireNote:'Прогресс к финансовой свободе',needData:'Нужно больше данных'},
-    de:{title:'Finanz-Dashboard',sub:'Money Flow System',cashflow:'Geldfluss',saveRate:'Sparquote',net:'Nettovermögen',score:'Finanz-Score',fire:'Fortschritt zur finanziellen Freiheit',positive:'Positiver Geldfluss',negative:'Negativer Geldfluss',good:'Sehr gut',ok:'Gut',watch:'Achtung',netNote:'Vermögen − Kredite',fireNote:'Fortschritt zur finanziellen Freiheit',needData:'Mehr Daten nötig'}
+    mn:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Хуримтлалын хувь',net:'Цэвэр хөрөнгө',score:'Санхүүгийн оноо',fire:'FIRE Progress',positive:'Эерэг мөнгөн урсгал',negative:'Сөрөг мөнгөн урсгал',good:'Маш сайн',ok:'Сайн',watch:'Анхаарах',netNote:'Хөрөнгө − Зээл',fireNote:'Санхүүгийн эрх чөлөөний ахиц',needData:'Илүү их өгөгдөл хэрэгтэй'},
+    en:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Savings rate',net:'Net worth',score:'Financial score',fire:'FIRE Progress',positive:'Positive money flow',negative:'Negative money flow',good:'Excellent',ok:'Good',watch:'Needs attention',netNote:'Assets − Loans',fireNote:'Financial independence progress',needData:'Needs more data'},
+    zh:{title:'高级仪表盘',sub:'Money Flow System',cashflow:'现金流',saveRate:'储蓄率',net:'净资产',score:'财务评分',fire:'FIRE进度',positive:'正向现金流',negative:'负向现金流',good:'优秀',ok:'良好',watch:'需关注',netNote:'资产 − 贷款',fireNote:'财务自由进度',needData:'需要更多数据'},
+    ja:{title:'プレミアムダッシュボード',sub:'Money Flow System',cashflow:'キャッシュフロー',saveRate:'貯蓄率',net:'純資産',score:'財務スコア',fire:'FIRE進捗',positive:'プラスの資金流',negative:'マイナスの資金流',good:'とても良い',ok:'良い',watch:'要注意',netNote:'資産 − ローン',fireNote:'経済的自立の進捗',needData:'データが必要'},
+    ko:{title:'프리미엄 대시보드',sub:'Money Flow System',cashflow:'현금흐름',saveRate:'저축률',net:'순자산',score:'재무 점수',fire:'FIRE 진행률',positive:'긍정적 현금흐름',negative:'부정적 현금흐름',good:'매우 좋음',ok:'좋음',watch:'주의 필요',netNote:'자산 − 대출',fireNote:'경제적 자유 진행률',needData:'데이터가 더 필요해요'},
+    ru:{title:'Премиум панель',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Норма сбережений',net:'Чистый капитал',score:'Финансовый балл',fire:'FIRE прогресс',positive:'Положительный поток',negative:'Отрицательный поток',good:'Отлично',ok:'Хорошо',watch:'Нужно внимание',netNote:'Активы − кредиты',fireNote:'Прогресс к финансовой свободе',needData:'Нужно больше данных'},
+    de:{title:'Premium Dashboard',sub:'Money Flow System',cashflow:'Cashflow',saveRate:'Sparquote',net:'Nettovermögen',score:'Finanz-Score',fire:'FIRE Fortschritt',positive:'Positiver Geldfluss',negative:'Negativer Geldfluss',good:'Sehr gut',ok:'Gut',watch:'Achtung',netNote:'Vermögen − Kredite',fireNote:'Finanzielle-Freiheit-Fortschritt',needData:'Mehr Daten nötig'}
   };
   return d[lang]||d.mn;
 }
@@ -2564,29 +2389,77 @@ function setPCardState(id,state){
   el.classList.remove('pdash-good','pdash-bad','pdash-warn');
   if(state)el.classList.add(state);
 }
+function monthKeyFromDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function addMonths(d,delta){const x=new Date(d.getFullYear(),d.getMonth()+delta,1);return x;}
+function avgMonthlyExpense(monthCount=3){
+  const now=new Date();
+  const keys=[];
+  for(let i=0;i<monthCount;i++)keys.push(monthKeyFromDate(addMonths(now,-i)));
+  const totals=keys.map(k=>txns.filter(t=>t.type==='expense'&&t.date&&t.date.substring(0,7)===k).reduce((s,t)=>s+t.amount,0));
+  const active=totals.filter(v=>v>0);
+  if(active.length>0)return active.reduce((s,v)=>s+v,0)/active.length;
+  const oneMonth=fT().filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  return oneMonth>0?oneMonth:0;
+}
+function currentMonthTotals(){
+  const now=new Date(), ym=now.toISOString().substring(0,7);
+  const arr=txns.filter(t=>t.date&&t.date.substring(0,7)===ym);
+  return {
+    income:arr.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+    expense:arr.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
+    savings:arr.filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0)
+  };
+}
+function calcBudgetHealthScore(){
+  try{
+    const mo=new Date().getMonth()+1, yr=new Date().getFullYear();
+    const prevY=budgetYear; budgetYear=yr;
+    let planned=0, used=0;
+    bCatsExp.forEach(cat=>{
+      const bk=bKeyFor(cat);
+      planned+=getBudgetVal(bk,mo);
+      used+=actualForBudget(cat,mo,'expense');
+      (cat.subs||[]).forEach(sb=>{planned+=getBudgetVal(bSubKey(cat,sb),mo);used+=actualForSub(cat,sb,mo,'expense');});
+    });
+    budgetYear=prevY;
+    return planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
+  }catch(e){return 70;}
+}
+function calcFinancialScore(inc,exp,dbt,tCur,totalSavings){
+  const month=currentMonthTotals();
+  const baseIncome=month.income>0?month.income:inc;
+  const baseExpense=month.expense>0?month.expense:exp;
+  const cashflow=baseIncome-baseExpense;
+  const saveRate=baseIncome>0?Math.round((month.savings/baseIncome)*100):0;
+  const monthlyDebtPay=debts.reduce((s,d)=>s+(d.monthly||0),0);
+  const debtBurden=baseIncome>0?(monthlyDebtPay/baseIncome)*100:(dbt>0?100:0);
+  const investmentGain=invests.reduce((s,i)=>s+((i.current||0)-(i.invested||0)),0);
+  const assetBase=(totalSavings||0)+(tCur||0);
+  const assetGrowthRate=assetBase>0?Math.max(0,(investmentGain/assetBase)*100):0;
+  const budgetHealth=calcBudgetHealthScore();
+
+  const cashScore=baseIncome>0?Math.max(0,Math.min(25,Math.round(((cashflow/baseIncome)+0.25)/0.50*25))):(cashflow>=0?12:0);
+  const savingsScore=Math.max(0,Math.min(25,Math.round(saveRate/25*25)));
+  const budgetScore=Math.max(0,Math.min(20,Math.round(budgetHealth/100*20)));
+  let debtScore=20;
+  if(debtBurden>0)debtScore=Math.max(0,Math.min(20,Math.round(20-(debtBurden/40*20))));
+  const assetScore=Math.max(0,Math.min(10,Math.round(assetGrowthRate/10*10)));
+
+  const total=Math.max(0,Math.min(100,Math.round(cashScore+savingsScore+budgetScore+debtScore+assetScore)));
+  return {total,cashScore,savingsScore,budgetScore,debtScore,assetScore,saveRate,budgetHealth};
+}
 function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const T=pDashText();
   const cashflow=inc-exp;
   const periodSavings=fT().filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
   const saveRate=inc>0?Math.round((periodSavings/inc)*100):0;
   const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
-  const debtRatio=inc>0?Math.min(100,Math.round((dbt/inc)*100)):dbt>0?100:0;
-  let budgetScore=70;
-  try{
-    const mo=new Date().getMonth()+1, yr=new Date().getFullYear();
-    const prevY=budgetYear; budgetYear=yr;
-    let planned=0, used=0;
-    bCatsExp.forEach(cat=>{const bk=bKeyFor(cat);planned+=getBudgetVal(bk,mo);used+=actualForBudget(cat,mo,'expense');(cat.subs||[]).forEach(sb=>{planned+=getBudgetVal(bSubKey(cat,sb),mo);used+=actualForSub(cat,sb,mo,'expense');});});
-    budgetYear=prevY;
-    budgetScore=planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
-  }catch(e){}
-  const cashScore=cashflow>=0?25:8;
-  const saveScore=Math.min(25,Math.max(0,saveRate));
-  const debtScore=Math.max(0,25-Math.round(debtRatio/8));
-  const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+debtScore+(budgetScore*0.25))));
-  const annualExpense=Math.max(exp*12,1);
+  const scoreData=calcFinancialScore(inc,exp,dbt,tCur,totalSavings);
+  const score=scoreData.total;
+  const avgExp=avgMonthlyExpense(3);
+  const annualExpense=Math.max(avgExp*12,1);
   const fireTarget=annualExpense*25;
-  const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
+  const firePct=avgExp>0?Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100))):0;
 
   const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
   setTxt('pdash-title',T.title); setTxt('pdash-sub',T.sub);
@@ -3698,11 +3571,8 @@ auth.onAuthStateChanged(user=>{
     regPage.classList.remove('show');
     appRoot.style.display='block';
 
-    window._authEmail=user.email||'';
-    try{localStorage.setItem('mongo_user_email',window._authEmail);}catch(e){}
     const userEl=document.getElementById('auth-user-email');
     if(userEl) userEl.textContent=user.email;
-    rProfile();
 
     // Хэрэглэгч тус бүрт тусдаа uid — өгөгдлийг дахин ачаална
     const prevUid=window._authUid;
