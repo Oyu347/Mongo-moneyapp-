@@ -1254,6 +1254,25 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .subcat-field-inline.has-selection .subcat-placeholder{color:#F3F4F6;}
   .subcat-field-inline .subcat-placeholder{color:#94A3B8;}
 }
+
+
+/* ── Möngö V29 calculators: section tabs + premium calculator cards ── */
+.calc-tabs{display:flex;gap:6px;margin:0 0 12px;padding:5px;border-radius:999px;background:rgba(73,176,182,.10);box-shadow:0 5px 14px rgba(31,127,134,.075)}
+.calc-tab-btn{flex:1;border:none;border-radius:999px;padding:9px 10px;background:transparent;color:#6B7280;cursor:pointer;font-size:13px;font-weight:900;transition:all .18s ease}
+.calc-tab-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 8px 18px rgba(73,176,182,.24)}
+.calc-panel{display:none}.calc-panel.active{display:block}
+.calc-card{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.86);border-radius:28px;padding:16px;margin-bottom:12px;box-shadow:0 12px 30px rgba(31,127,134,.105)}
+.calc-title{font-size:18px;font-weight:950;color:#374151;margin-bottom:6px;display:flex;align-items:center;gap:9px;letter-spacing:-.03em}
+.calc-title:before{content:"";width:12px;height:12px;border-radius:999px;background:radial-gradient(circle at 35% 35%,#F7D24A 0 18%,#49B0B6 44%,rgba(73,176,182,.14) 55% 100%);box-shadow:0 0 0 5px rgba(73,176,182,.08)}
+.calc-desc{font-size:12px;color:#6B7280;line-height:1.45;margin-bottom:12px;font-weight:650}
+.calc-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.calc-result{border-radius:20px;padding:11px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.10));border:1px solid rgba(73,176,182,.14)}
+.calc-result .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6B7280;font-weight:900;margin-bottom:4px}
+.calc-result .v{font-size:16px;color:#1F7F86;font-weight:950;letter-spacing:-.04em}
+.calc-note{margin-top:10px;font-size:11px;color:#6B7280;line-height:1.45;font-weight:650}
+@media(max-width:520px){.calc-result-grid{grid-template-columns:1fr}.calc-tab-btn{font-size:12px;padding:8px 8px}}
+@media(prefers-color-scheme:dark){.calc-card{background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76));border-color:rgba(116,215,220,.12)}.calc-title{color:#F3F4F6}.calc-tab-btn{color:#CBD5E1}}
+
 </style>
 </head>
 <body>
@@ -2048,6 +2067,7 @@ function applyLang(){
   rCatSel();rTChips();rBList();rBMonthSel();rBProg();rBOv();
   rTxns();rRecent();rGoals();rDebts();rInvests();
   uDash(); // мөнгөн тэмдэгт шинэчлэгдэнэ
+  if(calcTabsReady)renderCalcTexts();
   updateBudgetTotal();
   ['inc','exp','gls','dbt','inv'].forEach(rDonut);
 }
@@ -2542,7 +2562,7 @@ function toggleBudgetCatPanel(){
   if(!card)return;
   card.classList.toggle('collapsed');
 }
-function rAll(){rTxns();rDash();rGoals();rDebts();}
+function rAll(){rTxns();rDash();rGoals();rDebts();rInvests();}
 function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
 
 
@@ -3317,6 +3337,86 @@ function showToast(msg){
   t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2400);
 }
 
+
+
+// ── Möngö V29 Calculators: Loans / Savings / Investments ────────────────
+let calcTabsReady=false;
+function calcText(){
+  const all={
+    mn:{mineDebt:'Миний зээл',mineSavings:'Миний хуримтлал',mineInvest:'Миний хөрөнгө',calc:'Тооцоолуур',loanCalc:'Зээлийн тооцоолуур',loanDesc:'Зээлийн дүн, жилийн хүү, хугацаагаа оруулаад сарын төлбөр, нийт төлөх дүн, нийт хүүг тооцоолно.',loanAmount:'Зээлийн дүн',annualRate:'Жилийн хүү (%)',termMonths:'Хугацаа (сар)',monthlyPay:'Сарын төлбөр',totalPay:'Нийт төлөх',totalInterest:'Нийт хүү',overpay:'Илүү төлөх дүн',savingsCalc:'Хуримтлалын тооцоолуур',savingsDesc:'Зорилтот дүн, одоогийн хуримтлал, сар бүр нэмэх дүнгээр зорилгод хүрэх хугацааг тооцоолно.',target:'Зорилтот дүн',current:'Одоогийн дүн',monthlyAdd:'Сар бүр нэмэх',monthsToGoal:'Хүрэх хугацаа',left:'Дутуу дүн',neededMonthly:'Сард хэрэгтэй',investCalc:'Хөрөнгө оруулалтын тооцоолуур',investDesc:'Эхний хөрөнгө, сар бүр нэмэх дүн, өгөөж, хугацаагаар ирээдүйн үнэ цэнийг compound interest-аар тооцоолно.',initial:'Эхний хөрөнгө',years:'Хугацаа (жил)',futureValue:'Ирээдүйн үнэ цэнэ',contributed:'Нийт хийсэн',profit:'Ашиг',returnPct:'Өгөөж',calculate:'Тооцоолох',months:'сар',needInput:'Тоонуудыг оруулаад тооцоолно уу.'},
+    en:{mineDebt:'My loans',mineSavings:'My savings',mineInvest:'My assets',calc:'Calculator',loanCalc:'Loan calculator',loanDesc:'Enter loan amount, annual rate, and term to calculate monthly payment, total payment, and total interest.',loanAmount:'Loan amount',annualRate:'Annual rate (%)',termMonths:'Term (months)',monthlyPay:'Monthly payment',totalPay:'Total payment',totalInterest:'Total interest',overpay:'Overpayment',savingsCalc:'Savings calculator',savingsDesc:'Calculate how long it takes to reach your savings goal.',target:'Target amount',current:'Current amount',monthlyAdd:'Monthly add',monthsToGoal:'Time to goal',left:'Amount left',neededMonthly:'Needed monthly',investCalc:'Investment calculator',investDesc:'Estimate future value with compound growth.',initial:'Initial amount',years:'Term (years)',futureValue:'Future value',contributed:'Total contributed',profit:'Profit',returnPct:'Return',calculate:'Calculate',months:'months',needInput:'Enter numbers to calculate.'},
+    zh:{mineDebt:'我的贷款',mineSavings:'我的储蓄',mineInvest:'我的资产',calc:'计算器',loanCalc:'贷款计算器',loanDesc:'输入贷款金额、年利率和期限，计算月供、总还款和总利息。',loanAmount:'贷款金额',annualRate:'年利率 (%)',termMonths:'期限（月）',monthlyPay:'月供',totalPay:'总还款',totalInterest:'总利息',overpay:'多付金额',savingsCalc:'储蓄计算器',savingsDesc:'根据目标金额、当前储蓄和每月存入金额计算达成时间。',target:'目标金额',current:'当前金额',monthlyAdd:'每月存入',monthsToGoal:'达成时间',left:'剩余金额',neededMonthly:'每月需要',investCalc:'投资计算器',investDesc:'用复利估算未来价值。',initial:'初始金额',years:'期限（年）',futureValue:'未来价值',contributed:'总投入',profit:'收益',returnPct:'回报',calculate:'计算',months:'个月',needInput:'请输入数字后计算。'},
+    ja:{mineDebt:'私のローン',mineSavings:'私の貯蓄',mineInvest:'私の資産',calc:'計算機',loanCalc:'ローン計算機',loanDesc:'借入額、年利、期間から月々の返済額、総返済額、総利息を計算します。',loanAmount:'借入額',annualRate:'年利 (%)',termMonths:'期間（月）',monthlyPay:'月々の返済',totalPay:'総返済額',totalInterest:'総利息',overpay:'利息合計',savingsCalc:'貯蓄計算機',savingsDesc:'目標額、現在額、毎月の積立額から達成期間を計算します。',target:'目標額',current:'現在額',monthlyAdd:'毎月積立',monthsToGoal:'達成期間',left:'不足額',neededMonthly:'毎月必要',investCalc:'投資計算機',investDesc:'複利で将来価値を推計します。',initial:'初期投資',years:'期間（年）',futureValue:'将来価値',contributed:'総拠出額',profit:'利益',returnPct:'リターン',calculate:'計算',months:'ヶ月',needInput:'数値を入力して計算してください。'},
+    ko:{mineDebt:'내 대출',mineSavings:'내 저축',mineInvest:'내 자산',calc:'계산기',loanCalc:'대출 계산기',loanDesc:'대출금, 연이율, 기간으로 월 상환액, 총 상환액, 총 이자를 계산합니다.',loanAmount:'대출금',annualRate:'연이율 (%)',termMonths:'기간 (개월)',monthlyPay:'월 상환액',totalPay:'총 상환액',totalInterest:'총 이자',overpay:'추가 지급액',savingsCalc:'저축 계산기',savingsDesc:'목표 금액, 현재 금액, 월 저축액으로 달성 기간을 계산합니다.',target:'목표 금액',current:'현재 금액',monthlyAdd:'월 저축액',monthsToGoal:'달성 기간',left:'부족 금액',neededMonthly:'월 필요액',investCalc:'투자 계산기',investDesc:'복리로 미래 가치를 계산합니다.',initial:'초기 금액',years:'기간 (년)',futureValue:'미래 가치',contributed:'총 납입액',profit:'수익',returnPct:'수익률',calculate:'계산',months:'개월',needInput:'숫자를 입력한 뒤 계산하세요.'},
+    ru:{mineDebt:'Мои кредиты',mineSavings:'Мои сбережения',mineInvest:'Мои активы',calc:'Калькулятор',loanCalc:'Кредитный калькулятор',loanDesc:'Введите сумму, годовую ставку и срок, чтобы рассчитать ежемесячный платёж, общую выплату и проценты.',loanAmount:'Сумма кредита',annualRate:'Годовая ставка (%)',termMonths:'Срок (мес.)',monthlyPay:'Ежемесячный платёж',totalPay:'Всего выплатить',totalInterest:'Всего процентов',overpay:'Переплата',savingsCalc:'Калькулятор сбережений',savingsDesc:'Рассчитывает срок достижения цели по текущей сумме и ежемесячному пополнению.',target:'Целевая сумма',current:'Текущая сумма',monthlyAdd:'Ежемесячно',monthsToGoal:'Срок до цели',left:'Осталось',neededMonthly:'Нужно в месяц',investCalc:'Инвестиционный калькулятор',investDesc:'Оценивает будущую стоимость с учётом сложного процента.',initial:'Начальная сумма',years:'Срок (лет)',futureValue:'Будущая стоимость',contributed:'Всего внесено',profit:'Прибыль',returnPct:'Доходность',calculate:'Рассчитать',months:'мес.',needInput:'Введите числа для расчёта.'},
+    de:{mineDebt:'Meine Kredite',mineSavings:'Meine Ersparnisse',mineInvest:'Mein Vermögen',calc:'Rechner',loanCalc:'Kreditrechner',loanDesc:'Gib Kreditbetrag, Jahreszins und Laufzeit ein, um Monatsrate, Gesamtzahlung und Zinsen zu berechnen.',loanAmount:'Kreditbetrag',annualRate:'Jahreszins (%)',termMonths:'Laufzeit (Monate)',monthlyPay:'Monatsrate',totalPay:'Gesamtzahlung',totalInterest:'Gesamtzinsen',overpay:'Zinskosten',savingsCalc:'Sparrechner',savingsDesc:'Berechnet, wie lange du bis zum Sparziel brauchst.',target:'Zielbetrag',current:'Aktueller Betrag',monthlyAdd:'Monatlich sparen',monthsToGoal:'Zeit bis Ziel',left:'Fehlbetrag',neededMonthly:'Monatlich nötig',investCalc:'Investmentrechner',investDesc:'Schätzt den zukünftigen Wert mit Zinseszins.',initial:'Startbetrag',years:'Laufzeit (Jahre)',futureValue:'Zukünftiger Wert',contributed:'Gesamt eingezahlt',profit:'Gewinn',returnPct:'Rendite',calculate:'Berechnen',months:'Monate',needInput:'Bitte Zahlen eingeben.'}
+  };
+  return all[lang]||all.en;
+}
+function setupCalcTabs(){
+  const defs=[['debts','debt'],['goals','savings'],['invest','invest']];
+  defs.forEach(([tab,type])=>{
+    const sec=document.getElementById('tab-'+tab); if(!sec)return;
+    let mine=sec.querySelector('.calc-panel-mine');
+    if(!mine){
+      const tabs=document.createElement('div');tabs.className='calc-tabs';tabs.innerHTML='<button class="calc-tab-btn active" data-calc-tab="mine"></button><button class="calc-tab-btn" data-calc-tab="calc"></button>';
+      mine=document.createElement('div');mine.className='calc-panel calc-panel-mine active';
+      while(sec.firstChild)mine.appendChild(sec.firstChild);
+      const panel=document.createElement('div');panel.className='calc-panel calc-panel-calc';panel.id='calc-panel-'+type;
+      sec.appendChild(tabs);sec.appendChild(mine);sec.appendChild(panel);
+      tabs.querySelector('[data-calc-tab="mine"]').onclick=()=>showCalcTab(tab,'mine');
+      tabs.querySelector('[data-calc-tab="calc"]').onclick=()=>showCalcTab(tab,'calc');
+    }
+  });
+  renderCalcTexts();
+  calcTabsReady=true;
+}
+function showCalcTab(tab,which){
+  const sec=document.getElementById('tab-'+tab); if(!sec)return;
+  sec.querySelectorAll('.calc-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.calcTab===which));
+  const mine=sec.querySelector('.calc-panel-mine'), calc=sec.querySelector('.calc-panel-calc');
+  if(mine)mine.classList.toggle('active',which==='mine');
+  if(calc)calc.classList.toggle('active',which==='calc');
+}
+function renderCalcTexts(){
+  const T=calcText();
+  const map={debts:T.mineDebt,goals:T.mineSavings,invest:T.mineInvest};
+  Object.entries(map).forEach(([tab,label])=>{
+    const sec=document.getElementById('tab-'+tab); if(!sec)return;
+    const b1=sec.querySelector('[data-calc-tab="mine"]'),b2=sec.querySelector('[data-calc-tab="calc"]');
+    if(b1)b1.textContent=label; if(b2)b2.textContent=T.calc;
+  });
+  const d=document.getElementById('calc-panel-debt'); if(d)d.innerHTML=debtCalcHtml(T);
+  const g=document.getElementById('calc-panel-savings'); if(g)g.innerHTML=savingsCalcHtml(T);
+  const i=document.getElementById('calc-panel-invest'); if(i)i.innerHTML=investCalcHtml(T);
+  ['dc-amount','dc-rate','dc-months','sc-target','sc-current','sc-monthly','sc-months','ic-initial','ic-monthly','ic-rate','ic-years'].forEach(setupAmtInput);
+}
+function debtCalcHtml(T){return `<div class="calc-card"><div class="calc-title">💳 ${T.loanCalc}</div><div class="calc-desc">${T.loanDesc}</div><div class="form-row"><input id="dc-amount" class="fi" inputmode="decimal" placeholder="${T.loanAmount}"><input id="dc-rate" class="fi" inputmode="decimal" placeholder="${T.annualRate}"></div><div class="form-row"><input id="dc-months" class="fi" inputmode="decimal" placeholder="${T.termMonths}"><button class="btn btn-p" onclick="calcDebt()">${T.calculate}</button></div><div id="dc-result" class="calc-note">${T.needInput}</div></div>`;}
+function savingsCalcHtml(T){return `<div class="calc-card"><div class="calc-title">💰 ${T.savingsCalc}</div><div class="calc-desc">${T.savingsDesc}</div><div class="form-row"><input id="sc-target" class="fi" inputmode="decimal" placeholder="${T.target}"><input id="sc-current" class="fi" inputmode="decimal" placeholder="${T.current}"></div><div class="form-row"><input id="sc-monthly" class="fi" inputmode="decimal" placeholder="${T.monthlyAdd}"><input id="sc-months" class="fi" inputmode="decimal" placeholder="${T.termMonths}"></div><button class="btn btn-p" style="width:100%" onclick="calcSavings()">${T.calculate}</button><div id="sc-result" class="calc-note">${T.needInput}</div></div>`;}
+function investCalcHtml(T){return `<div class="calc-card"><div class="calc-title">📈 ${T.investCalc}</div><div class="calc-desc">${T.investDesc}</div><div class="form-row"><input id="ic-initial" class="fi" inputmode="decimal" placeholder="${T.initial}"><input id="ic-monthly" class="fi" inputmode="decimal" placeholder="${T.monthlyAdd}"></div><div class="form-row"><input id="ic-rate" class="fi" inputmode="decimal" placeholder="${T.annualRate}"><input id="ic-years" class="fi" inputmode="decimal" placeholder="${T.years}"></div><button class="btn btn-p" style="width:100%" onclick="calcInvest()">${T.calculate}</button><div id="ic-result" class="calc-note">${T.needInput}</div></div>`;}
+function resultGrid(items){return `<div class="calc-result-grid">${items.map(x=>`<div class="calc-result"><div class="k">${x[0]}</div><div class="v">${x[1]}</div></div>`).join('')}</div>`;}
+function calcDebt(){
+  const T=calcText(), P=parseAmt(document.getElementById('dc-amount').value), annual=parseAmt(document.getElementById('dc-rate').value), n=Math.max(0,Math.round(parseAmt(document.getElementById('dc-months').value)));
+  const el=document.getElementById('dc-result'); if(!P||!n){el.textContent=T.needInput;return;}
+  const r=annual/100/12; const pay=r?P*r/(1-Math.pow(1+r,-n)):P/n; const total=pay*n; const interest=total-P;
+  el.innerHTML=resultGrid([[T.monthlyPay,fmt(pay)],[T.totalPay,fmt(total)],[T.totalInterest,fmt(interest)],[T.overpay,fmt(Math.max(0,interest))]]);
+}
+function calcSavings(){
+  const T=calcText(), target=parseAmt(document.getElementById('sc-target').value), cur=parseAmt(document.getElementById('sc-current').value), monthly=parseAmt(document.getElementById('sc-monthly').value), deadline=Math.round(parseAmt(document.getElementById('sc-months').value));
+  const el=document.getElementById('sc-result'); if(!target){el.textContent=T.needInput;return;}
+  const left=Math.max(0,target-cur); const months=monthly>0?Math.ceil(left/monthly):0; const needed=deadline>0?Math.ceil(left/deadline):0;
+  el.innerHTML=resultGrid([[T.left,fmt(left)],[T.monthsToGoal,months?months+' '+T.months:'—'],[T.neededMonthly,needed?fmt(needed):'—'],[T.current,fmt(cur)]]);
+}
+function calcInvest(){
+  const T=calcText(), initial=parseAmt(document.getElementById('ic-initial').value), monthly=parseAmt(document.getElementById('ic-monthly').value), annual=parseAmt(document.getElementById('ic-rate').value), years=parseAmt(document.getElementById('ic-years').value);
+  const el=document.getElementById('ic-result'); if(!years||(!initial&&!monthly)){el.textContent=T.needInput;return;}
+  const n=Math.round(years*12), r=annual/100/12;
+  const fvInitial=initial*Math.pow(1+r,n);
+  const fvMonthly=r?monthly*((Math.pow(1+r,n)-1)/r):monthly*n;
+  const fv=fvInitial+fvMonthly; const contributed=initial+monthly*n; const profit=fv-contributed; const pct=contributed>0?profit/contributed*100:0;
+  el.innerHTML=resultGrid([[T.futureValue,fmt(fv)],[T.contributed,fmt(contributed)],[T.profit,(profit>=0?'+':'')+fmt(profit)],[T.returnPct,fmtP(pct)]]);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 const hadData=loadData();
 normalizeDefaultCatColors();
@@ -3334,6 +3434,7 @@ if(budgetType==='income'){
 
 // Setup comma-formatted inputs
 ['t-amount','g-target','g-saved','d-total','d-rem','d-mon','i-invested','i-current'].forEach(setupAmtInput);
+setupCalcTabs();
 
 rTIrow();rTCrow();rBIrow();rBCrow();
 rInvSel('t-inv-type');rInvSel('i-type');
