@@ -1409,6 +1409,18 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .loan-calc-btn{width:100%;min-height:54px !important;margin:4px 0 12px !important;border-radius:24px !important;font-size:16px !important;}
 .loan-calc-empty{padding:16px;border-radius:22px;background:rgba(73,176,182,.07);border:1px dashed rgba(73,176,182,.24);color:#6B7280;font-size:13px;font-weight:800;line-height:1.5;text-align:center;margin:12px 0;}
 
+
+
+/* ── Möngö V29.2 Investment calculator polish ── */
+.inv-scenario-wrap,.inv-allocation-wrap{margin-top:12px;border:1px solid rgba(73,176,182,.14);border-radius:24px;background:rgba(255,255,255,.72);padding:12px;box-shadow:0 8px 22px rgba(31,127,134,.07)}
+.inv-scenario-wrap canvas{width:100%;height:180px;display:block}
+.inv-allocation-wrap{display:grid;grid-template-columns:132px 1fr;gap:12px;align-items:center}
+.inv-allocation-wrap canvas{width:132px!important;height:132px!important}
+.inv-risk-note{margin-top:10px;padding:12px 14px;border-radius:22px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.10));color:#1F7F86;font-size:12px;font-weight:850;line-height:1.55}
+.inv-real-card .v{color:#0F766E!important}.inv-profit-card .v{color:#1F7F86!important}.inv-risk-card .v{color:#B7791F!important}
+@media(max-width:520px){.inv-allocation-wrap{grid-template-columns:1fr}.inv-allocation-wrap canvas{margin:0 auto}.inv-scenario-wrap canvas{height:170px}}
+@media(prefers-color-scheme:dark){.inv-scenario-wrap,.inv-allocation-wrap{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
+
 </style>
 </head>
 <body>
@@ -1815,38 +1827,104 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 <!-- INVEST -->
 <div id="tab-invest" class="section">
-  <div class="card">
-    <div class="card-title" id="lbl-addinvest"></div>
-    <div class="notice" style="margin-bottom:9px"><span style="font-size:14px">💡</span><span id="lbl-investinfo"></span></div>
-    <div class="form-row">
-      <input type="text" class="fi" id="i-name">
-      <select class="fi" id="i-type"></select>
-    </div>
-    <div class="form-row" style="align-items:flex-end">
-      <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-i-invested-lbl"></span>
-        <input type="text" class="fi" id="i-invested" placeholder="0" inputmode="decimal">
+  <div class="calc-tabs">
+    <button class="calc-tab-btn active" onclick="showCalcPanel('invest','mine',this)" id="invest-tab-mine">Миний хөрөнгө</button>
+    <button class="calc-tab-btn" onclick="showCalcPanel('invest','calc',this)" id="invest-tab-calc">Тооцоолуур</button>
+  </div>
+  <div id="invest-panel-mine" class="calc-panel active">
+    <div class="card">
+      <div class="card-title" id="lbl-addinvest"></div>
+      <div class="notice" style="margin-bottom:9px"><span style="font-size:14px">💡</span><span id="lbl-investinfo"></span></div>
+      <div class="form-row">
+        <input type="text" class="fi" id="i-name">
+        <select class="fi" id="i-type"></select>
       </div>
-      <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-i-current-lbl"></span>
-        <input type="text" class="fi" id="i-current" placeholder="0" inputmode="decimal">
+      <div class="form-row" style="align-items:flex-end">
+        <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-i-invested-lbl"></span>
+          <input type="text" class="fi" id="i-invested" placeholder="0" inputmode="decimal">
+        </div>
+        <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-i-current-lbl"></span>
+          <input type="text" class="fi" id="i-current" placeholder="0" inputmode="decimal">
+        </div>
+        <button class="btn btn-p" onclick="addInvest()" id="btn-addinvest" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
       </div>
-      <button class="btn btn-p" onclick="addInvest()" id="btn-addinvest" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
+      <div style="margin-bottom:7px;display:flex;flex-direction:column;gap:3px">
+        <span class="slbl" id="lbl-i-date-lbl"></span>
+        <input type="date" class="fi" id="i-date" style="width:100%">
+      </div>
     </div>
-    <div style="margin-bottom:7px;display:flex;flex-direction:column;gap:3px">
-      <span class="slbl" id="lbl-i-date-lbl"></span>
-      <input type="date" class="fi" id="i-date" style="width:100%">
+    <div class="sgrid" style="margin-bottom:11px">
+      <div class="metric" style="background:var(--brand-light)"><div class="metric-lbl" style="color:var(--brand-dark)" id="lbl-totalin"></div><div class="metric-val" style="color:var(--brand-dark)" id="i-total-in">0</div></div>
+      <div class="metric" style="background:var(--green-light)"><div class="metric-lbl" style="color:var(--green-dark)" id="lbl-curval"></div><div class="metric-val" style="color:var(--green-dark)" id="i-total-cur">0</div></div>
+      <div class="metric" id="i-pnl-card"><div class="metric-lbl" id="lbl-pnl2"></div><div class="metric-val" id="i-pnl-val">0</div></div>
+      <div class="metric" id="i-pct-card"><div class="metric-lbl" id="lbl-return"></div><div class="metric-val" id="i-pct-val">0%</div></div>
+    </div>
+    <div id="invest-list"></div>
+  </div>
+  <div id="invest-panel-calc" class="calc-panel">
+    <div class="calc-card inv-calc-card">
+      <div class="calc-title" id="lbl-inv-calc-title">Хөрөнгө оруулалтын тооцоолуур</div>
+      <div class="calc-desc" id="lbl-inv-calc-desc">Нийлмэл өсөлт, инфляц хассан бодит үнэ цэн, 3 хувилбарын ирээдүйн үр дүнг тооцно.</div>
+      <div class="form-row">
+        <div style="flex:1;min-width:130px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-initial">Анхны хөрөнгө</span>
+          <input type="text" class="fi" id="inv-calc-initial" placeholder="5,000,000" inputmode="decimal" data-amt="1">
+        </div>
+        <div style="flex:1;min-width:130px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-monthly">Сар бүр нэмэх дүн</span>
+          <input type="text" class="fi" id="inv-calc-monthly" placeholder="200,000" inputmode="decimal" data-amt="1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-years">Хугацаа / жил</span>
+          <input type="number" class="fi" id="inv-calc-years" placeholder="10" min="1">
+        </div>
+        <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-risk">Эрсдэлийн түвшин</span>
+          <select class="fi" id="inv-calc-risk" onchange="applyInvRiskRate()">
+            <option value="conservative" id="inv-risk-conservative">Консерватив</option>
+            <option value="balanced" id="inv-risk-balanced" selected>Дундаж</option>
+            <option value="aggressive" id="inv-risk-aggressive">Агрессив</option>
+            <option value="custom" id="inv-risk-custom">Гараар</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:100px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-rate">Жилийн өгөөж (%)</span>
+          <input type="number" class="fi" id="inv-calc-rate" placeholder="15" value="14" step="0.1">
+        </div>
+        <div style="flex:1;min-width:100px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-inflation">Инфляц (%)</span>
+          <input type="number" class="fi" id="inv-calc-inflation" placeholder="8" value="8" step="0.1">
+        </div>
+      </div>
+      <button class="btn btn-p loan-calc-btn" onclick="calcInvestmentAdvanced(true)" id="btn-inv-calc-run">Тооцоолох</button>
+      <div class="loan-calc-empty" id="inv-calc-empty">Анхны хөрөнгө, сар бүр нэмэх дүн, хугацаагаа оруулаад “Тооцоолох” дарна уу.</div>
+      <div class="loan-highlight" id="inv-main-value" style="display:none">0</div>
+      <div class="calc-result-grid" id="inv-result-grid" style="display:none">
+        <div class="calc-result"><div class="k" id="lbl-inv-future">Ирээдүйн хөрөнгө</div><div class="v" id="inv-res-future">0</div></div>
+        <div class="calc-result inv-real-card"><div class="k" id="lbl-inv-real">Инфляц хассан бодит үнэ</div><div class="v" id="inv-res-real">0</div></div>
+        <div class="calc-result"><div class="k" id="lbl-inv-total-invested">Нийт оруулсан</div><div class="v" id="inv-res-invested">0</div></div>
+        <div class="calc-result inv-profit-card"><div class="k" id="lbl-inv-profit">Цэвэр ашиг</div><div class="v" id="inv-res-profit">0</div></div>
+        <div class="calc-result inv-risk-card"><div class="k" id="lbl-inv-real-rate">Бодит өгөөж</div><div class="v" id="inv-res-real-rate">0%</div></div>
+      </div>
+      <div class="inv-scenario-wrap" id="inv-scenario-wrap" style="display:none">
+        <div class="calc-title" style="font-size:15px;margin-bottom:8px" id="lbl-inv-scenario">3 хувилбарын өсөлт</div>
+        <canvas id="inv-scenario-chart" width="620" height="210"></canvas>
+        <div class="leg" id="inv-scenario-legend" style="margin-top:6px"></div>
+      </div>
+      <div class="inv-allocation-wrap" id="inv-allocation-wrap" style="display:none">
+        <canvas id="inv-allocation-donut" width="132" height="132"></canvas>
+        <div class="leg" id="inv-allocation-legend"></div>
+      </div>
+      <div class="inv-risk-note" id="inv-risk-note" style="display:none"></div>
     </div>
   </div>
-  <div class="sgrid" style="margin-bottom:11px">
-    <div class="metric" style="background:var(--brand-light)"><div class="metric-lbl" style="color:var(--brand-dark)" id="lbl-totalin"></div><div class="metric-val" style="color:var(--brand-dark)" id="i-total-in">0</div></div>
-    <div class="metric" style="background:var(--green-light)"><div class="metric-lbl" style="color:var(--green-dark)" id="lbl-curval"></div><div class="metric-val" style="color:var(--green-dark)" id="i-total-cur">0</div></div>
-    <div class="metric" id="i-pnl-card"><div class="metric-lbl" id="lbl-pnl2"></div><div class="metric-val" id="i-pnl-val">0</div></div>
-    <div class="metric" id="i-pct-card"><div class="metric-lbl" id="lbl-return"></div><div class="metric-val" id="i-pct-val">0%</div></div>
-  </div>
-  <div id="invest-list"></div>
 </div>
-
 
 <!-- PROFILE -->
 <div id="tab-profile" class="section">
@@ -1862,7 +1940,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V29.1</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V29.2</div></div>
   </div>
   <div class="card">
     <div class="card-title" id="lbl-profile-help"></div>
@@ -3715,6 +3793,115 @@ requestAnimationFrame(()=>{
   ['loan-calc-amount','loan-calc-extra'].forEach(setupAmtInput);
   updateCalcTexts();
 });
+
+// ── Möngö V29.2 Investment calculator ─────────────────────────────────────
+const INVEST_CALC_EXTRA={
+  mn:{myInvest:'Миний хөрөнгө',invCalcTitle:'Хөрөнгө оруулалтын тооцоолуур',invCalcDesc:'Нийлмэл өсөлт, инфляц хассан бодит үнэ цэн, 3 хувилбарын ирээдүйн үр дүнг тооцно.',invInitial:'Анхны хөрөнгө',invMonthly:'Сар бүр нэмэх дүн',invYears:'Хугацаа / жил',invRisk:'Эрсдэлийн түвшин',invConservative:'Консерватив',invBalanced:'Дундаж',invAggressive:'Агрессив',invCustom:'Гараар',invRate:'Жилийн өгөөж (%)',invInflation:'Инфляц (%)',invCalcRun:'Тооцоолох',invEmpty:'Анхны хөрөнгө, сар бүр нэмэх дүн, хугацаагаа оруулаад “Тооцоолох” дарна уу.',invRequired:'Хөрөнгө, хугацаа, өгөөжийн утгаа зөв оруулна уу.',invFuture:'Ирээдүйн хөрөнгө',invReal:'Инфляц хассан бодит үнэ',invTotalInvested:'Нийт оруулсан',invProfit:'Цэвэр ашиг',invRealRate:'Бодит өгөөж',invScenario:'3 хувилбарын өсөлт',invBad:'Муу хувилбар',invExpected:'Дундаж хувилбар',invBest:'Шилдэг хувилбар',invAllocation:'Санал болгох багц',invRiskNote:'Энэ нь баталгаатай өгөөж биш. Эрсдэл өндөр байх тусам хэлбэлзэл ихэсдэг тул төрөлжүүлэлт чухал.'},
+  en:{myInvest:'My assets',invCalcTitle:'Investment calculator',invCalcDesc:'Calculate compound growth, inflation-adjusted value, and three future scenarios.',invInitial:'Initial investment',invMonthly:'Monthly contribution',invYears:'Term / years',invRisk:'Risk level',invConservative:'Conservative',invBalanced:'Balanced',invAggressive:'Aggressive',invCustom:'Custom',invRate:'Annual return (%)',invInflation:'Inflation (%)',invCalcRun:'Calculate',invEmpty:'Enter initial investment, monthly contribution, and term, then tap Calculate.',invRequired:'Please enter valid investment values, term, and return.',invFuture:'Future value',invReal:'Real value after inflation',invTotalInvested:'Total invested',invProfit:'Net profit',invRealRate:'Real return',invScenario:'3 scenario growth',invBad:'Low scenario',invExpected:'Expected',invBest:'Best scenario',invAllocation:'Suggested allocation',invRiskNote:'This is not a guaranteed return. Higher risk means higher volatility, so diversification matters.'}
+};
+Object.keys(INVEST_CALC_EXTRA).forEach(k=>Object.assign(CALC_LANGS[k],INVEST_CALC_EXTRA[k]));
+['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en,CALC_LANGS[k]||{});});
+const _origShowCalcPanel=showCalcPanel;
+showCalcPanel=function(section,panel,btn){
+  _origShowCalcPanel(section,panel,btn);
+  if(section==='invest'&&panel==='calc')clearInvCalcResults();
+};
+const _origUpdateCalcTexts=updateCalcTexts;
+updateCalcTexts=function(){
+  _origUpdateCalcTexts();
+  const t=CT();
+  const map={
+    'invest-tab-mine':t.myInvest,'invest-tab-calc':t.calc,'lbl-inv-calc-title':t.invCalcTitle,'lbl-inv-calc-desc':t.invCalcDesc,
+    'lbl-inv-initial':t.invInitial,'lbl-inv-monthly':t.invMonthly,'lbl-inv-years':t.invYears,'lbl-inv-risk':t.invRisk,
+    'inv-risk-conservative':t.invConservative,'inv-risk-balanced':t.invBalanced,'inv-risk-aggressive':t.invAggressive,'inv-risk-custom':t.invCustom,
+    'lbl-inv-rate':t.invRate,'lbl-inv-inflation':t.invInflation,'btn-inv-calc-run':t.invCalcRun,'inv-calc-empty':t.invEmpty,
+    'lbl-inv-future':t.invFuture,'lbl-inv-real':t.invReal,'lbl-inv-total-invested':t.invTotalInvested,'lbl-inv-profit':t.invProfit,
+    'lbl-inv-real-rate':t.invRealRate,'lbl-inv-scenario':t.invScenario
+  };
+  Object.entries(map).forEach(([id,txt])=>{const el=document.getElementById(id); if(el)el.textContent=txt;});
+  clearInvCalcResults();
+};
+function applyInvRiskRate(){
+  const risk=document.getElementById('inv-calc-risk')?.value;
+  const rate=document.getElementById('inv-calc-rate');
+  if(!rate)return;
+  const vals={conservative:10,balanced:14,aggressive:22};
+  if(vals[risk]!=null)rate.value=vals[risk];
+}
+function clearInvCalcResults(){
+  ['inv-main-value','inv-result-grid','inv-scenario-wrap','inv-allocation-wrap','inv-risk-note'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
+  const empty=document.getElementById('inv-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=CT().invEmpty;}
+  ['inv-res-future','inv-res-real','inv-res-invested','inv-res-profit','inv-main-value'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent='0';});
+  const rr=document.getElementById('inv-res-real-rate'); if(rr)rr.textContent='0%';
+  ['inv-scenario-legend','inv-allocation-legend'].forEach(id=>{const el=document.getElementById(id); if(el)el.innerHTML='';});
+  ['inv-scenario-chart','inv-allocation-donut'].forEach(id=>{const c=document.getElementById(id); if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}});
+}
+function futureValue(principal,monthly,annualRate,years){
+  const r=annualRate/12/100, n=Math.max(0,Math.round(years*12));
+  let fvPrincipal=principal*Math.pow(1+r,n);
+  let fvContrib=r===0?monthly*n:monthly*((Math.pow(1+r,n)-1)/r);
+  return fvPrincipal+fvContrib;
+}
+function calcInvestmentAdvanced(run){
+  const initial=parseAmt(document.getElementById('inv-calc-initial')?.value);
+  const monthly=parseAmt(document.getElementById('inv-calc-monthly')?.value);
+  const years=parseFloat(document.getElementById('inv-calc-years')?.value)||0;
+  const rate=parseFloat(document.getElementById('inv-calc-rate')?.value)||0;
+  const inflation=parseFloat(document.getElementById('inv-calc-inflation')?.value)||0;
+  const t=CT();
+  if(!run && !initial && !monthly && !years){clearInvCalcResults();return;}
+  if((initial<=0&&monthly<=0)||years<=0||rate<0||inflation<0){clearInvCalcResults();const e=document.getElementById('inv-calc-empty');if(e){e.style.display='block';e.textContent=t.invRequired;}return;}
+  const fv=futureValue(initial,monthly,rate,years);
+  const totalInvested=initial+monthly*Math.round(years*12);
+  const profit=fv-totalInvested;
+  const real=fv/Math.pow(1+inflation/100,years);
+  const realRate=((1+rate/100)/(1+inflation/100)-1)*100;
+  document.getElementById('inv-calc-empty').style.display='none';
+  document.getElementById('inv-main-value').style.display='block';
+  document.getElementById('inv-result-grid').style.display='grid';
+  document.getElementById('inv-scenario-wrap').style.display='block';
+  document.getElementById('inv-allocation-wrap').style.display='grid';
+  document.getElementById('inv-risk-note').style.display='block';
+  document.getElementById('inv-main-value').textContent=fmt(fv);
+  document.getElementById('inv-res-future').textContent=fmt(fv);
+  document.getElementById('inv-res-real').textContent=fmt(real);
+  document.getElementById('inv-res-invested').textContent=fmt(totalInvested);
+  document.getElementById('inv-res-profit').textContent=fmt(profit);
+  document.getElementById('inv-res-real-rate').textContent=(realRate>=0?'+':'')+realRate.toFixed(1)+'%';
+  document.getElementById('inv-risk-note').textContent=t.invRiskNote;
+  drawInvestmentScenario(initial,monthly,rate,years);
+  drawInvestmentAllocation(document.getElementById('inv-calc-risk').value);
+}
+function drawInvestmentScenario(initial,monthly,rate,years){
+  const t=CT(); const c=document.getElementById('inv-scenario-chart'); if(!c)return; const ctx=c.getContext('2d');
+  const W=c.width,H=c.height,pad=28; ctx.clearRect(0,0,W,H);
+  const yrs=Math.max(1,Math.round(years));
+  const rates=[Math.max(0,rate-5),rate,rate+5]; const labels=[t.invBad,t.invExpected,t.invBest]; const colors=['#E0635C','#49B0B6','#1D9E75'];
+  const series=rates.map(r=>Array.from({length:yrs+1},(_,i)=>futureValue(initial,monthly,r,i)));
+  const max=Math.max(...series.flat(),1);
+  ctx.strokeStyle='rgba(73,176,182,.18)';ctx.lineWidth=1;
+  for(let i=0;i<4;i++){const y=pad+(H-pad*2)*i/3;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  series.forEach((arr,si)=>{ctx.beginPath();arr.forEach((v,i)=>{const x=pad+(W-pad*2)*i/yrs;const y=H-pad-(H-pad*2)*v/max;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.strokeStyle=colors[si];ctx.lineWidth=si===1?4:3;ctx.stroke();});
+  ctx.fillStyle='#6B7280';ctx.font='12px sans-serif';ctx.fillText('0',8,H-pad+4);ctx.fillText(fmt(max).replace(CS,''),8,pad+4);
+  const leg=document.getElementById('inv-scenario-legend');
+  if(leg)leg.innerHTML=labels.map((l,i)=>`<div class="li2"><span class="ldot" style="background:${colors[i]}"></span>${l}: ${fmt(series[i][series[i].length-1])}</div>`).join('');
+}
+function drawInvestmentAllocation(risk){
+  const t=CT(); const c=document.getElementById('inv-allocation-donut'); if(!c)return;
+  let parts,labels;
+  if(risk==='conservative'){parts=[60,25,10,5];labels=['Бонд','Сан','Хувьцаа','Бэлэн'];}
+  else if(risk==='aggressive'){parts=[15,20,50,15];labels=['Бонд','Сан','Хувьцаа','Өсөлт'];}
+  else if(risk==='custom'){parts=[25,25,35,15];labels=['Бонд','Сан','Хувьцаа','Бусад'];}
+  else{parts=[35,30,25,10];labels=['Бонд','Сан','Хувьцаа','Үл хөдлөх'];}
+  const colors=['#F59E0B','#49B0B6','#1D9E75','#8B5CF6']; drawDonut(c,parts,colors);
+  const el=document.getElementById('inv-allocation-legend');
+  if(el)el.innerHTML=`<div class="li2" style="font-weight:950;color:var(--text)">${t.invAllocation}</div>`+parts.map((p,i)=>`<div class="li2"><span class="ldot" style="background:${colors[i]}"></span>${labels[i]}: ${p}%</div>`).join('');
+}
+requestAnimationFrame(()=>{
+  ['inv-calc-initial','inv-calc-monthly'].forEach(setupAmtInput);
+  applyInvRiskRate(); clearInvCalcResults();
+});
+
 </script>
 
 <!-- ── Firebase Auth ── -->
