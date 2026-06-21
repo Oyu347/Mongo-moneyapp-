@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-Möngö V28 Correct Latest Base
+Möngö V29.9 Dashboard Guide + FIRE Target
 Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
 Preserves: V22-V25 budget/search/dashboard improvements + V27 profile/material icons/header language.
 Adds: profile email fix, transaction subcategory selector UI, finance dashboard guide.
@@ -2259,6 +2259,18 @@ const V282_GUIDE_LANGS={
 };
 Object.keys(V282_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V282_GUIDE_LANGS[k]));
 
+
+const V299_METRIC_GUIDE_LANGS={
+  mn:{helpMetrics:'Санхүүгийн үзүүлэлтүүд',helpMetricsA:'Мөнгөн урсгал = орлого − зарлага. Эерэг байвал та орлогоосоо бага зарцуулж байна гэсэн үг. Хуримтлалын хувь = хуримтлалд хийсэн дүн / орлого × 100. Цэвэр хөрөнгө = хөрөнгө оруулалт + хуримтлал − зээл. Санхүүгийн эрх чөлөөний зорилтот дүн = жилийн зарлага × 25; таны цэвэр хөрөнгө энэ дүнд хүрвэл санхүүгийн эрх чөлөөнд ойртсон гэж тооцно.'},
+  en:{helpMetrics:'Finance metrics',helpMetricsA:'Money flow = income − expenses. A positive number means you spend less than you earn. Savings rate = amount saved / income × 100. Net worth = investments + savings − loans. Financial freedom target = annual expenses × 25; when net worth reaches this target, you are considered close to financial freedom.'},
+  zh:{helpMetrics:'财务指标',helpMetricsA:'资金流 = 收入 − 支出。为正表示支出低于收入。储蓄率 = 储蓄金额 / 收入 × 100。净资产 = 投资 + 储蓄 − 贷款。财务自由目标 = 年支出 × 25；当净资产达到该目标时，即接近财务自由。'},
+  ja:{helpMetrics:'財務指標',helpMetricsA:'お金の流れ＝収入−支出。プラスなら収入より少なく使えている状態です。貯蓄率＝貯蓄額 / 収入 × 100。純資産＝投資＋貯蓄−ローン。経済的自由の目標額＝年間支出×25。純資産がこの金額に達すると経済的自由に近づいたと考えます。'},
+  ko:{helpMetrics:'재무 지표',helpMetricsA:'돈의 흐름 = 수입 − 지출입니다. 플러스이면 번 돈보다 적게 쓰고 있다는 뜻입니다. 저축률 = 저축액 / 수입 × 100. 순자산 = 투자 + 저축 − 대출. 경제적 자유 목표금액 = 연간 지출 × 25이며, 순자산이 이 금액에 도달하면 경제적 자유에 가까워졌다고 봅니다.'},
+  ru:{helpMetrics:'Финансовые показатели',helpMetricsA:'Денежный поток = доходы − расходы. Положительное значение означает, что вы тратите меньше, чем зарабатываете. Норма сбережений = сумма сбережений / доход × 100. Чистый капитал = инвестиции + сбережения − кредиты. Цель финансовой свободы = годовые расходы × 25; когда чистый капитал достигает этой суммы, вы близки к финансовой свободе.'},
+  de:{helpMetrics:'Finanzkennzahlen',helpMetricsA:'Geldfluss = Einnahmen − Ausgaben. Ein positiver Wert bedeutet, dass du weniger ausgibst als du verdienst. Sparquote = gesparter Betrag / Einnahmen × 100. Nettovermögen = Investitionen + Ersparnisse − Kredite. Ziel für finanzielle Freiheit = jährliche Ausgaben × 25; wenn dein Nettovermögen dieses Ziel erreicht, giltst du als der finanziellen Freiheit nah.'}
+};
+Object.keys(V299_METRIC_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V299_METRIC_GUIDE_LANGS[k]));
+
 const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨🇳 中文',ja:'🇯🇵 日本語',ko:'🇰🇷 한국어',ru:'🇷🇺 Русский',de:'🇩🇪 Deutsch'};
 
 const ICOLS={stock:'#185FA5',crypto:'#BA7517',real:'#49b0b6',fund:'#1D9E75',bond:'#5F5E5A',gold:'#EF9F27',other:'#D4537E'};
@@ -2640,6 +2652,7 @@ function rProfile(){
       [L.helpBudget,L.helpBudgetA],
       [L.helpSavings,L.helpSavingsA],
       [L.helpInvest,L.helpInvestA],
+      [L.helpMetrics,L.helpMetricsA],
       [L.helpScore,L.helpScoreA],
       [L.helpDataProtect,L.helpDataProtectA],
       [L.helpBackup,L.helpBackupA],
@@ -3058,13 +3071,13 @@ function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEac
 // ── Möngö V25 Premium Finance Dashboard logic ─────────────────────────────
 function pDashText(){
   const d={
-    mn:{title:'Санхүүгийн самбар',sub:'Money Flow System',cashflow:'Мөнгөн урсгал',saveRate:'Хуримтлалын хувь',net:'Цэвэр хөрөнгө',score:'Санхүүгийн оноо',fire:'Санхүүгийн эрх чөлөө',positive:'Эерэг мөнгөн урсгал',negative:'Сөрөг мөнгөн урсгал',good:'Маш сайн',ok:'Сайн',watch:'Анхаарах',netNote:'Хөрөнгө − Зээл',fireNote:'Санхүүгийн эрх чөлөөний ахиц',needData:'Илүү их өгөгдөл хэрэгтэй'},
-    en:{title:'Finance Dashboard',sub:'Money Flow System',cashflow:'Money flow',saveRate:'Savings rate',net:'Net worth',score:'Financial score',fire:'Financial freedom progress',positive:'Positive money flow',negative:'Negative money flow',good:'Excellent',ok:'Good',watch:'Needs attention',netNote:'Assets − Loans',fireNote:'Progress toward financial freedom',needData:'Needs more data'},
-    zh:{title:'财务仪表盘',sub:'Money Flow System',cashflow:'资金流',saveRate:'储蓄率',net:'净资产',score:'财务评分',fire:'财务自由进度',positive:'正向资金流',negative:'负向资金流',good:'优秀',ok:'良好',watch:'需关注',netNote:'资产 − 贷款',fireNote:'财务自由进度',needData:'需要更多数据'},
-    ja:{title:'財務ダッシュボード',sub:'Money Flow System',cashflow:'お金の流れ',saveRate:'貯蓄率',net:'純資産',score:'財務スコア',fire:'経済的自由の進捗',positive:'プラスのお金の流れ',negative:'マイナスのお金の流れ',good:'とても良い',ok:'良い',watch:'要注意',netNote:'資産 − ローン',fireNote:'経済的自由への進捗',needData:'データが必要'},
-    ko:{title:'재무 대시보드',sub:'Money Flow System',cashflow:'돈의 흐름',saveRate:'저축률',net:'순자산',score:'재무 점수',fire:'경제적 자유 진행률',positive:'긍정적 돈의 흐름',negative:'부정적 돈의 흐름',good:'매우 좋음',ok:'좋음',watch:'주의 필요',netNote:'자산 − 대출',fireNote:'경제적 자유를 향한 진행률',needData:'데이터가 더 필요해요'},
-    ru:{title:'Финансовая панель',sub:'Money Flow System',cashflow:'Денежный поток',saveRate:'Норма сбережений',net:'Чистый капитал',score:'Финансовый балл',fire:'Прогресс к финансовой свободе',positive:'Положительный денежный поток',negative:'Отрицательный денежный поток',good:'Отлично',ok:'Хорошо',watch:'Нужно внимание',netNote:'Активы − кредиты',fireNote:'Прогресс к финансовой свободе',needData:'Нужно больше данных'},
-    de:{title:'Finanz-Dashboard',sub:'Money Flow System',cashflow:'Geldfluss',saveRate:'Sparquote',net:'Nettovermögen',score:'Finanz-Score',fire:'Fortschritt zur finanziellen Freiheit',positive:'Positiver Geldfluss',negative:'Negativer Geldfluss',good:'Sehr gut',ok:'Gut',watch:'Achtung',netNote:'Vermögen − Kredite',fireNote:'Fortschritt zur finanziellen Freiheit',needData:'Mehr Daten nötig'}
+    mn:{title:'Санхүүгийн самбар',sub:'Money Flow System',cashflow:'Мөнгөн урсгал',saveRate:'Хуримтлалын хувь',net:'Цэвэр хөрөнгө',score:'Санхүүгийн оноо',fire:'Санхүүгийн эрх чөлөө',positive:'Эерэг мөнгөн урсгал',negative:'Сөрөг мөнгөн урсгал',good:'Маш сайн',ok:'Сайн',watch:'Анхаарах',netNote:'Хөрөнгө − Зээл',fireNote:'Санхүүгийн эрх чөлөөний ахиц',needData:'Илүү их өгөгдөл хэрэгтэй',fireTargetLabel:'Зорилтот дүн'},
+    en:{title:'Finance Dashboard',sub:'Money Flow System',cashflow:'Money flow',saveRate:'Savings rate',net:'Net worth',score:'Financial score',fire:'Financial freedom progress',positive:'Positive money flow',negative:'Negative money flow',good:'Excellent',ok:'Good',watch:'Needs attention',netNote:'Assets − Loans',fireNote:'Progress toward financial freedom',needData:'Needs more data',fireTargetLabel:'Target amount'},
+    zh:{title:'财务仪表盘',sub:'Money Flow System',cashflow:'资金流',saveRate:'储蓄率',net:'净资产',score:'财务评分',fire:'财务自由进度',positive:'正向资金流',negative:'负向资金流',good:'优秀',ok:'良好',watch:'需关注',netNote:'资产 − 贷款',fireNote:'财务自由进度',needData:'需要更多数据',fireTargetLabel:'目标金额'},
+    ja:{title:'財務ダッシュボード',sub:'Money Flow System',cashflow:'お金の流れ',saveRate:'貯蓄率',net:'純資産',score:'財務スコア',fire:'経済的自由の進捗',positive:'プラスのお金の流れ',negative:'マイナスのお金の流れ',good:'とても良い',ok:'良い',watch:'要注意',netNote:'資産 − ローン',fireNote:'経済的自由への進捗',needData:'データが必要',fireTargetLabel:'目標額'},
+    ko:{title:'재무 대시보드',sub:'Money Flow System',cashflow:'돈의 흐름',saveRate:'저축률',net:'순자산',score:'재무 점수',fire:'경제적 자유 진행률',positive:'긍정적 돈의 흐름',negative:'부정적 돈의 흐름',good:'매우 좋음',ok:'좋음',watch:'주의 필요',netNote:'자산 − 대출',fireNote:'경제적 자유를 향한 진행률',needData:'데이터가 더 필요해요',fireTargetLabel:'목표 금액'},
+    ru:{title:'Финансовая панель',sub:'Money Flow System',cashflow:'Денежный поток',saveRate:'Норма сбережений',net:'Чистый капитал',score:'Финансовый балл',fire:'Прогресс к финансовой свободе',positive:'Положительный денежный поток',negative:'Отрицательный денежный поток',good:'Отлично',ok:'Хорошо',watch:'Нужно внимание',netNote:'Активы − кредиты',fireNote:'Прогресс к финансовой свободе',needData:'Нужно больше данных',fireTargetLabel:'Целевая сумма'},
+    de:{title:'Finanz-Dashboard',sub:'Money Flow System',cashflow:'Geldfluss',saveRate:'Sparquote',net:'Nettovermögen',score:'Finanz-Score',fire:'Fortschritt zur finanziellen Freiheit',positive:'Positiver Geldfluss',negative:'Negativer Geldfluss',good:'Sehr gut',ok:'Gut',watch:'Achtung',netNote:'Vermögen − Kredite',fireNote:'Fortschritt zur finanziellen Freiheit',needData:'Mehr Daten nötig',fireTargetLabel:'Zielbetrag'}
   };
   return d[lang]||d.mn;
 }
@@ -3179,7 +3192,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
   setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
   setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
-  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?T.fireNote:T.needData);
+  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
   const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
