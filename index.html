@@ -1495,6 +1495,34 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   #invest-panel-calc .inv-allocation-wrap.show{grid-template-columns:1fr !important;justify-items:center !important;}
 }
 
+
+
+/* ── Möngö V29.7 Savings calculator polish ── */
+#tab-goals .calc-tabs{
+  display:flex !important;gap:8px !important;margin:0 0 14px !important;padding:6px !important;border-radius:24px !important;
+  background:rgba(255,255,255,.72) !important;border:1px solid rgba(73,176,182,.18) !important;box-shadow:0 10px 24px rgba(31,127,134,.09) !important;
+}
+#tab-goals .calc-tab-btn{appearance:none !important;-webkit-appearance:none !important;flex:1 1 0 !important;border:0 !important;outline:0 !important;min-height:42px !important;border-radius:18px !important;padding:10px 12px !important;background:transparent !important;color:#6B7280 !important;font-size:14px !important;font-weight:950 !important;box-shadow:none !important;}
+#tab-goals .calc-tab-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86) !important;color:#fff !important;box-shadow:0 10px 20px rgba(31,127,134,.24) !important;}
+#tab-goals .calc-panel{display:none !important;}#tab-goals .calc-panel.active{display:block !important;}
+#goals-panel-calc .calc-card{background:rgba(255,255,255,.96) !important;border:1px solid rgba(255,255,255,.92) !important;border-radius:30px !important;padding:18px !important;box-shadow:0 16px 38px rgba(31,127,134,.11) !important;}
+#goals-panel-calc .calc-title{font-size:22px !important;line-height:1.15 !important;margin-bottom:8px !important;}
+#goals-panel-calc .calc-title.small{font-size:16px !important;margin-bottom:10px !important;}
+#goals-panel-calc .calc-desc{font-size:13px !important;line-height:1.5 !important;color:#6B7280 !important;margin-bottom:14px !important;}
+#goals-panel-calc .form-row{gap:12px !important;margin-bottom:12px !important;}
+#goals-panel-calc .slbl{font-size:11px !important;color:#6B7280 !important;font-weight:950 !important;letter-spacing:.05em !important;}
+#goals-panel-calc .fi{min-height:56px !important;border-radius:20px !important;font-size:16px !important;padding:13px 16px !important;background:rgba(255,255,255,.92) !important;}
+#goals-panel-calc .loan-calc-btn{width:100%;min-height:54px !important;margin:4px 0 12px !important;border-radius:24px !important;font-size:16px !important;}
+#goals-panel-calc .calc-result-grid{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;margin-top:12px !important;}
+#goals-panel-calc .calc-result{border-radius:22px !important;padding:13px 14px !important;background:#fff !important;border:1px solid rgba(73,176,182,.14) !important;box-shadow:0 8px 18px rgba(31,127,134,.07) !important;}
+#goals-panel-calc .calc-result .k{font-size:11px !important;color:#6B7280 !important;font-weight:950 !important;margin-bottom:6px !important;}
+#goals-panel-calc .calc-result .v{font-size:18px !important;line-height:1.2 !important;font-weight:1000 !important;color:#1F7F86 !important;}
+.saving-highlight{background:linear-gradient(135deg,rgba(29,158,117,.20),rgba(73,176,182,.12)) !important;color:#08724F !important;}
+.sav-chart-wrap{display:none}.sav-chart-wrap.show{display:block !important}.sav-chart-wrap canvas{width:100%;height:190px;display:block}.sav-chart-wrap .leg{margin-top:8px;gap:8px}
+.saving-challenge-msg{padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(29,158,117,.13),rgba(247,210,74,.12));color:#08724F;font-size:13px;font-weight:900;line-height:1.55;border:1px solid rgba(29,158,117,.14)}
+@media(max-width:520px){#tab-goals .calc-tabs{margin-left:0 !important;margin-right:0 !important;}#tab-goals .calc-tab-btn{font-size:13px !important;min-height:40px !important;}#goals-panel-calc .calc-card{padding:16px !important;border-radius:28px !important;}#goals-panel-calc .form-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;}#goals-panel-calc .form-row > div{min-width:0 !important;}#goals-panel-calc .fi{min-height:54px !important;font-size:15px !important;padding:12px 14px !important;}#goals-panel-calc .calc-result-grid{grid-template-columns:1fr !important;}#goals-panel-calc .loan-highlight{font-size:23px !important;padding:18px 14px !important;}.sav-chart-wrap canvas{height:170px}.saving-challenge-card .form-row{grid-template-columns:1fr !important;}}
+@media(prefers-color-scheme:dark){#goals-panel-calc .calc-card{background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76)) !important;border-color:rgba(116,215,220,.12) !important;}#goals-panel-calc .calc-result{background:rgba(255,255,255,.06) !important}.saving-challenge-msg{color:#74D7DC}}
+
 </style>
 </head>
 <body>
@@ -1773,32 +1801,108 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 <!-- GOALS -->
 <div id="tab-goals" class="section">
-  <div class="card">
-    <div class="card-title" id="lbl-addsaving"></div>
-    <div class="form-row">
-      <div style="flex:2;min-width:120px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-g-name-lbl"></span>
-        <input type="text" class="fi" id="g-name">
-      </div>
-      <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-g-target-lbl"></span>
-        <input type="text" class="fi" id="g-target" placeholder="0" inputmode="decimal">
-      </div>
-    </div>
-    <div class="form-row">
-      <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-g-saved-lbl"></span>
-        <input type="text" class="fi" id="g-saved" placeholder="0" inputmode="decimal">
-      </div>
-      <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl" id="lbl-g-dead-lbl"></span>
-        <input type="text" class="fi" id="g-dead">
-      </div>
-    </div>
-    <button class="btn btn-p" onclick="addGoal()" id="btn-addgoal" style="font-size:16px;padding:6px 16px;min-width:44px;width:100%;margin-top:2px">＋</button>
-    <p style="font-size:11px;color:var(--text2);margin-top:7px" id="lbl-savinginfo"></p>
+  <div class="calc-tabs">
+    <button class="calc-tab-btn active" onclick="showCalcPanel('goals','mine',this)" id="goals-tab-mine">Миний хуримтлал</button>
+    <button class="calc-tab-btn" onclick="showCalcPanel('goals','calc',this)" id="goals-tab-calc">Тооцоолуур</button>
   </div>
-  <div id="goals-list"></div>
+
+  <div id="goals-panel-mine" class="calc-panel active" style="display:block">
+    <div class="card">
+      <div class="card-title" id="lbl-addsaving"></div>
+      <div class="form-row">
+        <div style="flex:2;min-width:120px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-g-name-lbl"></span>
+          <input type="text" class="fi" id="g-name">
+        </div>
+        <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-g-target-lbl"></span>
+          <input type="text" class="fi" id="g-target" placeholder="0" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-g-saved-lbl"></span>
+          <input type="text" class="fi" id="g-saved" placeholder="0" inputmode="decimal">
+        </div>
+        <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-g-dead-lbl"></span>
+          <input type="text" class="fi" id="g-dead">
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="addGoal()" id="btn-addgoal" style="font-size:16px;padding:6px 16px;min-width:44px;width:100%;margin-top:2px">＋</button>
+      <p style="font-size:11px;color:var(--text2);margin-top:7px" id="lbl-savinginfo"></p>
+    </div>
+    <div id="goals-list"></div>
+  </div>
+
+  <div id="goals-panel-calc" class="calc-panel" style="display:none">
+    <div class="calc-card saving-calc-card">
+      <div class="calc-title" id="lbl-sav-calc-title">Хуримтлалын тооцоолуур</div>
+      <div class="calc-desc" id="lbl-sav-calc-desc">Сар бүр хуримтлуулахад ирээдүйд хэд болох, эсвэл зорилгод хүрэхийн тулд сард хэд хэрэгтэйг тооцно.</div>
+      <div class="form-row">
+        <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-start">Эхлэлийн дүн</span>
+          <input type="text" class="fi" id="sav-calc-start" placeholder="0" inputmode="decimal" data-amt="1">
+        </div>
+        <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-monthly">Сар бүр хийх дүн</span>
+          <input type="text" class="fi" id="sav-calc-monthly" placeholder="200,000" inputmode="decimal" data-amt="1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:110px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-years">Хугацаа / жил</span>
+          <input type="number" class="fi" id="sav-calc-years" placeholder="5" min="0.1" step="0.5">
+        </div>
+        <div style="flex:1;min-width:110px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-rate">Жилийн хүү (%)</span>
+          <input type="number" class="fi" id="sav-calc-rate" placeholder="12" min="0" step="0.1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-target">Зорилтот дүн</span>
+          <input type="text" class="fi" id="sav-calc-target" placeholder="50,000,000" inputmode="decimal" data-amt="1">
+        </div>
+      </div>
+      <button class="btn btn-p loan-calc-btn" onclick="calcSavingsAdvanced(true)" id="btn-sav-calc-run">Тооцоолох</button>
+      <div class="loan-calc-empty" id="sav-calc-empty">Эхлэлийн дүн, сар бүр хийх дүн, хугацаа, хүүгээ оруулаад “Тооцоолох” дарна уу.</div>
+      <div class="loan-highlight saving-highlight" id="sav-main-value" style="display:none">0</div>
+      <div class="calc-result-grid" id="sav-result-grid" style="display:none">
+        <div class="calc-result calc-good"><div class="k" id="lbl-sav-total">Нийт хуримтлал</div><div class="v" id="sav-res-total">0</div></div>
+        <div class="calc-result"><div class="k" id="lbl-sav-own">Таны хийсэн мөнгө</div><div class="v" id="sav-res-own">0</div></div>
+        <div class="calc-result calc-good"><div class="k" id="lbl-sav-interest">Хүүгийн ашиг</div><div class="v" id="sav-res-interest">0</div></div>
+        <div class="calc-result"><div class="k" id="lbl-sav-need">Зорилгод хүрэхэд сард</div><div class="v" id="sav-res-need">—</div></div>
+      </div>
+      <div class="inv-scenario-wrap sav-chart-wrap" id="sav-chart-wrap" style="display:none">
+        <div class="calc-title small" id="lbl-sav-chart">Өсөлтийн график</div>
+        <canvas id="sav-growth-chart" width="620" height="220"></canvas>
+        <div class="leg" id="sav-growth-legend"></div>
+      </div>
+    </div>
+
+    <div class="calc-card saving-challenge-card">
+      <div class="calc-title" id="lbl-sav-challenge-title">Кофены мөнгө challenge</div>
+      <div class="calc-desc" id="lbl-sav-challenge-desc">Өдөр бүрийн жижиг зардлыг хуримтлал болгож харвал хэд болж өсөхийг тооцно.</div>
+      <div class="form-row">
+        <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-daily">Өдөр бүр хэмнэх дүн</span>
+          <input type="text" class="fi" id="sav-daily-amount" placeholder="8,000" inputmode="decimal" data-amt="1">
+        </div>
+        <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-ch-years">Хугацаа / жил</span>
+          <input type="number" class="fi" id="sav-ch-years" placeholder="5" min="0.1" step="0.5">
+        </div>
+        <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-sav-ch-rate">Жилийн хүү (%)</span>
+          <input type="number" class="fi" id="sav-ch-rate" placeholder="12" min="0" step="0.1">
+        </div>
+      </div>
+      <button class="btn btn-p loan-calc-btn" onclick="calcSavingsChallenge(true)" id="btn-sav-ch-run">Challenge тооцох</button>
+      <div class="loan-calc-empty" id="sav-ch-empty">Өдөр бүрийн жижиг зардлаа оруулаад тооцоолоорой.</div>
+      <div class="saving-challenge-msg" id="sav-ch-msg" style="display:none"></div>
+    </div>
+  </div>
 </div>
 
 <!-- DEBTS -->
@@ -4004,6 +4108,119 @@ function drawInvestmentAllocation(risk, age=35, years=10){
 requestAnimationFrame(()=>{
   ['inv-calc-initial','inv-calc-monthly'].forEach(setupAmtInput);
   applyInvRiskRate(); clearInvCalcResults();
+});
+
+
+// ── Möngö V29.7 Savings calculator ───────────────────────────────────────
+const SAVINGS_CALC_EXTRA={
+  mn:{mySavings:'Миний хуримтлал',savCalcTitle:'Хуримтлалын тооцоолуур',savCalcDesc:'Сар бүр хуримтлуулахад ирээдүйд хэд болох, эсвэл зорилгод хүрэхийн тулд сард хэд хэрэгтэйг тооцно.',savStart:'Эхлэлийн дүн',savMonthly:'Сар бүр хийх дүн',savYears:'Хугацаа / жил',savRate:'Жилийн хүү (%)',savTarget:'Зорилтот дүн',savCalcRun:'Тооцоолох',savEmpty:'Эхлэлийн дүн, сар бүр хийх дүн, хугацаа, хүүгээ оруулаад “Тооцоолох” дарна уу.',savRequired:'Хуримтлалын дүн, хугацаа, хүүгээ зөв оруулна уу.',savTotal:'Нийт хуримтлал',savOwn:'Таны хийсэн мөнгө',savInterest:'Хүүгийн ашиг',savNeed:'Зорилгод хүрэхэд сард',savChart:'Өсөлтийн график',savTotalLine:'Нийт өсөлт',savOwnLine:'Өөрийн хийсэн мөнгө',savInterestLine:'Хүүгийн өсөлт',savChallengeTitle:'Кофены мөнгө challenge',savChallengeDesc:'Өдөр бүрийн жижиг зардлыг хуримтлал болгож харвал хэд болж өсөхийг тооцно.',savDaily:'Өдөр бүр хэмнэх дүн',savChYears:'Хугацаа / жил',savChRate:'Жилийн хүү (%)',savChRun:'Challenge тооцох',savChEmpty:'Өдөр бүрийн жижиг зардлаа оруулаад тооцоолоорой.',savChMsg:'Хэрэв та өдөр бүр {daily} хэмнээд, сар бүр {monthly} хуримтлуулбал {years} жилийн дараа {total}-тэй болно. Үүнээс {interest} нь зөвхөн хүүгийн ашиг байна.'},
+  en:{mySavings:'My savings',savCalcTitle:'Savings calculator',savCalcDesc:'Calculate how much you can save, or how much you need monthly to reach a target.',savStart:'Starting amount',savMonthly:'Monthly saving',savYears:'Term / years',savRate:'Annual interest (%)',savTarget:'Target amount',savCalcRun:'Calculate',savEmpty:'Enter starting amount, monthly saving, term, and interest rate, then tap Calculate.',savRequired:'Please enter valid savings values, term, and rate.',savTotal:'Total savings',savOwn:'Your contributions',savInterest:'Interest earned',savNeed:'Monthly needed',savChart:'Accumulation chart',savTotalLine:'Total growth',savOwnLine:'Your contributions',savInterestLine:'Interest growth',savChallengeTitle:'Coffee money challenge',savChallengeDesc:'See how a small daily expense can grow when saved instead.',savDaily:'Daily amount saved',savChYears:'Term / years',savChRate:'Annual interest (%)',savChRun:'Calculate challenge',savChEmpty:'Enter a small daily expense and calculate.',savChMsg:'If you save {daily} every day and invest {monthly} monthly, you could have {total} after {years} years. About {interest} comes from interest.'},
+  zh:{mySavings:'我的储蓄',savCalcTitle:'储蓄计算器',savStart:'起始金额',savMonthly:'每月储蓄',savYears:'期限 / 年',savRate:'年利率 (%)',savTarget:'目标金额',savCalcRun:'计算',savTotal:'总储蓄',savOwn:'自己存入',savInterest:'利息收益',savNeed:'每月需要',savChart:'增长图表',savChallengeTitle:'咖啡钱挑战',savDaily:'每天节省金额',savChRun:'计算挑战'},
+  ja:{mySavings:'私の貯蓄',savCalcTitle:'貯蓄計算機',savStart:'開始額',savMonthly:'毎月の貯蓄',savYears:'期間 / 年',savRate:'年利 (%)',savTarget:'目標額',savCalcRun:'計算',savTotal:'総貯蓄',savOwn:'自分の積立額',savInterest:'利息収益',savNeed:'毎月必要',savChart:'成長グラフ',savChallengeTitle:'コーヒー代チャレンジ',savDaily:'毎日節約する額',savChRun:'チャレンジ計算'},
+  ko:{mySavings:'내 저축',savCalcTitle:'저축 계산기',savStart:'시작 금액',savMonthly:'월 저축액',savYears:'기간 / 년',savRate:'연 이자 (%)',savTarget:'목표 금액',savCalcRun:'계산',savTotal:'총 저축',savOwn:'내가 넣은 금액',savInterest:'이자 수익',savNeed:'월 필요 금액',savChart:'성장 그래프',savChallengeTitle:'커피값 챌린지',savDaily:'매일 절약 금액',savChRun:'챌린지 계산'},
+  ru:{mySavings:'Мои сбережения',savCalcTitle:'Калькулятор сбережений',savStart:'Начальная сумма',savMonthly:'Ежемесячно',savYears:'Срок / лет',savRate:'Годовой процент (%)',savTarget:'Цель',savCalcRun:'Рассчитать',savTotal:'Всего накоплено',savOwn:'Ваши взносы',savInterest:'Доход от процентов',savNeed:'Нужно в месяц',savChart:'График роста',savChallengeTitle:'Кофейный челлендж',savDaily:'Экономия в день',savChRun:'Рассчитать'},
+  de:{mySavings:'Meine Ersparnisse',savCalcTitle:'Sparrechner',savStart:'Startbetrag',savMonthly:'Monatlich sparen',savYears:'Laufzeit / Jahre',savRate:'Jahreszins (%)',savTarget:'Zielbetrag',savCalcRun:'Berechnen',savTotal:'Gesamtersparnis',savOwn:'Eigene Einzahlungen',savInterest:'Zinsertrag',savNeed:'Benötigt pro Monat',savChart:'Wachstumsdiagramm',savChallengeTitle:'Kaffeegeld-Challenge',savDaily:'Täglich sparen',savChRun:'Challenge berechnen'}
+};
+Object.keys(SAVINGS_CALC_EXTRA).forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en,CALC_LANGS[k]||{},SAVINGS_CALC_EXTRA[k]);});
+const _prevShowCalcPanelSavings=showCalcPanel;
+showCalcPanel=function(section,panel,btn){
+  _prevShowCalcPanelSavings(section,panel,btn);
+  if(section==='goals'&&panel==='calc')clearSavingsCalcResults();
+};
+const _prevUpdateCalcTextsSavings=updateCalcTexts;
+updateCalcTexts=function(){
+  _prevUpdateCalcTextsSavings();
+  const t=CT();
+  const map={
+    'goals-tab-mine':t.mySavings,'goals-tab-calc':t.calc,'lbl-sav-calc-title':t.savCalcTitle,'lbl-sav-calc-desc':t.savCalcDesc,
+    'lbl-sav-start':t.savStart,'lbl-sav-monthly':t.savMonthly,'lbl-sav-years':t.savYears,'lbl-sav-rate':t.savRate,'lbl-sav-target':t.savTarget,
+    'btn-sav-calc-run':t.savCalcRun,'sav-calc-empty':t.savEmpty,'lbl-sav-total':t.savTotal,'lbl-sav-own':t.savOwn,'lbl-sav-interest':t.savInterest,'lbl-sav-need':t.savNeed,'lbl-sav-chart':t.savChart,
+    'lbl-sav-challenge-title':t.savChallengeTitle,'lbl-sav-challenge-desc':t.savChallengeDesc,'lbl-sav-daily':t.savDaily,'lbl-sav-ch-years':t.savChYears||t.savYears,'lbl-sav-ch-rate':t.savChRate||t.savRate,'btn-sav-ch-run':t.savChRun,'sav-ch-empty':t.savChEmpty
+  };
+  Object.entries(map).forEach(([id,txt])=>{const el=document.getElementById(id); if(el&&txt!=null)el.textContent=txt;});
+  clearSavingsCalcResults();
+};
+function savingsFutureValue(start,monthly,annualRate,years){
+  const r=annualRate/12/100, n=Math.max(0,Math.round(years*12));
+  const fvStart=start*Math.pow(1+r,n);
+  const fvMonthly=r===0?monthly*n:monthly*((Math.pow(1+r,n)-1)/r);
+  return fvStart+fvMonthly;
+}
+function savingsRequiredMonthly(target,start,annualRate,years){
+  const r=annualRate/12/100, n=Math.max(1,Math.round(years*12));
+  const need=target-start*Math.pow(1+r,n);
+  if(need<=0)return 0;
+  return r===0?need/n:need*r/(Math.pow(1+r,n)-1);
+}
+function clearSavingsCalcResults(){
+  ['sav-main-value','sav-result-grid','sav-chart-wrap'].forEach(id=>{const el=document.getElementById(id); if(el){el.style.display='none';el.classList.remove('show');}});
+  const empty=document.getElementById('sav-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=CT().savEmpty;}
+  ['sav-res-total','sav-res-own','sav-res-interest','sav-main-value'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent='0';});
+  const need=document.getElementById('sav-res-need'); if(need)need.textContent='—';
+  const c=document.getElementById('sav-growth-chart'); if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
+  const leg=document.getElementById('sav-growth-legend'); if(leg)leg.innerHTML='';
+}
+function calcSavingsAdvanced(run){
+  const start=parseAmt(document.getElementById('sav-calc-start')?.value);
+  const monthly=parseAmt(document.getElementById('sav-calc-monthly')?.value);
+  const target=parseAmt(document.getElementById('sav-calc-target')?.value);
+  const years=parseFloat(document.getElementById('sav-calc-years')?.value)||0;
+  const rate=parseFloat(document.getElementById('sav-calc-rate')?.value)||0;
+  const t=CT();
+  if(!run && !start && !monthly && !target && !years){clearSavingsCalcResults();return;}
+  if((start<0||monthly<0||target<0)||years<=0||rate<0||(start===0&&monthly===0&&target===0)){
+    clearSavingsCalcResults(); const e=document.getElementById('sav-calc-empty'); if(e){e.style.display='block';e.textContent=t.savRequired;} return;
+  }
+  const n=Math.round(years*12);
+  const fv=savingsFutureValue(start,monthly,rate,years);
+  const own=start+monthly*n;
+  const interest=Math.max(0,fv-own);
+  const req=target>0?savingsRequiredMonthly(target,start,rate,years):null;
+  document.getElementById('sav-calc-empty').style.display='none';
+  document.getElementById('sav-main-value').style.display='block';
+  document.getElementById('sav-result-grid').style.display='grid';
+  const wrap=document.getElementById('sav-chart-wrap'); if(wrap){wrap.style.display='block';wrap.classList.add('show');}
+  document.getElementById('sav-main-value').textContent=fmt(fv);
+  document.getElementById('sav-res-total').textContent=fmt(fv);
+  document.getElementById('sav-res-own').textContent=fmt(own);
+  document.getElementById('sav-res-interest').textContent=fmt(interest);
+  document.getElementById('sav-res-need').textContent=req==null?'—':fmt(Math.max(0,req));
+  drawSavingsGrowthChart(start,monthly,rate,years);
+}
+function drawSavingsGrowthChart(start,monthly,rate,years){
+  const t=CT(); const c=document.getElementById('sav-growth-chart'); if(!c)return; const ctx=c.getContext('2d');
+  const W=c.width,H=c.height,pad=28; ctx.clearRect(0,0,W,H);
+  const yrs=Math.max(1,Math.round(years));
+  const totalSeries=[], ownSeries=[], interestSeries=[];
+  for(let i=0;i<=yrs;i++){
+    const fv=savingsFutureValue(start,monthly,rate,i); const own=start+monthly*Math.round(i*12);
+    totalSeries.push(fv); ownSeries.push(own); interestSeries.push(Math.max(0,fv-own));
+  }
+  const max=Math.max(...totalSeries,1);
+  ctx.strokeStyle='rgba(73,176,182,.18)';ctx.lineWidth=1;
+  for(let i=0;i<4;i++){const y=pad+(H-pad*2)*i/3;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  function line(arr,color,width){ctx.beginPath();arr.forEach((v,i)=>{const x=pad+(W-pad*2)*i/yrs;const y=H-pad-(H-pad*2)*v/max;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
+  line(ownSeries,'#49B0B6',3); line(totalSeries,'#1D9E75',4);
+  ctx.fillStyle='#6B7280';ctx.font='12px sans-serif';ctx.fillText('0',8,H-pad+4);ctx.fillText(fmt(max).replace(CS,''),8,pad+4);
+  const leg=document.getElementById('sav-growth-legend');
+  if(leg)leg.innerHTML=`<div class="li2"><span class="ldot" style="background:#49B0B6"></span>${t.savOwnLine}: ${fmt(ownSeries[ownSeries.length-1])}</div><div class="li2"><span class="ldot" style="background:#1D9E75"></span>${t.savTotalLine}: ${fmt(totalSeries[totalSeries.length-1])}</div><div class="li2"><span class="ldot" style="background:#F59E0B"></span>${t.savInterestLine}: ${fmt(interestSeries[interestSeries.length-1])}</div>`;
+}
+function calcSavingsChallenge(run){
+  const daily=parseAmt(document.getElementById('sav-daily-amount')?.value);
+  const years=parseFloat(document.getElementById('sav-ch-years')?.value)||0;
+  const rate=parseFloat(document.getElementById('sav-ch-rate')?.value)||0;
+  const t=CT(); const empty=document.getElementById('sav-ch-empty'); const msg=document.getElementById('sav-ch-msg');
+  if(daily<=0||years<=0||rate<0){ if(empty){empty.style.display='block';empty.textContent=t.savChEmpty;} if(msg)msg.style.display='none'; return; }
+  const monthly=daily*30;
+  const total=savingsFutureValue(0,monthly,rate,years);
+  const own=monthly*Math.round(years*12);
+  const interest=Math.max(0,total-own);
+  if(empty)empty.style.display='none';
+  if(msg){msg.style.display='block';msg.textContent=(t.savChMsg||CALC_LANGS.en.savChMsg).replace('{daily}',fmt(daily)).replace('{monthly}',fmt(monthly)).replace('{years}',years).replace('{total}',fmt(total)).replace('{interest}',fmt(interest));}
+}
+requestAnimationFrame(()=>{
+  ['sav-calc-start','sav-calc-monthly','sav-calc-target','sav-daily-amount'].forEach(setupAmtInput);
+  clearSavingsCalcResults();
 });
 
 </script>
