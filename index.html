@@ -6,6 +6,7 @@ Preserves: V22-V25 budget/search/dashboard improvements + V27 profile/material i
 Adds: profile email fix, transaction subcategory selector UI, finance dashboard guide.
 V28.2: removes duplicate email row, moves Data after Help, adds Backup/Restore/Clear/Logout guide explanations.
 V29.1: adds advanced loan calculator with annuity/differentiated payments, extra payment savings, donut chart and amortization schedule.
+V29.3: fixes calculator tabs visibility, removes hardcoded calculator values, adds explicit Calculate button.
 -->
 <html lang="mn">
 <head>
@@ -1401,6 +1402,13 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .loan-table{font-size:11px !important;}
 }
 
+
+/* ── Möngö V29.3 fix: true two-tab behavior + calculate button ── */
+#tab-debts .calc-panel{display:none !important;}
+#tab-debts .calc-panel.active{display:block !important;}
+.loan-calc-btn{width:100%;min-height:54px !important;margin:4px 0 12px !important;border-radius:24px !important;font-size:16px !important;}
+.loan-calc-empty{padding:16px;border-radius:22px;background:rgba(73,176,182,.07);border:1px dashed rgba(73,176,182,.24);color:#6B7280;font-size:13px;font-weight:800;line-height:1.5;text-align:center;margin:12px 0;}
+
 </style>
 </head>
 <body>
@@ -1752,21 +1760,21 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <div class="form-row">
         <div style="flex:1;min-width:130px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-amount">Зээлийн дүн</span>
-          <input type="text" class="fi" id="loan-calc-amount" value="100,000,000" inputmode="decimal" data-amt="1" oninput="calcLoanAdvanced()">
+          <input type="text" class="fi" id="loan-calc-amount" placeholder="100,000,000" inputmode="decimal" data-amt="1">
         </div>
         <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-rate">Жилийн хүү (%)</span>
-          <input type="number" class="fi" id="loan-calc-rate" value="6" step="0.1" oninput="calcLoanAdvanced()">
+          <input type="number" class="fi" id="loan-calc-rate" placeholder="6" step="0.1">
         </div>
       </div>
       <div class="form-row">
         <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-term">Хугацаа</span>
-          <input type="number" class="fi" id="loan-calc-term" value="20" min="1" oninput="calcLoanAdvanced()">
+          <input type="number" class="fi" id="loan-calc-term" placeholder="20" min="1">
         </div>
         <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-term-unit">Хугацааны төрөл</span>
-          <select class="fi" id="loan-calc-term-unit" onchange="calcLoanAdvanced()">
+          <select class="fi" id="loan-calc-term-unit">
             <option value="years" id="loan-opt-years">Жил</option>
             <option value="months" id="loan-opt-months">Сар</option>
           </select>
@@ -1775,29 +1783,31 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <div class="form-row">
         <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-type">Төлөлтийн төрөл</span>
-          <select class="fi" id="loan-calc-type" onchange="calcLoanAdvanced()">
+          <select class="fi" id="loan-calc-type">
             <option value="annuity" id="loan-opt-annuity">Тэнцүү төлөлт</option>
             <option value="diff" id="loan-opt-diff">Үндсэн тэнцүү</option>
           </select>
         </div>
         <div style="flex:1;min-width:130px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-loan-extra">Сар бүр нэмэлт төлөлт</span>
-          <input type="text" class="fi" id="loan-calc-extra" value="0" inputmode="decimal" data-amt="1" oninput="calcLoanAdvanced()">
+          <input type="text" class="fi" id="loan-calc-extra" placeholder="0" inputmode="decimal" data-amt="1">
         </div>
       </div>
-      <div class="loan-highlight" id="loan-main-payment">0</div>
-      <div class="calc-result-grid">
+      <button class="btn btn-p loan-calc-btn" onclick="calcLoanAdvanced(true)" id="btn-loan-calc-run">Тооцоолох</button>
+      <div class="loan-calc-empty" id="loan-calc-empty">Зээлийн дүн, хүү, хугацаагаа оруулаад “Тооцоолох” дарна уу.</div>
+      <div class="loan-highlight" id="loan-main-payment" style="display:none">0</div>
+      <div class="calc-result-grid" id="loan-result-grid" style="display:none">
         <div class="calc-result"><div class="k" id="lbl-loan-monthly">Сар бүрийн төлөлт</div><div class="v" id="loan-res-monthly">0</div></div>
         <div class="calc-result calc-danger"><div class="k" id="lbl-loan-interest">Нийт хүү</div><div class="v" id="loan-res-interest">0</div></div>
         <div class="calc-result"><div class="k" id="lbl-loan-totalpay">Нийт төлөх дүн</div><div class="v" id="loan-res-total">0</div></div>
         <div class="calc-result calc-good"><div class="k" id="lbl-loan-save">Урьдчилж төлөөд хэмнэх</div><div class="v" id="loan-res-save">0</div></div>
       </div>
-      <div class="loan-split-wrap">
+      <div class="loan-split-wrap" id="loan-split-wrap" style="display:none">
         <canvas id="loan-calc-donut" width="118" height="118"></canvas>
         <div class="leg" id="loan-calc-legend"></div>
       </div>
       <div class="loan-extra-msg" id="loan-extra-msg"></div>
-      <button class="btn" style="width:100%;margin-top:10px" onclick="toggleLoanSchedule()" id="btn-loan-schedule">▼ Төлөлтийн хуваарь</button>
+      <button class="btn" style="width:100%;margin-top:10px;display:none" onclick="toggleLoanSchedule()" id="btn-loan-schedule">▼ Төлөлтийн хуваарь</button>
       <div id="loan-schedule-wrap" style="display:none;margin-top:10px"></div>
     </div>
   </div>
@@ -3584,8 +3594,8 @@ function showConfirm(msg){
 
 // ── Möngö V29.1 Advanced calculators ─────────────────────────────────────
 const CALC_LANGS={
-  mn:{myDebt:'Миний зээл',calc:'Тооцоолуур',loanCalcTitle:'Зээлийн тооцоолуур',loanCalcDesc:'Сарын төлөлт, нийт хүү, урьдчилж төлөхөд хэмнэх мөнгө, төлөлтийн хуваарийг тооцно.',loanAmount:'Зээлийн дүн',loanRate:'Жилийн хүү (%)',loanTerm:'Хугацаа',loanTermUnit:'Хугацааны төрөл',loanYears:'Жил',loanMonths:'Сар',loanType:'Төлөлтийн төрөл',loanAnnuity:'Тэнцүү төлөлт',loanDiff:'Үндсэн тэнцүү',loanExtra:'Сар бүр нэмэлт төлөлт',loanMonthly:'Сар бүрийн төлөлт',loanInterest:'Нийт хүү',loanTotalPay:'Нийт төлөх дүн',loanSave:'Урьдчилж төлөөд хэмнэх',loanPrincipal:'Үндсэн зээл',loanInterestOnly:'Хүү',loanExtraMsg:'Та {early} эрт дуусгаж, {save} хүү хэмнэнэ.',loanNoExtra:'Нэмэлт төлөлт оруулбал хэдэн сар/жилээр эрт дуусах, хэдэн төгрөгийн хүү хэмнэхийг харуулна.',loanSchedule:'Төлөлтийн хуваарь',loanScheduleNote:'Эхний 24 сар харуулав. Бүрэн хуваарь тооцоонд ашиглагдсан.',loanMonthCol:'Сар',loanPaymentCol:'Төлөлт',loanInterestCol:'Хүү',loanPrincipalCol:'Үндсэн',loanBalanceCol:'Үлдэгдэл'},
-  en:{myDebt:'My loans',calc:'Calculator',loanCalcTitle:'Loan calculator',loanCalcDesc:'Calculate monthly payment, total interest, early payment savings, and amortization schedule.',loanAmount:'Loan amount',loanRate:'Annual interest (%)',loanTerm:'Term',loanTermUnit:'Term unit',loanYears:'Years',loanMonths:'Months',loanType:'Payment type',loanAnnuity:'Equal payment',loanDiff:'Equal principal',loanExtra:'Monthly extra payment',loanMonthly:'Monthly payment',loanInterest:'Total interest',loanTotalPay:'Total repayment',loanSave:'Interest saved',loanPrincipal:'Principal',loanInterestOnly:'Interest',loanExtraMsg:'You finish {early} earlier and save {save} in interest.',loanNoExtra:'Enter an extra monthly payment to see time saved and interest saved.',loanSchedule:'Payment schedule',loanScheduleNote:'Showing first 24 months. Full schedule is used for calculations.',loanMonthCol:'Month',loanPaymentCol:'Payment',loanInterestCol:'Interest',loanPrincipalCol:'Principal',loanBalanceCol:'Balance'}
+  mn:{myDebt:'Миний зээл',calc:'Тооцоолуур',loanCalcTitle:'Зээлийн тооцоолуур',loanCalcDesc:'Сарын төлөлт, нийт хүү, урьдчилж төлөхөд хэмнэх мөнгө, төлөлтийн хуваарийг тооцно.',loanAmount:'Зээлийн дүн',loanRate:'Жилийн хүү (%)',loanTerm:'Хугацаа',loanTermUnit:'Хугацааны төрөл',loanYears:'Жил',loanMonths:'Сар',loanType:'Төлөлтийн төрөл',loanAnnuity:'Тэнцүү төлөлт',loanDiff:'Үндсэн тэнцүү',loanExtra:'Сар бүр нэмэлт төлөлт',loanMonthly:'Сар бүрийн төлөлт',loanInterest:'Нийт хүү',loanTotalPay:'Нийт төлөх дүн',loanSave:'Урьдчилж төлөөд хэмнэх',loanPrincipal:'Үндсэн зээл',loanInterestOnly:'Хүү',loanExtraMsg:'Та {early} эрт дуусгаж, {save} хүү хэмнэнэ.',loanNoExtra:'Нэмэлт төлөлт оруулбал хэдэн сар/жилээр эрт дуусах, хэдэн төгрөгийн хүү хэмнэхийг харуулна.',loanSchedule:'Төлөлтийн хуваарь',loanScheduleNote:'Эхний 24 сар харуулав. Бүрэн хуваарь тооцоонд ашиглагдсан.',loanMonthCol:'Сар',loanPaymentCol:'Төлөлт',loanInterestCol:'Хүү',loanPrincipalCol:'Үндсэн',loanBalanceCol:'Үлдэгдэл',loanCalcRun:'Тооцоолох',loanEmpty:'Зээлийн дүн, хүү, хугацаагаа оруулаад “Тооцоолох” дарна уу.',loanRequired:'Зээлийн дүн, жилийн хүү, хугацаагаа зөв оруулна уу.'},
+  en:{myDebt:'My loans',calc:'Calculator',loanCalcTitle:'Loan calculator',loanCalcDesc:'Calculate monthly payment, total interest, early payment savings, and amortization schedule.',loanAmount:'Loan amount',loanRate:'Annual interest (%)',loanTerm:'Term',loanTermUnit:'Term unit',loanYears:'Years',loanMonths:'Months',loanType:'Payment type',loanAnnuity:'Equal payment',loanDiff:'Equal principal',loanExtra:'Monthly extra payment',loanMonthly:'Monthly payment',loanInterest:'Total interest',loanTotalPay:'Total repayment',loanSave:'Interest saved',loanPrincipal:'Principal',loanInterestOnly:'Interest',loanExtraMsg:'You finish {early} earlier and save {save} in interest.',loanNoExtra:'Enter an extra monthly payment to see time saved and interest saved.',loanSchedule:'Payment schedule',loanScheduleNote:'Showing first 24 months. Full schedule is used for calculations.',loanMonthCol:'Month',loanPaymentCol:'Payment',loanInterestCol:'Interest',loanPrincipalCol:'Principal',loanBalanceCol:'Balance',loanCalcRun:'Calculate',loanEmpty:'Enter loan amount, interest rate, and term, then tap Calculate.',loanRequired:'Please enter a valid loan amount, annual rate, and term.'}
 };
 ['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=CALC_LANGS.en;});
 function CT(){return Object.assign({},CALC_LANGS.en,CALC_LANGS[lang]||CALC_LANGS.mn);}
@@ -3594,7 +3604,7 @@ function showCalcPanel(section,panel,btn){
   if(btn)btn.classList.add('active');
   document.querySelectorAll('#tab-'+section+' .calc-panel').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById(section+'-panel-'+panel); if(el)el.classList.add('active');
-  if(section==='debts'&&panel==='calc')calcLoanAdvanced();
+  if(section==='debts'&&panel==='calc')clearLoanCalcResults();
 }
 function updateCalcTexts(){
   const t=CT();
@@ -3603,10 +3613,10 @@ function updateCalcTexts(){
     'lbl-loan-amount':t.loanAmount,'lbl-loan-rate':t.loanRate,'lbl-loan-term':t.loanTerm,'lbl-loan-term-unit':t.loanTermUnit,
     'loan-opt-years':t.loanYears,'loan-opt-months':t.loanMonths,'lbl-loan-type':t.loanType,'loan-opt-annuity':t.loanAnnuity,
     'loan-opt-diff':t.loanDiff,'lbl-loan-extra':t.loanExtra,'lbl-loan-monthly':t.loanMonthly,'lbl-loan-interest':t.loanInterest,
-    'lbl-loan-totalpay':t.loanTotalPay,'lbl-loan-save':t.loanSave,'btn-loan-schedule':'▼ '+t.loanSchedule
+    'lbl-loan-totalpay':t.loanTotalPay,'lbl-loan-save':t.loanSave,'btn-loan-schedule':'▼ '+t.loanSchedule,'btn-loan-calc-run':t.loanCalcRun,'loan-calc-empty':t.loanEmpty
   };
   Object.entries(map).forEach(([id,txt])=>{const el=document.getElementById(id); if(el)el.textContent=txt;});
-  calcLoanAdvanced();
+  clearLoanCalcResults();
 }
 function monthsToText(m){
   m=Math.max(0,Math.round(m||0));
@@ -3635,15 +3645,37 @@ function buildLoanSchedule(P,annualRate,months,type,extra){
   }
   return {schedule,totalInterest,totalPay:P+totalInterest,monthly:type==='diff'?(schedule[0]?.payment||0):annPay};
 }
-function calcLoanAdvanced(){
+function clearLoanCalcResults(){
+  const ids=['loan-main-payment','loan-result-grid','loan-split-wrap','btn-loan-schedule'];
+  ids.forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
+  const empty=document.getElementById('loan-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=CT().loanEmpty;}
+  const sched=document.getElementById('loan-schedule-wrap'); if(sched)sched.style.display='none';
+  const msg=document.getElementById('loan-extra-msg'); if(msg){msg.style.display='none'; msg.textContent='';}
+  ['loan-res-monthly','loan-res-interest','loan-res-total','loan-res-save','loan-main-payment'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent='0';});
+  const leg=document.getElementById('loan-calc-legend'); if(leg)leg.innerHTML='';
+  const c=document.getElementById('loan-calc-donut');
+  if(c){const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);}
+}
+function showLoanCalcResults(){
+  ['loan-main-payment','loan-result-grid','loan-split-wrap','btn-loan-schedule'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display=id==='loan-result-grid'?'grid':(id==='loan-split-wrap'?'grid':'block');});
+  const empty=document.getElementById('loan-calc-empty'); if(empty)empty.style.display='none';
+}
+function calcLoanAdvanced(run){
   const amountEl=document.getElementById('loan-calc-amount'); if(!amountEl)return;
+  const t=CT();
   const P=parseAmt(amountEl.value); const rate=parseFloat(document.getElementById('loan-calc-rate').value)||0;
   const term=parseFloat(document.getElementById('loan-calc-term').value)||0; const unit=document.getElementById('loan-calc-term-unit').value;
+  if(!run && (!P && !rate && !term)){clearLoanCalcResults();return;}
+  if(P<=0 || rate<0 || term<=0){
+    clearLoanCalcResults();
+    const empty=document.getElementById('loan-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=t.loanRequired;}
+    return;
+  }
   const months=Math.max(1,Math.round(unit==='years'?term*12:term)); const type=document.getElementById('loan-calc-type').value;
   const extra=parseAmt(document.getElementById('loan-calc-extra').value);
   const base=buildLoanSchedule(P,rate,months,type,0); const withExtra=buildLoanSchedule(P,rate,months,type,extra);
-  const t=CT();
   const monthlyText=type==='diff' ? (fmt(base.schedule[0]?.payment||0)+' → '+fmt(base.schedule[Math.min(base.schedule.length-1,months-1)]?.payment||0)) : fmt(base.monthly);
+  showLoanCalcResults();
   document.getElementById('loan-main-payment').textContent=monthlyText;
   document.getElementById('loan-res-monthly').textContent=monthlyText;
   document.getElementById('loan-res-interest').textContent=fmt(base.totalInterest||0);
