@@ -1956,6 +1956,10 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
           <span class="slbl" id="lbl-inv-years">Хугацаа / жил</span>
           <input type="number" class="fi" id="inv-calc-years" placeholder="10" min="1">
         </div>
+        <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl" id="lbl-inv-age">Нас</span>
+          <input type="number" class="fi" id="inv-calc-age" placeholder="35" min="18" max="100">
+        </div>
         <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-inv-risk">Эрсдэлийн түвшин</span>
           <select class="fi" id="inv-calc-risk" onchange="applyInvRiskRate()">
@@ -3874,9 +3878,14 @@ requestAnimationFrame(()=>{
 
 // ── Möngö V29.2 Investment calculator ─────────────────────────────────────
 const INVEST_CALC_EXTRA={
-  mn:{myInvest:'Миний хөрөнгө',invCalcTitle:'Хөрөнгө оруулалтын тооцоолуур',invCalcDesc:'Нийлмэл өсөлт, инфляц хассан бодит үнэ цэн, 3 хувилбарын ирээдүйн үр дүнг тооцно.',invInitial:'Анхны хөрөнгө',invMonthly:'Сар бүр нэмэх дүн',invYears:'Хугацаа / жил',invRisk:'Эрсдэлийн түвшин',invConservative:'Консерватив',invBalanced:'Дундаж',invAggressive:'Агрессив',invCustom:'Гараар',invRate:'Жилийн өгөөж (%)',invInflation:'Инфляц (%)',invCalcRun:'Тооцоолох',invEmpty:'Анхны хөрөнгө, сар бүр нэмэх дүн, хугацаагаа оруулаад “Тооцоолох” дарна уу.',invRequired:'Хөрөнгө, хугацаа, өгөөжийн утгаа зөв оруулна уу.',invFuture:'Ирээдүйн хөрөнгө',invReal:'Инфляц хассан бодит үнэ',invTotalInvested:'Нийт оруулсан',invProfit:'Цэвэр ашиг',invRealRate:'Бодит өгөөж',invScenario:'3 хувилбарын өсөлт',invBad:'Муу хувилбар',invExpected:'Дундаж хувилбар',invBest:'Шилдэг хувилбар',invAllocation:'Санал болгох багц',invRiskNote:'Энэ нь баталгаатай өгөөж биш. Эрсдэл өндөр байх тусам хэлбэлзэл ихэсдэг тул төрөлжүүлэлт чухал.'},
-  en:{myInvest:'My assets',invCalcTitle:'Investment calculator',invCalcDesc:'Calculate compound growth, inflation-adjusted value, and three future scenarios.',invInitial:'Initial investment',invMonthly:'Monthly contribution',invYears:'Term / years',invRisk:'Risk level',invConservative:'Conservative',invBalanced:'Balanced',invAggressive:'Aggressive',invCustom:'Custom',invRate:'Annual return (%)',invInflation:'Inflation (%)',invCalcRun:'Calculate',invEmpty:'Enter initial investment, monthly contribution, and term, then tap Calculate.',invRequired:'Please enter valid investment values, term, and return.',invFuture:'Future value',invReal:'Real value after inflation',invTotalInvested:'Total invested',invProfit:'Net profit',invRealRate:'Real return',invScenario:'3 scenario growth',invBad:'Low scenario',invExpected:'Expected',invBest:'Best scenario',invAllocation:'Suggested allocation',invRiskNote:'This is not a guaranteed return. Higher risk means higher volatility, so diversification matters.'}
-};
+  mn:{myInvest:'Миний хөрөнгө',invCalcTitle:'Хөрөнгө оруулалтын тооцоолуур',invCalcDesc:'Нийлмэл өсөлт, инфляц хассан бодит үнэ цэн, 3 хувилбарын ирээдүйн үр дүнг тооцно.',invInitial:'Анхны хөрөнгө',invMonthly:'Сар бүр нэмэх дүн',invYears:'Хугацаа / жил',invAge:'Нас',invRisk:'Эрсдэлийн түвшин',invConservative:'Консерватив',invBalanced:'Дундаж',invAggressive:'Агрессив',invCustom:'Гараар',invRate:'Жилийн өгөөж (%)',invInflation:'Инфляц (%)',invCalcRun:'Тооцоолох',invEmpty:'Анхны хөрөнгө, сар бүр нэмэх дүн, хугацаа, насаа оруулаад “Тооцоолох” дарна уу.',invRequired:'Хөрөнгө, хугацаа, нас, өгөөжийн утгаа зөв оруулна уу.',invFuture:'Ирээдүйн хөрөнгө',invReal:'Инфляц хассан бодит үнэ',invTotalInvested:'Нийт оруулсан',invProfit:'Цэвэр ашиг',invRealRate:'Бодит өгөөж',invScenario:'3 хувилбарын өсөлт',invBad:'Муу хувилбар',invExpected:'Дундаж хувилбар',invBest:'Шилдэг хувилбар',invAllocation:'Санал болгох багц',invRiskNote:'Энэ нь баталгаатай өгөөж биш. Багцын санал нь таны нас, хугацаа, эрсдэлийн түвшинд тулгуурласан ерөнхий чиглэл юм.',invStocks:'Хувьцаа',invBonds:'Бонд',invRealEstate:'Үл хөдлөх',invFunds:'Сан',invCash:'Бэлэн мөнгө'},
+  en:{myInvest:'My assets',invCalcTitle:'Investment calculator',invCalcDesc:'Calculate compound growth, inflation-adjusted value, and three future scenarios.',invInitial:'Initial investment',invMonthly:'Monthly contribution',invYears:'Term / years',invAge:'Age',invRisk:'Risk level',invConservative:'Conservative',invBalanced:'Balanced',invAggressive:'Aggressive',invCustom:'Custom',invRate:'Annual return (%)',invInflation:'Inflation (%)',invCalcRun:'Calculate',invEmpty:'Enter initial investment, monthly contribution, term, and age, then tap Calculate.',invRequired:'Please enter valid investment values, term, age, and return.',invFuture:'Future value',invReal:'Real value after inflation',invTotalInvested:'Total invested',invProfit:'Net profit',invRealRate:'Real return',invScenario:'3 scenario growth',invBad:'Low scenario',invExpected:'Expected',invBest:'Best scenario',invAllocation:'Suggested allocation',invRiskNote:'This is not a guaranteed return. The suggested allocation is a general guide based on age, time horizon, and risk level.',invStocks:'Stocks',invBonds:'Bonds',invRealEstate:'Real estate',invFunds:'Funds',invCash:'Cash'},
+  zh:{invAge:'年龄',invStocks:'股票',invBonds:'债券',invRealEstate:'房地产',invFunds:'基金',invCash:'现金'},
+  ja:{invAge:'年齢',invStocks:'株式',invBonds:'債券',invRealEstate:'不動産',invFunds:'ファンド',invCash:'現金'},
+  ko:{invAge:'나이',invStocks:'주식',invBonds:'채권',invRealEstate:'부동산',invFunds:'펀드',invCash:'현금'},
+  ru:{invAge:'Возраст',invStocks:'Акции',invBonds:'Облигации',invRealEstate:'Недвижимость',invFunds:'Фонды',invCash:'Наличные'},
+  de:{invAge:'Alter',invStocks:'Aktien',invBonds:'Anleihen',invRealEstate:'Immobilien',invFunds:'Fonds',invCash:'Bargeld'}
+}
 Object.keys(INVEST_CALC_EXTRA).forEach(k=>Object.assign(CALC_LANGS[k],INVEST_CALC_EXTRA[k]));
 ['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en,CALC_LANGS[k]||{});});
 const _origShowCalcPanel=showCalcPanel;
@@ -3890,7 +3899,7 @@ updateCalcTexts=function(){
   const t=CT();
   const map={
     'invest-tab-mine':t.myInvest,'invest-tab-calc':t.calc,'lbl-inv-calc-title':t.invCalcTitle,'lbl-inv-calc-desc':t.invCalcDesc,
-    'lbl-inv-initial':t.invInitial,'lbl-inv-monthly':t.invMonthly,'lbl-inv-years':t.invYears,'lbl-inv-risk':t.invRisk,
+    'lbl-inv-initial':t.invInitial,'lbl-inv-monthly':t.invMonthly,'lbl-inv-years':t.invYears,'lbl-inv-age':t.invAge,'lbl-inv-risk':t.invRisk,
     'inv-risk-conservative':t.invConservative,'inv-risk-balanced':t.invBalanced,'inv-risk-aggressive':t.invAggressive,'inv-risk-custom':t.invCustom,
     'lbl-inv-rate':t.invRate,'lbl-inv-inflation':t.invInflation,'btn-inv-calc-run':t.invCalcRun,'inv-calc-empty':t.invEmpty,
     'lbl-inv-future':t.invFuture,'lbl-inv-real':t.invReal,'lbl-inv-total-invested':t.invTotalInvested,'lbl-inv-profit':t.invProfit,
@@ -3924,11 +3933,13 @@ function calcInvestmentAdvanced(run){
   const initial=parseAmt(document.getElementById('inv-calc-initial')?.value);
   const monthly=parseAmt(document.getElementById('inv-calc-monthly')?.value);
   const years=parseFloat(document.getElementById('inv-calc-years')?.value)||0;
+  let age=parseFloat(document.getElementById('inv-calc-age')?.value)||35;
+  age=Math.max(18,Math.min(100,age));
   const rate=parseFloat(document.getElementById('inv-calc-rate')?.value)||0;
   const inflation=parseFloat(document.getElementById('inv-calc-inflation')?.value)||0;
   const t=CT();
   if(!run && !initial && !monthly && !years){clearInvCalcResults();return;}
-  if((initial<=0&&monthly<=0)||years<=0||rate<0||inflation<0){clearInvCalcResults();const e=document.getElementById('inv-calc-empty');if(e){e.style.display='block';e.textContent=t.invRequired;}return;}
+  if((initial<=0&&monthly<=0)||years<=0||age<18||age>100||rate<0||inflation<0){clearInvCalcResults();const e=document.getElementById('inv-calc-empty');if(e){e.style.display='block';e.textContent=t.invRequired;}return;}
   const fv=futureValue(initial,monthly,rate,years);
   const totalInvested=initial+monthly*Math.round(years*12);
   const profit=fv-totalInvested;
@@ -3948,7 +3959,7 @@ function calcInvestmentAdvanced(run){
   document.getElementById('inv-res-real-rate').textContent=(realRate>=0?'+':'')+realRate.toFixed(1)+'%';
   document.getElementById('inv-risk-note').textContent=t.invRiskNote;
   drawInvestmentScenario(initial,monthly,rate,years);
-  drawInvestmentAllocation(document.getElementById('inv-calc-risk').value);
+  drawInvestmentAllocation(document.getElementById('inv-calc-risk').value, age, years);
 }
 function drawInvestmentScenario(initial,monthly,rate,years){
   const t=CT(); const c=document.getElementById('inv-scenario-chart'); if(!c)return; const ctx=c.getContext('2d');
@@ -3964,14 +3975,29 @@ function drawInvestmentScenario(initial,monthly,rate,years){
   const leg=document.getElementById('inv-scenario-legend');
   if(leg)leg.innerHTML=labels.map((l,i)=>`<div class="li2"><span class="ldot" style="background:${colors[i]}"></span>${l}: ${fmt(series[i][series[i].length-1])}</div>`).join('');
 }
-function drawInvestmentAllocation(risk){
+function getSmartAllocation(risk, age, years){
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  let stock=110-age;
+  const riskAdj={conservative:-15,balanced:0,aggressive:15,custom:0}[risk]||0;
+  const horizonAdj=years<3?-20:years<5?-12:years<10?-5:years>20?5:0;
+  stock=clamp(Math.round(stock+riskAdj+horizonAdj),20,85);
+  let cash=risk==='conservative'?12:(risk==='aggressive'?5:8);
+  if(years<3)cash+=5;
+  let realEstate=risk==='aggressive'?10:(risk==='conservative'?8:12);
+  let funds=risk==='conservative'?15:(risk==='aggressive'?15:18);
+  let bonds=100-stock-cash-realEstate-funds;
+  if(bonds<5){const diff=5-bonds;stock=clamp(stock-diff,20,85);bonds=5;}
+  const total=stock+bonds+realEstate+funds+cash;
+  if(total!==100)bonds+=100-total;
+  return {stocks:stock,bonds,realEstate,funds,cash};
+}
+function drawInvestmentAllocation(risk, age=35, years=10){
   const t=CT(); const c=document.getElementById('inv-allocation-donut'); if(!c)return;
-  let parts,labels;
-  if(risk==='conservative'){parts=[60,25,10,5];labels=['Бонд','Сан','Хувьцаа','Бэлэн'];}
-  else if(risk==='aggressive'){parts=[15,20,50,15];labels=['Бонд','Сан','Хувьцаа','Өсөлт'];}
-  else if(risk==='custom'){parts=[25,25,35,15];labels=['Бонд','Сан','Хувьцаа','Бусад'];}
-  else{parts=[35,30,25,10];labels=['Бонд','Сан','Хувьцаа','Үл хөдлөх'];}
-  const colors=['#F59E0B','#49B0B6','#1D9E75','#8B5CF6']; drawDonut(c,parts,colors);
+  const a=getSmartAllocation(risk,age,years);
+  const parts=[a.stocks,a.bonds,a.realEstate,a.funds,a.cash];
+  const labels=[t.invStocks,t.invBonds,t.invRealEstate,t.invFunds,t.invCash];
+  const colors=['#1D9E75','#F59E0B','#8B5CF6','#49B0B6','#64748B'];
+  drawDonut(c,parts,colors);
   const el=document.getElementById('inv-allocation-legend');
   if(el)el.innerHTML=`<div class="li2" style="font-weight:950;color:var(--text)">${t.invAllocation}</div>`+parts.map((p,i)=>`<div class="li2"><span class="ldot" style="background:${colors[i]}"></span>${labels[i]}: ${p}%</div>`).join('');
 }
