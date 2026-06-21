@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-Möngö V29.9 Dashboard Guide + FIRE Target
+Möngö V30 FIRE + Score Intelligence + Premium Splash
 Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
 Preserves: V22-V25 budget/search/dashboard improvements + V27 profile/material icons/header language.
 Adds: profile email fix, transaction subcategory selector UI, finance dashboard guide.
@@ -1543,9 +1543,47 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .score-row-note{font-size:11px;color:#6B7280;font-weight:650;line-height:1.35;margin-top:6px;}
 @media(prefers-color-scheme:dark){.score-detail-title,.score-row-name{color:#F3F4F6}.score-detail-total,.score-row-val{color:#74D7DC}}
 
+
+
+/* ── Möngö V30: Premium splash + FIRE/score intelligence ── */
+.mongo-splash{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
+.mongo-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);}
+.splash-logo{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(31,127,134,.18));animation:splashFloat 1.8s ease-in-out infinite alternate;}
+.splash-name{font-size:38px;font-weight:950;letter-spacing:-.06em;color:#1F7F86;line-height:1.1;margin-top:12px;}
+.splash-sub{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#8B97A3;font-weight:900;margin-top:4px;}
+.splash-line{height:1px;background:linear-gradient(90deg,transparent,#49B0B6,#F7D24A,transparent);margin:22px 0 18px;}
+.splash-quote{font-size:16px;color:#374151;font-weight:900;line-height:1.7;}
+.splash-flow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px;color:#1F7F86;font-size:12px;font-weight:950;}
+.splash-pill{padding:7px 10px;border-radius:999px;background:rgba(73,176,182,.11);border:1px solid rgba(73,176,182,.16);}
+@keyframes splashFloat{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.025)}}
+.fire-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;position:relative;z-index:1;}
+.fire-mini{padding:10px 11px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(73,176,182,.13);}
+.fire-mini .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;color:#6B7280;margin-bottom:4px;}
+.fire-mini .v{font-size:14px;font-weight:950;color:#1F7F86;letter-spacing:-.03em;}
+.fire-forecast{grid-column:1/-1;background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(255,204,51,.10));}
+.score-reco{margin-top:13px;padding:12px 13px;border-radius:22px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(255,204,51,.10));border:1px solid rgba(73,176,182,.14);font-size:12px;color:#1F7F86;font-weight:850;line-height:1.5;}
+.score-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:rgba(73,176,182,.10);color:#1F7F86;font-weight:950;font-size:11px;margin-left:6px;}
+@media(max-width:520px){.splash-logo{width:104px;height:104px}.splash-name{font-size:34px}.fire-detail-grid{grid-template-columns:1fr}.splash-quote{font-size:15px}}
+@media(prefers-color-scheme:dark){.mongo-splash{background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.14),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.18),transparent 32%),linear-gradient(145deg,#0d1517,#121b1d 55%,#0b1112)}.splash-card{background:rgba(18,27,29,.78);border-color:rgba(116,215,220,.12)}.splash-quote{color:#F3F4F6}.fire-mini{background:rgba(255,255,255,.05)}}
+
 </style>
 </head>
 <body>
+
+<!-- ── Möngö V30 Premium Splash ── -->
+<div class="mongo-splash" id="mongo-splash">
+  <div class="splash-card">
+    <img class="splash-logo" src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%2238%22%20y1%3D%2228%22%20x2%3D%22218%22%20y2%3D%22232%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2361CBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.55%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23227B82%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2255%22%20y1%3D%2248%22%20x2%3D%22202%22%20y2%3D%22208%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.42%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23C99A1D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%229%22%20stdDeviation%3D%227%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.25%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%20%20%3Cfilter%20id%3D%22soft%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%225%22%20stdDeviation%3D%224%22%20flood-color%3D%22%230B4F55%22%20flood-opacity%3D%220.28%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20x%3D%2212%22%20y%3D%2212%22%20width%3D%22232%22%20height%3D%22232%22%20rx%3D%2254%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M42%2016C66%209%20190%208%20216%2021%22%20fill%3D%22none%22%20stroke%3D%22%238BE5E3%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.45%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2282%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20139V73%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%2054L143%2080H113Z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M144%20144L160%20160%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M168%20152L174%20174L152%20168Z%22%20fill%3D%22%23FFFFFF%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22129%22%20r%3D%2236%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20filter%3D%22url%28%23soft%29%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22150%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2258%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%3C%2Fsvg%3E" alt="Möngö logo">
+    <div class="splash-name">Möngö</div>
+    <div class="splash-sub">Money Flow System</div>
+    <div class="splash-line"></div>
+    <div class="splash-quote" id="splash-quote">Санхүүгээ удирд.<br>Хөрөнгөө өсгө.<br>Эрх чөлөөгөө бүтээ.</div>
+    <div class="splash-flow">
+      <span class="splash-pill">Орлого</span><span class="splash-pill">Хуримтлал</span><span class="splash-pill">Хөрөнгө</span><span class="splash-pill">Эрх чөлөө</span>
+    </div>
+  </div>
+</div>
 
 <!-- ── LOGIN хуудас ── -->
 <div class="auth-wrap show" id="auth-login">
@@ -1723,6 +1761,11 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <div class="pdash-v" id="pdash-fire-val">0%</div>
         <div class="pdash-note" id="pdash-fire-note"></div>
         <div class="pdash-bar"><div class="pdash-fill" id="pdash-fire-fill" style="width:0%"></div></div>
+        <div class="fire-detail-grid" id="pdash-fire-details">
+          <div class="fire-mini"><div class="k" id="pdash-fire-current-lbl">Одоогийн хөрөнгө</div><div class="v" id="pdash-fire-current">0</div></div>
+          <div class="fire-mini"><div class="k" id="pdash-fire-remaining-lbl">Үлдсэн</div><div class="v" id="pdash-fire-remaining">0</div></div>
+          <div class="fire-mini fire-forecast"><div class="k" id="pdash-fire-forecast-lbl">Прогноз</div><div class="v" id="pdash-fire-forecast">—</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2152,7 +2195,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V29.2</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V30</div></div>
   </div>
   <div class="card">
     <div class="card-title" id="lbl-profile-help"></div>
@@ -2270,6 +2313,18 @@ const V299_METRIC_GUIDE_LANGS={
   de:{helpMetrics:'Finanzkennzahlen',helpMetricsA:'Geldfluss = Einnahmen − Ausgaben. Ein positiver Wert bedeutet, dass du weniger ausgibst als du verdienst. Sparquote = gesparter Betrag / Einnahmen × 100. Nettovermögen = Investitionen + Ersparnisse − Kredite. Ziel für finanzielle Freiheit = jährliche Ausgaben × 25; wenn dein Nettovermögen dieses Ziel erreicht, giltst du als der finanziellen Freiheit nah.'}
 };
 Object.keys(V299_METRIC_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V299_METRIC_GUIDE_LANGS[k]));
+
+const V30_GUIDE_LANGS={
+  mn:{helpCashflow:'Мөнгөн урсгал гэж юу вэ?',helpCashflowA:'Мөнгөн урсгал = орлого − зарлага. Энэ тоо эерэг байвал та олж байгаагаасаа бага зарцуулж, илүүдэл мөнгөө хуримтлал болон хөрөнгө рүү чиглүүлэх боломжтой гэсэн үг.',helpSavingsRate:'Хуримтлалын хувь гэж юу вэ?',helpSavingsRateA:'Хуримтлалын хувь = хуримтлалд хийсэн дүн / орлого × 100. 10% бол эхлэл, 20%+ бол сайн, 30%+ бол санхүүгийн эрх чөлөөнд хурдан ойртох хүчтэй түвшин гэж үзэж болно.',helpNetWorth:'Цэвэр хөрөнгө гэж юу вэ?',helpNetWorthA:'Цэвэр хөрөнгө = нийт хуримтлал + хөрөнгө оруулалт − нийт зээл. Энэ нь таны бодит санхүүгийн байр суурийг харуулдаг хамгийн чухал үзүүлэлтүүдийн нэг.',helpFireGoal:'Санхүүгийн эрх чөлөө гэж юу вэ?',helpFireGoalA:'Санхүүгийн эрх чөлөөний зорилтот дүн = жилийн зарлага × 25. Таны цэвэр хөрөнгө энэ дүнд хүрвэл хөрөнгийн өгөөжөөр амьдрах боломжтой түвшинд ойртож байна гэж тооцно.',helpGoalPlan:'Санхүүгийн зорилгоо хэрхэн тодорхойлох вэ?',helpGoalPlanA:'Эхлээд онцгой сан, өр бууруулах, байрны урьдчилгаа, хөрөнгө оруулалт, санхүүгийн эрх чөлөө гэсэн зорилгуудаа хугацаа болон дүнтэй нь тодорхойлоорой. Дараа нь сар бүр хийх шаардлагатай дүнгээ тооцоолуураар бодож болно.'},
+  en:{helpCashflow:'What is money flow?',helpCashflowA:'Money flow = income − expenses. A positive number means you spend less than you earn and can direct the surplus toward savings and assets.',helpSavingsRate:'What is savings rate?',helpSavingsRateA:'Savings rate = amount saved / income × 100. 10% is a start, 20%+ is good, and 30%+ can move you toward financial freedom faster.',helpNetWorth:'What is net worth?',helpNetWorthA:'Net worth = total savings + investments − total loans. It is one of the clearest measures of your true financial position.',helpFireGoal:'What is financial freedom?',helpFireGoalA:'Financial freedom target = annual expenses × 25. When net worth reaches this amount, you are getting close to a level where investment returns can support your lifestyle.',helpGoalPlan:'How to set financial goals?',helpGoalPlanA:'Start with emergency fund, debt reduction, home down payment, investing, and financial freedom. Give each goal an amount and deadline, then use calculators to find the monthly action.'},
+  zh:{helpCashflow:'什么是资金流？',helpCashflowA:'资金流 = 收入 − 支出。为正表示支出低于收入，可以把剩余资金用于储蓄和资产。',helpSavingsRate:'什么是储蓄率？',helpSavingsRateA:'储蓄率 = 储蓄金额 / 收入 × 100。10%是开始，20%以上较好，30%以上可更快接近财务自由。',helpNetWorth:'什么是净资产？',helpNetWorthA:'净资产 = 总储蓄 + 投资 − 总贷款。这是衡量真实财务位置的重要指标。',helpFireGoal:'什么是财务自由？',helpFireGoalA:'财务自由目标 = 年支出 × 25。当净资产达到该金额时，说明你接近可以用投资回报支持生活的水平。',helpGoalPlan:'如何设定财务目标？',helpGoalPlanA:'先设定应急金、减少债务、购房首付、投资、财务自由等目标，并写下金额与期限，再用计算器计算每月需要行动。'},
+  ja:{helpCashflow:'お金の流れとは？',helpCashflowA:'お金の流れ＝収入−支出。プラスなら収入より少なく使えており、余剰を貯蓄や資産に回せます。',helpSavingsRate:'貯蓄率とは？',helpSavingsRateA:'貯蓄率＝貯蓄額 / 収入 × 100。10%はスタート、20%以上は良好、30%以上は経済的自由に近づきやすい水準です。',helpNetWorth:'純資産とは？',helpNetWorthA:'純資産＝貯蓄＋投資−ローン。実際の財務状態を示す重要な指標です。',helpFireGoal:'経済的自由とは？',helpFireGoalA:'経済的自由の目標額＝年間支出×25。純資産がこの金額に達すると、投資収益で生活を支えられる水準に近づきます。',helpGoalPlan:'財務目標の立て方',helpGoalPlanA:'緊急資金、借入削減、住宅頭金、投資、経済的自由などに金額と期限を設定し、計算機で毎月必要な行動を確認します。'},
+  ko:{helpCashflow:'돈의 흐름이란?',helpCashflowA:'돈의 흐름 = 수입 − 지출입니다. 플러스이면 번 돈보다 적게 쓰고 남는 돈을 저축과 자산으로 보낼 수 있습니다.',helpSavingsRate:'저축률이란?',helpSavingsRateA:'저축률 = 저축액 / 수입 × 100. 10%는 시작, 20% 이상은 좋음, 30% 이상은 경제적 자유에 더 빠르게 가까워지는 수준입니다.',helpNetWorth:'순자산이란?',helpNetWorthA:'순자산 = 총저축 + 투자 − 총대출. 실제 재무 위치를 보여주는 핵심 지표입니다.',helpFireGoal:'경제적 자유란?',helpFireGoalA:'경제적 자유 목표금액 = 연간 지출 × 25. 순자산이 이 금액에 도달하면 투자수익으로 생활을 지탱할 수 있는 수준에 가까워집니다.',helpGoalPlan:'재무 목표 설정 방법',helpGoalPlanA:'비상금, 부채 줄이기, 주택 자금, 투자, 경제적 자유 목표를 금액과 기한으로 정하고 계산기로 매월 필요한 금액을 확인하세요.'},
+  ru:{helpCashflow:'Что такое денежный поток?',helpCashflowA:'Денежный поток = доходы − расходы. Положительное значение означает, что вы тратите меньше, чем зарабатываете, и можете направлять излишек в сбережения и активы.',helpSavingsRate:'Что такое норма сбережений?',helpSavingsRateA:'Норма сбережений = сумма сбережений / доход × 100. 10% — начало, 20%+ — хорошо, 30%+ помогает быстрее двигаться к финансовой свободе.',helpNetWorth:'Что такое чистый капитал?',helpNetWorthA:'Чистый капитал = сбережения + инвестиции − кредиты. Это один из главных показателей реального финансового положения.',helpFireGoal:'Что такое финансовая свобода?',helpFireGoalA:'Цель финансовой свободы = годовые расходы × 25. Когда чистый капитал достигает этой суммы, вы приближаетесь к уровню, где доход от инвестиций может поддерживать образ жизни.',helpGoalPlan:'Как ставить финансовые цели?',helpGoalPlanA:'Определите резервный фонд, снижение долгов, первый взнос, инвестиции и финансовую свободу с суммой и сроком, затем рассчитайте ежемесячный шаг.'},
+  de:{helpCashflow:'Was ist Geldfluss?',helpCashflowA:'Geldfluss = Einnahmen − Ausgaben. Ein positiver Wert bedeutet, dass du weniger ausgibst als du verdienst und den Überschuss in Sparen und Vermögen lenken kannst.',helpSavingsRate:'Was ist die Sparquote?',helpSavingsRateA:'Sparquote = gesparter Betrag / Einkommen × 100. 10% ist ein Start, 20%+ ist gut, 30%+ bringt dich schneller Richtung finanzielle Freiheit.',helpNetWorth:'Was ist Nettovermögen?',helpNetWorthA:'Nettovermögen = Ersparnisse + Investitionen − Kredite. Es ist eine der wichtigsten Kennzahlen deiner echten Finanzlage.',helpFireGoal:'Was ist finanzielle Freiheit?',helpFireGoalA:'Ziel für finanzielle Freiheit = jährliche Ausgaben × 25. Wenn dein Nettovermögen dieses Ziel erreicht, bist du nahe an einem Niveau, bei dem Investmenterträge deinen Lebensstil tragen können.',helpGoalPlan:'Wie setzt man Finanzziele?',helpGoalPlanA:'Lege Notgroschen, Schuldenabbau, Eigenkapital, Investieren und finanzielle Freiheit mit Betrag und Frist fest. Danach zeigen Rechner den monatlichen Schritt.'}
+};
+Object.keys(V30_GUIDE_LANGS).forEach(k=>Object.assign(LANGS[k],V30_GUIDE_LANGS[k]));
+
 
 const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨🇳 中文',ja:'🇯🇵 日本語',ko:'🇰🇷 한국어',ru:'🇷🇺 Русский',de:'🇩🇪 Deutsch'};
 
@@ -2653,7 +2708,12 @@ function rProfile(){
       [L.helpSavings,L.helpSavingsA],
       [L.helpInvest,L.helpInvestA],
       [L.helpMetrics,L.helpMetricsA],
+      [L.helpCashflow,L.helpCashflowA],
+      [L.helpSavingsRate,L.helpSavingsRateA],
+      [L.helpNetWorth,L.helpNetWorthA],
+      [L.helpFireGoal,L.helpFireGoalA],
       [L.helpScore,L.helpScoreA],
+      [L.helpGoalPlan,L.helpGoalPlanA],
       [L.helpDataProtect,L.helpDataProtectA],
       [L.helpBackup,L.helpBackupA],
       [L.helpRestore,L.helpRestoreA],
@@ -3081,6 +3141,52 @@ function pDashText(){
   };
   return d[lang]||d.mn;
 }
+function v30DashText(){
+  const d={
+    mn:{current:'Одоогийн хөрөнгө',remaining:'Үлдсэн',forecast:'Прогноз',reached:'Та санхүүгийн эрх чөлөөний зорилтот дүнд хүрсэн байна.',noForecast:'Одоогийн мөнгөн урсгал дээр прогноз гаргахад илүү өгөгдөл хэрэгтэй.',years:'жил',months:'сар',reachIn:'Одоогийн хурдаар ойролцоогоор',after:'дараа хүрнэ',improve:'Сайжруулах боломж',saveReco:'Хуримтлалын хувиа 20%+ болговол оноо нэмэгдэнэ.',cashReco:'Мөнгөн урсгалаа эерэг болгох нь хамгийн түрүүнд оноо нэмнэ.',budgetReco:'Төсөв хэтрэлтийг бууруулбал оноо нэмэгдэнэ.',debtReco:'Сарын зээлийн ачааллаа бууруулбал оноо нэмэгдэнэ.',growthReco:'Хөрөнгө оруулалтын өсөлтөө эерэг байлгавал оноо нэмэгдэнэ.',excellentReco:'Маш сайн байна. Одоо хөрөнгөө тогтвортой өсгөх төлөвлөгөөгөө үргэлжлүүлээрэй.'},
+    en:{current:'Current net worth',remaining:'Remaining',forecast:'Forecast',reached:'You have reached the financial freedom target.',noForecast:'More positive cashflow data is needed for a forecast.',years:'yrs',months:'mo',reachIn:'At the current pace, you may reach it in about',after:'',improve:'Improvement opportunity',saveReco:'Raise your savings rate to 20%+ to improve the score.',cashReco:'Making cashflow positive is the fastest score improvement.',budgetReco:'Reducing budget overspending can improve the score.',debtReco:'Lowering monthly loan burden can improve the score.',growthReco:'Keeping asset growth positive can improve the score.',excellentReco:'Excellent. Keep growing assets consistently.'},
+    zh:{current:'当前净资产',remaining:'剩余',forecast:'预测',reached:'你已达到财务自由目标。',noForecast:'需要更多正向现金流数据才能预测。',years:'年',months:'个月',reachIn:'按当前速度，大约',after:'后达到',improve:'可改进项',saveReco:'把储蓄率提高到20%以上可提升评分。',cashReco:'让资金流转正是最快的提升方式。',budgetReco:'减少预算超支可提升评分。',debtReco:'降低月贷款压力可提升评分。',growthReco:'保持资产正增长可提升评分。',excellentReco:'很好，请继续稳定增加资产。'},
+    ja:{current:'現在の純資産',remaining:'残り',forecast:'予測',reached:'経済的自由の目標額に到達しています。',noForecast:'予測にはさらにプラスのお金の流れが必要です。',years:'年',months:'か月',reachIn:'現在のペースでは約',after:'後に到達',improve:'改善ポイント',saveReco:'貯蓄率を20%以上にするとスコアが上がります。',cashReco:'お金の流れをプラスにするのが最優先です。',budgetReco:'予算超過を減らすとスコアが上がります。',debtReco:'毎月のローン負担を下げるとスコアが上がります。',growthReco:'資産成長をプラスに保つとスコアが上がります。',excellentReco:'とても良い状態です。資産を継続的に育てましょう。'},
+    ko:{current:'현재 순자산',remaining:'남은 금액',forecast:'예측',reached:'경제적 자유 목표금액에 도달했습니다.',noForecast:'예측하려면 더 많은 긍정적 현금흐름 데이터가 필요합니다.',years:'년',months:'개월',reachIn:'현재 속도라면 약',after:'후 도달',improve:'개선 기회',saveReco:'저축률을 20% 이상으로 올리면 점수가 올라갑니다.',cashReco:'현금흐름을 플러스로 만드는 것이 우선입니다.',budgetReco:'예산 초과를 줄이면 점수가 올라갑니다.',debtReco:'월 대출 부담을 낮추면 점수가 올라갑니다.',growthReco:'자산 성장을 플러스로 유지하면 점수가 올라갑니다.',excellentReco:'매우 좋습니다. 자산을 꾸준히 성장시키세요.'},
+    ru:{current:'Текущий чистый капитал',remaining:'Осталось',forecast:'Прогноз',reached:'Вы достигли цели финансовой свободы.',noForecast:'Для прогноза нужно больше положительного денежного потока.',years:'лет',months:'мес.',reachIn:'При текущем темпе примерно через',after:'',improve:'Возможность улучшения',saveReco:'Поднимите норму сбережений до 20%+ для роста балла.',cashReco:'Положительный денежный поток быстрее всего улучшит балл.',budgetReco:'Снижение перерасхода бюджета улучшит балл.',debtReco:'Снижение ежемесячной кредитной нагрузки улучшит балл.',growthReco:'Положительный рост активов улучшит балл.',excellentReco:'Отлично. Продолжайте стабильно наращивать активы.'},
+    de:{current:'Aktuelles Nettovermögen',remaining:'Verbleibend',forecast:'Prognose',reached:'Du hast das Ziel für finanzielle Freiheit erreicht.',noForecast:'Für eine Prognose braucht es mehr positiven Geldfluss.',years:'Jahre',months:'Mon.',reachIn:'Beim aktuellen Tempo erreichst du es in ca.',after:'',improve:'Verbesserungsmöglichkeit',saveReco:'Erhöhe die Sparquote auf 20%+, um den Score zu verbessern.',cashReco:'Positiver Geldfluss verbessert den Score am schnellsten.',budgetReco:'Weniger Budgetüberschreitung verbessert den Score.',debtReco:'Eine niedrigere monatliche Kreditlast verbessert den Score.',growthReco:'Positives Vermögenswachstum verbessert den Score.',excellentReco:'Sehr gut. Baue dein Vermögen weiter konstant auf.'}
+  };
+  return d[lang]||d.mn;
+}
+function avgMonthlyCashflowAll(){
+  if(!txns.length)return 0;
+  const ds=txns.map(t=>new Date(t.date||Date.now())).filter(d=>!isNaN(d));
+  if(!ds.length)return 0;
+  const min=new Date(Math.min(...ds)), max=new Date(Math.max(...ds));
+  const months=Math.max(1,(max.getFullYear()-min.getFullYear())*12+(max.getMonth()-min.getMonth())+1);
+  const total=txns.reduce((s,t)=>s+(t.type==='income'?Number(t.amount)||0:-(Number(t.amount)||0)),0);
+  return total/months;
+}
+function fireForecastText(netWorth,fireTarget){
+  const T=v30DashText();
+  const left=fireTarget-netWorth;
+  if(left<=0)return T.reached;
+  const monthly=avgMonthlyCashflowAll();
+  if(monthly<=0)return T.noForecast;
+  const m=Math.ceil(left/monthly);
+  const y=Math.floor(m/12), mo=m%12;
+  const parts=[]; if(y>0)parts.push(y+' '+T.years); if(mo>0||!parts.length)parts.push(mo+' '+T.months);
+  return (T.reachIn+' '+parts.join(' ')+' '+T.after).trim();
+}
+function scoreRecommendation(){
+  if(!lastScoreBreakdown)return '';
+  const T=v30DashText();
+  const b=lastScoreBreakdown;
+  const candidates=[
+    {gap:25-b.cashScore,txt:T.cashReco},
+    {gap:25-b.saveScore,txt:T.saveReco},
+    {gap:20-b.budgetScore,txt:T.budgetReco},
+    {gap:20-b.debtScore,txt:T.debtReco},
+    {gap:10-b.growthScore,txt:T.growthReco}
+  ].sort((a,b)=>b.gap-a.gap);
+  const best=candidates[0];
+  return (b.total>=85?T.excellentReco:(best&&best.gap>0?best.txt:T.excellentReco));
+}
 function setPCardState(id,state){
   const el=document.getElementById(id); if(!el)return;
   el.classList.remove('pdash-good','pdash-bad','pdash-warn');
@@ -3122,7 +3228,7 @@ function renderScoreDetail(){
       <div class="score-row-top"><div class="score-row-name">${r.name}</div><div class="score-row-val">${r.score} / ${r.max}</div></div>
       <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
       <div class="score-row-note">${r.note}</div>
-    </div>`;}).join('');
+    </div>`;}).join('')+`<div class="score-reco"><span class="score-badge">${v30DashText().improve}</span><br>${scoreRecommendation()}</div>`;
 }
 function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const T=pDashText();
@@ -3181,7 +3287,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   }
 
   const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+budgetScore+debtScore+growthScore)));
-  lastScoreBreakdown={total:score,cashScore,saveScore,budgetScore,debtScore,growthScore};
+  lastScoreBreakdown={total:score,cashScore,saveScore,budgetScore,debtScore,growthScore,saveRate,cashflow,budgetPct,debtRatio};
   const annualExpense=Math.max(exp*12,1);
   const fireTarget=annualExpense*25;
   const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
@@ -3193,6 +3299,10 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
   setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
   setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
+  const V30=v30DashText();
+  setTxt('pdash-fire-current-lbl',V30.current); setTxt('pdash-fire-current',fmt(netWorth));
+  setTxt('pdash-fire-remaining-lbl',V30.remaining); setTxt('pdash-fire-remaining',fmt(Math.max(0,fireTarget-netWorth)));
+  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',exp>0?fireForecastText(netWorth,fireTarget):T.needData);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
   const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
@@ -4344,6 +4454,15 @@ requestAnimationFrame(()=>{
   ['sav-calc-start','sav-calc-monthly','sav-calc-target','sav-daily-amount'].forEach(setupAmtInput);
   clearSavingsCalcResults();
 });
+
+
+
+// ── Möngö V30 Premium splash ─────────────────────────────────────────────
+(function(){
+  function hideSplash(){const sp=document.getElementById('mongo-splash'); if(sp){sp.classList.add('hide'); setTimeout(()=>{sp.style.display='none';},520);}}
+  window.addEventListener('load',()=>setTimeout(hideSplash,1900));
+  setTimeout(hideSplash,3200);
+})();
 
 </script>
 
