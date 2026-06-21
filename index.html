@@ -2389,28 +2389,55 @@ function setPCardState(id,state){
   el.classList.remove('pdash-good','pdash-bad','pdash-warn');
   if(state)el.classList.add(state);
 }
-function monthKeyFromDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
-function addMonths(d,delta){const x=new Date(d.getFullYear(),d.getMonth()+delta,1);return x;}
-function avgMonthlyExpense(monthCount=3){
+function getLastMonthsStats(monthCount=3){
   const now=new Date();
   const keys=[];
-  for(let i=0;i<monthCount;i++)keys.push(monthKeyFromDate(addMonths(now,-i)));
-  const totals=keys.map(k=>txns.filter(t=>t.type==='expense'&&t.date&&t.date.substring(0,7)===k).reduce((s,t)=>s+t.amount,0));
-  const active=totals.filter(v=>v>0);
-  if(active.length>0)return active.reduce((s,v)=>s+v,0)/active.length;
-  const oneMonth=fT().filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  return oneMonth>0?oneMonth:0;
-}
-function currentMonthTotals(){
-  const now=new Date(), ym=now.toISOString().substring(0,7);
-  const arr=txns.filter(t=>t.date&&t.date.substring(0,7)===ym);
+  for(let i=0;i<monthCount;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const map={};
+  keys.forEach(k=>map[k]={income:0,expense:0,savings:0,hasExpense:false,hasIncome:false});
+  txns.forEach(t=>{
+    if(!t.date)return;
+    const key=t.date.substring(0,7);
+    if(!map[key])return;
+    const amount=t.amount||0;
+    if(t.type==='income'){
+      map[key].income+=amount;
+      if(amount>0)map[key].hasIncome=true;
+    }else if(t.type==='expense'){
+      map[key].expense+=amount;
+      if(amount>0)map[key].hasExpense=true;
+      if(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))map[key].savings+=amount;
+    }
+  });
+  const rows=keys.map(k=>map[k]);
+  const sum=(field)=>rows.reduce((a,r)=>a+(r[field]||0),0);
+  const activeExpenseMonths=Math.max(1,rows.filter(r=>r.hasExpense).length);
+  const activeIncomeMonths=Math.max(1,rows.filter(r=>r.hasIncome).length);
   return {
-    income:arr.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
-    expense:arr.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
-    savings:arr.filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0)
+    income:sum('income'),
+    expense:sum('expense'),
+    savings:sum('savings'),
+    avgIncome:sum('income')/activeIncomeMonths,
+    avgExpense:sum('expense')/activeExpenseMonths,
+    expenseMonths:rows.filter(r=>r.hasExpense).length,
+    incomeMonths:rows.filter(r=>r.hasIncome).length
   };
 }
-function calcBudgetHealthScore(){
+function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
+  const T=pDashText();
+  const cashflow=inc-exp;
+  const last3=getLastMonthsStats(3);
+  const avgMonthlyIncome=last3.avgIncome||inc||0;
+  const avgMonthlyExpense=last3.avgExpense||exp||0;
+  const periodSavings=fT().filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
+  const avgMonthlySavings=last3.savings>0?(last3.savings/Math.max(1,last3.expenseMonths||last3.incomeMonths||1)):periodSavings;
+  const saveRate=inc>0?Math.round((periodSavings/inc)*100):(avgMonthlyIncome>0?Math.round((avgMonthlySavings/avgMonthlyIncome)*100):0);
+  const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
+
+  let budgetHealth=70;
   try{
     const mo=new Date().getMonth()+1, yr=new Date().getFullYear();
     const prevY=budgetYear; budgetYear=yr;
@@ -2419,47 +2446,48 @@ function calcBudgetHealthScore(){
       const bk=bKeyFor(cat);
       planned+=getBudgetVal(bk,mo);
       used+=actualForBudget(cat,mo,'expense');
-      (cat.subs||[]).forEach(sb=>{planned+=getBudgetVal(bSubKey(cat,sb),mo);used+=actualForSub(cat,sb,mo,'expense');});
+      (cat.subs||[]).forEach(sb=>{
+        planned+=getBudgetVal(bSubKey(cat,sb),mo);
+        used+=actualForSub(cat,sb,mo,'expense');
+      });
     });
     budgetYear=prevY;
-    return planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
-  }catch(e){return 70;}
-}
-function calcFinancialScore(inc,exp,dbt,tCur,totalSavings){
-  const month=currentMonthTotals();
-  const baseIncome=month.income>0?month.income:inc;
-  const baseExpense=month.expense>0?month.expense:exp;
-  const cashflow=baseIncome-baseExpense;
-  const saveRate=baseIncome>0?Math.round((month.savings/baseIncome)*100):0;
+    budgetHealth=planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
+  }catch(e){}
+
+  // Financial score /100
+  // 1) Money flow 25, 2) savings 25, 3) budget 20, 4) loan burden 20, 5) asset growth 10.
+  const avgCashflow=avgMonthlyIncome-avgMonthlyExpense;
+  let cashScore=0;
+  if(avgMonthlyIncome>0){
+    const cfRatio=avgCashflow/avgMonthlyIncome;
+    cashScore=cfRatio>=0.20?25:(cfRatio>=0?Math.round(12+cfRatio/0.20*13):Math.max(0,Math.round(12+cfRatio*40)));
+  }else{
+    cashScore=avgCashflow>=0?12:0;
+  }
+  const avgSaveRate=avgMonthlyIncome>0?(avgMonthlySavings/avgMonthlyIncome*100):saveRate;
+  const saveScore=Math.max(0,Math.min(25,Math.round(avgSaveRate)));
+  const budgetScore=Math.max(0,Math.min(20,Math.round(budgetHealth*0.20)));
   const monthlyDebtPay=debts.reduce((s,d)=>s+(d.monthly||0),0);
-  const debtBurden=baseIncome>0?(monthlyDebtPay/baseIncome)*100:(dbt>0?100:0);
-  const investmentGain=invests.reduce((s,i)=>s+((i.current||0)-(i.invested||0)),0);
-  const assetBase=(totalSavings||0)+(tCur||0);
-  const assetGrowthRate=assetBase>0?Math.max(0,(investmentGain/assetBase)*100):0;
-  const budgetHealth=calcBudgetHealthScore();
-
-  const cashScore=baseIncome>0?Math.max(0,Math.min(25,Math.round(((cashflow/baseIncome)+0.25)/0.50*25))):(cashflow>=0?12:0);
-  const savingsScore=Math.max(0,Math.min(25,Math.round(saveRate/25*25)));
-  const budgetScore=Math.max(0,Math.min(20,Math.round(budgetHealth/100*20)));
+  const debtPayRatio=avgMonthlyIncome>0?(monthlyDebtPay/avgMonthlyIncome*100):(dbt>0?100:0);
   let debtScore=20;
-  if(debtBurden>0)debtScore=Math.max(0,Math.min(20,Math.round(20-(debtBurden/40*20))));
-  const assetScore=Math.max(0,Math.min(10,Math.round(assetGrowthRate/10*10)));
+  if(debtPayRatio<=0)debtScore=20;
+  else if(debtPayRatio<=20)debtScore=20;
+  else if(debtPayRatio<=35)debtScore=15;
+  else if(debtPayRatio<=50)debtScore=8;
+  else debtScore=3;
+  const totalInvested=invests.reduce((s,i)=>s+(i.invested||0),0);
+  const assetBase=((totalSavings||0)+(tCur||0))>0?5:0;
+  const pnl=(tCur||0)-totalInvested;
+  const growthBonus=totalInvested>0?(pnl>=0?5:Math.max(0,Math.round(5+(pnl/Math.max(totalInvested,1))*10))):(((totalSavings||0)>0)?5:0);
+  const assetScore=Math.max(0,Math.min(10,assetBase+growthBonus));
+  const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+budgetScore+debtScore+assetScore)));
 
-  const total=Math.max(0,Math.min(100,Math.round(cashScore+savingsScore+budgetScore+debtScore+assetScore)));
-  return {total,cashScore,savingsScore,budgetScore,debtScore,assetScore,saveRate,budgetHealth};
-}
-function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
-  const T=pDashText();
-  const cashflow=inc-exp;
-  const periodSavings=fT().filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
-  const saveRate=inc>0?Math.round((periodSavings/inc)*100):0;
-  const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
-  const scoreData=calcFinancialScore(inc,exp,dbt,tCur,totalSavings);
-  const score=scoreData.total;
-  const avgExp=avgMonthlyExpense(3);
-  const annualExpense=Math.max(avgExp*12,1);
+  // Financial freedom progress: average monthly expense × 12 × 25.
+  const monthlyExpenseForFire=avgMonthlyExpense||exp||0;
+  const annualExpense=Math.max(monthlyExpenseForFire*12,1);
   const fireTarget=annualExpense*25;
-  const firePct=avgExp>0?Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100))):0;
+  const firePct=monthlyExpenseForFire>0?Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100))):0;
 
   const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
   setTxt('pdash-title',T.title); setTxt('pdash-sub',T.sub);
@@ -2467,7 +2495,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
   setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
   setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
-  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?T.fireNote:T.needData);
+  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',monthlyExpenseForFire>0?T.fireNote:T.needData);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
   setPCardState('pdash-cashflow-card',cashflow>=0?'pdash-good':'pdash-bad');
@@ -2475,6 +2503,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setPCardState('pdash-net-card',netWorth>=0?'pdash-good':'pdash-bad');
   setPCardState('pdash-score-card',score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad'));
 }
+
 
 function uDash(){
   const ft=fT();
