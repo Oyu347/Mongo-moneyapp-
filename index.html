@@ -1421,6 +1421,80 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @media(max-width:520px){.inv-allocation-wrap{grid-template-columns:1fr}.inv-allocation-wrap canvas{margin:0 auto}.inv-scenario-wrap canvas{height:170px}}
 @media(prefers-color-scheme:dark){.inv-scenario-wrap,.inv-allocation-wrap{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
 
+
+
+/* ── Möngö V29.5 Investment tabs separation + polished calculator UI ── */
+#tab-invest .calc-tabs{
+  display:flex !important;
+  gap:8px !important;
+  margin:0 0 14px !important;
+  padding:6px !important;
+  border-radius:24px !important;
+  background:rgba(255,255,255,.72) !important;
+  border:1px solid rgba(73,176,182,.18) !important;
+  box-shadow:0 10px 24px rgba(31,127,134,.09) !important;
+}
+#tab-invest .calc-tab-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  flex:1 1 0 !important;
+  border:0 !important;
+  outline:0 !important;
+  min-height:42px !important;
+  border-radius:18px !important;
+  padding:10px 12px !important;
+  background:transparent !important;
+  color:#6B7280 !important;
+  font-size:14px !important;
+  font-weight:950 !important;
+  box-shadow:none !important;
+}
+#tab-invest .calc-tab-btn.active{
+  background:linear-gradient(135deg,#49B0B6,#1F7F86) !important;
+  color:#fff !important;
+  box-shadow:0 10px 20px rgba(31,127,134,.24) !important;
+}
+#tab-invest .calc-panel{display:none !important;}
+#tab-invest .calc-panel.active{display:block !important;}
+#invest-panel-calc .calc-card{
+  background:rgba(255,255,255,.96) !important;
+  border:1px solid rgba(255,255,255,.92) !important;
+  border-radius:30px !important;
+  padding:18px !important;
+  box-shadow:0 16px 38px rgba(31,127,134,.11) !important;
+}
+#invest-panel-calc .calc-title{font-size:22px !important;line-height:1.15 !important;margin-bottom:8px !important;}
+#invest-panel-calc .calc-desc{font-size:13px !important;line-height:1.5 !important;color:#6B7280 !important;margin-bottom:14px !important;}
+#invest-panel-calc .form-row{gap:12px !important;margin-bottom:12px !important;}
+#invest-panel-calc .slbl{font-size:11px !important;color:#6B7280 !important;font-weight:950 !important;letter-spacing:.05em !important;}
+#invest-panel-calc .fi{min-height:56px !important;border-radius:20px !important;font-size:16px !important;padding:13px 16px !important;background:rgba(255,255,255,.92) !important;}
+#invest-panel-calc .loan-calc-btn{width:100%;min-height:54px !important;margin:4px 0 12px !important;border-radius:24px !important;font-size:16px !important;}
+#invest-panel-calc .calc-result-grid{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;margin-top:12px !important;}
+#invest-panel-calc .calc-result{
+  border-radius:22px !important;
+  padding:13px 14px !important;
+  background:#fff !important;
+  border:1px solid rgba(73,176,182,.14) !important;
+  box-shadow:0 8px 18px rgba(31,127,134,.07) !important;
+}
+#invest-panel-calc .calc-result .k{font-size:11px !important;color:#6B7280 !important;font-weight:950 !important;margin-bottom:6px !important;}
+#invest-panel-calc .calc-result .v{font-size:18px !important;line-height:1.2 !important;font-weight:1000 !important;color:#1F7F86 !important;}
+#invest-panel-calc .loan-highlight{font-size:25px !important;}
+#invest-panel-calc .inv-scenario-wrap,#invest-panel-calc .inv-allocation-wrap{display:none;}
+#invest-panel-calc .inv-scenario-wrap.show,#invest-panel-calc .inv-allocation-wrap.show{display:block;}
+#invest-panel-calc .inv-allocation-wrap.show{display:grid;}
+@media(max-width:520px){
+  #tab-invest .calc-tabs{margin-left:0 !important;margin-right:0 !important;}
+  #tab-invest .calc-tab-btn{font-size:13px !important;min-height:40px !important;}
+  #invest-panel-calc .calc-card{padding:16px !important;border-radius:28px !important;}
+  #invest-panel-calc .form-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;}
+  #invest-panel-calc .form-row > div{min-width:0 !important;}
+  #invest-panel-calc .fi{min-height:54px !important;font-size:15px !important;padding:12px 14px !important;}
+  #invest-panel-calc .calc-result-grid{grid-template-columns:1fr !important;}
+  #invest-panel-calc .loan-highlight{font-size:23px !important;padding:18px 14px !important;}
+  #invest-panel-calc .inv-allocation-wrap.show{grid-template-columns:1fr !important;justify-items:center !important;}
+}
+
 </style>
 </head>
 <body>
@@ -1733,7 +1807,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <button class="calc-tab-btn active" onclick="showCalcPanel('debts','mine',this)" id="debt-tab-mine">Миний зээл</button>
     <button class="calc-tab-btn" onclick="showCalcPanel('debts','calc',this)" id="debt-tab-calc">Тооцоолуур</button>
   </div>
-  <div id="debts-panel-mine" class="calc-panel active">
+  <div id="debts-panel-mine" class="calc-panel active" style="display:block">
   <div class="card">
     <div class="card-title" id="lbl-adddebt"></div>
     <div class="form-row">
@@ -1765,7 +1839,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   </div>
   <div id="debts-list"></div>
   </div>
-  <div id="debts-panel-calc" class="calc-panel">
+  <div id="debts-panel-calc" class="calc-panel" style="display:none">
     <div class="calc-card loan-adv-card">
       <div class="calc-title" id="lbl-loan-calc-title">Зээлийн тооцоолуур</div>
       <div class="calc-desc" id="lbl-loan-calc-desc">Сарын төлөлт, нийт хүү, урьдчилж төлөхөд хэмнэх мөнгө, төлөлтийн хуваарийг тооцно.</div>
@@ -1831,7 +1905,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <button class="calc-tab-btn active" onclick="showCalcPanel('invest','mine',this)" id="invest-tab-mine">Миний хөрөнгө</button>
     <button class="calc-tab-btn" onclick="showCalcPanel('invest','calc',this)" id="invest-tab-calc">Тооцоолуур</button>
   </div>
-  <div id="invest-panel-mine" class="calc-panel active">
+  <div id="invest-panel-mine" class="calc-panel active" style="display:block">
     <div class="card">
       <div class="card-title" id="lbl-addinvest"></div>
       <div class="notice" style="margin-bottom:9px"><span style="font-size:14px">💡</span><span id="lbl-investinfo"></span></div>
@@ -1863,7 +1937,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     </div>
     <div id="invest-list"></div>
   </div>
-  <div id="invest-panel-calc" class="calc-panel">
+  <div id="invest-panel-calc" class="calc-panel" style="display:none">
     <div class="calc-card inv-calc-card">
       <div class="calc-title" id="lbl-inv-calc-title">Хөрөнгө оруулалтын тооцоолуур</div>
       <div class="calc-desc" id="lbl-inv-calc-desc">Нийлмэл өсөлт, инфляц хассан бодит үнэ цэн, 3 хувилбарын ирээдүйн үр дүнг тооцно.</div>
@@ -3678,11 +3752,15 @@ const CALC_LANGS={
 ['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=CALC_LANGS.en;});
 function CT(){return Object.assign({},CALC_LANGS.en,CALC_LANGS[lang]||CALC_LANGS.mn);}
 function showCalcPanel(section,panel,btn){
-  document.querySelectorAll('#tab-'+section+' .calc-tab-btn').forEach(b=>b.classList.remove('active'));
+  const root=document.getElementById('tab-'+section);
+  if(!root)return;
+  root.querySelectorAll('.calc-tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  document.querySelectorAll('#tab-'+section+' .calc-panel').forEach(p=>p.classList.remove('active'));
-  const el=document.getElementById(section+'-panel-'+panel); if(el)el.classList.add('active');
+  root.querySelectorAll('.calc-panel').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  const el=document.getElementById(section+'-panel-'+panel);
+  if(el){el.classList.add('active');el.style.display='block';}
   if(section==='debts'&&panel==='calc')clearLoanCalcResults();
+  if(section==='invest'&&panel==='calc')clearInvCalcResults();
 }
 function updateCalcTexts(){
   const t=CT();
@@ -3725,7 +3803,7 @@ function buildLoanSchedule(P,annualRate,months,type,extra){
 }
 function clearLoanCalcResults(){
   const ids=['loan-main-payment','loan-result-grid','loan-split-wrap','btn-loan-schedule'];
-  ids.forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
+  ids.forEach(id=>{const el=document.getElementById(id); if(el){el.style.display='none';el.classList.remove('show');}});
   const empty=document.getElementById('loan-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=CT().loanEmpty;}
   const sched=document.getElementById('loan-schedule-wrap'); if(sched)sched.style.display='none';
   const msg=document.getElementById('loan-extra-msg'); if(msg){msg.style.display='none'; msg.textContent='';}
@@ -3829,7 +3907,7 @@ function applyInvRiskRate(){
   if(vals[risk]!=null)rate.value=vals[risk];
 }
 function clearInvCalcResults(){
-  ['inv-main-value','inv-result-grid','inv-scenario-wrap','inv-allocation-wrap','inv-risk-note'].forEach(id=>{const el=document.getElementById(id); if(el)el.style.display='none';});
+  ['inv-main-value','inv-result-grid','inv-scenario-wrap','inv-allocation-wrap','inv-risk-note'].forEach(id=>{const el=document.getElementById(id); if(el){el.style.display='none';el.classList.remove('show');}});
   const empty=document.getElementById('inv-calc-empty'); if(empty){empty.style.display='block'; empty.textContent=CT().invEmpty;}
   ['inv-res-future','inv-res-real','inv-res-invested','inv-res-profit','inv-main-value'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent='0';});
   const rr=document.getElementById('inv-res-real-rate'); if(rr)rr.textContent='0%';
@@ -3859,8 +3937,8 @@ function calcInvestmentAdvanced(run){
   document.getElementById('inv-calc-empty').style.display='none';
   document.getElementById('inv-main-value').style.display='block';
   document.getElementById('inv-result-grid').style.display='grid';
-  document.getElementById('inv-scenario-wrap').style.display='block';
-  document.getElementById('inv-allocation-wrap').style.display='grid';
+  const _scw=document.getElementById('inv-scenario-wrap'); if(_scw){_scw.style.display='block';_scw.classList.add('show');}
+  const _alw=document.getElementById('inv-allocation-wrap'); if(_alw){_alw.style.display='grid';_alw.classList.add('show');}
   document.getElementById('inv-risk-note').style.display='block';
   document.getElementById('inv-main-value').textContent=fmt(fv);
   document.getElementById('inv-res-future').textContent=fmt(fv);
