@@ -1523,6 +1523,26 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @media(max-width:520px){#tab-goals .calc-tabs{margin-left:0 !important;margin-right:0 !important;}#tab-goals .calc-tab-btn{font-size:13px !important;min-height:40px !important;}#goals-panel-calc .calc-card{padding:16px !important;border-radius:28px !important;}#goals-panel-calc .form-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;}#goals-panel-calc .form-row > div{min-width:0 !important;}#goals-panel-calc .fi{min-height:54px !important;font-size:15px !important;padding:12px 14px !important;}#goals-panel-calc .calc-result-grid{grid-template-columns:1fr !important;}#goals-panel-calc .loan-highlight{font-size:23px !important;padding:18px 14px !important;}.sav-chart-wrap canvas{height:170px}.saving-challenge-card .form-row{grid-template-columns:1fr !important;}}
 @media(prefers-color-scheme:dark){#goals-panel-calc .calc-card{background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76)) !important;border-color:rgba(116,215,220,.12) !important;}#goals-panel-calc .calc-result{background:rgba(255,255,255,.06) !important}.saving-challenge-msg{color:#74D7DC}}
 
+
+
+/* ── Möngö V29.8 financial score breakdown ── */
+#pdash-score-card{cursor:pointer;}
+.score-detail-card{display:none;}
+.score-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.score-detail-title{font-size:18px;font-weight:950;letter-spacing:-.03em;color:#374151;display:flex;align-items:center;gap:8px;}
+.score-detail-title:before{content:"";width:12px;height:12px;border-radius:999px;background:radial-gradient(circle at 35% 35%,#F7D24A 0 18%,#49B0B6 44%,rgba(73,176,182,.14) 55% 100%);box-shadow:0 0 0 5px rgba(73,176,182,.08)}
+.score-detail-total{font-size:22px;font-weight:950;color:#1F7F86;white-space:nowrap;}
+.score-detail-sub{font-size:12px;color:#6B7280;font-weight:700;line-height:1.45;margin-top:2px;}
+.score-row{padding:10px 0;border-bottom:1px solid rgba(73,176,182,.10);}
+.score-row:last-child{border-bottom:none;}
+.score-row-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+.score-row-name{font-size:13px;color:#374151;font-weight:900;}
+.score-row-val{font-size:13px;color:#1F7F86;font-weight:950;white-space:nowrap;}
+.score-bar{height:9px;border-radius:999px;background:rgba(73,176,182,.12);overflow:hidden;}
+.score-bar-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);transition:width .25s ease;}
+.score-row-note{font-size:11px;color:#6B7280;font-weight:650;line-height:1.35;margin-top:6px;}
+@media(prefers-color-scheme:dark){.score-detail-title,.score-row-name{color:#F3F4F6}.score-detail-total,.score-row-val{color:#74D7DC}}
+
 </style>
 </head>
 <body>
@@ -1705,6 +1725,16 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <div class="pdash-bar"><div class="pdash-fill" id="pdash-fire-fill" style="width:0%"></div></div>
       </div>
     </div>
+  </div>
+  <div class="card score-detail-card" id="score-detail-card">
+    <div class="score-detail-head">
+      <div>
+        <div class="score-detail-title" id="score-detail-title">Санхүүгийн онооны задаргаа</div>
+        <div class="score-detail-sub" id="score-detail-sub">Оноо нь мөнгөн урсгал, хуримтлал, төсөв, зээл, хөрөнгө өсөлтөөс бүрдэнэ.</div>
+      </div>
+      <div class="score-detail-total" id="score-detail-total">0/100</div>
+    </div>
+    <div id="score-detail-list"></div>
   </div>
   <div class="sgrid">
     <div class="metric" id="m-inc"><div class="metric-lbl" id="lbl-income"></div><div class="metric-val" id="d-inc">0</div></div>
@@ -3043,26 +3073,102 @@ function setPCardState(id,state){
   el.classList.remove('pdash-good','pdash-bad','pdash-warn');
   if(state)el.classList.add(state);
 }
+let lastScoreBreakdown=null;
+function scoreDetailText(){
+  const d={
+    mn:{title:'Санхүүгийн онооны задаргаа',sub:'Оноо нь 5 үндсэн хэсгээс бүрдэнэ. Онооны карт дээр дарж нээж/хаана.',cash:'Мөнгөн урсгал',save:'Хуримтлал',budget:'Төсөв',debt:'Зээл',growth:'Хөрөнгө өсөлт',cashNote:'Орлого − зарлага эерэг байх тусам оноо нэмэгдэнэ.',saveNote:'Хуримтлалын хувь өндөр байх тусам оноо нэмэгдэнэ.',budgetNote:'Төсөвтөө багтах тусам оноо өндөр байна.',debtNote:'Сарын зээлийн төлбөр орлоготой харьцуулахад бага байх тусам сайн.',growthNote:'Хөрөнгө оруулалтын өсөлт эерэг байх тусам оноо нэмэгдэнэ.'},
+    en:{title:'Financial score breakdown',sub:'The score is built from 5 core areas. Tap the score card to open/close.',cash:'Money flow',save:'Savings',budget:'Budget',debt:'Loans',growth:'Asset growth',cashNote:'A positive income minus expense improves this score.',saveNote:'A higher savings rate improves this score.',budgetNote:'Staying within budget improves this score.',debtNote:'Lower monthly loan payments compared with income is better.',growthNote:'Positive investment growth improves this score.'},
+    zh:{title:'财务评分明细',sub:'评分由5个核心部分组成。点击评分卡可展开/收起。',cash:'资金流',save:'储蓄',budget:'预算',debt:'贷款',growth:'资产增长',cashNote:'收入减支出越为正，分数越高。',saveNote:'储蓄率越高，分数越高。',budgetNote:'越能控制在预算内，分数越高。',debtNote:'月贷款支出相对收入越低越好。',growthNote:'投资增长越积极，分数越高。'},
+    ja:{title:'財務スコア内訳',sub:'スコアは5つの主要項目で構成されます。スコアカードをタップして開閉します。',cash:'お金の流れ',save:'貯蓄',budget:'予算',debt:'ローン',growth:'資産成長',cashNote:'収入−支出がプラスほど高得点です。',saveNote:'貯蓄率が高いほど高得点です。',budgetNote:'予算内に収まるほど高得点です。',debtNote:'収入に対する毎月のローン支払いが低いほど良いです。',growthNote:'投資成長がプラスほど高得点です。'},
+    ko:{title:'재무 점수 상세',sub:'점수는 5가지 핵심 영역으로 구성됩니다. 점수 카드를 눌러 열고 닫을 수 있습니다.',cash:'돈의 흐름',save:'저축',budget:'예산',debt:'대출',growth:'자산 성장',cashNote:'수입−지출이 플러스일수록 점수가 높아집니다.',saveNote:'저축률이 높을수록 점수가 높아집니다.',budgetNote:'예산 안에서 지출할수록 점수가 높습니다.',debtNote:'수입 대비 월 대출 상환액이 낮을수록 좋습니다.',growthNote:'투자 성장이 플러스일수록 점수가 높습니다.'},
+    ru:{title:'Разбор финансового балла',sub:'Балл состоит из 5 ключевых частей. Нажмите на карточку балла, чтобы открыть/закрыть.',cash:'Денежный поток',save:'Сбережения',budget:'Бюджет',debt:'Кредиты',growth:'Рост активов',cashNote:'Чем выше доходы минус расходы, тем лучше.',saveNote:'Чем выше норма сбережений, тем выше балл.',budgetNote:'Соблюдение бюджета повышает балл.',debtNote:'Чем ниже ежемесячные платежи по кредитам к доходу, тем лучше.',growthNote:'Положительный рост инвестиций повышает балл.'},
+    de:{title:'Finanz-Score Details',sub:'Der Score besteht aus 5 Kernbereichen. Tippe auf die Score-Karte zum Öffnen/Schließen.',cash:'Geldfluss',save:'Sparen',budget:'Budget',debt:'Kredite',growth:'Vermögenswachstum',cashNote:'Je positiver Einnahmen minus Ausgaben ist, desto besser.',saveNote:'Eine höhere Sparquote verbessert den Score.',budgetNote:'Innerhalb des Budgets zu bleiben verbessert den Score.',debtNote:'Niedrigere monatliche Kreditraten im Verhältnis zum Einkommen sind besser.',growthNote:'Positives Investmentwachstum verbessert den Score.'}
+  };
+  return d[lang]||d.mn;
+}
+function toggleScoreDetail(){
+  const el=document.getElementById('score-detail-card'); if(!el)return;
+  el.style.display=(el.style.display==='none'||!el.style.display)?'block':'none';
+  if(el.style.display==='block')renderScoreDetail();
+}
+function renderScoreDetail(){
+  if(!lastScoreBreakdown)return;
+  const T=scoreDetailText();
+  const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
+  setTxt('score-detail-title',T.title); setTxt('score-detail-sub',T.sub); setTxt('score-detail-total',lastScoreBreakdown.total+' / 100');
+  const rows=[
+    {name:T.cash,score:lastScoreBreakdown.cashScore,max:25,note:T.cashNote},
+    {name:T.save,score:lastScoreBreakdown.saveScore,max:25,note:T.saveNote},
+    {name:T.budget,score:lastScoreBreakdown.budgetScore,max:20,note:T.budgetNote},
+    {name:T.debt,score:lastScoreBreakdown.debtScore,max:20,note:T.debtNote},
+    {name:T.growth,score:lastScoreBreakdown.growthScore,max:10,note:T.growthNote}
+  ];
+  const list=document.getElementById('score-detail-list'); if(!list)return;
+  list.innerHTML=rows.map(r=>{const pct=r.max>0?Math.max(0,Math.min(100,(r.score/r.max)*100)):0;return `
+    <div class="score-row">
+      <div class="score-row-top"><div class="score-row-name">${r.name}</div><div class="score-row-val">${r.score} / ${r.max}</div></div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+      <div class="score-row-note">${r.note}</div>
+    </div>`;}).join('');
+}
 function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const T=pDashText();
   const cashflow=inc-exp;
-  const periodSavings=fT().filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
+  const ft=fT();
+  const periodSavings=ft.filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
   const saveRate=inc>0?Math.round((periodSavings/inc)*100):0;
   const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
-  const debtRatio=inc>0?Math.min(100,Math.round((dbt/inc)*100)):dbt>0?100:0;
-  let budgetScore=70;
+
+  let budgetPct=70;
   try{
     const mo=new Date().getMonth()+1, yr=new Date().getFullYear();
     const prevY=budgetYear; budgetYear=yr;
     let planned=0, used=0;
     bCatsExp.forEach(cat=>{const bk=bKeyFor(cat);planned+=getBudgetVal(bk,mo);used+=actualForBudget(cat,mo,'expense');(cat.subs||[]).forEach(sb=>{planned+=getBudgetVal(bSubKey(cat,sb),mo);used+=actualForSub(cat,sb,mo,'expense');});});
     budgetYear=prevY;
-    budgetScore=planned>0?Math.max(0,Math.min(100,Math.round(100-(Math.max(0,used-planned)/planned*100)))):70;
+    if(planned>0){
+      const overRatio=Math.max(0,(used-planned)/planned);
+      budgetPct=Math.max(0,Math.min(100,Math.round(100-(overRatio*160))));
+    }
   }catch(e){}
-  const cashScore=cashflow>=0?25:8;
-  const saveScore=Math.min(25,Math.max(0,saveRate));
-  const debtScore=Math.max(0,25-Math.round(debtRatio/8));
-  const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+debtScore+(budgetScore*0.25))));
+
+  const cashMargin=inc>0?cashflow/inc:(cashflow>0?1:-1);
+  let cashScore=0;
+  if(inc<=0&&exp<=0) cashScore=12;
+  else if(cashMargin>=0.25) cashScore=25;
+  else if(cashMargin>=0.15) cashScore=22;
+  else if(cashMargin>=0.05) cashScore=18;
+  else if(cashMargin>=0) cashScore=14;
+  else cashScore=Math.max(0,Math.round(14+(cashMargin*28)));
+
+  const saveScore=Math.max(0,Math.min(25,Math.round(saveRate>=25?25:saveRate)));
+  const budgetScore=Math.max(0,Math.min(20,Math.round(budgetPct*0.20)));
+
+  const monthlyDebt=debts.reduce((s,d)=>s+(Number(d.monthly)||0),0);
+  const debtRatio=inc>0?monthlyDebt/inc:(dbt>0?1:0);
+  let debtScore=20;
+  if(dbt<=0&&monthlyDebt<=0) debtScore=20;
+  else if(inc<=0) debtScore=4;
+  else if(debtRatio<=0.2) debtScore=19;
+  else if(debtRatio<=0.35) debtScore=15;
+  else if(debtRatio<=0.5) debtScore=8;
+  else debtScore=3;
+
+  const invested=invests.reduce((s,i)=>s+(Number(i.invested)||0),0);
+  const current=invests.reduce((s,i)=>s+(Number(i.current)||0),0);
+  let growthScore=5;
+  if(invested>0){
+    const ret=(current-invested)/invested;
+    if(ret>=0.15) growthScore=10;
+    else if(ret>=0.08) growthScore=9;
+    else if(ret>=0.03) growthScore=8;
+    else if(ret>=0) growthScore=7;
+    else if(ret>=-0.05) growthScore=4;
+    else growthScore=2;
+  }
+
+  const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+budgetScore+debtScore+growthScore)));
+  lastScoreBreakdown={total:score,cashScore,saveScore,budgetScore,debtScore,growthScore};
   const annualExpense=Math.max(exp*12,1);
   const fireTarget=annualExpense*25;
   const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
@@ -3076,11 +3182,14 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?T.fireNote:T.needData);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
+  const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
+  renderScoreDetail();
   setPCardState('pdash-cashflow-card',cashflow>=0?'pdash-good':'pdash-bad');
   setPCardState('pdash-save-card',saveRate>=20?'pdash-good':(saveRate>=10?'pdash-warn':'pdash-bad'));
   setPCardState('pdash-net-card',netWorth>=0?'pdash-good':'pdash-bad');
   setPCardState('pdash-score-card',score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad'));
 }
+
 
 function uDash(){
   const ft=fT();
