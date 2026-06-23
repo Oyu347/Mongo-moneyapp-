@@ -1576,23 +1576,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .logo{width:52px!important;height:52px!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;}
 @media(max-width:520px){.auth-logo img,#auth-logo-img,#auth-logo-img2,#auth-logo-img3{width:88px!important;height:88px!important}.splash-logo{width:104px!important;height:104px!important}.logo,.logo img{width:48px!important;height:48px!important}}
 
-
-
-/* ── User requested: Splash logo same visual style as Login logo ── */
-.splash-logo{
-  width:92px!important;
-  height:92px!important;
-  border-radius:50%!important;
-  object-fit:contain!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  filter:drop-shadow(0 14px 24px rgba(31,127,134,.18))!important;
-  animation:none!important;
-}
-@media(max-width:520px){
-  .splash-logo{width:88px!important;height:88px!important;}
-}
-
 </style>
 </head>
 <body>
@@ -5283,6 +5266,182 @@ auth.onAuthStateChanged(user=>{
       polishLogoAndText();
     };
   }
+})();
+</script>
+
+
+
+<!-- Möngö V30.4 final logo consistency patch: splash/login/app use the same horizontal lockup -->
+<style>
+/* Desired logo lockup: icon + Möngö + MONEY FLOW SYSTEM, same on splash/login/header */
+.mongo-lockup,
+.auth-logo,
+.v27-topbar .brand{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:14px !important;
+  overflow:visible !important;
+}
+.mongo-lockup{
+  margin:2px auto 28px !important;
+}
+.mongo-lockup img{
+  width:112px !important;
+  height:112px !important;
+  border-radius:0 !important;
+  object-fit:contain !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 14px 24px rgba(31,127,134,.18)) !important;
+}
+.mongo-lockup-text,
+.auth-logo > div,
+.v27-topbar .brand > span.brand-name{
+  overflow:visible !important;
+}
+.mongo-lockup-name{
+  font-size:40px !important;
+  font-weight:950 !important;
+  line-height:1.08 !important;
+  letter-spacing:-1.3px !important;
+  color:#49B0B6 !important;
+  padding-bottom:7px !important;
+  margin-bottom:-4px !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
+}
+.mongo-lockup-sub{
+  font-size:13px !important;
+  font-weight:900 !important;
+  letter-spacing:4px !important;
+  color:#8B97A3 !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+  text-transform:uppercase !important;
+}
+/* Hide the old separate splash icon/name/subtitle so splash matches login exactly */
+.mongo-splash .splash-card > .splash-logo,
+.mongo-splash .splash-card > .splash-name,
+.mongo-splash .splash-card > .splash-sub{
+  display:none !important;
+}
+/* Login lockup sizing like approved screenshot */
+.auth-logo img,#auth-logo-img,#auth-logo-img2,#auth-logo-img3{
+  width:120px !important;
+  height:120px !important;
+  border-radius:0 !important;
+  object-fit:contain !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 14px 24px rgba(31,127,134,.18)) !important;
+}
+.auth-logo-name{
+  font-size:42px !important;
+  font-weight:950 !important;
+  color:#49B0B6 !important;
+  letter-spacing:-1.3px !important;
+  line-height:1.08 !important;
+  padding-bottom:7px !important;
+  margin-bottom:-4px !important;
+  white-space:nowrap !important;
+}
+.auth-logo-sub{
+  font-size:12.5px !important;
+  letter-spacing:3.7px !important;
+  font-weight:900 !important;
+  color:#8B97A3 !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+  text-transform:uppercase !important;
+}
+/* App header keeps the same logo source, scaled down */
+.v27-topbar .logo,
+.v27-topbar .logo img{
+  width:58px !important;
+  height:58px !important;
+  border-radius:0 !important;
+  object-fit:contain !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+.v27-topbar .logo img{
+  filter:drop-shadow(0 8px 14px rgba(31,127,134,.16)) !important;
+}
+.v27-topbar .brand-name{
+  font-size:24px !important;
+  color:#49B0B6 !important;
+  font-weight:950 !important;
+  letter-spacing:-.7px !important;
+  line-height:1.08 !important;
+  padding-bottom:6px !important;
+  margin-bottom:-5px !important;
+}
+.v27-topbar .brand span:last-child{
+  font-size:9.5px !important;
+  letter-spacing:1.65px !important;
+  font-weight:900 !important;
+  color:#8B97A3 !important;
+  white-space:nowrap !important;
+  text-transform:uppercase !important;
+}
+@media(max-width:520px){
+  .mongo-lockup{gap:12px !important;margin-bottom:24px !important;}
+  .mongo-lockup img{width:96px !important;height:96px !important;}
+  .mongo-lockup-name{font-size:34px !important;}
+  .mongo-lockup-sub{font-size:10.5px !important;letter-spacing:2.9px !important;}
+  .auth-logo{gap:12px !important;}
+  .auth-logo img,#auth-logo-img,#auth-logo-img2,#auth-logo-img3{width:112px !important;height:112px !important;}
+  .auth-logo-name{font-size:38px !important;}
+  .auth-logo-sub{font-size:11px !important;letter-spacing:3px !important;}
+  .v27-topbar .logo,.v27-topbar .logo img{width:52px !important;height:52px !important;}
+  .v27-topbar .brand-name{font-size:21px !important;}
+  .v27-topbar .brand span:last-child{font-size:8.2px !important;letter-spacing:1.25px !important;}
+}
+</style>
+<script>
+(function(){
+  function logoSrc(){
+    var a=document.getElementById('auth-logo-img');
+    if(a && a.getAttribute('src')) return a.getAttribute('src');
+    var h=document.querySelector('.logo img');
+    if(h && h.getAttribute('src')) return h.getAttribute('src');
+    var s=document.querySelector('.splash-logo');
+    return s ? s.getAttribute('src') : '';
+  }
+  function forceLogoLockup(){
+    var src=logoSrc();
+    if(src){
+      document.querySelectorAll('#auth-logo-img,#auth-logo-img2,#auth-logo-img3,.logo img').forEach(function(img){
+        img.src=src;
+        img.style.background='transparent';
+        img.style.objectFit='contain';
+        img.style.borderRadius='0';
+      });
+    }
+    document.querySelectorAll('.auth-logo-name,.brand-name').forEach(function(el){ el.textContent='Möngö'; });
+    document.querySelectorAll('.auth-logo-sub').forEach(function(el){ el.textContent='MONEY FLOW SYSTEM'; });
+    document.querySelectorAll('.v27-topbar .brand span').forEach(function(el){
+      var t=(el.textContent||'').trim().toLowerCase();
+      if(t.includes('smart') || t.includes('money flow')) el.textContent='MONEY FLOW SYSTEM';
+    });
+    var card=document.querySelector('#mongo-splash .splash-card');
+    if(card){
+      var old=card.querySelector('.mongo-lockup');
+      if(!old){
+        var wrap=document.createElement('div');
+        wrap.className='mongo-lockup';
+        wrap.innerHTML='<img alt="Möngö logo"><div class="mongo-lockup-text"><div class="mongo-lockup-name">Möngö</div><div class="mongo-lockup-sub">MONEY FLOW SYSTEM</div></div>';
+        card.insertBefore(wrap, card.firstChild);
+      }
+      var im=card.querySelector('.mongo-lockup img');
+      if(im && src) im.src=src;
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',forceLogoLockup); else forceLogoLockup();
+  window.addEventListener('load',forceLogoLockup);
+  [100,300,700,1200,2000].forEach(function(ms){ setTimeout(forceLogoLockup,ms); });
 })();
 </script>
 
