@@ -7,6 +7,7 @@ Adds: profile email fix, transaction subcategory selector UI, finance dashboard 
 V28.2: removes duplicate email row, moves Data after Help, adds Backup/Restore/Clear/Logout guide explanations.
 V29.1: adds advanced loan calculator with annuity/differentiated payments, extra payment savings, donut chart and amortization schedule.
 V29.3: fixes calculator tabs visibility, removes hardcoded calculator values, adds explicit Calculate button.
+V30.4: bigger splash logo, old Pay Yourself First savings-rate logic, FIRE target detached from period filter.
 -->
 <html lang="mn">
 <head>
@@ -1575,6 +1576,17 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .logo img{width:52px!important;height:52px!important;border-radius:50%!important;object-fit:contain!important;background:transparent!important;filter:drop-shadow(0 8px 14px rgba(31,127,134,.18))!important;}
 .logo{width:52px!important;height:52px!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;}
 @media(max-width:520px){.auth-logo img,#auth-logo-img,#auth-logo-img2,#auth-logo-img3{width:88px!important;height:88px!important}.splash-logo{width:104px!important;height:104px!important}.logo,.logo img{width:48px!important;height:48px!important}}
+
+
+/* ── Möngö V30.4 requested polish: bigger splash logo, smaller splash copy ── */
+.splash-logo{width:136px!important;height:136px!important;}
+.splash-name{font-size:36px!important;margin-top:8px!important;}
+.splash-sub{font-size:11px!important;letter-spacing:2.6px!important;}
+.splash-line{margin:18px 0 14px!important;}
+.splash-quote{font-size:14px!important;line-height:1.55!important;}
+.splash-flow{margin-top:14px!important;gap:7px!important;}
+.splash-pill{font-size:11px!important;padding:6px 9px!important;}
+@media(max-width:520px){.splash-logo{width:126px!important;height:126px!important}.splash-name{font-size:32px!important}.splash-quote{font-size:13.5px!important}.splash-sub{font-size:10px!important;letter-spacing:2.2px!important}}
 
 </style>
 </head>
@@ -3170,11 +3182,21 @@ function v30DashText(){
 }
 function avgMonthlyCashflowAll(){
   if(!txns.length)return 0;
-  const ds=txns.map(t=>new Date(t.date||Date.now())).filter(d=>!isNaN(d));
+  const ds=txns.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
   if(!ds.length)return 0;
   const min=new Date(Math.min(...ds)), max=new Date(Math.max(...ds));
   const months=Math.max(1,(max.getFullYear()-min.getFullYear())*12+(max.getMonth()-min.getMonth())+1);
   const total=txns.reduce((s,t)=>s+(t.type==='income'?Number(t.amount)||0:-(Number(t.amount)||0)),0);
+  return total/months;
+}
+function avgMonthlyExpenseAll(){
+  const expenseTxns=txns.filter(t=>t.type==='expense');
+  if(!expenseTxns.length)return 0;
+  const ds=expenseTxns.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
+  if(!ds.length)return 0;
+  const min=new Date(Math.min(...ds)), max=new Date(Math.max(...ds));
+  const months=Math.max(1,(max.getFullYear()-min.getFullYear())*12+(max.getMonth()-min.getMonth())+1);
+  const total=expenseTxns.reduce((s,t)=>s+(Number(t.amount)||0),0);
   return total/months;
 }
 function fireForecastText(netWorth,fireTarget){
@@ -3249,9 +3271,10 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const T=pDashText();
   const cashflow=inc-exp;
   const ft=fT();
+  // Savings rate follows the “Pay Yourself First” principle:
+  // only money explicitly recorded under the Savings category counts here.
   const explicitSavings=ft.filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
-  const autoSavings=Math.max(0,inc-exp);
-  const periodSavings=Math.max(explicitSavings,autoSavings);
+  const periodSavings=explicitSavings;
   const saveRate=inc>0?Math.max(0,Math.min(100,Math.round((periodSavings/inc)*100))):0;
   const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
 
@@ -3305,7 +3328,10 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
 
   const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+budgetScore+debtScore+growthScore)));
   lastScoreBreakdown={total:score,cashScore,saveScore,budgetScore,debtScore,growthScore,saveRate,cashflow,budgetPct,debtRatio};
-  const annualExpense=Math.max(exp*12,1);
+  // FIRE is a long-term strategic number, so it must not change when the
+  // dashboard period filter changes. It uses all-time average monthly expense.
+  const avgMonthlyExpense=avgMonthlyExpenseAll();
+  const annualExpense=Math.max(avgMonthlyExpense*12,1);
   const fireTarget=annualExpense*25;
   const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
 
@@ -3315,11 +3341,11 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
   setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
   setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
-  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',exp>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
+  setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',avgMonthlyExpense>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
   const V30=v30DashText();
   setTxt('pdash-fire-current-lbl',V30.current); setTxt('pdash-fire-current',fmt(netWorth));
   setTxt('pdash-fire-remaining-lbl',V30.remaining); setTxt('pdash-fire-remaining',fmt(Math.max(0,fireTarget-netWorth)));
-  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',exp>0?fireForecastText(netWorth,fireTarget):T.needData);
+  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',avgMonthlyExpense>0?fireForecastText(netWorth,fireTarget):T.needData);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
   const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
