@@ -1588,6 +1588,35 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .splash-pill{font-size:11px!important;padding:6px 9px!important;}
 @media(max-width:520px){.splash-logo{width:126px!important;height:126px!important}.splash-name{font-size:32px!important}.splash-quote{font-size:13.5px!important}.splash-sub{font-size:10px!important;letter-spacing:2.2px!important}}
 
+
+/* ── V30.5 fixes: subcategory dropdown full list + FIRE forecast by savings ── */
+#tab-transactions .card:first-child{
+  overflow:visible !important;
+  z-index:80 !important;
+}
+#tab-transactions .txn-search-card{
+  position:relative;
+  z-index:1 !important;
+}
+.subcat-field-inline{
+  position:relative !important;
+  z-index:120 !important;
+}
+.subcat-field-inline .subcat-dropdown,#t-subcat-list{
+  max-height:280px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  z-index:9999 !important;
+  background:var(--bg) !important;
+}
+.subcat-opt{
+  min-height:42px;
+  flex-shrink:0;
+}
+@media(max-width:520px){
+  .subcat-field-inline .subcat-dropdown,#t-subcat-list{max-height:240px !important;}
+}
+
 </style>
 </head>
 <body>
@@ -3170,8 +3199,8 @@ function pDashText(){
 }
 function v30DashText(){
   const d={
-    mn:{current:'Одоогийн хөрөнгө',remaining:'Үлдсэн',forecast:'Прогноз',reached:'Та санхүүгийн эрх чөлөөний зорилтот дүнд хүрсэн байна.',noForecast:'Одоогийн мөнгөн урсгал дээр прогноз гаргахад илүү өгөгдөл хэрэгтэй.',years:'жил',months:'сар',reachIn:'Одоогийн хурдаар ойролцоогоор',after:'дараа хүрнэ',improve:'Сайжруулах боломж',saveReco:'Хуримтлалын хувиа 20%+ болговол оноо нэмэгдэнэ.',cashReco:'Мөнгөн урсгалаа эерэг болгох нь хамгийн түрүүнд оноо нэмнэ.',budgetReco:'Төсөв хэтрэлтийг бууруулбал оноо нэмэгдэнэ.',debtReco:'Сарын зээлийн ачааллаа бууруулбал оноо нэмэгдэнэ.',growthReco:'Хөрөнгө оруулалтын өсөлтөө эерэг байлгавал оноо нэмэгдэнэ.',excellentReco:'Маш сайн байна. Одоо хөрөнгөө тогтвортой өсгөх төлөвлөгөөгөө үргэлжлүүлээрэй.'},
-    en:{current:'Current net worth',remaining:'Remaining',forecast:'Forecast',reached:'You have reached the financial freedom target.',noForecast:'More positive cashflow data is needed for a forecast.',years:'yrs',months:'mo',reachIn:'At the current pace, you may reach it in about',after:'',improve:'Improvement opportunity',saveReco:'Raise your savings rate to 20%+ to improve the score.',cashReco:'Making cashflow positive is the fastest score improvement.',budgetReco:'Reducing budget overspending can improve the score.',debtReco:'Lowering monthly loan burden can improve the score.',growthReco:'Keeping asset growth positive can improve the score.',excellentReco:'Excellent. Keep growing assets consistently.'},
+    mn:{current:'Одоогийн хөрөнгө',remaining:'Үлдсэн',forecast:'Прогноз',reached:'Та санхүүгийн эрх чөлөөний зорилтот дүнд хүрсэн байна.',noForecast:'Прогноз гаргахад хуримтлалын өгөгдөл хэрэгтэй.',years:'жил',months:'сар',reachIn:'Энэ хуримтлалын хурдаа хадгалбал ойролцоогоор',after:'дараа хүрнэ',improve:'Сайжруулах боломж',saveReco:'Хуримтлалын хувиа 20%+ болговол оноо нэмэгдэнэ.',cashReco:'Мөнгөн урсгалаа эерэг болгох нь хамгийн түрүүнд оноо нэмнэ.',budgetReco:'Төсөв хэтрэлтийг бууруулбал оноо нэмэгдэнэ.',debtReco:'Сарын зээлийн ачааллаа бууруулбал оноо нэмэгдэнэ.',growthReco:'Хөрөнгө оруулалтын өсөлтөө эерэг байлгавал оноо нэмэгдэнэ.',excellentReco:'Маш сайн байна. Одоо хөрөнгөө тогтвортой өсгөх төлөвлөгөөгөө үргэлжлүүлээрэй.'},
+    en:{current:'Current net worth',remaining:'Remaining',forecast:'Forecast',reached:'You have reached the financial freedom target.',noForecast:'More savings data is needed for a forecast.',years:'yrs',months:'mo',reachIn:'At this savings pace, you may reach it in about',after:'',improve:'Improvement opportunity',saveReco:'Raise your savings rate to 20%+ to improve the score.',cashReco:'Making cashflow positive is the fastest score improvement.',budgetReco:'Reducing budget overspending can improve the score.',debtReco:'Lowering monthly loan burden can improve the score.',growthReco:'Keeping asset growth positive can improve the score.',excellentReco:'Excellent. Keep growing assets consistently.'},
     zh:{current:'当前净资产',remaining:'剩余',forecast:'预测',reached:'你已达到财务自由目标。',noForecast:'需要更多正向现金流数据才能预测。',years:'年',months:'个月',reachIn:'按当前速度，大约',after:'后达到',improve:'可改进项',saveReco:'把储蓄率提高到20%以上可提升评分。',cashReco:'让资金流转正是最快的提升方式。',budgetReco:'减少预算超支可提升评分。',debtReco:'降低月贷款压力可提升评分。',growthReco:'保持资产正增长可提升评分。',excellentReco:'很好，请继续稳定增加资产。'},
     ja:{current:'現在の純資産',remaining:'残り',forecast:'予測',reached:'経済的自由の目標額に到達しています。',noForecast:'予測にはさらにプラスのお金の流れが必要です。',years:'年',months:'か月',reachIn:'現在のペースでは約',after:'後に到達',improve:'改善ポイント',saveReco:'貯蓄率を20%以上にするとスコアが上がります。',cashReco:'お金の流れをプラスにするのが最優先です。',budgetReco:'予算超過を減らすとスコアが上がります。',debtReco:'毎月のローン負担を下げるとスコアが上がります。',growthReco:'資産成長をプラスに保つとスコアが上がります。',excellentReco:'とても良い状態です。資産を継続的に育てましょう。'},
     ko:{current:'현재 순자산',remaining:'남은 금액',forecast:'예측',reached:'경제적 자유 목표금액에 도달했습니다.',noForecast:'예측하려면 더 많은 긍정적 현금흐름 데이터가 필요합니다.',years:'년',months:'개월',reachIn:'현재 속도라면 약',after:'후 도달',improve:'개선 기회',saveReco:'저축률을 20% 이상으로 올리면 점수가 올라갑니다.',cashReco:'현금흐름을 플러스로 만드는 것이 우선입니다.',budgetReco:'예산 초과를 줄이면 점수가 올라갑니다.',debtReco:'월 대출 부담을 낮추면 점수가 올라갑니다.',growthReco:'자산 성장을 플러스로 유지하면 점수가 올라갑니다.',excellentReco:'매우 좋습니다. 자산을 꾸준히 성장시키세요.'},
@@ -3199,11 +3228,34 @@ function avgMonthlyExpenseAll(){
   const total=expenseTxns.reduce((s,t)=>s+(Number(t.amount)||0),0);
   return total/months;
 }
+function isSavingsTxn(t){
+  if(!t||t.type!=='expense')return false;
+  if(t.catKey==='savings_cat')return true;
+  const names=['Хуримтлал','Savings','储蓄','貯蓄','저축','Сбережения','Ersparnisse'];
+  return names.includes(t.catName);
+}
+function avgMonthlySavingsAll(){
+  // FIRE forecast uses Pay-Yourself-First savings, not period cashflow.
+  // Use the latest rolling 12 months; if data is newer than 12 months, use available months.
+  const savingsTxns=txns.filter(isSavingsTxn);
+  if(!savingsTxns.length)return 0;
+  const ds=savingsTxns.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
+  if(!ds.length)return 0;
+  const latest=new Date(Math.max(...ds));
+  const windowStart=new Date(latest.getFullYear(),latest.getMonth()-11,1,0,0,0,0);
+  const inWindow=savingsTxns.filter(t=>parseTxnDateLocal(t.date||'')>=windowStart);
+  const usedDates=inWindow.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
+  if(!usedDates.length)return 0;
+  const earliest=new Date(Math.min(...usedDates));
+  const months=Math.max(1,Math.min(12,(latest.getFullYear()-earliest.getFullYear())*12+(latest.getMonth()-earliest.getMonth())+1));
+  const total=inWindow.reduce((s,t)=>s+(Number(t.amount)||0),0);
+  return total/months;
+}
 function fireForecastText(netWorth,fireTarget){
   const T=v30DashText();
   const left=fireTarget-netWorth;
   if(left<=0)return T.reached;
-  const monthly=avgMonthlyCashflowAll();
+  const monthly=avgMonthlySavingsAll();
   if(monthly<=0)return T.noForecast;
   const m=Math.ceil(left/monthly);
   const y=Math.floor(m/12), mo=m%12;
@@ -3273,7 +3325,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const ft=fT();
   // Savings rate follows the “Pay Yourself First” principle:
   // only money explicitly recorded under the Savings category counts here.
-  const explicitSavings=ft.filter(t=>t.type==='expense'&&(t.catKey==='savings_cat'||t.catName===cN({key:'savings_cat'}))).reduce((s,t)=>s+t.amount,0);
+  const explicitSavings=ft.filter(isSavingsTxn).reduce((s,t)=>s+t.amount,0);
   const periodSavings=explicitSavings;
   const saveRate=inc>0?Math.max(0,Math.min(100,Math.round((periodSavings/inc)*100))):0;
   const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
@@ -3345,7 +3397,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const V30=v30DashText();
   setTxt('pdash-fire-current-lbl',V30.current); setTxt('pdash-fire-current',fmt(netWorth));
   setTxt('pdash-fire-remaining-lbl',V30.remaining); setTxt('pdash-fire-remaining',fmt(Math.max(0,fireTarget-netWorth)));
-  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',avgMonthlyExpense>0?fireForecastText(netWorth,fireTarget):T.needData);
+  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',avgMonthlySavingsAll()>0?fireForecastText(netWorth,fireTarget):V30.noForecast);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
   const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
   const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
