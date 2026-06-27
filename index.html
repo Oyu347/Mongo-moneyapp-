@@ -12,6 +12,7 @@ V30.6: splash screen copy changed to English before language selection.
 V30.7: goal deadline uses remaining months by date/created date; loan extra payment can be limited to N months.
 V30.8: adds Pay Yourself First savings tab/assistant and net worth growth indicator.
 V30.9: Pay Yourself First popup edit mode stays inside popup and returns to confirm flow.
+V31.0: adds dashboard welcome/motivation and upgraded profile wealth center.
 -->
 <html lang="mn">
 <head>
@@ -1680,6 +1681,32 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .pay-modal-actions.editing{grid-template-columns:1fr 1fr;}
 @media(max-width:520px){.pay-edit-row{grid-template-columns:1fr 76px 20px}.pay-modal-actions.editing{grid-template-columns:1fr;}}
 @media(prefers-color-scheme:dark){.pay-edit-name{color:#F3F4F6}.pay-edit-list{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
+
+/* ── Möngö V31: Welcome + Profile Wealth Center ── */
+.wealth-welcome-card{margin:0 0 12px;padding:17px 18px;border-radius:30px;background:linear-gradient(135deg,rgba(73,176,182,.18),rgba(247,210,74,.14),rgba(255,255,255,.82));border:1px solid rgba(255,255,255,.86);box-shadow:0 16px 38px rgba(31,127,134,.11);position:relative;overflow:hidden;}
+.wealth-welcome-card:after{content:"";position:absolute;right:-30px;top:-34px;width:112px;height:112px;border-radius:999px;background:rgba(255,255,255,.42);}
+.wealth-welcome-hi{font-size:20px;font-weight:1000;color:#1F7F86;letter-spacing:-.04em;position:relative;z-index:1;line-height:1.18;}
+.wealth-welcome-quote{font-size:12px;color:#6B7280;font-weight:850;line-height:1.5;margin-top:7px;position:relative;z-index:1;}
+.profile-section-card{padding:16px 17px!important;}
+.profile-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px;}
+.profile-mini{padding:12px 13px;border-radius:22px;background:rgba(73,176,182,.07);border:1px solid rgba(73,176,182,.12);min-height:70px;}
+.profile-mini .k{font-size:10.5px;color:#6B7280;font-weight:950;text-transform:uppercase;letter-spacing:.045em;line-height:1.2;}
+.profile-mini .v{font-size:16px;color:#1F7F86;font-weight:1000;letter-spacing:-.04em;margin-top:6px;line-height:1.15;}
+.profile-mini.good .v{color:#08724F}.profile-mini.bad .v{color:#B91C1C}.profile-mini.warn .v{color:#B7791F}
+.profile-goal-item{padding:10px 0;border-bottom:1px solid rgba(73,176,182,.10);}
+.profile-goal-item:last-child{border-bottom:none;}
+.profile-goal-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:7px;}
+.profile-goal-name{font-size:13px;font-weight:950;color:#374151;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.profile-goal-pct{font-size:12px;font-weight:1000;color:#1F7F86;white-space:nowrap;}
+.profile-pay-summary{border-radius:22px;background:linear-gradient(135deg,rgba(73,176,182,.10),rgba(247,210,74,.10));border:1px solid rgba(73,176,182,.13);padding:12px 13px;color:#1F7F86;font-size:13px;font-weight:900;line-height:1.55;}
+.profile-badges{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.profile-badge{border-radius:20px;padding:11px 10px;background:rgba(255,255,255,.72);border:1px solid rgba(73,176,182,.13);box-shadow:0 7px 17px rgba(31,127,134,.055);font-size:12px;font-weight:900;color:#374151;line-height:1.35;opacity:.55;}
+.profile-badge.earned{opacity:1;background:linear-gradient(135deg,rgba(29,158,117,.12),rgba(73,176,182,.07));color:#08724F;border-color:rgba(29,158,117,.18);}
+.profile-philosophy{padding:14px;border-radius:24px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.12));border:1px solid rgba(73,176,182,.14);color:#1F7F86;font-size:13px;font-weight:900;line-height:1.65;}
+.profile-shortcut-btn{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:7px;}
+@media(max-width:520px){.profile-mini-grid,.profile-badges{grid-template-columns:1fr}.wealth-welcome-hi{font-size:18px}.profile-mini .v{font-size:15px}}
+@media(prefers-color-scheme:dark){.wealth-welcome-card{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08),rgba(23,35,38,.78));border-color:rgba(116,215,220,.12)}.wealth-welcome-quote,.profile-mini .k{color:#CBD5E1}.profile-goal-name,.profile-badge{color:#F3F4F6}.profile-mini,.profile-badge{background:rgba(255,255,255,.05);border-color:rgba(116,215,220,.12)}.profile-philosophy,.profile-pay-summary{color:#74D7DC}}
+
 </style>
 </head>
 <body>
@@ -1837,6 +1864,11 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <span style="font-size:12px;color:var(--text2)" id="lbl-from"></span><input type="date" class="fi" id="p-from">
     <span style="font-size:12px;color:var(--text2)" id="lbl-to"></span><input type="date" class="fi" id="p-to">
     <button class="btn btn-p" style="font-size:12px;padding:5px 10px" onclick="applyCustom()" id="btn-apply"></button>
+  </div>
+
+  <div class="wealth-welcome-card" id="wealth-welcome-card">
+    <div class="wealth-welcome-hi" id="wealth-welcome-hi">👋 Сайн байна уу!</div>
+    <div class="wealth-welcome-quote" id="wealth-welcome-quote">💎 Өөртөө эхлээд төл.</div>
   </div>
 
   <div class="premium-dash" id="premium-finance-dash">
@@ -2332,16 +2364,50 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title" id="lbl-profile-account"></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V30.3</div></div>
+
+  <div class="card profile-section-card" id="profile-progress-card">
+    <div class="card-title" id="profile-progress-title">📈 Миний санхүүгийн ахиц</div>
+    <div class="profile-mini-grid">
+      <div class="profile-mini" id="profile-net-mini"><div class="k" id="profile-net-k">Цэвэр хөрөнгө</div><div class="v" id="profile-net-v">0</div></div>
+      <div class="profile-mini" id="profile-growth-mini"><div class="k" id="profile-growth-k">Өсөлт</div><div class="v" id="profile-growth-v">—</div></div>
+      <div class="profile-mini" id="profile-savings-mini"><div class="k" id="profile-savings-k">Хуримтлал</div><div class="v" id="profile-savings-v">0</div></div>
+      <div class="profile-mini" id="profile-score-mini"><div class="k" id="profile-score-k">Санхүүгийн оноо</div><div class="v" id="profile-score-v">0/100</div></div>
+    </div>
   </div>
-  <div class="card">
+
+  <div class="card profile-section-card" id="profile-goals-card">
+    <div class="card-title" id="profile-goals-title">🎯 Миний зорилгууд</div>
+    <div id="profile-goals-list"></div>
+  </div>
+
+  <div class="card profile-section-card" id="profile-pay-card">
+    <div class="card-title" id="profile-pay-title">💰 Өөртөө эхлээд төл</div>
+    <div class="profile-pay-summary" id="profile-pay-summary"></div>
+    <button class="btn btn-p profile-shortcut-btn" onclick="goPaySettingsFromProfile()"><span class="material-symbols-rounded">savings</span><span id="profile-pay-btn">Тохиргоо засах</span></button>
+  </div>
+
+  <div class="card profile-section-card" id="profile-badge-card">
+    <div class="card-title" id="profile-badge-title">🏆 Амжилтын тэмдэг</div>
+    <div class="profile-badges" id="profile-badges-list"></div>
+  </div>
+
+  <div class="card profile-section-card">
     <div class="card-title" id="lbl-profile-help"></div>
     <div id="profile-help-list"></div>
   </div>
-  <div class="card">
+
+  <div class="card profile-section-card" id="profile-philosophy-card">
+    <div class="card-title" id="profile-philosophy-title">❤️ Möngö Philosophy</div>
+    <div class="profile-philosophy" id="profile-philosophy-text"></div>
+  </div>
+
+  <div class="card profile-section-card">
+    <div class="card-title" id="lbl-profile-account"></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V31.0</div></div>
+  </div>
+
+  <div class="card profile-section-card">
     <div class="card-title" id="lbl-profile-data"></div>
     <div class="profile-actions">
       <button class="btn btn-p" onclick="exportData()"><span class="material-symbols-rounded">download</span><span id="lbl-profile-backup"></span></button>
@@ -2836,36 +2902,93 @@ function currentUserEmail(){
     return (candidates.find(v=>String(v||'').trim()) || '—').trim();
   }catch(e){return '—';}
 }
+function profileText(){
+  const d={
+    mn:{progress:'📈 Миний санхүүгийн ахиц',goals:'🎯 Миний зорилгууд',pay:'💰 Өөртөө эхлээд төл',badges:'🏆 Амжилтын тэмдэг',philosophy:'❤️ Möngö Philosophy',net:'Цэвэр хөрөнгө',growth:'Өсөлт',savings:'Хуримтлал',score:'Санхүүгийн оноо',noGoals:'Одоогоор хуримтлалын зорилго алга.',payEdit:'Тохиргоо засах',paySummary:'Орлогоос {rate}% хадгална. Хуваарилалт: {alloc}',payNoGoals:'Хуримтлалын зорилго үүсгээд “Өөртөө төл” хуваарилалтаа тохируулаарай.',earned:'Биелсэн',locked:'Эхэлж байна'},
+    en:{progress:'📈 My financial progress',goals:'🎯 My goals',pay:'💰 Pay yourself first',badges:'🏆 Achievements',philosophy:'❤️ Möngö Philosophy',net:'Net worth',growth:'Growth',savings:'Savings',score:'Financial score',noGoals:'No savings goals yet.',payEdit:'Edit settings',paySummary:'Save {rate}% of each income. Allocation: {alloc}',payNoGoals:'Create savings goals, then set your Pay Yourself First allocation.',earned:'Earned',locked:'Starting'},
+    zh:{progress:'📈 我的财务进步',goals:'🎯 我的目标',pay:'💰 先支付自己',badges:'🏆 成就徽章',philosophy:'❤️ Möngö 理念',net:'净资产',growth:'增长',savings:'储蓄',score:'财务评分',noGoals:'还没有储蓄目标。',payEdit:'编辑设置',paySummary:'每笔收入储蓄 {rate}%。分配：{alloc}',payNoGoals:'先创建储蓄目标，再设置分配。',earned:'已获得',locked:'开始中'},
+    ja:{progress:'📈 私の進捗',goals:'🎯 目標',pay:'💰 まず自分に払う',badges:'🏆 実績',philosophy:'❤️ Möngö Philosophy',net:'純資産',growth:'成長',savings:'貯蓄',score:'財務スコア',noGoals:'貯蓄目標はまだありません。',payEdit:'設定を編集',paySummary:'収入の {rate}% を貯蓄。配分：{alloc}',payNoGoals:'貯蓄目標を作成して配分を設定しましょう。',earned:'達成',locked:'開始'},
+    ko:{progress:'📈 나의 재무 성장',goals:'🎯 내 목표',pay:'💰 나에게 먼저 지불',badges:'🏆 성취 배지',philosophy:'❤️ Möngö Philosophy',net:'순자산',growth:'성장',savings:'저축',score:'재무 점수',noGoals:'아직 저축 목표가 없습니다.',payEdit:'설정 수정',paySummary:'수입의 {rate}%를 저축합니다. 배분: {alloc}',payNoGoals:'저축 목표를 만든 뒤 배분을 설정하세요.',earned:'달성',locked:'시작'},
+    ru:{progress:'📈 Мой финансовый прогресс',goals:'🎯 Мои цели',pay:'💰 Сначала заплати себе',badges:'🏆 Достижения',philosophy:'❤️ Философия Möngö',net:'Чистый капитал',growth:'Рост',savings:'Сбережения',score:'Финансовый балл',noGoals:'Пока нет целей накоплений.',payEdit:'Изменить настройки',paySummary:'Сохранять {rate}% каждого дохода. Распределение: {alloc}',payNoGoals:'Создайте цели накоплений и настройте распределение.',earned:'Получено',locked:'Начало'},
+    de:{progress:'📈 Mein Finanzfortschritt',goals:'🎯 Meine Ziele',pay:'💰 Bezahle dich zuerst',badges:'🏆 Erfolge',philosophy:'❤️ Möngö Philosophie',net:'Nettovermögen',growth:'Wachstum',savings:'Ersparnisse',score:'Finanz-Score',noGoals:'Noch keine Sparziele.',payEdit:'Einstellungen bearbeiten',paySummary:'Spare {rate}% jedes Einkommens. Aufteilung: {alloc}',payNoGoals:'Erstelle Sparziele und lege die Aufteilung fest.',earned:'Erreicht',locked:'Start'}
+  };return d[lang]||d.mn;
+}
+function wealthQuotes(){
+  const q={
+    mn:['💎 Өөртөө эхлээд төл.','🌱 Өнөөдрийн жижиг алхам маргаашийн их баялаг.','📈 Цэвэр хөрөнгөө өсгөхөд төвлөр.','🎯 Зорилготой мөнгө хамгийн хурдан өсдөг.','💰 Орлого биш, үлдээдэг мөнгө чинь баялгийг бүтээдэг.','🏡 Өнөөдрийн хуримтлал ирээдүйн эрх чөлөө.','🚀 Баялаг бол дадал, аз биш.'],
+    en:['💎 Pay yourself first.','🌱 Today’s small step builds tomorrow’s wealth.','📈 Focus on growing your net worth.','🎯 Money with a goal grows faster.','💰 Wealth is built by what you keep, not only what you earn.','🏡 Today’s saving is tomorrow’s freedom.','🚀 Wealth is a habit, not luck.'],
+    zh:['💎 先支付自己。','🌱 今天的小行动，成就明天的财富。','📈 专注于增长净资产。','🎯 有目标的钱增长更快。','💰 财富来自留下的钱，而不只是收入。'],
+    ja:['💎 まず自分に払う。','🌱 今日の小さな一歩が明日の富をつくる。','📈 純資産の成長に集中しよう。','🎯 目的のあるお金は早く育つ。'],
+    ko:['💎 나에게 먼저 지불하세요.','🌱 오늘의 작은 걸음이 내일의 부를 만듭니다.','📈 순자산 성장에 집중하세요.','🎯 목표가 있는 돈은 더 빨리 자랍니다.'],
+    ru:['💎 Сначала заплати себе.','🌱 Маленький шаг сегодня создает богатство завтра.','📈 Фокусируйтесь на росте чистого капитала.','🎯 Деньги с целью растут быстрее.'],
+    de:['💎 Bezahle dich zuerst.','🌱 Der kleine Schritt von heute baut den Wohlstand von morgen.','📈 Konzentriere dich auf dein Nettovermögen.','🎯 Geld mit Ziel wächst schneller.']
+  };return q[lang]||q.mn;
+}
+function userDisplayName(){
+  const email=currentUserEmail();
+  if(!email||email==='—')return '';
+  return String(email).split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+function updateWelcomeCard(){
+  const hi=document.getElementById('wealth-welcome-hi'), qt=document.getElementById('wealth-welcome-quote');
+  if(!hi||!qt)return;
+  const name=userDisplayName();
+  if(lang==='mn')hi.textContent=name?`👋 Сайн байна уу, ${name}!`:'👋 Möngö-д тавтай морил!';
+  else hi.textContent=name?`👋 Welcome, ${name}!`:'👋 Welcome to Möngö!';
+  const quotes=wealthQuotes();
+  const idx=new Date().getDate()%quotes.length;
+  qt.textContent=quotes[idx];
+}
+function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+(Number(d.remaining)||0),0);}
+function renderProfileProgress(){
+  const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
+  [['profile-progress-title',PT.progress],['profile-net-k',PT.net],['profile-growth-k',PT.growth],['profile-savings-k',PT.savings],['profile-score-k',PT.score]].forEach(([id,t])=>{const e=document.getElementById(id);if(e)e.textContent=t;});
+  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+  set('profile-net-v',fmt(net));
+  const sign=delta>0?'+':delta<0?'−':''; set('profile-growth-v',`${sign}${fmt(Math.abs(delta))}`);
+  const gm=document.getElementById('profile-growth-mini'); if(gm)gm.className='profile-mini '+(delta>0?'good':delta<0?'bad':'');
+  set('profile-savings-v',fmt(savings)); set('profile-score-v',score+' / 100');
+}
+function renderProfileGoals(){
+  const PT=profileText(); const title=document.getElementById('profile-goals-title'); if(title)title.textContent=PT.goals;
+  const list=document.getElementById('profile-goals-list'); if(!list)return;
+  if(!goals.length){list.innerHTML=`<div class="empty">${PT.noGoals}</div>`;return;}
+  list.innerHTML=goals.slice(0,6).map(g=>{const saved=getGoalEffectiveSaved(g);const target=Math.max(1,Number(g.target)||0);const pct=Math.max(0,Math.min(100,Math.round(saved/target*100)));return `<div class="profile-goal-item"><div class="profile-goal-top"><div class="profile-goal-name">🎯 ${g.name||''}</div><div class="profile-goal-pct">${pct}%</div></div><div class="pbar"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,#49B0B6,#1F7F86)"></div></div><div class="lbl2" style="margin-top:5px;font-weight:800">${fmt(saved)} / ${fmt(target)}</div></div>`;}).join('');
+}
+function renderProfilePaySummary(){
+  const PT=profileText(); const title=document.getElementById('profile-pay-title'); if(title)title.textContent=PT.pay; const btn=document.getElementById('profile-pay-btn'); if(btn)btn.textContent=PT.payEdit;
+  const el=document.getElementById('profile-pay-summary'); if(!el)return;
+  if(!goals.length){el.textContent=PT.payNoGoals;return;}
+  const alloc=goals.map(g=>{const p=Number((paySettings.alloc||{})[g.id]||0);return p>0?`${g.name} ${p}%`:'';}).filter(Boolean).join(' · ')||'—';
+  el.textContent=PT.paySummary.replace('{rate}',Number(paySettings.rate||0)).replace('{alloc}',alloc);
+}
+function renderProfileBadges(){
+  const PT=profileText(); const title=document.getElementById('profile-badge-title'); if(title)title.textContent=PT.badges;
+  const el=document.getElementById('profile-badges-list'); if(!el)return;
+  const net=profileNetWorth(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
+  const data=[['🥇','Анхны хуримтлал',savings>0],['🥈','100 гүйлгээ',txns.length>=100],['🥉','30 өдөр бүртгэл',txns.length>=30],['💎','100 сая цэвэр хөрөнгө',net>=100000000],['🚀','Оноо 90+',score>=90],['🏆','Зорилго 100%',goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity))]];
+  el.innerHTML=data.map(([ico,name,ok])=>`<div class="profile-badge ${ok?'earned':''}">${ico} ${name}<br><span style="font-size:10px;font-weight:800;opacity:.75">${ok?PT.earned:PT.locked}</span></div>`).join('');
+}
+function renderProfilePhilosophy(){
+  const PT=profileText(); const title=document.getElementById('profile-philosophy-title'); if(title)title.textContent=PT.philosophy;
+  const el=document.getElementById('profile-philosophy-text'); if(!el)return; const q=wealthQuotes(); el.textContent=q[(new Date().getDate()+3)%q.length];
+}
+function goPaySettingsFromProfile(){
+  const nav=document.getElementById('nav-goals'); showTab('goals',nav); if(nav)nav.classList.add('active');
+  const btn=document.getElementById('goals-tab-pay'); if(btn)showCalcPanel('goals','pay',btn);
+  setTimeout(()=>document.getElementById('goals-panel-pay')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
 function rProfile(){
   const email=currentUserEmail();
   const e1=document.getElementById('profile-email-main'); if(e1)e1.textContent=email;
   const lr=document.getElementById('profile-language-row'); if(lr)lr.textContent=V27_LANG_NAMES[lang]||'🇲🇳 Монгол';
+  renderProfileProgress();renderProfileGoals();renderProfilePaySummary();renderProfileBadges();renderProfilePhilosophy();
   const list=document.getElementById('profile-help-list');
   if(list){
     const items=[
-      [L.helpDashboard,L.helpDashboardA],
-      [L.helpIncome,L.helpIncomeA],
-      [L.helpExpense,L.helpExpenseA],
-      [L.helpBudget,L.helpBudgetA],
-      [L.helpSavings,L.helpSavingsA],
-      [L.helpInvest,L.helpInvestA],
-      [L.helpMetrics,L.helpMetricsA],
-      [L.helpCashflow,L.helpCashflowA],
-      [L.helpSavingsRate,L.helpSavingsRateA],
-      [L.helpNetWorth,L.helpNetWorthA],
-      [L.helpFireGoal,L.helpFireGoalA],
-      [L.helpScore,L.helpScoreA],
-      [L.helpGoalPlan,L.helpGoalPlanA],
-      [L.helpDataProtect,L.helpDataProtectA],
-      [L.helpBackup,L.helpBackupA],
-      [L.helpRestore,L.helpRestoreA],
-      [L.helpClearData,L.helpClearDataA],
-      [L.helpSignOut,L.helpSignOutA]
+      [L.helpDashboard,L.helpDashboardA],[L.helpIncome,L.helpIncomeA],[L.helpExpense,L.helpExpenseA],[L.helpBudget,L.helpBudgetA],[L.helpSavings,L.helpSavingsA],[L.helpInvest,L.helpInvestA],[L.helpMetrics,L.helpMetricsA],[L.helpCashflow,L.helpCashflowA],[L.helpSavingsRate,L.helpSavingsRateA],[L.helpNetWorth,L.helpNetWorthA],[L.helpFireGoal,L.helpFireGoalA],[L.helpScore,L.helpScoreA],[L.helpGoalPlan,L.helpGoalPlanA],[L.helpDataProtect,L.helpDataProtectA],[L.helpBackup,L.helpBackupA],[L.helpRestore,L.helpRestoreA],[L.helpClearData,L.helpClearDataA],[L.helpSignOut,L.helpSignOutA]
     ];
-    list.innerHTML=items.map((it,idx)=>`<div class="help-item${idx===0?' open':''}">
-      <div class="help-q" onclick="this.parentElement.classList.toggle('open')"><span>${it[0]||''}</span><span class="material-symbols-rounded">expand_more</span></div>
-      <div class="help-a">${it[1]||''}</div>
-    </div>`).join('');
+    list.innerHTML=items.map((it,idx)=>`<div class="help-item${idx===0?' open':''}"><div class="help-q" onclick="this.parentElement.classList.toggle('open')"><span>${it[0]||''}</span><span class="material-symbols-rounded">expand_more</span></div><div class="help-a">${it[1]||''}</div></div>`).join('');
   }
 }
 
@@ -3276,7 +3399,7 @@ function toggleBudgetCatPanel(){
   card.classList.toggle('collapsed');
 }
 function rAll(){rTxns();rDash();rGoals();rPaySettings();rDebts();}
-function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
+function rDash(){uDash();updateWelcomeCard();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
 
 
 // ── Möngö V25 Premium Finance Dashboard logic ─────────────────────────────
@@ -3501,7 +3624,9 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setPCardState('pdash-save-card',saveRate>=20?'pdash-good':(saveRate>=10?'pdash-warn':'pdash-bad'));
   setPCardState('pdash-net-card',netWorth>=0?'pdash-good':'pdash-bad');
   setPCardState('pdash-score-card',score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad'));
+  updateWelcomeCard();
 }
+
 
 
 function uDash(){
