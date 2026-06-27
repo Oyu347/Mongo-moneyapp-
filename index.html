@@ -14,6 +14,7 @@ V30.8: adds Pay Yourself First savings tab/assistant and net worth growth indica
 V30.9: Pay Yourself First popup edit mode stays inside popup and returns to confirm flow.
 V31.0: adds dashboard welcome/motivation and upgraded profile wealth center.
 V32.0: profile 10/10 polish — wealth level, compact 2x2 progress, premium goals, badge colors, hero greeting.
+V33.0: settings merged with data, localized wealth philosophy, 7-language profile texts, refined wealth journey.
 -->
 <html lang="mn">
 <head>
@@ -1747,7 +1748,6 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .profile-badge .badge-state{font-size:10.5px;font-weight:850;opacity:.72;margin-top:2px;}
 .profile-philosophy{font-size:14px!important;padding:16px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 8px 20px rgba(31,127,134,.06)!important;}
 #lbl-profile-account::before{content:"⚙️ ";}
-#lbl-profile-data::before{content:"";}
 @media(max-width:520px){
   .profile-mini-grid,.profile-badges{grid-template-columns:1fr 1fr!important;}
   .profile-mini{min-height:78px!important;padding:12px 10px!important;}
@@ -1759,6 +1759,15 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .wealth-level-name{font-size:20px;}
 }
 @media(prefers-color-scheme:dark){.wealth-level-card,.profile-mini{background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.78))!important;border-color:rgba(116,215,220,.12)!important}.wealth-level-note{color:#CBD5E1}.profile-goal-pill{background:rgba(23,35,38,.86);color:#74D7DC}}
+
+
+/* ── Möngö V33: Settings merge + localized philosophy polish ── */
+.profile-settings-card{padding-bottom:18px!important;}
+.profile-settings-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(73,176,182,.20),rgba(247,210,74,.16),transparent);margin:12px 0;}
+.profile-actions-settings{margin-top:4px;}
+.profile-actions-settings .btn,.profile-actions-settings label.btn{min-height:48px;border-radius:20px!important;}
+.profile-philosophy:before{content:"";display:block;width:42px;height:4px;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#F7D24A);margin-bottom:10px;opacity:.75;}
+.wealth-level-title,.profile-mini .k{word-break:keep-all;}
 
 </style>
 </head>
@@ -2466,15 +2475,12 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <div class="profile-philosophy" id="profile-philosophy-text"></div>
   </div>
 
-  <div class="card profile-section-card">
+  <div class="card profile-section-card profile-settings-card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V32.0</div></div>
-  </div>
-
-  <div class="card profile-section-card">
-    <div class="card-title" id="lbl-profile-data"></div>
-    <div class="profile-actions">
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V33.0</div></div>
+    <div class="profile-settings-divider"></div>
+    <div class="profile-actions profile-actions-settings">
       <button class="btn btn-p" onclick="exportData()"><span class="material-symbols-rounded">download</span><span id="lbl-profile-backup"></span></button>
       <label class="btn" style="cursor:pointer"><span class="material-symbols-rounded">upload</span><span id="lbl-profile-restore"></span><input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
       <button class="btn profile-danger" onclick="clearData()"><span class="material-symbols-rounded">delete</span><span id="lbl-profile-clear"></span></button>
@@ -2543,13 +2549,13 @@ const LANGS={
 };
 
 const V27_PROFILE_LANGS={
-  mn:{profile:'Профайл',profileTitle:'Миний профайл',profileAccount:'Миний бүртгэл',profileEmail:'Имэйл хаяг',profileLanguage:'Хэл',profileVersion:'Хувилбар',profileData:'Өгөгдөл',profileBackup:'Backup хийх',profileRestore:'Restore хийх',profileClear:'Өгөгдөл устгах',profileLogout:'Гарах',profileHelp:'Апп ашиглах заавар',helpIncome:'Орлого бүртгэх',helpIncomeA:'Гүйлгээ цэс рүү орж “Орлого”-г сонгоод тайлбар, дүн, ангилал, огноогоо оруулан нэмнэ.',helpExpense:'Зарлага бүртгэх',helpExpenseA:'Гүйлгээ цэсэнд “Зарлага”-г сонгож зардлын ангиллаа зөв сонговол төсөвтэй автоматаар харьцуулагдана.',helpBudget:'Төсөв ашиглах',helpBudgetA:'Төсөв цэс дээр сар, орлого/зарлагын төрлөө сонгоод ангилал бүрт төлөвлөсөн дүнгээ хадгална. Хэтэрсэн төсөв улаан хүрээтэй харагдана.',helpSavings:'Хуримтлал үүсгэх',helpSavingsA:'Хуримтлал цэс дээр зорилтот дүн, одоогийн хуримтлал, хугацаагаа оруулна. Сард хэд хэрэгтэйг автоматаар харуулна.',helpInvest:'Хөрөнгө бүртгэх',helpInvestA:'Хөрөнгө цэс дээр оруулсан дүн, одоогийн үнэ цэнээ оруулснаар ашиг/алдагдал болон өгөөж автоматаар өнгөөр ялгарна.',helpScore:'Санхүүгийн оноо',helpScoreA:'Санхүүгийн оноо нь мөнгөн урсгал, хуримтлал, өр, төсвийн гүйцэтгэлийн нийлбэр үнэлгээ юм.'},
-  en:{profile:'Profile',profileTitle:'My profile',profileAccount:'My account',profileEmail:'Email',profileLanguage:'Language',profileVersion:'Version',profileData:'Data',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Clear data',profileLogout:'Sign out',profileHelp:'How to use the app',helpIncome:'Add income',helpIncomeA:'Open Transactions, choose Income, then enter description, amount, category, and date.',helpExpense:'Add expense',helpExpenseA:'Choose Expense in Transactions. When the category matches a budget, it is compared automatically.',helpBudget:'Use budget',helpBudgetA:'In Budget, select month and income/expense type, then save planned amounts. Over-budget items show with a red border.',helpSavings:'Create savings goal',helpSavingsA:'In Savings, enter target, current amount, and deadline. The app shows the monthly amount needed.',helpInvest:'Track assets',helpInvestA:'In Assets, enter invested amount and current value. Profit/loss and return are color-coded automatically.',helpScore:'Financial score',helpScoreA:'The score combines money flow, savings, debt, and budget performance.'},
-  zh:{profile:'个人资料',profileTitle:'我的资料',profileAccount:'我的账户',profileEmail:'邮箱',profileLanguage:'语言',profileVersion:'版本',profileData:'数据',profileBackup:'备份',profileRestore:'恢复',profileClear:'清除数据',profileLogout:'退出',profileHelp:'使用指南',helpIncome:'添加收入',helpIncomeA:'进入交易，选择收入，填写说明、金额、类别和日期。',helpExpense:'添加支出',helpExpenseA:'在交易中选择支出，类别匹配预算时会自动比较。',helpBudget:'使用预算',helpBudgetA:'在预算中选择月份和类型并保存计划金额。超支项目会显示红色边框。',helpSavings:'建立储蓄目标',helpSavingsA:'在储蓄中输入目标、当前金额和期限，系统会显示每月需要金额。',helpInvest:'记录资产',helpInvestA:'在资产中输入投入金额和当前价值，盈亏和回报会自动用颜色区分。',helpScore:'财务评分',helpScoreA:'评分综合资金流、储蓄、债务和预算表现。'},
-  ja:{profile:'プロフィール',profileTitle:'マイプロフィール',profileAccount:'アカウント',profileEmail:'メール',profileLanguage:'言語',profileVersion:'バージョン',profileData:'データ',profileBackup:'バックアップ',profileRestore:'復元',profileClear:'データ削除',profileLogout:'ログアウト',profileHelp:'使い方',helpIncome:'収入を追加',helpIncomeA:'取引で収入を選び、説明・金額・カテゴリ・日付を入力します。',helpExpense:'支出を追加',helpExpenseA:'取引で支出を選びます。カテゴリが予算と一致すると自動比較されます。',helpBudget:'予算を使う',helpBudgetA:'予算で月と種類を選び、計画額を保存します。超過した項目は赤い枠で表示されます。',helpSavings:'貯蓄目標を作成',helpSavingsA:'目標額、現在額、期限を入力すると、毎月必要な額が表示されます。',helpInvest:'資産を記録',helpInvestA:'投資額と現在価値を入力すると、損益とリターンが色分けされます。',helpScore:'財務スコア',helpScoreA:'お金の流れ、貯蓄、借入、予算達成度を合わせた評価です。'},
-  ko:{profile:'프로필',profileTitle:'내 프로필',profileAccount:'내 계정',profileEmail:'이메일',profileLanguage:'언어',profileVersion:'버전',profileData:'데이터',profileBackup:'백업',profileRestore:'복원',profileClear:'데이터 삭제',profileLogout:'로그아웃',profileHelp:'앱 사용법',helpIncome:'수입 추가',helpIncomeA:'거래에서 수입을 선택하고 설명, 금액, 카테고리, 날짜를 입력합니다.',helpExpense:'지출 추가',helpExpenseA:'거래에서 지출을 선택합니다. 예산 카테고리와 일치하면 자동 비교됩니다.',helpBudget:'예산 사용',helpBudgetA:'예산에서 월과 유형을 선택하고 계획 금액을 저장합니다. 초과 예산은 빨간 테두리로 표시됩니다.',helpSavings:'저축 목표 만들기',helpSavingsA:'목표 금액, 현재 금액, 기한을 입력하면 월 필요 금액을 보여줍니다.',helpInvest:'자산 기록',helpInvestA:'투자 금액과 현재 가치를 입력하면 손익과 수익률이 색상으로 표시됩니다.',helpScore:'재무 점수',helpScoreA:'돈의 흐름, 저축, 부채, 예산 성과를 합산한 평가입니다.'},
-  ru:{profile:'Профиль',profileTitle:'Мой профиль',profileAccount:'Мой аккаунт',profileEmail:'Email',profileLanguage:'Язык',profileVersion:'Версия',profileData:'Данные',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Удалить данные',profileLogout:'Выйти',profileHelp:'Как пользоваться приложением',helpIncome:'Добавить доход',helpIncomeA:'Откройте Операции, выберите Доход, затем введите описание, сумму, категорию и дату.',helpExpense:'Добавить расход',helpExpenseA:'Выберите Расход. Если категория совпадает с бюджетом, она сравнивается автоматически.',helpBudget:'Использовать бюджет',helpBudgetA:'В Бюджете выберите месяц и тип, сохраните плановые суммы. Превышение бюджета отображается красной рамкой.',helpSavings:'Создать цель накоплений',helpSavingsA:'Введите цель, текущую сумму и срок. Приложение покажет нужную сумму в месяц.',helpInvest:'Учет активов',helpInvestA:'Введите вложенную сумму и текущую стоимость. Прибыль/убыток и доходность окрашиваются автоматически.',helpScore:'Финансовый балл',helpScoreA:'Балл объединяет денежный поток, сбережения, долг и выполнение бюджета.'},
-  de:{profile:'Profil',profileTitle:'Mein Profil',profileAccount:'Mein Konto',profileEmail:'E-Mail',profileLanguage:'Sprache',profileVersion:'Version',profileData:'Daten',profileBackup:'Backup',profileRestore:'Wiederherstellen',profileClear:'Daten löschen',profileLogout:'Abmelden',profileHelp:'App-Anleitung',helpIncome:'Einnahme hinzufügen',helpIncomeA:'Öffne Transaktionen, wähle Einnahme und gib Beschreibung, Betrag, Kategorie und Datum ein.',helpExpense:'Ausgabe hinzufügen',helpExpenseA:'Wähle Ausgabe. Wenn die Kategorie zum Budget passt, wird sie automatisch verglichen.',helpBudget:'Budget nutzen',helpBudgetA:'Wähle im Budget Monat und Typ und speichere geplante Beträge. Überschrittene Budgets haben einen roten Rahmen.',helpSavings:'Sparziel erstellen',helpSavingsA:'Gib Zielbetrag, aktuellen Betrag und Frist ein. Die App zeigt den nötigen Monatsbetrag.',helpInvest:'Vermögen erfassen',helpInvestA:'Gib investierten Betrag und aktuellen Wert ein. Gewinn/Verlust und Rendite werden farblich markiert.',helpScore:'Finanz-Score',helpScoreA:'Der Score kombiniert Geldfluss, Sparen, Schulden und Budgetleistung.'}
+  mn:{profile:'Профайл',profileTitle:'Миний профайл',profileAccount:'Тохиргоо',profileEmail:'Имэйл хаяг',profileLanguage:'Хэл',profileVersion:'Хувилбар',profileData:'Өгөгдөл',profileBackup:'Backup хийх',profileRestore:'Restore хийх',profileClear:'Өгөгдөл устгах',profileLogout:'Гарах',profileHelp:'Апп ашиглах заавар',helpIncome:'Орлого бүртгэх',helpIncomeA:'Гүйлгээ цэс рүү орж “Орлого”-г сонгоод тайлбар, дүн, ангилал, огноогоо оруулан нэмнэ.',helpExpense:'Зарлага бүртгэх',helpExpenseA:'Гүйлгээ цэсэнд “Зарлага”-г сонгож зардлын ангиллаа зөв сонговол төсөвтэй автоматаар харьцуулагдана.',helpBudget:'Төсөв ашиглах',helpBudgetA:'Төсөв цэс дээр сар, орлого/зарлагын төрлөө сонгоод ангилал бүрт төлөвлөсөн дүнгээ хадгална. Хэтэрсэн төсөв улаан хүрээтэй харагдана.',helpSavings:'Хуримтлал үүсгэх',helpSavingsA:'Хуримтлал цэс дээр зорилтот дүн, одоогийн хуримтлал, хугацаагаа оруулна. Сард хэд хэрэгтэйг автоматаар харуулна.',helpInvest:'Хөрөнгө бүртгэх',helpInvestA:'Хөрөнгө цэс дээр оруулсан дүн, одоогийн үнэ цэнээ оруулснаар ашиг/алдагдал болон өгөөж автоматаар өнгөөр ялгарна.',helpScore:'Санхүүгийн оноо',helpScoreA:'Санхүүгийн оноо нь мөнгөн урсгал, хуримтлал, өр, төсвийн гүйцэтгэлийн нийлбэр үнэлгээ юм.'},
+  en:{profile:'Profile',profileTitle:'My profile',profileAccount:'Settings',profileEmail:'Email',profileLanguage:'Language',profileVersion:'Version',profileData:'Data',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Clear data',profileLogout:'Sign out',profileHelp:'How to use the app',helpIncome:'Add income',helpIncomeA:'Open Transactions, choose Income, then enter description, amount, category, and date.',helpExpense:'Add expense',helpExpenseA:'Choose Expense in Transactions. When the category matches a budget, it is compared automatically.',helpBudget:'Use budget',helpBudgetA:'In Budget, select month and income/expense type, then save planned amounts. Over-budget items show with a red border.',helpSavings:'Create savings goal',helpSavingsA:'In Savings, enter target, current amount, and deadline. The app shows the monthly amount needed.',helpInvest:'Track assets',helpInvestA:'In Assets, enter invested amount and current value. Profit/loss and return are color-coded automatically.',helpScore:'Financial score',helpScoreA:'The score combines money flow, savings, debt, and budget performance.'},
+  zh:{profile:'个人资料',profileTitle:'我的资料',profileAccount:'设置',profileEmail:'邮箱',profileLanguage:'语言',profileVersion:'版本',profileData:'数据',profileBackup:'备份',profileRestore:'恢复',profileClear:'清除数据',profileLogout:'退出',profileHelp:'使用指南',helpIncome:'添加收入',helpIncomeA:'进入交易，选择收入，填写说明、金额、类别和日期。',helpExpense:'添加支出',helpExpenseA:'在交易中选择支出，类别匹配预算时会自动比较。',helpBudget:'使用预算',helpBudgetA:'在预算中选择月份和类型并保存计划金额。超支项目会显示红色边框。',helpSavings:'建立储蓄目标',helpSavingsA:'在储蓄中输入目标、当前金额和期限，系统会显示每月需要金额。',helpInvest:'记录资产',helpInvestA:'在资产中输入投入金额和当前价值，盈亏和回报会自动用颜色区分。',helpScore:'财务评分',helpScoreA:'评分综合资金流、储蓄、债务和预算表现。'},
+  ja:{profile:'プロフィール',profileTitle:'マイプロフィール',profileAccount:'設定',profileEmail:'メール',profileLanguage:'言語',profileVersion:'バージョン',profileData:'データ',profileBackup:'バックアップ',profileRestore:'復元',profileClear:'データ削除',profileLogout:'ログアウト',profileHelp:'使い方',helpIncome:'収入を追加',helpIncomeA:'取引で収入を選び、説明・金額・カテゴリ・日付を入力します。',helpExpense:'支出を追加',helpExpenseA:'取引で支出を選びます。カテゴリが予算と一致すると自動比較されます。',helpBudget:'予算を使う',helpBudgetA:'予算で月と種類を選び、計画額を保存します。超過した項目は赤い枠で表示されます。',helpSavings:'貯蓄目標を作成',helpSavingsA:'目標額、現在額、期限を入力すると、毎月必要な額が表示されます。',helpInvest:'資産を記録',helpInvestA:'投資額と現在価値を入力すると、損益とリターンが色分けされます。',helpScore:'財務スコア',helpScoreA:'お金の流れ、貯蓄、借入、予算達成度を合わせた評価です。'},
+  ko:{profile:'프로필',profileTitle:'내 프로필',profileAccount:'설정',profileEmail:'이메일',profileLanguage:'언어',profileVersion:'버전',profileData:'데이터',profileBackup:'백업',profileRestore:'복원',profileClear:'데이터 삭제',profileLogout:'로그아웃',profileHelp:'앱 사용법',helpIncome:'수입 추가',helpIncomeA:'거래에서 수입을 선택하고 설명, 금액, 카테고리, 날짜를 입력합니다.',helpExpense:'지출 추가',helpExpenseA:'거래에서 지출을 선택합니다. 예산 카테고리와 일치하면 자동 비교됩니다.',helpBudget:'예산 사용',helpBudgetA:'예산에서 월과 유형을 선택하고 계획 금액을 저장합니다. 초과 예산은 빨간 테두리로 표시됩니다.',helpSavings:'저축 목표 만들기',helpSavingsA:'목표 금액, 현재 금액, 기한을 입력하면 월 필요 금액을 보여줍니다.',helpInvest:'자산 기록',helpInvestA:'투자 금액과 현재 가치를 입력하면 손익과 수익률이 색상으로 표시됩니다.',helpScore:'재무 점수',helpScoreA:'돈의 흐름, 저축, 부채, 예산 성과를 합산한 평가입니다.'},
+  ru:{profile:'Профиль',profileTitle:'Мой профиль',profileAccount:'Настройки',profileEmail:'Email',profileLanguage:'Язык',profileVersion:'Версия',profileData:'Данные',profileBackup:'Backup',profileRestore:'Restore',profileClear:'Удалить данные',profileLogout:'Выйти',profileHelp:'Как пользоваться приложением',helpIncome:'Добавить доход',helpIncomeA:'Откройте Операции, выберите Доход, затем введите описание, сумму, категорию и дату.',helpExpense:'Добавить расход',helpExpenseA:'Выберите Расход. Если категория совпадает с бюджетом, она сравнивается автоматически.',helpBudget:'Использовать бюджет',helpBudgetA:'В Бюджете выберите месяц и тип, сохраните плановые суммы. Превышение бюджета отображается красной рамкой.',helpSavings:'Создать цель накоплений',helpSavingsA:'Введите цель, текущую сумму и срок. Приложение покажет нужную сумму в месяц.',helpInvest:'Учет активов',helpInvestA:'Введите вложенную сумму и текущую стоимость. Прибыль/убыток и доходность окрашиваются автоматически.',helpScore:'Финансовый балл',helpScoreA:'Балл объединяет денежный поток, сбережения, долг и выполнение бюджета.'},
+  de:{profile:'Profil',profileTitle:'Mein Profil',profileAccount:'Einstellungen',profileEmail:'E-Mail',profileLanguage:'Sprache',profileVersion:'Version',profileData:'Daten',profileBackup:'Backup',profileRestore:'Wiederherstellen',profileClear:'Daten löschen',profileLogout:'Abmelden',profileHelp:'App-Anleitung',helpIncome:'Einnahme hinzufügen',helpIncomeA:'Öffne Transaktionen, wähle Einnahme und gib Beschreibung, Betrag, Kategorie und Datum ein.',helpExpense:'Ausgabe hinzufügen',helpExpenseA:'Wähle Ausgabe. Wenn die Kategorie zum Budget passt, wird sie automatisch verglichen.',helpBudget:'Budget nutzen',helpBudgetA:'Wähle im Budget Monat und Typ und speichere geplante Beträge. Überschrittene Budgets haben einen roten Rahmen.',helpSavings:'Sparziel erstellen',helpSavingsA:'Gib Zielbetrag, aktuellen Betrag und Frist ein. Die App zeigt den nötigen Monatsbetrag.',helpInvest:'Vermögen erfassen',helpInvestA:'Gib investierten Betrag und aktuellen Wert ein. Gewinn/Verlust und Rendite werden farblich markiert.',helpScore:'Finanz-Score',helpScoreA:'Der Score kombiniert Geldfluss, Sparen, Schulden und Budgetleistung.'}
 };
 Object.keys(V27_PROFILE_LANGS).forEach(k=>Object.assign(LANGS[k],V27_PROFILE_LANGS[k]));
 const V28_GUIDE_LANGS={
@@ -2969,24 +2975,24 @@ function currentUserEmail(){
 }
 function profileText(){
   const d={
-    mn:{progress:'📈 Миний санхүүгийн ахиц',goals:'🎯 Миний зорилгууд',pay:'💰 Өөртөө эхлээд төл',badges:'🏆 Амжилтын тэмдэг',philosophy:'❤️ Möngö Philosophy',net:'Цэвэр хөрөнгө',growth:'Өсөлт',savings:'Хуримтлал',score:'Санхүүгийн оноо',noGoals:'Одоогоор хуримтлалын зорилго алга.',payEdit:'Тохиргоо засах',paySummary:'Орлогоос {rate}% хадгална. Хуваарилалт: {alloc}',payNoGoals:'Хуримтлалын зорилго үүсгээд “Өөртөө төл” хуваарилалтаа тохируулаарай.',earned:'Биелсэн',locked:'Эхэлж байна'},
-    en:{progress:'📈 My financial progress',goals:'🎯 My goals',pay:'💰 Pay yourself first',badges:'🏆 Achievements',philosophy:'❤️ Möngö Philosophy',net:'Net worth',growth:'Growth',savings:'Savings',score:'Financial score',noGoals:'No savings goals yet.',payEdit:'Edit settings',paySummary:'Save {rate}% of each income. Allocation: {alloc}',payNoGoals:'Create savings goals, then set your Pay Yourself First allocation.',earned:'Earned',locked:'Starting'},
-    zh:{progress:'📈 我的财务进步',goals:'🎯 我的目标',pay:'💰 先支付自己',badges:'🏆 成就徽章',philosophy:'❤️ Möngö 理念',net:'净资产',growth:'增长',savings:'储蓄',score:'财务评分',noGoals:'还没有储蓄目标。',payEdit:'编辑设置',paySummary:'每笔收入储蓄 {rate}%。分配：{alloc}',payNoGoals:'先创建储蓄目标，再设置分配。',earned:'已获得',locked:'开始中'},
-    ja:{progress:'📈 私の進捗',goals:'🎯 目標',pay:'💰 まず自分に払う',badges:'🏆 実績',philosophy:'❤️ Möngö Philosophy',net:'純資産',growth:'成長',savings:'貯蓄',score:'財務スコア',noGoals:'貯蓄目標はまだありません。',payEdit:'設定を編集',paySummary:'収入の {rate}% を貯蓄。配分：{alloc}',payNoGoals:'貯蓄目標を作成して配分を設定しましょう。',earned:'達成',locked:'開始'},
-    ko:{progress:'📈 나의 재무 성장',goals:'🎯 내 목표',pay:'💰 나에게 먼저 지불',badges:'🏆 성취 배지',philosophy:'❤️ Möngö Philosophy',net:'순자산',growth:'성장',savings:'저축',score:'재무 점수',noGoals:'아직 저축 목표가 없습니다.',payEdit:'설정 수정',paySummary:'수입의 {rate}%를 저축합니다. 배분: {alloc}',payNoGoals:'저축 목표를 만든 뒤 배분을 설정하세요.',earned:'달성',locked:'시작'},
-    ru:{progress:'📈 Мой финансовый прогресс',goals:'🎯 Мои цели',pay:'💰 Сначала заплати себе',badges:'🏆 Достижения',philosophy:'❤️ Философия Möngö',net:'Чистый капитал',growth:'Рост',savings:'Сбережения',score:'Финансовый балл',noGoals:'Пока нет целей накоплений.',payEdit:'Изменить настройки',paySummary:'Сохранять {rate}% каждого дохода. Распределение: {alloc}',payNoGoals:'Создайте цели накоплений и настройте распределение.',earned:'Получено',locked:'Начало'},
-    de:{progress:'📈 Mein Finanzfortschritt',goals:'🎯 Meine Ziele',pay:'💰 Bezahle dich zuerst',badges:'🏆 Erfolge',philosophy:'❤️ Möngö Philosophie',net:'Nettovermögen',growth:'Wachstum',savings:'Ersparnisse',score:'Finanz-Score',noGoals:'Noch keine Sparziele.',payEdit:'Einstellungen bearbeiten',paySummary:'Spare {rate}% jedes Einkommens. Aufteilung: {alloc}',payNoGoals:'Erstelle Sparziele und lege die Aufteilung fest.',earned:'Erreicht',locked:'Start'}
+    mn:{progress:'📈 Миний санхүүгийн ахиц',goals:'🎯 Миний зорилгууд',pay:'💰 Өөртөө эхлээд төл',badges:'🏆 Амжилтын тэмдэг',philosophy:'🌱 Баялаг бүтээх философи',net:'Цэвэр хөрөнгө',growth:'Өсөлт',savings:'Хуримтлал',score:'Санхүүгийн оноо',noGoals:'Одоогоор хуримтлалын зорилго алга.',payEdit:'Тохиргоо засах',paySummary:'Орлогоос {rate}% хадгална. Хуваарилалт: {alloc}',payNoGoals:'Хуримтлалын зорилго үүсгээд “Өөртөө төл” хуваарилалтаа тохируулаарай.',earned:'Биелсэн',locked:'Эхэлж байна',wealthLevel:'💎 Баялгийн түвшин',nextLevel:'Дараагийн түвшин',pointsLeft:'Дутуу {n} оноо.',topLevel:'Та хамгийн дээд түвшинд хүрлээ. Эрчээ хадгалаарай.',badgesList:['Анхны хуримтлал','100 гүйлгээ','30 өдөр бүртгэл','100 сая цэвэр хөрөнгө','Оноо 90+','Зорилго 100%']},
+    en:{progress:'📈 My financial progress',goals:'🎯 My goals',pay:'💰 Pay yourself first',badges:'🏆 Achievements',philosophy:'🌱 Wealth-building philosophy',net:'Net worth',growth:'Growth',savings:'Savings',score:'Financial score',noGoals:'No savings goals yet.',payEdit:'Edit settings',paySummary:'Save {rate}% of each income. Allocation: {alloc}',payNoGoals:'Create savings goals, then set your Pay Yourself First allocation.',earned:'Earned',locked:'Starting',wealthLevel:'💎 Wealth level',nextLevel:'Next level',pointsLeft:'{n} points to go.',topLevel:'You reached the top level. Keep the momentum.',badgesList:['First saving','100 transactions','30-day tracking','100M net worth','Score 90+','Goal 100%']},
+    zh:{progress:'📈 我的财务进步',goals:'🎯 我的目标',pay:'💰 先支付自己',badges:'🏆 成就徽章',philosophy:'🌱 财富建设理念',net:'净资产',growth:'增长',savings:'储蓄',score:'财务评分',noGoals:'还没有储蓄目标。',payEdit:'编辑设置',paySummary:'每笔收入储蓄 {rate}%。分配：{alloc}',payNoGoals:'先创建储蓄目标，再设置“先支付自己”的分配。',earned:'已获得',locked:'开始中',wealthLevel:'💎 财富等级',nextLevel:'下一等级',pointsLeft:'还差 {n} 分。',topLevel:'你已达到最高等级，请保持节奏。',badgesList:['首次储蓄','100 笔交易','30 天记录','1亿净资产','评分90+','目标100%']},
+    ja:{progress:'📈 私の財務進捗',goals:'🎯 私の目標',pay:'💰 まず自分に払う',badges:'🏆 実績バッジ',philosophy:'🌱 富を築く哲学',net:'純資産',growth:'成長',savings:'貯蓄',score:'財務スコア',noGoals:'貯蓄目標はまだありません。',payEdit:'設定を編集',paySummary:'収入の {rate}% を貯蓄。配分：{alloc}',payNoGoals:'貯蓄目標を作成してから配分を設定しましょう。',earned:'達成',locked:'開始中',wealthLevel:'💎 富のレベル',nextLevel:'次のレベル',pointsLeft:'あと {n} 点。',topLevel:'最高レベルに到達しました。この調子で続けましょう。',badgesList:['初めての貯蓄','100件の取引','30日記録','純資産1億','スコア90+','目標100%']},
+    ko:{progress:'📈 나의 재무 성장',goals:'🎯 내 목표',pay:'💰 나에게 먼저 지불',badges:'🏆 성취 배지',philosophy:'🌱 부를 만드는 철학',net:'순자산',growth:'성장',savings:'저축',score:'재무 점수',noGoals:'아직 저축 목표가 없습니다.',payEdit:'설정 수정',paySummary:'수입의 {rate}%를 저축합니다. 배분: {alloc}',payNoGoals:'저축 목표를 만든 뒤 배분을 설정하세요.',earned:'달성',locked:'시작 중',wealthLevel:'💎 부의 레벨',nextLevel:'다음 레벨',pointsLeft:'{n}점 남았습니다.',topLevel:'최고 레벨에 도달했습니다. 흐름을 유지하세요.',badgesList:['첫 저축','100건 거래','30일 기록','순자산 1억','점수 90+','목표 100%']},
+    ru:{progress:'📈 Мой финансовый прогресс',goals:'🎯 Мои цели',pay:'💰 Сначала заплати себе',badges:'🏆 Достижения',philosophy:'🌱 Философия создания богатства',net:'Чистый капитал',growth:'Рост',savings:'Сбережения',score:'Финансовый балл',noGoals:'Пока нет целей накоплений.',payEdit:'Изменить настройки',paySummary:'Сохранять {rate}% каждого дохода. Распределение: {alloc}',payNoGoals:'Создайте цели накоплений и настройте распределение.',earned:'Получено',locked:'Начало',wealthLevel:'💎 Уровень богатства',nextLevel:'Следующий уровень',pointsLeft:'Осталось {n} баллов.',topLevel:'Вы достигли высшего уровня. Сохраняйте темп.',badgesList:['Первое накопление','100 операций','30 дней учета','100 млн чистого капитала','Балл 90+','Цель 100%']},
+    de:{progress:'📈 Mein Finanzfortschritt',goals:'🎯 Meine Ziele',pay:'💰 Bezahle dich zuerst',badges:'🏆 Erfolge',philosophy:'🌱 Philosophie des Vermögensaufbaus',net:'Nettovermögen',growth:'Wachstum',savings:'Ersparnisse',score:'Finanz-Score',noGoals:'Noch keine Sparziele.',payEdit:'Einstellungen bearbeiten',paySummary:'Spare {rate}% jedes Einkommens. Aufteilung: {alloc}',payNoGoals:'Erstelle Sparziele und lege die Aufteilung fest.',earned:'Erreicht',locked:'Start',wealthLevel:'💎 Vermögenslevel',nextLevel:'Nächstes Level',pointsLeft:'Noch {n} Punkte.',topLevel:'Du hast das höchste Level erreicht. Halte den Schwung.',badgesList:['Erstes Sparen','100 Transaktionen','30 Tage Tracking','100 Mio. Nettovermögen','Score 90+','Ziel 100%']}
   };return d[lang]||d.mn;
 }
 function wealthQuotes(){
   const q={
-    mn:['💎 Өөртөө эхлээд төл.','🌱 Өнөөдрийн жижиг алхам маргаашийн их баялаг.','📈 Цэвэр хөрөнгөө өсгөхөд төвлөр.','🎯 Зорилготой мөнгө хамгийн хурдан өсдөг.','💰 Орлого биш, үлдээдэг мөнгө чинь баялгийг бүтээдэг.','🏡 Өнөөдрийн хуримтлал ирээдүйн эрх чөлөө.','🚀 Баялаг бол дадал, аз биш.'],
-    en:['💎 Pay yourself first.','🌱 Today’s small step builds tomorrow’s wealth.','📈 Focus on growing your net worth.','🎯 Money with a goal grows faster.','💰 Wealth is built by what you keep, not only what you earn.','🏡 Today’s saving is tomorrow’s freedom.','🚀 Wealth is a habit, not luck.'],
-    zh:['💎 先支付自己。','🌱 今天的小行动，成就明天的财富。','📈 专注于增长净资产。','🎯 有目标的钱增长更快。','💰 财富来自留下的钱，而不只是收入。'],
-    ja:['💎 まず自分に払う。','🌱 今日の小さな一歩が明日の富をつくる。','📈 純資産の成長に集中しよう。','🎯 目的のあるお金は早く育つ。'],
-    ko:['💎 나에게 먼저 지불하세요.','🌱 오늘의 작은 걸음이 내일의 부를 만듭니다.','📈 순자산 성장에 집중하세요.','🎯 목표가 있는 돈은 더 빨리 자랍니다.'],
-    ru:['💎 Сначала заплати себе.','🌱 Маленький шаг сегодня создает богатство завтра.','📈 Фокусируйтесь на росте чистого капитала.','🎯 Деньги с целью растут быстрее.'],
-    de:['💎 Bezahle dich zuerst.','🌱 Der kleine Schritt von heute baut den Wohlstand von morgen.','📈 Konzentriere dich auf dein Nettovermögen.','🎯 Geld mit Ziel wächst schneller.']
+    mn:['💎 Өөртөө эхлээд төл.','🌱 Өнөөдрийн жижиг алхам маргаашийн их баялаг.','📈 Цэвэр хөрөнгөө өсгөхөд төвлөр.','🎯 Зорилготой мөнгө хамгийн хурдан өсдөг.','💰 Орлого биш, үлдээдэг мөнгө чинь баялгийг бүтээдэг.','🏡 Өнөөдрийн хуримтлал ирээдүйн эрх чөлөө.','🚀 Баялаг бол дадал, аз биш.','🌳 Мөнгө зорилготой үед систем болж өсдөг.','💚 Зарлагаа удирд, хөрөнгөө өсгө.','✨ Санхүүгийн эрх чөлөө жижиг алхмуудаас эхэлдэг.'],
+    en:['💎 Pay yourself first.','🌱 Today’s small step builds tomorrow’s wealth.','📈 Focus on growing your net worth.','🎯 Money with a goal grows faster.','💰 Wealth is built by what you keep, not only what you earn.','🏡 Today’s saving is tomorrow’s freedom.','🚀 Wealth is a habit, not luck.','🌳 Money grows faster inside a system.','💚 Control expenses, grow assets.','✨ Financial freedom starts with small steps.'],
+    zh:['💎 先支付自己。','🌱 今天的小行动，成就明天的财富。','📈 专注于增长净资产。','🎯 有目标的钱增长更快。','💰 财富来自留下的钱，而不只是收入。','🏡 今天的储蓄是明天的自由。','🚀 财富是习惯，不是运气。','🌳 钱在系统中增长更快。','💚 管理支出，增长资产。','✨ 财务自由始于小步骤。'],
+    ja:['💎 まず自分に払う。','🌱 今日の小さな一歩が明日の富をつくる。','📈 純資産の成長に集中しよう。','🎯 目的のあるお金は早く育つ。','💰 富は収入だけでなく残したお金で築かれる。','🏡 今日の貯蓄は明日の自由。','🚀 富は運ではなく習慣。','🌳 お金は仕組みの中でより早く育つ。','💚 支出を管理し、資産を育てよう。','✨ 経済的自由は小さな一歩から始まる。'],
+    ko:['💎 나에게 먼저 지불하세요.','🌱 오늘의 작은 걸음이 내일의 부를 만듭니다.','📈 순자산 성장에 집중하세요.','🎯 목표가 있는 돈은 더 빨리 자랍니다.','💰 부는 버는 돈보다 남기는 돈으로 만들어집니다.','🏡 오늘의 저축은 내일의 자유입니다.','🚀 부는 운이 아니라 습관입니다.','🌳 돈은 시스템 안에서 더 빨리 자랍니다.','💚 지출을 관리하고 자산을 키우세요.','✨ 경제적 자유는 작은 걸음에서 시작됩니다.'],
+    ru:['💎 Сначала заплати себе.','🌱 Маленький шаг сегодня создает богатство завтра.','📈 Фокусируйтесь на росте чистого капитала.','🎯 Деньги с целью растут быстрее.','💰 Богатство создается тем, что вы сохраняете, а не только зарабатываете.','🏡 Накопление сегодня — свобода завтра.','🚀 Богатство — это привычка, а не удача.','🌳 Деньги быстрее растут в системе.','💚 Управляйте расходами, растите активы.','✨ Финансовая свобода начинается с маленьких шагов.'],
+    de:['💎 Bezahle dich zuerst.','🌱 Der kleine Schritt von heute baut den Wohlstand von morgen.','📈 Konzentriere dich auf dein Nettovermögen.','🎯 Geld mit Ziel wächst schneller.','💰 Vermögen entsteht durch das, was du behältst, nicht nur verdienst.','🏡 Heutiges Sparen ist morgige Freiheit.','🚀 Wohlstand ist Gewohnheit, nicht Glück.','🌳 Geld wächst schneller in einem System.','💚 Kontrolliere Ausgaben, baue Vermögen auf.','✨ Finanzielle Freiheit beginnt mit kleinen Schritten.']
   };return q[lang]||q.mn;
 }
 function userDisplayName(){
@@ -3007,8 +3013,16 @@ function updateWelcomeCard(){
 function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+(Number(d.remaining)||0),0);}
 function timeGreeting(){
   const h=new Date().getHours();
-  if(lang==='mn')return h<12?'Өглөөний мэнд':h<18?'Өдрийн мэнд':'Оройн мэнд';
-  return h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const d={
+    mn:['Өглөөний мэнд','Өдрийн мэнд','Оройн мэнд'],
+    en:['Good morning','Good afternoon','Good evening'],
+    zh:['早上好','下午好','晚上好'],
+    ja:['おはようございます','こんにちは','こんばんは'],
+    ko:['좋은 아침입니다','좋은 오후입니다','좋은 저녁입니다'],
+    ru:['Доброе утро','Добрый день','Добрый вечер'],
+    de:['Guten Morgen','Guten Tag','Guten Abend']
+  };
+  const a=d[lang]||d.mn; return h<12?a[0]:h<18?a[1]:a[2];
 }
 function renderProfileHero(){
   const name=userDisplayName(); const title=document.getElementById('lbl-profile-title');
@@ -3019,26 +3033,27 @@ function renderProfileHero(){
 }
 function wealthLevelInfo(score, net){
   const levels=[
-    {name:'Starter', ico:'🌱', min:0, next:'Saver'},
-    {name:'Saver', ico:'🌿', min:50, next:'Wealth Builder'},
-    {name:'Wealth Builder', ico:'💎', min:70, next:'Investor'},
-    {name:'Investor', ico:'📈', min:85, next:'Financial Freedom'},
-    {name:'Financial Freedom', ico:'👑', min:95, next:'Top Level'}
+    {name:'Starter', ico:'🌱', min:0},
+    {name:'Saver', ico:'🌿', min:50},
+    {name:'Investor', ico:'📈', min:70},
+    {name:'Wealth Builder', ico:'💎', min:85},
+    {name:'Financial Freedom', ico:'👑', min:95}
   ];
   let lv=levels[0]; for(const l of levels){if(score>=l.min)lv=l;}
   let next=levels.find(l=>l.min>score); let pct=next?Math.max(0,Math.min(100,Math.round((score-lv.min)/(next.min-lv.min)*100))):100;
   return {lv,next,pct};
 }
 function renderWealthLevel(){
+  const PT=profileText();
   const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0; const net=profileNetWorth(); const info=wealthLevelInfo(score,net);
   const title=document.getElementById('wealth-level-title'), name=document.getElementById('wealth-level-name'), badge=document.getElementById('wealth-level-badge'), fill=document.getElementById('wealth-level-fill'), note=document.getElementById('wealth-level-note');
-  if(title)title.textContent=lang==='mn'?'💎 Баялгийн түвшин':'💎 Wealth Level';
+  if(title)title.textContent=PT.wealthLevel;
   if(name)name.textContent=info.lv.name;
   if(badge)badge.textContent=info.lv.ico;
   if(fill)fill.style.width=info.pct+'%';
   if(note){
-    if(info.next) note.textContent=lang==='mn'?`Дараагийн түвшин: ${info.next.name}. Дутуу ${Math.max(0,info.next.min-score)} оноо.`:`Next level: ${info.next.name}. ${Math.max(0,info.next.min-score)} points to go.`;
-    else note.textContent=lang==='mn'?'Та хамгийн дээд түвшинд хүрлээ. Эрчээ хадгалаарай.':'You reached the top level. Keep the momentum.';
+    if(info.next) note.textContent=`${PT.nextLevel}: ${info.next.name}. ${PT.pointsLeft.replace('{n}',Math.max(0,info.next.min-score))}`;
+    else note.textContent=PT.topLevel;
   }
 }
 function renderProfileProgress(){
@@ -3069,7 +3084,8 @@ function renderProfileBadges(){
   const PT=profileText(); const title=document.getElementById('profile-badge-title'); if(title)title.textContent=PT.badges;
   const el=document.getElementById('profile-badges-list'); if(!el)return;
   const net=profileNetWorth(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
-  const data=[['🥇','Анхны хуримтлал',savings>0,'gold'],['🥈','100 гүйлгээ',txns.length>=100,'silver'],['🥉','30 өдөр бүртгэл',txns.length>=30,'bronze'],['💎','100 сая цэвэр хөрөнгө',net>=100000000,''],['🚀','Оноо 90+',score>=90,''],['🏆','Зорилго 100%',goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity)),'gold']];
+  const names=PT.badgesList||['First saving','100 transactions','30-day tracking','100M net worth','Score 90+','Goal 100%'];
+  const data=[['🥇',names[0],savings>0,'gold'],['🥈',names[1],txns.length>=100,'silver'],['🥉',names[2],txns.length>=30,'bronze'],['💎',names[3],net>=100000000,''],['🚀',names[4],score>=90,''],['🏆',names[5],goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity)),'gold']];
   el.innerHTML=data.map(([ico,name,ok,tier])=>`<div class="profile-badge ${ok?'earned':''} ${ok?tier:''}"><div class="badge-ico">${ico}</div><div><div class="badge-name">${name}</div><div class="badge-state">${ok?PT.earned:PT.locked}</div></div></div>`).join('');
 }
 function renderProfilePhilosophy(){
