@@ -10,6 +10,7 @@ V29.3: fixes calculator tabs visibility, removes hardcoded calculator values, ad
 V30.4: bigger splash logo, old Pay Yourself First savings-rate logic, FIRE target detached from period filter.
 V30.6: splash screen copy changed to English before language selection.
 V30.7: goal deadline uses remaining months by date/created date; loan extra payment can be limited to N months.
+V30.8: adds Pay Yourself First savings tab/assistant and net worth growth indicator.
 -->
 <html lang="mn">
 <head>
@@ -1633,6 +1634,35 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .subcat-field-inline .subcat-dropdown,#t-subcat-list{max-height:240px !important;}
 }
 
+
+/* ── Möngö V30.8: Pay Yourself First + Net Worth Growth ── */
+#goals-panel-pay .pay-card{background:rgba(255,255,255,.96)!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:30px!important;padding:18px!important;box-shadow:0 16px 38px rgba(31,127,134,.11)!important;margin-bottom:12px;}
+.pay-hero{padding:16px;border-radius:26px;background:linear-gradient(135deg,rgba(73,176,182,.16),rgba(247,210,74,.13));border:1px solid rgba(73,176,182,.18);margin-bottom:14px;}
+.pay-title{font-size:20px;font-weight:1000;color:#1F7F86;letter-spacing:-.04em;margin-bottom:6px;}
+.pay-desc{font-size:12px;color:#6B7280;font-weight:750;line-height:1.55;}
+.pay-rate-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 12px;}
+.pay-rate-btn{min-height:42px;border-radius:18px;border:1px solid rgba(73,176,182,.18);background:#fff;color:#1F7F86;font-weight:1000;cursor:pointer;box-shadow:0 6px 16px rgba(31,127,134,.06);}
+.pay-rate-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 10px 22px rgba(31,127,134,.22);}
+.pay-goal-row{display:grid;grid-template-columns:1fr 86px 32px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(73,176,182,.10);}
+.pay-goal-row:last-child{border-bottom:none;}
+.pay-goal-name{font-size:13px;font-weight:900;color:#374151;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pay-goal-input{min-height:38px!important;border-radius:16px!important;text-align:right;font-weight:900!important;padding:8px 10px!important;}
+.pay-total{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:11px 13px;border-radius:22px;background:rgba(73,176,182,.08);font-size:12px;font-weight:950;color:#1F7F86;}
+.pay-total.bad{background:#FFF4F4;color:#B91C1C;}
+.pay-modal{display:none;position:fixed;inset:0;z-index:13000;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.34);backdrop-filter:blur(4px);}
+.pay-modal.show{display:flex;}
+.pay-modal-card{width:min(390px,100%);border-radius:30px;background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.88);box-shadow:0 30px 80px rgba(31,127,134,.24);padding:20px;}
+.pay-modal-title{font-size:18px;font-weight:1000;color:#1F7F86;letter-spacing:-.03em;margin-bottom:6px;}
+.pay-modal-desc{font-size:12px;color:#6B7280;font-weight:750;line-height:1.5;margin-bottom:12px;}
+.pay-plan-list{border-radius:22px;background:rgba(73,176,182,.07);border:1px solid rgba(73,176,182,.12);padding:8px 12px;margin-bottom:12px;}
+.pay-plan-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(73,176,182,.10);font-size:13px;font-weight:900;color:#374151;}
+.pay-plan-item:last-child{border-bottom:none;}
+.pay-modal-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.net-growth-note{font-size:11px;font-weight:950;margin-top:7px;position:relative;z-index:1;line-height:1.35;}
+.net-growth-note.good{color:#08724F}.net-growth-note.bad{color:#B91C1C}.net-growth-note.neutral{color:#6B7280}
+@media(max-width:520px){.pay-rate-row{grid-template-columns:repeat(2,1fr)}.pay-goal-row{grid-template-columns:1fr 78px 28px}.pay-modal-actions{grid-template-columns:1fr}.pay-modal-card{border-radius:28px}}
+@media(prefers-color-scheme:dark){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
+
 </style>
 </head>
 <body>
@@ -1814,6 +1844,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <div class="pdash-k" id="pdash-net-lbl"></div>
         <div class="pdash-v" id="pdash-net-val">0</div>
         <div class="pdash-note" id="pdash-net-note"></div>
+        <div class="net-growth-note neutral" id="pdash-net-growth">—</div>
         <div class="pdash-icon">💎</div>
       </div>
       <div class="pdash-card" id="pdash-score-card" onclick="toggleScoreDetail()">
@@ -1943,6 +1974,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="calc-tabs">
     <button class="calc-tab-btn active" onclick="showCalcPanel('goals','mine',this)" id="goals-tab-mine">Миний хуримтлал</button>
     <button class="calc-tab-btn" onclick="showCalcPanel('goals','calc',this)" id="goals-tab-calc">Тооцоолуур</button>
+    <button class="calc-tab-btn" onclick="showCalcPanel('goals','pay',this)" id="goals-tab-pay">Өөртөө төл</button>
   </div>
 
   <div id="goals-panel-mine" class="calc-panel active" style="display:block">
@@ -1972,6 +2004,27 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <p style="font-size:11px;color:var(--text2);margin-top:7px" id="lbl-savinginfo"></p>
     </div>
     <div id="goals-list"></div>
+  </div>
+
+  <div id="goals-panel-pay" class="calc-panel" style="display:none">
+    <div class="pay-card">
+      <div class="pay-hero">
+        <div class="pay-title" id="pay-title">Өөртөө эхлээд төл</div>
+        <div class="pay-desc" id="pay-desc">Орлого бүртгэх бүртээ орлогоосоо эхлээд хуримтлалын гүйлгээ үүсгэх хуваарилалтаа тохируулна.</div>
+      </div>
+      <div class="slbl" id="pay-rate-label">Орлогоос хадгалах хувь</div>
+      <div class="pay-rate-row">
+        <button class="pay-rate-btn" type="button" onclick="setPayRate(10,this)">10%</button>
+        <button class="pay-rate-btn" type="button" onclick="setPayRate(15,this)">15%</button>
+        <button class="pay-rate-btn" type="button" onclick="setPayRate(20,this)">20%</button>
+        <input class="fi pay-goal-input" id="pay-rate-custom" placeholder="%" type="number" min="0" max="100" step="1" oninput="setPayRateCustom(this.value)">
+      </div>
+      <div class="slbl" id="pay-alloc-label">Хуримтлалын зорилго руу хуваарилах хувь</div>
+      <div id="pay-goals-list"></div>
+      <div class="pay-total" id="pay-total-row"><span id="pay-total-label">Нийт</span><span id="pay-total-val">0%</span></div>
+      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="savePaySettings()" id="pay-save-btn">Тохиргоо хадгалах</button>
+      <p style="font-size:11px;color:var(--text2);margin-top:9px;line-height:1.45" id="pay-help">Орлого бүртгэсний дараа энэ хуваарилалтаар “Хуримтлал” ангиллын зарлагын гүйлгээ үүсгэх санал гарна. Зорилтот дүн өөрчлөгдөхгүй.</p>
+    </div>
   </div>
 
   <div id="goals-panel-calc" class="calc-panel" style="display:none">
@@ -2423,6 +2476,8 @@ let txnSearchOpen=false;
 let txnSearchQuery='';
 // Lock state: set of cat keys/names that are user-locked
 let lockedCats=new Set();
+let paySettings={enabled:true,rate:20,alloc:{}};
+let pendingPayPlan=null;
 
 let incCats=[
   {key:'salary',icon:'💰',color:'#22C55E'},
@@ -3103,6 +3158,9 @@ function addTransaction(){
   const catObj=gCats().find(c=>cN(c)===catName);
   const catKey=catObj&&catObj.key?catObj.key:null;
   txns.unshift({id:Date.now(),desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType});
+  if(curType==='income'){
+    preparePayAssistant(amount,date);
+  }
   if(curType==='expense'){
     const d=debts.find(d=>d.name===catName||d.name===desc);if(d)d.remaining=Math.max(0,d.remaining-amount);
     const cat=expCats.find(c=>cN(c)===catName);
@@ -3200,7 +3258,7 @@ function toggleBudgetCatPanel(){
   if(!card)return;
   card.classList.toggle('collapsed');
 }
-function rAll(){rTxns();rDash();rGoals();rDebts();}
+function rAll(){rTxns();rDash();rGoals();rPaySettings();rDebts();}
 function rDash(){uDash();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
 
 
@@ -3411,7 +3469,7 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   setTxt('pdash-title',T.title); setTxt('pdash-sub',T.sub);
   setTxt('pdash-cashflow-lbl',T.cashflow); setTxt('pdash-cashflow-val',fmt(cashflow)); setTxt('pdash-cashflow-note',cashflow>=0?T.positive:T.negative);
   setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
-  setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote);
+  setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote); updateNetWorthGrowth(netWorth);
   setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
   setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',avgMonthlyExpense>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
   const V30=v30DashText();
@@ -4091,7 +4149,7 @@ function saveData(){
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
-      bCatsExpSave,bCatsIncSave};
+      bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[]};
     localStorage.setItem(getDBKey(),JSON.stringify(data));
     showSaveIndicator();
   }catch(e){console.warn('Save error:',e);}
@@ -4116,6 +4174,8 @@ function loadData(){
     const activeBtn=document.getElementById('btype-'+budgetType);
     if(activeBtn)activeBtn.classList.add('active');
     if(data.lockedCats)lockedCats=new Set(data.lockedCats);
+    if(data.paySettings)paySettings=Object.assign({enabled:true,rate:20,alloc:{}},data.paySettings);
+    if(data.netWorthSnapshots)window.netWorthSnapshots=data.netWorthSnapshots;
     if(data.incCatsCustom)incCats=[...incCats,...data.incCatsCustom];
     if(data.expCatsCustom)expCats=[...expCats,...data.expCatsCustom];
     // Merge bCats
@@ -4499,6 +4559,68 @@ requestAnimationFrame(()=>{
 });
 
 
+
+
+// ── Möngö V30.8 Pay Yourself First + Net Worth Growth ───────────────────
+function payText(){
+  const d={
+    mn:{tab:'Өөртөө төл',title:'Өөртөө эхлээд төл',desc:'Орлого бүртгэх бүртээ орлогоосоо эхлээд хуримтлалын гүйлгээ үүсгэх хуваарилалтаа тохируулна.',rate:'Орлогоос хадгалах хувь',alloc:'Хуримтлалын зорилго руу хуваарилах хувь',total:'Нийт',save:'Тохиргоо хадгалах',help:'Орлого бүртгэсний дараа энэ хуваарилалтаар “Хуримтлал” ангиллын зарлагын гүйлгээ үүсгэх санал гарна. Зорилтот дүн өөрчлөгдөхгүй.',noGoals:'Эхлээд “Миний хуримтлал” хэсэгт зорилго үүсгээрэй.',saved:'Өөртөө төлөх тохиргоо хадгалагдлаа',modalTitle:'Өөртөө эхлээд төлөх үү?',modalDesc:'Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?',confirm:'Бүртгэх',edit:'Засах',skip:'Алгасах',created:'Хуримтлалын гүйлгээ үүслээ',badTotal:'Хуваарилалтын нийт 100% байх хэрэгтэй',growthData:'Өсөлтийн өгөгдөл цуглуулж байна',growthAll:'Нийт өсөлт',growthPeriod:'Сонгосон хугацаанд'},
+    en:{tab:'Pay yourself',title:'Pay yourself first',desc:'Set how each income should create savings expense transactions first.',rate:'Savings rate from income',alloc:'Allocation to savings goals',total:'Total',save:'Save settings',help:'After income is recorded, the app suggests creating Savings expense transactions. Target amounts do not change.',noGoals:'Create goals in “My savings” first.',saved:'Pay yourself settings saved',modalTitle:'Pay yourself first?',modalDesc:'Income was recorded. Create savings expense transactions using your allocation?',confirm:'Record',edit:'Edit',skip:'Skip',created:'Savings transactions created',badTotal:'Allocation total must be 100%',growthData:'Collecting growth data',growthAll:'Total growth',growthPeriod:'Selected period'},
+    zh:{tab:'先付给自己'},ja:{tab:'自分に払う'},ko:{tab:'나에게 먼저'},ru:{tab:'Сначала себе'},de:{tab:'Zahle dich'}
+  };
+  return Object.assign({},d.en,d[lang]||d.mn);
+}
+function rPaySettings(){
+  const t=payText();
+  [['pay-title',t.title],['pay-desc',t.desc],['pay-rate-label',t.rate],['pay-alloc-label',t.alloc],['pay-total-label',t.total],['pay-save-btn',t.save],['pay-help',t.help],['pay-modal-title',t.modalTitle],['pay-modal-desc',t.modalDesc],['pay-modal-confirm',t.confirm],['pay-modal-edit',t.edit],['pay-modal-skip',t.skip]].forEach(([id,txt])=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
+  const custom=document.getElementById('pay-rate-custom'); if(custom)custom.value=![10,15,20].includes(Number(paySettings.rate))?paySettings.rate:'';
+  document.querySelectorAll('.pay-rate-btn').forEach(b=>b.classList.toggle('active',parseFloat(b.textContent)===Number(paySettings.rate)));
+  const list=document.getElementById('pay-goals-list'); if(!list)return;
+  if(!goals.length){list.innerHTML=`<div class="empty">${t.noGoals}</div>`;updatePayTotal();return;}
+  list.innerHTML=goals.map(g=>{const val=Number(paySettings.alloc&&paySettings.alloc[g.id]||0);return `<div class="pay-goal-row">
+    <div class="pay-goal-name">${g.name}</div>
+    <input class="fi pay-goal-input" type="number" min="0" max="100" step="1" value="${val||''}" placeholder="0" oninput="setPayAlloc(${g.id},this.value)">
+    <div style="font-size:12px;color:#6B7280;font-weight:900">%</div>
+  </div>`;}).join('');
+  updatePayTotal();
+}
+function setPayRate(v,btn){paySettings.rate=Math.max(0,Math.min(100,Number(v)||0));const c=document.getElementById('pay-rate-custom');if(c)c.value='';document.querySelectorAll('.pay-rate-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');saveData();}
+function setPayRateCustom(v){paySettings.rate=Math.max(0,Math.min(100,Number(v)||0));document.querySelectorAll('.pay-rate-btn').forEach(b=>b.classList.remove('active'));saveData();}
+function setPayAlloc(id,v){if(!paySettings.alloc)paySettings.alloc={};paySettings.alloc[id]=Math.max(0,Math.min(100,Number(v)||0));updatePayTotal();}
+function payAllocTotal(){return goals.reduce((s,g)=>s+Number(paySettings.alloc&&paySettings.alloc[g.id]||0),0);}
+function updatePayTotal(){const row=document.getElementById('pay-total-row'),val=document.getElementById('pay-total-val');const total=payAllocTotal();if(val)val.textContent=total+'%';if(row)row.classList.toggle('bad',goals.length&&total!==100);}
+function savePaySettings(){const t=payText();if(goals.length&&payAllocTotal()!==100){showToast(t.badTotal);return;}saveData();showToast(t.saved+' ✓');}
+function preparePayAssistant(incomeAmount,date){
+  if(!goals.length||!paySettings||Number(paySettings.rate)<=0)return;
+  const total=payAllocTotal(); if(total!==100)return;
+  const saveAmount=Math.round(incomeAmount*(Number(paySettings.rate)||0)/100); if(saveAmount<=0)return;
+  const rows=goals.map(g=>{const pct=Number(paySettings.alloc&&paySettings.alloc[g.id]||0);const amount=Math.round(saveAmount*pct/100);return {goalId:g.id,goalName:g.name,pct,amount};}).filter(r=>r.amount>0);
+  if(!rows.length)return; pendingPayPlan={date,rows,total:saveAmount}; renderPayModal();
+}
+function renderPayModal(){
+  const modal=document.getElementById('pay-assist-modal'),list=document.getElementById('pay-plan-list'); if(!modal||!list||!pendingPayPlan)return;
+  list.innerHTML=pendingPayPlan.rows.map(r=>`<div class="pay-plan-item"><span>${r.goalName} · ${r.pct}%</span><span>${fmt(r.amount)}</span></div>`).join('')+`<div class="pay-plan-item"><span>${payText().total}</span><span>${fmt(pendingPayPlan.total)}</span></div>`;
+  modal.classList.add('show');
+}
+function savingsCatDisplayName(){const c=expCats.find(x=>x.key==='savings_cat')||bCatsExp.find(x=>x.key==='savings_cat');return c?cN(c):(lang==='mn'?'Хуримтлал':'Savings');}
+function confirmPayAssistant(){
+  if(!pendingPayPlan)return; const base=Date.now(); const catName=savingsCatDisplayName();
+  pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',autoPaySelf:true});});
+  pendingPayPlan=null; const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); saveData(); rAll(); showToast(payText().created+' ✓');
+}
+function editPayAssistant(){const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); pendingPayPlan=null; const btn=document.getElementById('goals-tab-pay'); showTab('goals',document.getElementById('nav-goals')); showCalcPanel('goals','pay',btn); if(btn){document.querySelectorAll('#tab-goals .calc-tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}}
+function skipPayAssistant(){pendingPayPlan=null;const m=document.getElementById('pay-assist-modal');if(m)m.classList.remove('show');}
+function periodLabelForGrowth(){const t=payText();return period==='all'?t.growthAll:t.growthPeriod;}
+function periodWealthDelta(){const ft=fT();const savings=ft.filter(isSavingsTxn).reduce((s,t)=>s+(Number(t.amount)||0),0);const invGain=invests.filter(i=>{const d=parseTxnDateLocal(i.date||'');const pd=getPD();return d>=pd.from&&d<=pd.to;}).reduce((s,i)=>s+((Number(i.current)||0)-(Number(i.invested)||0)),0);return savings+invGain;}
+function updateNetWorthGrowth(netWorth){
+  const el=document.getElementById('pdash-net-growth'); if(!el)return;
+  const delta=periodWealthDelta(); const base=Math.max(1,Math.abs(netWorth-delta)); const pct=delta?((delta/base)*100):0;
+  el.className='net-growth-note '+(delta>0?'good':delta<0?'bad':'neutral');
+  const arrow=delta>0?'📈':delta<0?'📉':'•';
+  const sign=delta>0?'+':delta<0?'−':'';
+  el.textContent=`${arrow} ${periodLabelForGrowth()} ${sign}${fmt(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(1)}%)`;
+}
+
 // ── Möngö V29.7 Savings calculator ───────────────────────────────────────
 const SAVINGS_CALC_EXTRA={
   mn:{mySavings:'Миний хуримтлал',savCalcTitle:'Хуримтлалын тооцоолуур',savCalcDesc:'Сар бүр хуримтлуулахад ирээдүйд хэд болох, эсвэл зорилгод хүрэхийн тулд сард хэд хэрэгтэйг тооцно.',savStart:'Эхлэлийн дүн',savMonthly:'Сар бүр хийх дүн',savYears:'Хугацаа / жил',savRate:'Жилийн хүү (%)',savTarget:'Зорилтот дүн',savCalcRun:'Тооцоолох',savEmpty:'Эхлэлийн дүн, сар бүр хийх дүн, хугацаа, хүүгээ оруулаад “Тооцоолох” дарна уу.',savRequired:'Хуримтлалын дүн, хугацаа, хүүгээ зөв оруулна уу.',savTotal:'Нийт хуримтлал',savOwn:'Таны хийсэн мөнгө',savInterest:'Хүүгийн ашиг',savNeed:'Зорилгод хүрэхэд сард',savChart:'Өсөлтийн график',savTotalLine:'Нийт өсөлт',savOwnLine:'Өөрийн хийсэн мөнгө',savInterestLine:'Хүүгийн өсөлт',savChallengeTitle:'Кофены мөнгө challenge',savChallengeDesc:'Өдөр бүрийн жижиг зардлыг хуримтлал болгож харвал хэд болж өсөхийг тооцно.',savDaily:'Өдөр бүр хэмнэх дүн',savChYears:'Хугацаа / жил',savChRate:'Жилийн хүү (%)',savChRun:'Challenge тооцох',savChEmpty:'Өдөр бүрийн жижиг зардлаа оруулаад тооцоолоорой.',savChMsg:'Хэрэв та өдөр бүр {daily} хэмнээд, сар бүр {monthly} хуримтлуулбал {years} жилийн дараа {total}-тэй болно. Үүнээс {interest} нь зөвхөн хүүгийн ашиг байна.'},
@@ -4514,13 +4636,14 @@ const _prevShowCalcPanelSavings=showCalcPanel;
 showCalcPanel=function(section,panel,btn){
   _prevShowCalcPanelSavings(section,panel,btn);
   if(section==='goals'&&panel==='calc')clearSavingsCalcResults();
+  if(section==='goals'&&panel==='pay')rPaySettings();
 };
 const _prevUpdateCalcTextsSavings=updateCalcTexts;
 updateCalcTexts=function(){
   _prevUpdateCalcTextsSavings();
   const t=CT();
   const map={
-    'goals-tab-mine':t.mySavings,'goals-tab-calc':t.calc,'lbl-sav-calc-title':t.savCalcTitle,'lbl-sav-calc-desc':t.savCalcDesc,
+    'goals-tab-mine':t.mySavings,'goals-tab-calc':t.calc,'goals-tab-pay':(payText().tab),'lbl-sav-calc-title':t.savCalcTitle,'lbl-sav-calc-desc':t.savCalcDesc,
     'lbl-sav-start':t.savStart,'lbl-sav-monthly':t.savMonthly,'lbl-sav-years':t.savYears,'lbl-sav-rate':t.savRate,'lbl-sav-target':t.savTarget,
     'btn-sav-calc-run':t.savCalcRun,'sav-calc-empty':t.savEmpty,'lbl-sav-total':t.savTotal,'lbl-sav-own':t.savOwn,'lbl-sav-interest':t.savInterest,'lbl-sav-need':t.savNeed,'lbl-sav-chart':t.savChart,
     'lbl-sav-challenge-title':t.savChallengeTitle,'lbl-sav-challenge-desc':t.savChallengeDesc,'lbl-sav-daily':t.savDaily,'lbl-sav-ch-years':t.savChYears||t.savYears,'lbl-sav-ch-rate':t.savChRate||t.savRate,'btn-sav-ch-run':t.savChRun,'sav-ch-empty':t.savChEmpty
@@ -5019,6 +5142,35 @@ auth.onAuthStateChanged(user=>{
     .mongo-brand-sub{font-size:10px!important;letter-spacing:1.8px!important;}
     .logo,.logo img{width:44px!important;height:44px!important;}
   }
+
+/* ── Möngö V30.8: Pay Yourself First + Net Worth Growth ── */
+#goals-panel-pay .pay-card{background:rgba(255,255,255,.96)!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:30px!important;padding:18px!important;box-shadow:0 16px 38px rgba(31,127,134,.11)!important;margin-bottom:12px;}
+.pay-hero{padding:16px;border-radius:26px;background:linear-gradient(135deg,rgba(73,176,182,.16),rgba(247,210,74,.13));border:1px solid rgba(73,176,182,.18);margin-bottom:14px;}
+.pay-title{font-size:20px;font-weight:1000;color:#1F7F86;letter-spacing:-.04em;margin-bottom:6px;}
+.pay-desc{font-size:12px;color:#6B7280;font-weight:750;line-height:1.55;}
+.pay-rate-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 12px;}
+.pay-rate-btn{min-height:42px;border-radius:18px;border:1px solid rgba(73,176,182,.18);background:#fff;color:#1F7F86;font-weight:1000;cursor:pointer;box-shadow:0 6px 16px rgba(31,127,134,.06);}
+.pay-rate-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 10px 22px rgba(31,127,134,.22);}
+.pay-goal-row{display:grid;grid-template-columns:1fr 86px 32px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(73,176,182,.10);}
+.pay-goal-row:last-child{border-bottom:none;}
+.pay-goal-name{font-size:13px;font-weight:900;color:#374151;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pay-goal-input{min-height:38px!important;border-radius:16px!important;text-align:right;font-weight:900!important;padding:8px 10px!important;}
+.pay-total{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:11px 13px;border-radius:22px;background:rgba(73,176,182,.08);font-size:12px;font-weight:950;color:#1F7F86;}
+.pay-total.bad{background:#FFF4F4;color:#B91C1C;}
+.pay-modal{display:none;position:fixed;inset:0;z-index:13000;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.34);backdrop-filter:blur(4px);}
+.pay-modal.show{display:flex;}
+.pay-modal-card{width:min(390px,100%);border-radius:30px;background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.88);box-shadow:0 30px 80px rgba(31,127,134,.24);padding:20px;}
+.pay-modal-title{font-size:18px;font-weight:1000;color:#1F7F86;letter-spacing:-.03em;margin-bottom:6px;}
+.pay-modal-desc{font-size:12px;color:#6B7280;font-weight:750;line-height:1.5;margin-bottom:12px;}
+.pay-plan-list{border-radius:22px;background:rgba(73,176,182,.07);border:1px solid rgba(73,176,182,.12);padding:8px 12px;margin-bottom:12px;}
+.pay-plan-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(73,176,182,.10);font-size:13px;font-weight:900;color:#374151;}
+.pay-plan-item:last-child{border-bottom:none;}
+.pay-modal-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.net-growth-note{font-size:11px;font-weight:950;margin-top:7px;position:relative;z-index:1;line-height:1.35;}
+.net-growth-note.good{color:#08724F}.net-growth-note.bad{color:#B91C1C}.net-growth-note.neutral{color:#6B7280}
+@media(max-width:520px){.pay-rate-row{grid-template-columns:repeat(2,1fr)}.pay-goal-row{grid-template-columns:1fr 78px 28px}.pay-modal-actions{grid-template-columns:1fr}.pay-modal-card{border-radius:28px}}
+@media(prefers-color-scheme:dark){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
+
 </style>
 <script>
 (function(){
@@ -5080,6 +5232,21 @@ auth.onAuthStateChanged(user=>{
   }
 })();
 </script>
+
+
+<!-- ── Pay Yourself First Assistant Modal ── -->
+<div class="pay-modal" id="pay-assist-modal">
+  <div class="pay-modal-card">
+    <div class="pay-modal-title" id="pay-modal-title">Өөртөө эхлээд төлөх үү?</div>
+    <div class="pay-modal-desc" id="pay-modal-desc">Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?</div>
+    <div class="pay-plan-list" id="pay-plan-list"></div>
+    <div class="pay-modal-actions">
+      <button class="btn btn-p" onclick="confirmPayAssistant()" id="pay-modal-confirm">Бүртгэх</button>
+      <button class="btn" onclick="editPayAssistant()" id="pay-modal-edit">Засах</button>
+      <button class="btn" onclick="skipPayAssistant()" id="pay-modal-skip">Алгасах</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
