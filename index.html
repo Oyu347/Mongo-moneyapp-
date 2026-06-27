@@ -11,6 +11,7 @@ V30.4: bigger splash logo, old Pay Yourself First savings-rate logic, FIRE targe
 V30.6: splash screen copy changed to English before language selection.
 V30.7: goal deadline uses remaining months by date/created date; loan extra payment can be limited to N months.
 V30.8: adds Pay Yourself First savings tab/assistant and net worth growth indicator.
+V30.9: Pay Yourself First popup edit mode stays inside popup and returns to confirm flow.
 -->
 <html lang="mn">
 <head>
@@ -1663,6 +1664,22 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @media(max-width:520px){.pay-rate-row{grid-template-columns:repeat(2,1fr)}.pay-goal-row{grid-template-columns:1fr 78px 28px}.pay-modal-actions{grid-template-columns:1fr}.pay-modal-card{border-radius:28px}}
 @media(prefers-color-scheme:dark){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
 
+
+
+/* ── Möngö V30.9: Pay Yourself First popup inline edit mode ── */
+.pay-edit-panel{display:none;margin-top:10px;}
+.pay-edit-panel.show{display:block;}
+.pay-edit-list{border-radius:22px;background:rgba(73,176,182,.07);border:1px solid rgba(73,176,182,.12);padding:8px 12px;margin:10px 0 12px;}
+.pay-edit-row{display:grid;grid-template-columns:1fr 84px 24px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(73,176,182,.10);}
+.pay-edit-row:last-child{border-bottom:none;}
+.pay-edit-name{font-size:13px;font-weight:900;color:#374151;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pay-edit-input{min-height:38px!important;border-radius:16px!important;text-align:right;font-weight:900!important;padding:8px 10px!important;}
+.pay-edit-total{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding:10px 12px;border-radius:20px;background:rgba(73,176,182,.08);font-size:12px;font-weight:950;color:#1F7F86;}
+.pay-edit-total.bad{background:#FFF4F4;color:#B91C1C;}
+.pay-edit-check{display:flex;align-items:center;gap:8px;margin:9px 0 12px;font-size:12px;color:#6B7280;font-weight:850;line-height:1.35;}
+.pay-modal-actions.editing{grid-template-columns:1fr 1fr;}
+@media(max-width:520px){.pay-edit-row{grid-template-columns:1fr 76px 20px}.pay-modal-actions.editing{grid-template-columns:1fr;}}
+@media(prefers-color-scheme:dark){.pay-edit-name{color:#F3F4F6}.pay-edit-list{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
 </style>
 </head>
 <body>
@@ -4595,12 +4612,20 @@ function preparePayAssistant(incomeAmount,date){
   const total=payAllocTotal(); if(total!==100)return;
   const saveAmount=Math.round(incomeAmount*(Number(paySettings.rate)||0)/100); if(saveAmount<=0)return;
   const rows=goals.map(g=>{const pct=Number(paySettings.alloc&&paySettings.alloc[g.id]||0);const amount=Math.round(saveAmount*pct/100);return {goalId:g.id,goalName:g.name,pct,amount};}).filter(r=>r.amount>0);
-  if(!rows.length)return; pendingPayPlan={date,rows,total:saveAmount}; renderPayModal();
+  if(!rows.length)return; pendingPayPlan={date,incomeAmount,rate:Number(paySettings.rate)||0,rows,total:saveAmount}; renderPayModal(false);
 }
-function renderPayModal(){
-  const modal=document.getElementById('pay-assist-modal'),list=document.getElementById('pay-plan-list'); if(!modal||!list||!pendingPayPlan)return;
+function renderPayModal(editMode=false){
+  const modal=document.getElementById('pay-assist-modal'),list=document.getElementById('pay-plan-list'),edit=document.getElementById('pay-edit-panel'),actions=document.getElementById('pay-modal-actions');
+  if(!modal||!list||!pendingPayPlan)return;
   list.innerHTML=pendingPayPlan.rows.map(r=>`<div class="pay-plan-item"><span>${r.goalName} · ${r.pct}%</span><span>${fmt(r.amount)}</span></div>`).join('')+`<div class="pay-plan-item"><span>${payText().total}</span><span>${fmt(pendingPayPlan.total)}</span></div>`;
+  list.style.display=editMode?'none':'block';
+  if(edit)edit.classList.toggle('show',!!editMode);
+  if(actions)actions.classList.toggle('editing',!!editMode);
+  const normal=document.getElementById('pay-normal-actions'), editBtns=document.getElementById('pay-edit-actions');
+  if(normal)normal.style.display=editMode?'none':'grid';
+  if(editBtns)editBtns.style.display=editMode?'grid':'none';
   modal.classList.add('show');
+  if(editMode)renderPayEditPanel();
 }
 function savingsCatDisplayName(){const c=expCats.find(x=>x.key==='savings_cat')||bCatsExp.find(x=>x.key==='savings_cat');return c?cN(c):(lang==='mn'?'Хуримтлал':'Savings');}
 function confirmPayAssistant(){
@@ -4608,7 +4633,43 @@ function confirmPayAssistant(){
   pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',autoPaySelf:true});});
   pendingPayPlan=null; const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); saveData(); rAll(); showToast(payText().created+' ✓');
 }
-function editPayAssistant(){const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); pendingPayPlan=null; const btn=document.getElementById('goals-tab-pay'); showTab('goals',document.getElementById('nav-goals')); showCalcPanel('goals','pay',btn); if(btn){document.querySelectorAll('#tab-goals .calc-tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}}
+function editPayAssistant(){
+  if(!pendingPayPlan)return;
+  renderPayModal(true);
+}
+function renderPayEditPanel(){
+  const panel=document.getElementById('pay-edit-panel'), rateEl=document.getElementById('pay-edit-rate'), list=document.getElementById('pay-edit-list'), totalEl=document.getElementById('pay-edit-total-val'), totalRow=document.getElementById('pay-edit-total-row');
+  if(!panel||!list||!pendingPayPlan)return;
+  const currentRate=Number(pendingPayPlan.rate||paySettings.rate||0);
+  if(rateEl)rateEl.value=currentRate;
+  list.innerHTML=goals.map(g=>{
+    const found=pendingPayPlan.rows.find(r=>r.goalId==g.id);
+    const pct=found?Number(found.pct||0):Number(paySettings.alloc&&paySettings.alloc[g.id]||0);
+    return `<div class="pay-edit-row"><div class="pay-edit-name">${g.name}</div><input class="fi pay-edit-input" type="number" min="0" max="100" step="1" value="${pct||''}" placeholder="0" data-goal-id="${g.id}" oninput="updatePayEditTotal()"><div style="font-size:12px;color:#6B7280;font-weight:900">%</div></div>`;
+  }).join('');
+  updatePayEditTotal();
+}
+function payEditAllocTotal(){
+  return Array.from(document.querySelectorAll('#pay-edit-list .pay-edit-input')).reduce((s,i)=>s+(Number(i.value)||0),0);
+}
+function updatePayEditTotal(){
+  const total=payEditAllocTotal(); const val=document.getElementById('pay-edit-total-val'), row=document.getElementById('pay-edit-total-row');
+  if(val)val.textContent=total+'%'; if(row)row.classList.toggle('bad',goals.length&&total!==100);
+}
+function savePayEditFromModal(){
+  if(!pendingPayPlan)return; const t=payText(); const total=payEditAllocTotal();
+  if(goals.length&&total!==100){showToast(t.badTotal);return;}
+  const rate=Math.max(0,Math.min(100,Number(document.getElementById('pay-edit-rate')?.value)||0));
+  const alloc={}; Array.from(document.querySelectorAll('#pay-edit-list .pay-edit-input')).forEach(i=>{alloc[i.dataset.goalId]=Math.max(0,Math.min(100,Number(i.value)||0));});
+  const saveAmount=Math.round((Number(pendingPayPlan.incomeAmount)||0)*rate/100);
+  const rows=goals.map(g=>{const pct=Number(alloc[g.id]||0);const amount=Math.round(saveAmount*pct/100);return {goalId:g.id,goalName:g.name,pct,amount};}).filter(r=>r.amount>0);
+  if(!rows.length){showToast(t.badTotal);return;}
+  if(document.getElementById('pay-edit-default')?.checked){paySettings.rate=rate;paySettings.alloc=alloc;saveData();rPaySettings();}
+  pendingPayPlan={...pendingPayPlan,rate,rows,total:saveAmount};
+  renderPayModal(false);
+}
+function backPayEditModal(){renderPayModal(false);}
+
 function skipPayAssistant(){pendingPayPlan=null;const m=document.getElementById('pay-assist-modal');if(m)m.classList.remove('show');}
 function periodLabelForGrowth(){const t=payText();return period==='all'?t.growthAll:t.growthPeriod;}
 function periodWealthDelta(){const ft=fT();const savings=ft.filter(isSavingsTxn).reduce((s,t)=>s+(Number(t.amount)||0),0);const invGain=invests.filter(i=>{const d=parseTxnDateLocal(i.date||'');const pd=getPD();return d>=pd.from&&d<=pd.to;}).reduce((s,i)=>s+((Number(i.current)||0)-(Number(i.invested)||0)),0);return savings+invGain;}
@@ -5240,10 +5301,23 @@ auth.onAuthStateChanged(user=>{
     <div class="pay-modal-title" id="pay-modal-title">Өөртөө эхлээд төлөх үү?</div>
     <div class="pay-modal-desc" id="pay-modal-desc">Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?</div>
     <div class="pay-plan-list" id="pay-plan-list"></div>
-    <div class="pay-modal-actions">
-      <button class="btn btn-p" onclick="confirmPayAssistant()" id="pay-modal-confirm">Бүртгэх</button>
-      <button class="btn" onclick="editPayAssistant()" id="pay-modal-edit">Засах</button>
-      <button class="btn" onclick="skipPayAssistant()" id="pay-modal-skip">Алгасах</button>
+    <div class="pay-edit-panel" id="pay-edit-panel">
+      <div class="slbl">Хадгалах хувь</div>
+      <input class="fi" id="pay-edit-rate" type="number" min="0" max="100" step="1" placeholder="20" oninput="updatePayEditTotal()" style="width:100%;margin-top:5px">
+      <div class="pay-edit-list" id="pay-edit-list"></div>
+      <div class="pay-edit-total" id="pay-edit-total-row"><span>Нийт</span><span id="pay-edit-total-val">0%</span></div>
+      <label class="pay-edit-check"><input type="checkbox" id="pay-edit-default"> <span>Үүнийг үндсэн тохиргоо болгох</span></label>
+    </div>
+    <div class="pay-modal-actions" id="pay-modal-actions">
+      <div class="pay-modal-actions" id="pay-normal-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;grid-column:1/-1">
+        <button class="btn btn-p" onclick="confirmPayAssistant()" id="pay-modal-confirm">Бүртгэх</button>
+        <button class="btn" onclick="editPayAssistant()" id="pay-modal-edit">Засах</button>
+        <button class="btn" onclick="skipPayAssistant()" id="pay-modal-skip">Алгасах</button>
+      </div>
+      <div class="pay-modal-actions" id="pay-edit-actions" style="display:none;grid-template-columns:1fr 1fr;gap:8px;grid-column:1/-1">
+        <button class="btn btn-p" onclick="savePayEditFromModal()">Хадгалах</button>
+        <button class="btn" onclick="backPayEditModal()">Буцах</button>
+      </div>
     </div>
   </div>
 </div>
