@@ -13,6 +13,7 @@ V30.7: goal deadline uses remaining months by date/created date; loan extra paym
 V30.8: adds Pay Yourself First savings tab/assistant and net worth growth indicator.
 V30.9: Pay Yourself First popup edit mode stays inside popup and returns to confirm flow.
 V31.0: adds dashboard welcome/motivation and upgraded profile wealth center.
+V32.0: profile 10/10 polish — wealth level, compact 2x2 progress, premium goals, badge colors, hero greeting.
 -->
 <html lang="mn">
 <head>
@@ -1707,6 +1708,58 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @media(max-width:520px){.profile-mini-grid,.profile-badges{grid-template-columns:1fr}.wealth-welcome-hi{font-size:18px}.profile-mini .v{font-size:15px}}
 @media(prefers-color-scheme:dark){.wealth-welcome-card{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08),rgba(23,35,38,.78));border-color:rgba(116,215,220,.12)}.wealth-welcome-quote,.profile-mini .k{color:#CBD5E1}.profile-goal-name,.profile-badge{color:#F3F4F6}.profile-mini,.profile-badge{background:rgba(255,255,255,.05);border-color:rgba(116,215,220,.12)}.profile-philosophy,.profile-pay-summary{color:#74D7DC}}
 
+
+
+/* ── Möngö V32: Profile 10/10 polish ── */
+.profile-hero{border-radius:32px!important;padding:18px!important;overflow:hidden!important;position:relative!important;}
+.profile-hero:after{content:"";position:absolute;right:-34px;top:-38px;width:130px;height:130px;border-radius:999px;background:rgba(255,255,255,.42);pointer-events:none;}
+.profile-hero .profile-avatar{width:64px!important;height:64px!important;border-radius:24px!important;box-shadow:0 16px 34px rgba(31,127,134,.24)!important;position:relative;z-index:1;}
+.profile-hero .profile-avatar .material-symbols-rounded{font-size:34px!important;}
+#lbl-profile-title{font-size:20px!important;line-height:1.15!important;color:#1F7F86!important;position:relative;z-index:1;}
+#profile-email-main{position:relative;z-index:1;}
+.wealth-level-card{padding:16px 17px!important;border-radius:30px!important;background:linear-gradient(135deg,rgba(73,176,182,.17),rgba(247,210,74,.13),rgba(255,255,255,.88))!important;border:1px solid rgba(255,255,255,.88)!important;}
+.wealth-level-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.wealth-level-title{font-size:12px;color:#6B7280;font-weight:950;text-transform:uppercase;letter-spacing:.055em;}
+.wealth-level-name{font-size:22px;font-weight:1000;color:#1F7F86;letter-spacing:-.05em;margin-top:2px;}
+.wealth-level-badge{width:58px;height:58px;border-radius:22px;background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 14px 28px rgba(31,127,134,.22);flex-shrink:0;}
+.wealth-level-track{height:12px;border-radius:999px;background:rgba(73,176,182,.12);overflow:hidden;margin:10px 0 9px;}
+.wealth-level-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86,#F7D24A);width:0%;transition:width .35s ease;}
+.wealth-level-note{font-size:12px;color:#6B7280;font-weight:850;line-height:1.45;}
+.profile-mini-grid{grid-template-columns:1fr 1fr!important;gap:9px!important;}
+.profile-mini{min-height:82px!important;padding:13px 12px!important;background:linear-gradient(145deg,rgba(232,248,248,.92),rgba(255,255,255,.82))!important;box-shadow:0 8px 20px rgba(31,127,134,.065)!important;position:relative;overflow:hidden;}
+.profile-mini:after{content:"";position:absolute;right:-22px;top:-26px;width:72px;height:72px;border-radius:999px;background:rgba(255,255,255,.45);}
+.profile-mini .k,.profile-mini .v{position:relative;z-index:1;}
+.profile-score-bar{height:8px;border-radius:999px;background:rgba(73,176,182,.13);overflow:hidden;margin-top:8px;position:relative;z-index:1;}
+.profile-score-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);width:0%;}
+.profile-goal-item{padding:13px 0!important;}
+.profile-goal-pbar{height:18px;border-radius:999px;background:rgba(73,176,182,.10);overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(31,127,134,.05);}
+.profile-goal-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);min-width:0;}
+.profile-goal-pill{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:1000;color:#1F7F86;background:rgba(255,255,255,.82);border-radius:999px;padding:2px 7px;line-height:1.15;}
+.profile-goal-amount{margin-top:7px;font-size:12px;color:#6B7280;font-weight:850;}
+.profile-badges{grid-template-columns:1fr 1fr!important;gap:9px!important;}
+.profile-badge{min-height:68px!important;display:flex;align-items:center;gap:10px;padding:12px!important;border-radius:22px!important;}
+.profile-badge .badge-ico{width:34px;height:34px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(107,114,128,.10);font-size:18px;}
+.profile-badge.earned .badge-ico{background:linear-gradient(135deg,#49B0B6,#1F7F86);box-shadow:0 8px 18px rgba(31,127,134,.18);}
+.profile-badge.gold .badge-ico{background:linear-gradient(135deg,#FFF08A,#F7D24A,#D6A21D);}
+.profile-badge.silver .badge-ico{background:linear-gradient(135deg,#F8FAFC,#CBD5E1,#94A3B8);}
+.profile-badge.bronze .badge-ico{background:linear-gradient(135deg,#F6C28B,#D97706,#92400E);}
+.profile-badge .badge-name{font-size:12px;font-weight:950;line-height:1.3;}
+.profile-badge .badge-state{font-size:10.5px;font-weight:850;opacity:.72;margin-top:2px;}
+.profile-philosophy{font-size:14px!important;padding:16px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 8px 20px rgba(31,127,134,.06)!important;}
+#lbl-profile-account::before{content:"⚙️ ";}
+#lbl-profile-data::before{content:"";}
+@media(max-width:520px){
+  .profile-mini-grid,.profile-badges{grid-template-columns:1fr 1fr!important;}
+  .profile-mini{min-height:78px!important;padding:12px 10px!important;}
+  .profile-mini .k{font-size:9.5px!important;}
+  .profile-mini .v{font-size:14px!important;}
+  .profile-badge{padding:10px 9px!important;gap:7px!important;}
+  .profile-badge .badge-ico{width:30px;height:30px;border-radius:12px;font-size:16px;}
+  .profile-badge .badge-name{font-size:11px;}
+  .wealth-level-name{font-size:20px;}
+}
+@media(prefers-color-scheme:dark){.wealth-level-card,.profile-mini{background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.78))!important;border-color:rgba(116,215,220,.12)!important}.wealth-level-note{color:#CBD5E1}.profile-goal-pill{background:rgba(23,35,38,.86);color:#74D7DC}}
+
 </style>
 </head>
 <body>
@@ -2365,6 +2418,18 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     </div>
   </div>
 
+  <div class="card wealth-level-card" id="profile-wealth-level-card">
+    <div class="wealth-level-top">
+      <div>
+        <div class="wealth-level-title" id="wealth-level-title">💎 Баялгийн түвшин</div>
+        <div class="wealth-level-name" id="wealth-level-name">Starter</div>
+      </div>
+      <div class="wealth-level-badge" id="wealth-level-badge">🌱</div>
+    </div>
+    <div class="wealth-level-track"><div class="wealth-level-fill" id="wealth-level-fill"></div></div>
+    <div class="wealth-level-note" id="wealth-level-note">Дараагийн түвшин рүү ойртож байна.</div>
+  </div>
+
   <div class="card profile-section-card" id="profile-progress-card">
     <div class="card-title" id="profile-progress-title">📈 Миний санхүүгийн ахиц</div>
     <div class="profile-mini-grid">
@@ -2404,7 +2469,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="card profile-section-card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V31.0</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V32.0</div></div>
   </div>
 
   <div class="card profile-section-card">
@@ -2940,6 +3005,42 @@ function updateWelcomeCard(){
   qt.textContent=quotes[idx];
 }
 function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+(Number(d.remaining)||0),0);}
+function timeGreeting(){
+  const h=new Date().getHours();
+  if(lang==='mn')return h<12?'Өглөөний мэнд':h<18?'Өдрийн мэнд':'Оройн мэнд';
+  return h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+}
+function renderProfileHero(){
+  const name=userDisplayName(); const title=document.getElementById('lbl-profile-title');
+  if(title){
+    if(lang==='mn')title.textContent=name?`👋 ${timeGreeting()}, ${name}`:'👋 Möngö-д тавтай морил';
+    else title.textContent=name?`👋 ${timeGreeting()}, ${name}`:'👋 Welcome to Möngö';
+  }
+}
+function wealthLevelInfo(score, net){
+  const levels=[
+    {name:'Starter', ico:'🌱', min:0, next:'Saver'},
+    {name:'Saver', ico:'🌿', min:50, next:'Wealth Builder'},
+    {name:'Wealth Builder', ico:'💎', min:70, next:'Investor'},
+    {name:'Investor', ico:'📈', min:85, next:'Financial Freedom'},
+    {name:'Financial Freedom', ico:'👑', min:95, next:'Top Level'}
+  ];
+  let lv=levels[0]; for(const l of levels){if(score>=l.min)lv=l;}
+  let next=levels.find(l=>l.min>score); let pct=next?Math.max(0,Math.min(100,Math.round((score-lv.min)/(next.min-lv.min)*100))):100;
+  return {lv,next,pct};
+}
+function renderWealthLevel(){
+  const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0; const net=profileNetWorth(); const info=wealthLevelInfo(score,net);
+  const title=document.getElementById('wealth-level-title'), name=document.getElementById('wealth-level-name'), badge=document.getElementById('wealth-level-badge'), fill=document.getElementById('wealth-level-fill'), note=document.getElementById('wealth-level-note');
+  if(title)title.textContent=lang==='mn'?'💎 Баялгийн түвшин':'💎 Wealth Level';
+  if(name)name.textContent=info.lv.name;
+  if(badge)badge.textContent=info.lv.ico;
+  if(fill)fill.style.width=info.pct+'%';
+  if(note){
+    if(info.next) note.textContent=lang==='mn'?`Дараагийн түвшин: ${info.next.name}. Дутуу ${Math.max(0,info.next.min-score)} оноо.`:`Next level: ${info.next.name}. ${Math.max(0,info.next.min-score)} points to go.`;
+    else note.textContent=lang==='mn'?'Та хамгийн дээд түвшинд хүрлээ. Эрчээ хадгалаарай.':'You reached the top level. Keep the momentum.';
+  }
+}
 function renderProfileProgress(){
   const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
   [['profile-progress-title',PT.progress],['profile-net-k',PT.net],['profile-growth-k',PT.growth],['profile-savings-k',PT.savings],['profile-score-k',PT.score]].forEach(([id,t])=>{const e=document.getElementById(id);if(e)e.textContent=t;});
@@ -2947,13 +3048,15 @@ function renderProfileProgress(){
   set('profile-net-v',fmt(net));
   const sign=delta>0?'+':delta<0?'−':''; set('profile-growth-v',`${sign}${fmt(Math.abs(delta))}`);
   const gm=document.getElementById('profile-growth-mini'); if(gm)gm.className='profile-mini '+(delta>0?'good':delta<0?'bad':'');
-  set('profile-savings-v',fmt(savings)); set('profile-score-v',score+' / 100');
+  set('profile-savings-v',fmt(savings));
+  const scoreEl=document.getElementById('profile-score-v');
+  if(scoreEl) scoreEl.innerHTML=`⭐ ${score} / 100<div class="profile-score-bar"><div class="profile-score-fill" style="width:${Math.max(0,Math.min(100,score))}%"></div></div>`;
 }
 function renderProfileGoals(){
   const PT=profileText(); const title=document.getElementById('profile-goals-title'); if(title)title.textContent=PT.goals;
   const list=document.getElementById('profile-goals-list'); if(!list)return;
   if(!goals.length){list.innerHTML=`<div class="empty">${PT.noGoals}</div>`;return;}
-  list.innerHTML=goals.slice(0,6).map(g=>{const saved=getGoalEffectiveSaved(g);const target=Math.max(1,Number(g.target)||0);const pct=Math.max(0,Math.min(100,Math.round(saved/target*100)));return `<div class="profile-goal-item"><div class="profile-goal-top"><div class="profile-goal-name">🎯 ${g.name||''}</div><div class="profile-goal-pct">${pct}%</div></div><div class="pbar"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,#49B0B6,#1F7F86)"></div></div><div class="lbl2" style="margin-top:5px;font-weight:800">${fmt(saved)} / ${fmt(target)}</div></div>`;}).join('');
+  list.innerHTML=goals.slice(0,6).map(g=>{const saved=getGoalEffectiveSaved(g);const target=Math.max(1,Number(g.target)||0);const pct=Math.max(0,Math.min(100,Math.round(saved/target*100)));return `<div class="profile-goal-item"><div class="profile-goal-top"><div class="profile-goal-name">🎯 ${g.name||''}</div></div><div class="profile-goal-pbar"><div class="profile-goal-fill" style="width:${pct}%"></div><div class="profile-goal-pill">${pct}%</div></div><div class="profile-goal-amount">${fmt(saved)} / ${fmt(target)}</div></div>`;}).join('');
 }
 function renderProfilePaySummary(){
   const PT=profileText(); const title=document.getElementById('profile-pay-title'); if(title)title.textContent=PT.pay; const btn=document.getElementById('profile-pay-btn'); if(btn)btn.textContent=PT.payEdit;
@@ -2966,8 +3069,8 @@ function renderProfileBadges(){
   const PT=profileText(); const title=document.getElementById('profile-badge-title'); if(title)title.textContent=PT.badges;
   const el=document.getElementById('profile-badges-list'); if(!el)return;
   const net=profileNetWorth(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
-  const data=[['🥇','Анхны хуримтлал',savings>0],['🥈','100 гүйлгээ',txns.length>=100],['🥉','30 өдөр бүртгэл',txns.length>=30],['💎','100 сая цэвэр хөрөнгө',net>=100000000],['🚀','Оноо 90+',score>=90],['🏆','Зорилго 100%',goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity))]];
-  el.innerHTML=data.map(([ico,name,ok])=>`<div class="profile-badge ${ok?'earned':''}">${ico} ${name}<br><span style="font-size:10px;font-weight:800;opacity:.75">${ok?PT.earned:PT.locked}</span></div>`).join('');
+  const data=[['🥇','Анхны хуримтлал',savings>0,'gold'],['🥈','100 гүйлгээ',txns.length>=100,'silver'],['🥉','30 өдөр бүртгэл',txns.length>=30,'bronze'],['💎','100 сая цэвэр хөрөнгө',net>=100000000,''],['🚀','Оноо 90+',score>=90,''],['🏆','Зорилго 100%',goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity)),'gold']];
+  el.innerHTML=data.map(([ico,name,ok,tier])=>`<div class="profile-badge ${ok?'earned':''} ${ok?tier:''}"><div class="badge-ico">${ico}</div><div><div class="badge-name">${name}</div><div class="badge-state">${ok?PT.earned:PT.locked}</div></div></div>`).join('');
 }
 function renderProfilePhilosophy(){
   const PT=profileText(); const title=document.getElementById('profile-philosophy-title'); if(title)title.textContent=PT.philosophy;
@@ -2982,7 +3085,7 @@ function rProfile(){
   const email=currentUserEmail();
   const e1=document.getElementById('profile-email-main'); if(e1)e1.textContent=email;
   const lr=document.getElementById('profile-language-row'); if(lr)lr.textContent=V27_LANG_NAMES[lang]||'🇲🇳 Монгол';
-  renderProfileProgress();renderProfileGoals();renderProfilePaySummary();renderProfileBadges();renderProfilePhilosophy();
+  renderProfileHero();renderWealthLevel();renderProfileProgress();renderProfileGoals();renderProfilePaySummary();renderProfileBadges();renderProfilePhilosophy();
   const list=document.getElementById('profile-help-list');
   if(list){
     const items=[
