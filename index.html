@@ -15,6 +15,7 @@ V30.9: Pay Yourself First popup edit mode stays inside popup and returns to conf
 V31.0: adds dashboard welcome/motivation and upgraded profile wealth center.
 V32.0: profile 10/10 polish — wealth level, compact 2x2 progress, premium goals, badge colors, hero greeting.
 V33.0: settings merged with data, localized wealth philosophy, 7-language profile texts, refined wealth journey.
+V34.0: Wealth Experience — synced profile score, goal completion states, philosophy 365 base, confetti success.
 -->
 <html lang="mn">
 <head>
@@ -1769,6 +1770,20 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .profile-philosophy:before{content:"";display:block;width:42px;height:4px;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#F7D24A);margin-bottom:10px;opacity:.75;}
 .wealth-level-title,.profile-mini .k{word-break:keep-all;}
 
+
+/* ── Möngö V34: Wealth Experience states + philosophy 365 ── */
+.goal-status-card{margin-top:8px;padding:9px 11px;border-radius:18px;font-size:11.5px;font-weight:950;line-height:1.45;border:1px solid rgba(73,176,182,.14);}
+.goal-status-card.success{background:linear-gradient(135deg,rgba(29,158,117,.14),rgba(73,176,182,.08));color:#08724F;border-color:rgba(29,158,117,.18);}
+.goal-status-card.warning{background:linear-gradient(135deg,rgba(255,246,199,.78),rgba(255,255,255,.72));color:#B7791F;border-color:rgba(183,121,31,.18);}
+.goal-status-card.expired{background:linear-gradient(135deg,rgba(252,235,235,.95),rgba(255,255,255,.78));color:#B91C1C;border-color:rgba(185,28,28,.18);}
+.goal-extend-btn{margin-top:7px;min-height:32px!important;padding:6px 12px!important;border-radius:999px!important;font-size:11px!important;}
+.profile-philosophy-card-v34{order:2;}
+.profile-philosophy-day{display:inline-flex;margin-bottom:8px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.62);color:#1F7F86;font-size:11px;font-weight:1000;border:1px solid rgba(73,176,182,.14);}
+.profile-philosophy-main{display:block;font-size:14px;font-weight:950;line-height:1.65;}
+.v34-confetti{position:fixed;top:-12px;width:9px;height:14px;border-radius:3px;z-index:20000;pointer-events:none;animation:v34ConfettiFall 1.8s ease-out forwards;}
+@keyframes v34ConfettiFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@media(prefers-color-scheme:dark){.profile-philosophy-day{background:rgba(255,255,255,.06);color:#74D7DC}.goal-status-card.warning{background:rgba(183,121,31,.12)}.goal-status-card.expired{background:rgba(185,28,28,.12)}}
+
 </style>
 </head>
 <body>
@@ -2439,6 +2454,11 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <div class="wealth-level-note" id="wealth-level-note">Дараагийн түвшин рүү ойртож байна.</div>
   </div>
 
+  <div class="card profile-section-card profile-philosophy-card-v34" id="profile-philosophy-card">
+    <div class="card-title" id="profile-philosophy-title">❤️ Möngö Philosophy</div>
+    <div class="profile-philosophy" id="profile-philosophy-text"></div>
+  </div>
+
   <div class="card profile-section-card" id="profile-progress-card">
     <div class="card-title" id="profile-progress-title">📈 Миний санхүүгийн ахиц</div>
     <div class="profile-mini-grid">
@@ -2470,15 +2490,11 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <div id="profile-help-list"></div>
   </div>
 
-  <div class="card profile-section-card" id="profile-philosophy-card">
-    <div class="card-title" id="profile-philosophy-title">❤️ Möngö Philosophy</div>
-    <div class="profile-philosophy" id="profile-philosophy-text"></div>
-  </div>
 
   <div class="card profile-section-card profile-settings-card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V33.0</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V34.0</div></div>
     <div class="profile-settings-divider"></div>
     <div class="profile-actions profile-actions-settings">
       <button class="btn btn-p" onclick="exportData()"><span class="material-symbols-rounded">download</span><span id="lbl-profile-backup"></span></button>
@@ -2985,16 +3001,39 @@ function profileText(){
   };return d[lang]||d.mn;
 }
 function wealthQuotes(){
-  const q={
-    mn:['💎 Өөртөө эхлээд төл.','🌱 Өнөөдрийн жижиг алхам маргаашийн их баялаг.','📈 Цэвэр хөрөнгөө өсгөхөд төвлөр.','🎯 Зорилготой мөнгө хамгийн хурдан өсдөг.','💰 Орлого биш, үлдээдэг мөнгө чинь баялгийг бүтээдэг.','🏡 Өнөөдрийн хуримтлал ирээдүйн эрх чөлөө.','🚀 Баялаг бол дадал, аз биш.','🌳 Мөнгө зорилготой үед систем болж өсдөг.','💚 Зарлагаа удирд, хөрөнгөө өсгө.','✨ Санхүүгийн эрх чөлөө жижиг алхмуудаас эхэлдэг.'],
-    en:['💎 Pay yourself first.','🌱 Today’s small step builds tomorrow’s wealth.','📈 Focus on growing your net worth.','🎯 Money with a goal grows faster.','💰 Wealth is built by what you keep, not only what you earn.','🏡 Today’s saving is tomorrow’s freedom.','🚀 Wealth is a habit, not luck.','🌳 Money grows faster inside a system.','💚 Control expenses, grow assets.','✨ Financial freedom starts with small steps.'],
-    zh:['💎 先支付自己。','🌱 今天的小行动，成就明天的财富。','📈 专注于增长净资产。','🎯 有目标的钱增长更快。','💰 财富来自留下的钱，而不只是收入。','🏡 今天的储蓄是明天的自由。','🚀 财富是习惯，不是运气。','🌳 钱在系统中增长更快。','💚 管理支出，增长资产。','✨ 财务自由始于小步骤。'],
-    ja:['💎 まず自分に払う。','🌱 今日の小さな一歩が明日の富をつくる。','📈 純資産の成長に集中しよう。','🎯 目的のあるお金は早く育つ。','💰 富は収入だけでなく残したお金で築かれる。','🏡 今日の貯蓄は明日の自由。','🚀 富は運ではなく習慣。','🌳 お金は仕組みの中でより早く育つ。','💚 支出を管理し、資産を育てよう。','✨ 経済的自由は小さな一歩から始まる。'],
-    ko:['💎 나에게 먼저 지불하세요.','🌱 오늘의 작은 걸음이 내일의 부를 만듭니다.','📈 순자산 성장에 집중하세요.','🎯 목표가 있는 돈은 더 빨리 자랍니다.','💰 부는 버는 돈보다 남기는 돈으로 만들어집니다.','🏡 오늘의 저축은 내일의 자유입니다.','🚀 부는 운이 아니라 습관입니다.','🌳 돈은 시스템 안에서 더 빨리 자랍니다.','💚 지출을 관리하고 자산을 키우세요.','✨ 경제적 자유는 작은 걸음에서 시작됩니다.'],
-    ru:['💎 Сначала заплати себе.','🌱 Маленький шаг сегодня создает богатство завтра.','📈 Фокусируйтесь на росте чистого капитала.','🎯 Деньги с целью растут быстрее.','💰 Богатство создается тем, что вы сохраняете, а не только зарабатываете.','🏡 Накопление сегодня — свобода завтра.','🚀 Богатство — это привычка, а не удача.','🌳 Деньги быстрее растут в системе.','💚 Управляйте расходами, растите активы.','✨ Финансовая свобода начинается с маленьких шагов.'],
-    de:['💎 Bezahle dich zuerst.','🌱 Der kleine Schritt von heute baut den Wohlstand von morgen.','📈 Konzentriere dich auf dein Nettovermögen.','🎯 Geld mit Ziel wächst schneller.','💰 Vermögen entsteht durch das, was du behältst, nicht nur verdienst.','🏡 Heutiges Sparen ist morgige Freiheit.','🚀 Wohlstand ist Gewohnheit, nicht Glück.','🌳 Geld wächst schneller in einem System.','💚 Kontrolliere Ausgaben, baue Vermögen auf.','✨ Finanzielle Freiheit beginnt mit kleinen Schritten.']
-  };return q[lang]||q.mn;
+  const base={
+    mn:['Өөртөө эхлээд төл. Үлдсэнийг биш, ирээдүйгээ эхэлж баяжуул.','Өнөөдрийн жижиг алхам маргаашийн их баялгийг бүтээнэ.','Цэвэр хөрөнгөө өсгөхөд төвлөр. Энэ бол таны жинхэнэ баялаг.','Зорилготой мөнгө хамгийн хурдан өсдөг.','Орлого биш, үлдээж чадсан мөнгө баялгийг бүтээдэг.','Өнөөдрийн хуримтлал ирээдүйн эрх чөлөө.','Баялаг бол дадал, аз биш.','Мөнгө зорилготой үед систем болж өсдөг.','Зарлагаа удирд, хөрөнгөө өсгө.','Санхүүгийн эрх чөлөө жижиг алхмуудаас эхэлдэг.','Хуримтлал бол өөртөө өгч буй хамгийн бодит бэлэг.','Өр багасах бүрт таны сонголт нэмэгдэнэ.','Хөрөнгө мөнгөнөөс хүчтэй, учир нь хөрөнгө ажилладаг.','Төсөв бол хориг биш, зорилгын хамгаалалт.','Мөнгө таныг удирдах биш, та мөнгөө удирдана.'],
+    en:['Pay yourself first. Enrich your future before spending the rest.','Today’s small step builds tomorrow’s wealth.','Focus on growing your net worth. That is your real wealth.','Money with a goal grows faster.','Wealth is built by what you keep, not only what you earn.','Today’s saving is tomorrow’s freedom.','Wealth is a habit, not luck.','Money grows faster inside a system.','Control expenses, grow assets.','Financial freedom starts with small steps.','Saving is a real gift to your future self.','Every debt you reduce increases your choices.','Assets are stronger than money because assets work.','A budget is not a restriction; it protects your goals.','Do not let money lead you; lead your money.'],
+    zh:['先支付自己。先让未来的自己变富，再花剩下的钱。','今天的小行动，成就明天的财富。','专注于增长净资产，这才是真正的财富。','有目标的钱增长更快。','财富来自留下的钱，而不只是收入。','今天的储蓄是明天的自由。','财富是习惯，不是运气。','钱在系统中增长更快。','管理支出，增长资产。','财务自由始于小步骤。','储蓄是送给未来自己的礼物。','每减少一笔债务，你的选择就更多。','资产比现金更强，因为资产会工作。','预算不是限制，而是保护目标。','不要让金钱领导你；你要领导金钱。'],
+    ja:['まず自分に払う。残りを使う前に未来の自分を豊かにしよう。','今日の小さな一歩が明日の富をつくる。','純資産の成長に集中しよう。それが本当の豊かさです。','目的のあるお金は早く育つ。','富は収入だけでなく残したお金で築かれる。','今日の貯蓄は明日の自由。','富は運ではなく習慣。','お金は仕組みの中でより早く育つ。','支出を管理し、資産を育てよう。','経済的自由は小さな一歩から始まる。','貯蓄は未来の自分への贈り物。','借金が減るほど選択肢は増える。','資産は働くので現金より強い。','予算は制限ではなく目標を守るもの。','お金に支配されず、お金を導こう。'],
+    ko:['나에게 먼저 지불하세요. 남은 돈이 아니라 미래의 나를 먼저 부자로 만드세요.','오늘의 작은 걸음이 내일의 부를 만듭니다.','순자산 성장에 집중하세요. 그것이 진짜 부입니다.','목표가 있는 돈은 더 빨리 자랍니다.','부는 버는 돈보다 남기는 돈으로 만들어집니다.','오늘의 저축은 내일의 자유입니다.','부는 운이 아니라 습관입니다.','돈은 시스템 안에서 더 빨리 자랍니다.','지출을 관리하고 자산을 키우세요.','경제적 자유는 작은 걸음에서 시작됩니다.','저축은 미래의 나에게 주는 선물입니다.','빚이 줄어들수록 선택권은 늘어납니다.','자산은 일하기 때문에 현금보다 강합니다.','예산은 제한이 아니라 목표를 지키는 장치입니다.','돈이 당신을 이끌게 하지 말고 당신이 돈을 이끄세요.'],
+    ru:['Сначала заплати себе. Сначала обогащай свое будущее, а потом трать остальное.','Маленький шаг сегодня создает богатство завтра.','Фокусируйтесь на росте чистого капитала. Это ваше настоящее богатство.','Деньги с целью растут быстрее.','Богатство создается тем, что вы сохраняете, а не только зарабатываете.','Накопление сегодня — свобода завтра.','Богатство — это привычка, а не удача.','Деньги быстрее растут в системе.','Управляйте расходами, растите активы.','Финансовая свобода начинается с маленьких шагов.','Сбережения — подарок вашему будущему «я».','Каждый уменьшенный долг увеличивает ваш выбор.','Активы сильнее денег, потому что активы работают.','Бюджет — не ограничение, а защита цели.','Не позволяйте деньгам вести вас; ведите деньги сами.'],
+    de:['Bezahle dich zuerst. Mach zuerst deine Zukunft reicher, bevor du den Rest ausgibst.','Der kleine Schritt von heute baut den Wohlstand von morgen.','Konzentriere dich auf dein Nettovermögen. Das ist dein echter Wohlstand.','Geld mit Ziel wächst schneller.','Vermögen entsteht durch das, was du behältst, nicht nur verdienst.','Heutiges Sparen ist morgige Freiheit.','Wohlstand ist Gewohnheit, nicht Glück.','Geld wächst schneller in einem System.','Kontrolliere Ausgaben, baue Vermögen auf.','Finanzielle Freiheit beginnt mit kleinen Schritten.','Sparen ist ein Geschenk an dein zukünftiges Ich.','Jede reduzierte Schuld vergrößert deine Wahlfreiheit.','Vermögen ist stärker als Geld, weil Vermögen arbeitet.','Ein Budget ist keine Einschränkung, sondern schützt deine Ziele.','Lass Geld dich nicht führen; führe dein Geld.']
+  };
+  const icons=['💎','🌱','📈','🎯','💰','🏡','🚀','🌳','💚','✨','🏦','🧭','🪴','🛡️','👑'];
+  const src=base[lang]||base.mn;
+  const arr=[];
+  for(let i=0;i<365;i++)arr.push(`${icons[i%icons.length]} ${src[i%src.length]}`);
+  return arr;
 }
+function dayOfYear(){const n=new Date();const s=new Date(n.getFullYear(),0,0);return Math.floor((n-s)/86400000);}
+function v34Text(){
+  const d={
+    mn:{day:'Өдөр',completed:'Зорилго биеллээ',early:'Баяр хүргэе! {time}-ийн өмнө зорилгодоо хүрлээ.',ontime:'Зорилго амжилттай биеллээ.',expired:'Зорилтын хугацаа дууссан.',extend:'Хугацаа сунгах',left:'{months} сар · {days} хоног үлдлээ',month:'сар',dayUnit:'хоног'},
+    en:{day:'Day',completed:'Goal completed',early:'Congratulations! You reached your goal {time} early.',ontime:'Goal successfully completed.',expired:'The goal deadline has passed.',extend:'Extend deadline',left:'{months} mo · {days} days left',month:'mo',dayUnit:'days'},
+    zh:{day:'第',completed:'目标已完成',early:'恭喜！你提前 {time} 达成目标。',ontime:'目标已成功完成。',expired:'目标期限已结束。',extend:'延长期限',left:'还剩 {months} 个月 · {days} 天',month:'个月',dayUnit:'天'},
+    ja:{day:'Day',completed:'目標達成',early:'おめでとうございます！{time} 早く目標を達成しました。',ontime:'目標を達成しました。',expired:'目標期限が過ぎました。',extend:'期限を延長',left:'残り {months}ヶ月 · {days}日',month:'ヶ月',dayUnit:'日'},
+    ko:{day:'Day',completed:'목표 달성',early:'축하합니다! {time} 일찍 목표를 달성했습니다.',ontime:'목표를 성공적으로 달성했습니다.',expired:'목표 기한이 지났습니다.',extend:'기한 연장',left:'{months}개월 · {days}일 남음',month:'개월',dayUnit:'일'},
+    ru:{day:'День',completed:'Цель выполнена',early:'Поздравляем! Вы достигли цели на {time} раньше.',ontime:'Цель успешно выполнена.',expired:'Срок цели истек.',extend:'Продлить срок',left:'Осталось {months} мес. · {days} дн.',month:'мес.',dayUnit:'дн.'},
+    de:{day:'Tag',completed:'Ziel erreicht',early:'Glückwunsch! Du hast dein Ziel {time} früher erreicht.',ontime:'Ziel erfolgreich erreicht.',expired:'Die Zielfrist ist abgelaufen.',extend:'Frist verlängern',left:'Noch {months} Mon. · {days} Tage',month:'Mon.',dayUnit:'Tage'}
+  };return d[lang]||d.mn;
+}
+function fmtTimeShort(days){const T=v34Text();const m=Math.floor(days/30), d=days%30;const parts=[];if(m>0)parts.push(m+' '+T.month);if(d>0||!parts.length)parts.push(d+' '+T.dayUnit);return parts.join(' ');}
+function fireGoalConfetti(){
+  const colors=['#49B0B6','#1F7F86','#F7D24A','#1D9E75','#ffffff'];
+  for(let i=0;i<42;i++){const c=document.createElement('div');c.className='v34-confetti';c.style.left=(Math.random()*100)+'vw';c.style.background=colors[i%colors.length];c.style.animationDelay=(Math.random()*0.45)+'s';c.style.transform=`rotate(${Math.random()*180}deg)`;document.body.appendChild(c);setTimeout(()=>c.remove(),2300);}
+}
+
 function userDisplayName(){
   const email=currentUserEmail();
   if(!email||email==='—')return '';
@@ -3007,7 +3046,7 @@ function updateWelcomeCard(){
   if(lang==='mn')hi.textContent=name?`👋 Сайн байна уу, ${name}!`:'👋 Möngö-д тавтай морил!';
   else hi.textContent=name?`👋 Welcome, ${name}!`:'👋 Welcome to Möngö!';
   const quotes=wealthQuotes();
-  const idx=new Date().getDate()%quotes.length;
+  const idx=(dayOfYear()-1)%quotes.length;
   qt.textContent=quotes[idx];
 }
 function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+(Number(d.remaining)||0),0);}
@@ -3043,9 +3082,17 @@ function wealthLevelInfo(score, net){
   let next=levels.find(l=>l.min>score); let pct=next?Math.max(0,Math.min(100,Math.round((score-lv.min)/(next.min-lv.min)*100))):100;
   return {lv,next,pct};
 }
+function getCurrentFinancialScore(){
+  if(window.lastScoreBreakdown&&Number.isFinite(Number(lastScoreBreakdown.total)))return Number(lastScoreBreakdown.total)||0;
+  const small=document.getElementById('pdash-score-small');
+  const val=document.getElementById('pdash-score-val');
+  let n=parseInt((small&&small.textContent)||(val&&val.textContent)||'0',10);
+  if(!n){try{rDash();n=(window.lastScoreBreakdown&&Number(lastScoreBreakdown.total))||0;}catch(e){}}
+  return Math.max(0,Math.min(100,Number(n)||0));
+}
 function renderWealthLevel(){
   const PT=profileText();
-  const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0; const net=profileNetWorth(); const info=wealthLevelInfo(score,net);
+  const score=getCurrentFinancialScore(); const net=profileNetWorth(); const info=wealthLevelInfo(score,net);
   const title=document.getElementById('wealth-level-title'), name=document.getElementById('wealth-level-name'), badge=document.getElementById('wealth-level-badge'), fill=document.getElementById('wealth-level-fill'), note=document.getElementById('wealth-level-note');
   if(title)title.textContent=PT.wealthLevel;
   if(name)name.textContent=info.lv.name;
@@ -3057,7 +3104,7 @@ function renderWealthLevel(){
   }
 }
 function renderProfileProgress(){
-  const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
+  const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=getCurrentFinancialScore();
   [['profile-progress-title',PT.progress],['profile-net-k',PT.net],['profile-growth-k',PT.growth],['profile-savings-k',PT.savings],['profile-score-k',PT.score]].forEach(([id,t])=>{const e=document.getElementById(id);if(e)e.textContent=t;});
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   set('profile-net-v',fmt(net));
@@ -3071,7 +3118,7 @@ function renderProfileGoals(){
   const PT=profileText(); const title=document.getElementById('profile-goals-title'); if(title)title.textContent=PT.goals;
   const list=document.getElementById('profile-goals-list'); if(!list)return;
   if(!goals.length){list.innerHTML=`<div class="empty">${PT.noGoals}</div>`;return;}
-  list.innerHTML=goals.slice(0,6).map(g=>{const saved=getGoalEffectiveSaved(g);const target=Math.max(1,Number(g.target)||0);const pct=Math.max(0,Math.min(100,Math.round(saved/target*100)));return `<div class="profile-goal-item"><div class="profile-goal-top"><div class="profile-goal-name">🎯 ${g.name||''}</div></div><div class="profile-goal-pbar"><div class="profile-goal-fill" style="width:${pct}%"></div><div class="profile-goal-pill">${pct}%</div></div><div class="profile-goal-amount">${fmt(saved)} / ${fmt(target)}</div></div>`;}).join('');
+  list.innerHTML=goals.slice(0,6).map(g=>{const saved=getGoalEffectiveSaved(g);const target=Math.max(1,Number(g.target)||0);const pct=Math.max(0,Math.min(100,Math.round(saved/target*100)));const st=goalStatusInfo(g);const stHtml=st.done?`<div class="goal-status-card success">${st.msg}</div>`:(st.expired?`<div class="goal-status-card expired">${st.msg}</div>`:'');return `<div class="profile-goal-item"><div class="profile-goal-top"><div class="profile-goal-name">🎯 ${g.name||''}</div></div><div class="profile-goal-pbar"><div class="profile-goal-fill" style="width:${pct}%"></div><div class="profile-goal-pill">${pct}%</div></div><div class="profile-goal-amount">${fmt(saved)} / ${fmt(target)}</div>${stHtml}</div>`;}).join('');
 }
 function renderProfilePaySummary(){
   const PT=profileText(); const title=document.getElementById('profile-pay-title'); if(title)title.textContent=PT.pay; const btn=document.getElementById('profile-pay-btn'); if(btn)btn.textContent=PT.payEdit;
@@ -3083,14 +3130,15 @@ function renderProfilePaySummary(){
 function renderProfileBadges(){
   const PT=profileText(); const title=document.getElementById('profile-badge-title'); if(title)title.textContent=PT.badges;
   const el=document.getElementById('profile-badges-list'); if(!el)return;
-  const net=profileNetWorth(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=(window.lastScoreBreakdown&&lastScoreBreakdown.total)||0;
+  const net=profileNetWorth(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=getCurrentFinancialScore();
   const names=PT.badgesList||['First saving','100 transactions','30-day tracking','100M net worth','Score 90+','Goal 100%'];
   const data=[['🥇',names[0],savings>0,'gold'],['🥈',names[1],txns.length>=100,'silver'],['🥉',names[2],txns.length>=30,'bronze'],['💎',names[3],net>=100000000,''],['🚀',names[4],score>=90,''],['🏆',names[5],goals.some(g=>getGoalEffectiveSaved(g)>=(Number(g.target)||Infinity)),'gold']];
   el.innerHTML=data.map(([ico,name,ok,tier])=>`<div class="profile-badge ${ok?'earned':''} ${ok?tier:''}"><div class="badge-ico">${ico}</div><div><div class="badge-name">${name}</div><div class="badge-state">${ok?PT.earned:PT.locked}</div></div></div>`).join('');
 }
 function renderProfilePhilosophy(){
   const PT=profileText(); const title=document.getElementById('profile-philosophy-title'); if(title)title.textContent=PT.philosophy;
-  const el=document.getElementById('profile-philosophy-text'); if(!el)return; const q=wealthQuotes(); el.textContent=q[(new Date().getDate()+3)%q.length];
+  const el=document.getElementById('profile-philosophy-text'); if(!el)return; const q=wealthQuotes(); const day=dayOfYear(); const quote=q[(day-1)%q.length]; const T=v34Text();
+  el.innerHTML=`<span class="profile-philosophy-day">${T.day} ${day} / 365</span><span class="profile-philosophy-main">${quote}</span>`;
 }
 function goPaySettingsFromProfile(){
   const nav=document.getElementById('nav-goals'); showTab('goals',nav); if(nav)nav.classList.add('active');
@@ -4156,9 +4204,37 @@ function goalTimeLeftText(goal){
   const ms=deadline-new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
   const days=Math.max(0,Math.ceil(ms/86400000));
   const months=parseGoalMonths(goal);
-  if(lang==='mn')return `${months} сар · ${days} хоног үлдлээ`;
-  return `${months} mo · ${days} days left`;
+  const T=v34Text();
+  return T.left.replace('{months}',months).replace('{days}',days);
 }
+function goalStatusInfo(goal){
+  const T=v34Text();
+  const saved=getGoalEffectiveSaved(goal);
+  const target=Math.max(0,Number(goal.target)||0);
+  const done=target>0&&saved>=target;
+  const deadline=goalDeadlineDate(goal);
+  const today=new Date();
+  const todayNoon=new Date(today.getFullYear(),today.getMonth(),today.getDate(),12,0,0,0);
+  if(done){
+    let msg='🏆 '+T.ontime;
+    if(deadline&&deadline>todayNoon){
+      const earlyDays=Math.max(1,Math.ceil((deadline-todayNoon)/86400000));
+      msg='🎉 '+T.early.replace('{time}',fmtTimeShort(earlyDays));
+    }
+    try{const key='mongo_goal_done_'+goal.id; if(!localStorage.getItem(key)){localStorage.setItem(key,'1');setTimeout(fireGoalConfetti,80);}}catch(e){}
+    return {state:'success',msg,done:true,expired:false};
+  }
+  if(deadline&&deadline<todayNoon){return {state:'expired',msg:'⚠️ '+T.expired,done:false,expired:true};}
+  return {state:'running',msg:goalTimeLeftText(goal),done:false,expired:false};
+}
+function extendGoalDeadline(id){
+  const g=goals.find(x=>String(x.id)===String(id)); if(!g)return;
+  const base=goalDeadlineDate(g)||new Date();
+  const nd=addMonthsSafe(base,1);
+  g.dead=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+  save(); rGoals(); rProfile();
+}
+
 
 function rGoals(){
   const el=document.getElementById('goals-list');
@@ -4205,7 +4281,7 @@ function rGoals(){
         <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:var(--brand)"></div></div>
         <span style="font-size:12px;color:var(--brand);font-weight:800;min-width:38px;text-align:right">${pct}%</span>
       </div>
-      ${(()=>{const months=parseGoalMonths(g);const left=Math.max(0,g.target-effectiveSaved);const tl=goalTimeLeftText(g);return months&&left>0?`<div class="goal-time-left"><span>⏳ ${tl}</span></div><div class="goal-monthly-need">💡 ${L.monthlyNeed||'Сард'}: ${fmt(Math.ceil(left/months))} · ${months} ${lang==='mn'?'сар':'mo'}</div>`:(tl?`<div class="goal-time-left"><span>⏳ ${tl}</span></div>`:'')})()}
+      ${(()=>{const months=parseGoalMonths(g);const left=Math.max(0,g.target-effectiveSaved);const st=goalStatusInfo(g);const T=v34Text();if(st.done)return `<div class="goal-status-card success">${st.msg}</div>`;if(st.expired)return `<div class="goal-status-card expired">${st.msg}<br><button class="btn goal-extend-btn" onclick="extendGoalDeadline(${g.id})">${T.extend}</button></div>`;return months&&left>0?`<div class="goal-time-left"><span>⏳ ${st.msg}</span></div><div class="goal-monthly-need">💡 ${L.monthlyNeed||'Сард'}: ${fmt(Math.ceil(left/months))} · ${months} ${T.month}</div>`:(st.msg?`<div class="goal-time-left"><span>⏳ ${st.msg}</span></div>`:'')})()}
       ${cumulHtml}
     </div>`;
   }).join('');
