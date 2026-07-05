@@ -17,6 +17,7 @@ V32.0: profile 10/10 polish — wealth level, compact 2x2 progress, premium goal
 V33.0: settings merged with data, localized wealth philosophy, 7-language profile texts, refined wealth journey.
 V34.0: Wealth Experience — synced profile score, goal completion states, philosophy 365 base, confetti success.
 V35.0: Adds Möngö Philosophy 365 first chapter — 30 foundation quotes in 7 languages.
+V36.0: fixes Pay Yourself First prompt for all dates, links transaction/investment delete-edit sync, removes investment detail field, adds edit buttons and compact auto badges.
 -->
 <html lang="mn">
 <head>
@@ -1785,6 +1786,23 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @keyframes v34ConfettiFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
 @media(prefers-color-scheme:dark){.profile-philosophy-day{background:rgba(255,255,255,.06);color:#74D7DC}.goal-status-card.warning{background:rgba(183,121,31,.12)}.goal-status-card.expired{background:rgba(185,28,28,.12)}}
 
+
+
+/* ── Möngö V36: transaction edit + compact automatic badges ── */
+#invest-extra{display:none!important;}
+.txn-title-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;}
+.txn-title-line .lbl1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.txn-auto-badge{font-size:9px;background:#e0f5f6;color:#337a7f;padding:1px 6px;border-radius:999px;font-weight:900;white-space:nowrap;line-height:1.35;}
+.txn-meta-line{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;min-width:0;}
+.txn-meta-line .lbl2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.list-item{gap:8px;}
+.list-item .il{min-width:0;flex:1;}
+.list-item .ir{flex-shrink:0;white-space:nowrap;}
+.list-item .ir .amt{white-space:nowrap;display:inline-block;min-width:max-content;}
+.txn-action-btn{width:31px;height:31px;border-radius:999px!important;display:inline-flex;align-items:center;justify-content:center;padding:0!important;font-size:14px!important;}
+.txn-action-edit{color:#1F7F86!important;border-color:rgba(73,176,182,.18)!important;background:rgba(73,176,182,.08)!important;}
+@media(max-width:520px){.txn-action-btn{width:30px;height:30px}.list-item .ir{gap:5px!important}.txn-auto-badge{font-size:8.5px;padding:1px 5px}}
+
 </style>
 </head>
 <body>
@@ -2047,12 +2065,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <input type="date" class="fi" id="t-date">
       <button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button>
     </div>
-    <div id="invest-extra" style="display:none;margin-bottom:7px">
-      <div style="background:var(--bg2);border-radius:var(--radius);padding:9px;margin-top:4px">
-        <div class="slbl" id="lbl-invdetail"></div>
-        <select class="fi" style="width:100%" id="t-inv-type"></select>
-      </div>
-    </div>
+    <div id="invest-extra" style="display:none;margin-bottom:7px"></div>
   </div>
   <div class="card txn-search-card">
     <div class="card-title txn-title-row">
@@ -2495,7 +2508,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="card profile-section-card profile-settings-card">
     <div class="card-title" id="lbl-profile-account"></div>
     <div class="profile-row"><div class="profile-label" id="lbl-profile-language"></div><div class="profile-value" id="profile-language-row">🇲🇳 Монгол</div></div>
-    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V35.0</div></div>
+    <div class="profile-row"><div class="profile-label" id="lbl-profile-version"></div><div class="profile-value">Möngö V36.0</div></div>
     <div class="profile-settings-divider"></div>
     <div class="profile-actions profile-actions-settings">
       <button class="btn btn-p" onclick="exportData()"><span class="material-symbols-rounded">download</span><span id="lbl-profile-backup"></span></button>
@@ -2648,6 +2661,7 @@ let txnSearchQuery='';
 // Lock state: set of cat keys/names that are user-locked
 let lockedCats=new Set();
 let paySettings={enabled:true,rate:20,alloc:{}};
+let editTxnId=null;
 let pendingPayPlan=null;
 
 let incCats=[
@@ -3460,7 +3474,7 @@ function onCatChange(){
   const c=expCats.find(x=>cN(x)===v);
   const iv=c&&isInv(c);
   document.getElementById('invest-auto-notice').style.display=iv?'flex':'none';
-  document.getElementById('invest-extra').style.display=iv?'block':'none';
+  document.getElementById('invest-extra').style.display='none';
   const expCat=bCatsExp.find(c=>cN(c)===v);
   const subs=expCat?expCat.subs||[]:[];
   rSubcatList(subs,expCat?(expCat.key||v):v,'expense');
@@ -3667,13 +3681,69 @@ function saveBudget(){
 }
 
 // ── Transactions ──────────────────────────────────────────────────────────
+function inferInvestmentTypeFromSubcat(label){
+  const raw=String(label||'').toLowerCase();
+  const all=[];
+  Object.values(INVEST_TYPES_ALL||{}).forEach(arr=>arr.forEach(x=>all.push(x)));
+  for(const item of all){
+    if(raw && String(item.label||'').toLowerCase()===raw)return item.k;
+  }
+  if(/bond|бонд|облига|債券|채권|anleihen/.test(raw))return 'bond';
+  if(/stock|хувьцаа|акц|股票|株式|주식|aktien/.test(raw))return 'stock';
+  if(/crypto|крипто|加密|暗号|암호|krypto/.test(raw))return 'crypto';
+  if(/real|үл хөдлөх|недвиж|房地产|不動産|부동산|immobilien/.test(raw))return 'real';
+  if(/fund|сан|фонд|基金|投資信託|펀드|fonds/.test(raw))return 'fund';
+  if(/gold|алт|золото|黄金|金|금/.test(raw))return 'gold';
+  return 'other';
+}
+function getLinkedInvestsForTxn(t){
+  if(!t)return [];
+  return invests.filter(i=>i.sourceTxnId===t.id || (i.autoAdded && !i.sourceTxnId && i.name===t.desc && Number(i.invested)===Number(t.amount) && i.date===t.date));
+}
+function syncInvestmentFromTxn(t){
+  if(!t || t.type!=='expense')return;
+  const cat=expCats.find(c=>cN(c)===t.catName);
+  if(!(cat&&isInv(cat)))return;
+  const typeKey=inferInvestmentTypeFromSubcat(t.desc||t.subcatName||t.catName);
+  let linked=getLinkedInvestsForTxn(t);
+  if(linked.length){
+    const keep=linked[0];
+    keep.name=t.desc; keep.typeKey=typeKey; keep.invested=Number(t.amount)||0; keep.current=keep.current||keep.invested; keep.date=t.date; keep.autoAdded=true; keep.sourceTxnId=t.id;
+    // Давхардсан хуучин холбоосуудыг цэвэрлэнэ
+    const keepId=keep.id;
+    invests=invests.filter(i=>i.id===keepId || !linked.slice(1).some(x=>x.id===i.id));
+  }else{
+    invests.unshift({id:Date.now()+1,name:t.desc,typeKey,invested:Number(t.amount)||0,current:Number(t.amount)||0,date:t.date,autoAdded:true,sourceTxnId:t.id});
+  }
+}
+function clearTxnForm(){
+  document.getElementById('t-desc').value='';
+  document.getElementById('t-amount').value='';
+  selSubcat=null;subDropOpen=false;editTxnId=null;
+  const subLabel=document.getElementById('t-subcat-label'); if(subLabel)subLabel.textContent=L.subcatPh||'Дэд ангилал сонгох';
+  const subWrap=document.getElementById('t-subcat-wrap'); if(subWrap)subWrap.classList.remove('has-selection');
+  const list=document.getElementById('t-subcat-list'); if(list)list.style.display='none';
+  const btn=document.getElementById('btn-add-txn'); if(btn)btn.textContent='＋';
+}
+function editTxn(id){
+  const t=txns.find(x=>x.id===id); if(!t)return;
+  editTxnId=id; setType(t.type);
+  const cat=document.getElementById('t-cat'); if(cat){cat.value=t.catName; onCatChange();}
+  document.getElementById('t-desc').value=t.desc||'';
+  document.getElementById('t-amount').value=(Number(t.amount)||0).toLocaleString('en-US');
+  document.getElementById('t-date').value=t.date||new Date().toISOString().substring(0,10);
+  selSubcat=t.subcatName||null;
+  const lab=document.getElementById('t-subcat-label'), wrap=document.getElementById('t-subcat-wrap');
+  if(selSubcat&&lab){lab.textContent=t.desc||selSubcat;if(wrap)wrap.classList.add('has-selection');}
+  const btn=document.getElementById('btn-add-txn'); if(btn)btn.textContent='✓';
+  document.getElementById('tab-transactions')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function addTransaction(){
   const descRaw=document.getElementById('t-desc').value.trim();
   const amount=parseAmt(document.getElementById('t-amount').value);
   const catName=document.getElementById('t-cat').value;
   const date=document.getElementById('t-date').value;
   const subcatKey=selSubcat||null;
-  // subcatKey-аас харуулах нэрийг авна
   let subcatDisplay=null;
   if(subcatKey){
     const cats=curType==='income'?bCatsInc:bCatsExp;
@@ -3685,27 +3755,42 @@ function addTransaction(){
   if(!amount||amount<=0)return;
   const catObj=gCats().find(c=>cN(c)===catName);
   const catKey=catObj&&catObj.key?catObj.key:null;
-  txns.unshift({id:Date.now(),desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType});
-  if(curType==='income'){
-    preparePayAssistant(amount,date);
-  }
-  if(curType==='expense'){
-    const d=debts.find(d=>d.name===catName||d.name===desc);if(d)d.remaining=Math.max(0,d.remaining-amount);
+  const isEdit=!!editTxnId;
+  let txn;
+  if(isEdit){
+    txn=txns.find(t=>t.id===editTxnId);
+    if(!txn)return;
+    const oldLinked=getLinkedInvestsForTxn(txn);
+    Object.assign(txn,{desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType});
     const cat=expCats.find(c=>cN(c)===catName);
-    if(cat&&isInv(cat)){const tK=document.getElementById('t-inv-type').value;invests.unshift({id:Date.now()+1,name:desc,typeKey:tK,invested:amount,current:amount,date,autoAdded:true});rInvests();rDonut('inv');}
+    if(curType==='expense'&&cat&&isInv(cat)){
+      syncInvestmentFromTxn(txn);
+    }else if(oldLinked.length){
+      invests=invests.filter(i=>!oldLinked.some(x=>x.id===i.id));
+    }
+  }else{
+    txn={id:Date.now(),desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType};
+    txns.unshift(txn);
+    if(curType==='expense'){
+      const d=debts.find(d=>d.name===catName||d.name===desc);if(d)d.remaining=Math.max(0,d.remaining-amount);
+      syncInvestmentFromTxn(txn);
+    }
   }
-  document.getElementById('t-desc').value='';
-  document.getElementById('t-amount').value='';
-  selSubcat=null;subDropOpen=false;
-  const subLabel=document.getElementById('t-subcat-label'); if(subLabel)subLabel.textContent=L.subcatPh||'Дэд ангилал сонгох';
-  const subWrap=document.getElementById('t-subcat-wrap'); if(subWrap)subWrap.classList.remove('has-selection');
-  document.getElementById('t-subcat-list').style.display='none';
-  saveData();rAll();
+  clearTxnForm();
+  saveData();rAll();rInvests();rDonut('inv');uDash();
+  if(!isEdit && curType==='income'){
+    setTimeout(()=>preparePayAssistant(amount,date),60);
+  }
 }
 async function delTxn(id){
   if(!await showConfirm(L.confirmDel))return;
-  txns=txns.filter(t=>t.id!==id);saveData();rAll();
+  const t=txns.find(x=>x.id===id);
+  const linked=getLinkedInvestsForTxn(t);
+  txns=txns.filter(t=>t.id!==id);
+  if(linked.length){invests=invests.filter(i=>!linked.some(x=>x.id===i.id));}
+  saveData();rAll();rInvests();rDonut('inv');uDash();
 }
+
 
 // ── Goals ────────────────────────────────────────────────────────────────
 function addGoal(){
@@ -4050,7 +4135,6 @@ function uDash(){
 function tRow(t,del){
   const ci=getCatInfo(t.catName,t.type);
   const iv=t.type==='expense'&&expCats.find(c=>cN(c)===t.catName&&isInv(c));
-  // subcatName(key)-г харуулах нэр болгон орчуулна
   let subcatDisplay=t.subcatName||'';
   if(subcatDisplay){
     const cats=t.type==='income'?bCatsInc:bCatsExp;
@@ -4064,17 +4148,18 @@ function tRow(t,del){
   const budgeted=isTxnBudgeted(t);
   const budgetChip=budgeted?'':`<span class="txn-budget-chip">${L.descPh||'Unbudgeted'}</span>`;
   const amtClass=`amt amt-${t.type[0]} ${budgeted?'amt-budgeted':'amt-unbudgeted'}`;
+  const autoBadge=(iv||t.autoPaySelf)?`<span class="txn-auto-badge">${iv?'📈 ':''}${L.automark}</span>`:'';
   return`<div class="list-item">
     <div class="il">
-      <span class="lbl1">${t.desc}</span>
-      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-        <span class="lbl2"><span>${ci.icon}</span> <span style="color:${ci.color}">${t.catName}</span>${subLabel} · ${t.date}</span>
-        ${iv?`<span style="font-size:9px;background:#e0f5f6;color:#337a7f;padding:1px 4px;border-radius:5px">📈 ${L.automark}</span>`:''}${budgetChip}
+      <div class="txn-title-line"><span class="lbl1">${t.desc}</span>${autoBadge}</div>
+      <div class="txn-meta-line">
+        <span class="lbl2"><span>${ci.icon}</span> <span style="color:${ci.color}">${t.catName}</span>${subLabel} · ${t.date}</span>${budgetChip}
       </div>
     </div>
-    ${del?`<div class="ir"><span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm btn-d" onclick="delTxn(${t.id})">✕</button></div>`:`<span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
+    ${del?`<div class="ir"><span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm txn-action-btn txn-action-edit" onclick="editTxn(${t.id})">✎</button><button class="btn btn-sm btn-d txn-action-btn" onclick="delTxn(${t.id})">✕</button></div>`:`<span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
   </div>`;
 }
+
 
 function rRecent(){
   const el=document.getElementById('recent-list');
@@ -5124,7 +5209,11 @@ function payText(){
   const d={
     mn:{tab:'Өөртөө төл',title:'Өөртөө эхлээд төл',desc:'Орлого бүртгэх бүртээ орлогоосоо эхлээд хуримтлалын гүйлгээ үүсгэх хуваарилалтаа тохируулна.',rate:'Орлогоос хадгалах хувь',alloc:'Хуримтлалын зорилго руу хуваарилах хувь',total:'Нийт',save:'Тохиргоо хадгалах',help:'Орлого бүртгэсний дараа энэ хуваарилалтаар “Хуримтлал” ангиллын зарлагын гүйлгээ үүсгэх санал гарна. Зорилтот дүн өөрчлөгдөхгүй.',noGoals:'Эхлээд “Миний хуримтлал” хэсэгт зорилго үүсгээрэй.',saved:'Өөртөө төлөх тохиргоо хадгалагдлаа',modalTitle:'Өөртөө эхлээд төлөх үү?',modalDesc:'Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?',confirm:'Бүртгэх',edit:'Засах',skip:'Алгасах',created:'Хуримтлалын гүйлгээ үүслээ',badTotal:'Хуваарилалтын нийт 100% байх хэрэгтэй',growthData:'Өсөлтийн өгөгдөл цуглуулж байна',growthAll:'Нийт өсөлт',growthPeriod:'Сонгосон хугацаанд'},
     en:{tab:'Pay yourself',title:'Pay yourself first',desc:'Set how each income should create savings expense transactions first.',rate:'Savings rate from income',alloc:'Allocation to savings goals',total:'Total',save:'Save settings',help:'After income is recorded, the app suggests creating Savings expense transactions. Target amounts do not change.',noGoals:'Create goals in “My savings” first.',saved:'Pay yourself settings saved',modalTitle:'Pay yourself first?',modalDesc:'Income was recorded. Create savings expense transactions using your allocation?',confirm:'Record',edit:'Edit',skip:'Skip',created:'Savings transactions created',badTotal:'Allocation total must be 100%',growthData:'Collecting growth data',growthAll:'Total growth',growthPeriod:'Selected period'},
-    zh:{tab:'先付给自己'},ja:{tab:'自分に払う'},ko:{tab:'나에게 먼저'},ru:{tab:'Сначала себе'},de:{tab:'Zahle dich'}
+    zh:{tab:'先付给自己',title:'先支付自己',desc:'设置每笔收入先生成储蓄支出交易的分配方式。',rate:'收入储蓄比例',alloc:'分配到储蓄目标',total:'总计',save:'保存设置',help:'记录收入后，应用会建议创建储蓄支出交易。目标金额不会改变。',noGoals:'请先在“我的储蓄”中创建目标。',saved:'先支付自己设置已保存',modalTitle:'先支付自己吗？',modalDesc:'收入已记录。是否按设置创建储蓄支出交易？',confirm:'记录',edit:'编辑',skip:'跳过',created:'储蓄交易已创建',badTotal:'分配总计必须为100%',growthData:'正在收集增长数据',growthAll:'总增长',growthPeriod:'所选期间'},
+    ja:{tab:'自分に払う',title:'まず自分に払う',desc:'収入ごとに先に貯蓄支出取引を作る配分を設定します。',rate:'収入から貯蓄する割合',alloc:'貯蓄目標への配分',total:'合計',save:'設定を保存',help:'収入を記録すると、この配分で貯蓄支出取引を作成する提案が表示されます。目標額は変わりません。',noGoals:'まず「私の貯蓄」で目標を作成してください。',saved:'設定を保存しました',modalTitle:'まず自分に払いますか？',modalDesc:'収入が記録されました。設定に従って貯蓄支出取引を作成しますか？',confirm:'記録',edit:'編集',skip:'スキップ',created:'貯蓄取引を作成しました',badTotal:'配分の合計は100%にしてください',growthData:'成長データを収集中',growthAll:'総成長',growthPeriod:'選択期間'},
+    ko:{tab:'나에게 먼저',title:'나에게 먼저 지불',desc:'수입마다 먼저 저축 지출 거래를 만들 배분을 설정합니다.',rate:'수입에서 저축할 비율',alloc:'저축 목표로 배분',total:'합계',save:'설정 저장',help:'수입을 기록하면 이 배분으로 저축 지출 거래 생성을 제안합니다. 목표 금액은 바뀌지 않습니다.',noGoals:'먼저 “내 저축”에서 목표를 만드세요.',saved:'설정이 저장되었습니다',modalTitle:'나에게 먼저 지불할까요?',modalDesc:'수입이 기록되었습니다. 설정대로 저축 지출 거래를 만들까요?',confirm:'기록',edit:'수정',skip:'건너뛰기',created:'저축 거래가 생성되었습니다',badTotal:'배분 합계는 100%여야 합니다',growthData:'성장 데이터 수집 중',growthAll:'전체 성장',growthPeriod:'선택 기간'},
+    ru:{tab:'Сначала себе',title:'Сначала заплати себе',desc:'Настройте, какая часть каждого дохода сначала создает операции сбережений.',rate:'Процент сбережений от дохода',alloc:'Распределение по целям',total:'Итого',save:'Сохранить настройки',help:'После записи дохода приложение предложит создать расходные операции в Сбережения. Целевые суммы не изменяются.',noGoals:'Сначала создайте цели в разделе «Мои сбережения».',saved:'Настройки сохранены',modalTitle:'Сначала заплатить себе?',modalDesc:'Доход записан. Создать операции сбережений по настройкам?',confirm:'Записать',edit:'Изменить',skip:'Пропустить',created:'Операции сбережений созданы',badTotal:'Сумма распределения должна быть 100%',growthData:'Собираем данные роста',growthAll:'Общий рост',growthPeriod:'Выбранный период'},
+    de:{tab:'Zahle dich',title:'Bezahle dich zuerst',desc:'Lege fest, wie jedes Einkommen zuerst Spar-Ausgaben erstellt.',rate:'Sparquote vom Einkommen',alloc:'Aufteilung auf Sparziele',total:'Gesamt',save:'Einstellungen speichern',help:'Nach einer Einnahme schlägt die App Spar-Ausgaben vor. Zielbeträge ändern sich nicht.',noGoals:'Erstelle zuerst Ziele unter „Meine Ersparnisse“.',saved:'Einstellungen gespeichert',modalTitle:'Dich zuerst bezahlen?',modalDesc:'Einnahme wurde erfasst. Spar-Ausgaben nach deiner Aufteilung erstellen?',confirm:'Eintragen',edit:'Bearbeiten',skip:'Überspringen',created:'Spar-Transaktionen erstellt',badTotal:'Die Aufteilung muss 100% ergeben',growthData:'Wachstumsdaten werden gesammelt',growthAll:'Gesamtwachstum',growthPeriod:'Ausgewählter Zeitraum'}
   };
   return Object.assign({},d.en,d[lang]||d.mn);
 }
