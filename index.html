@@ -1573,6 +1573,10 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 /* ── Möngö V30: Premium splash + FIRE/score intelligence ── */
 .mongo-splash{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
 .mongo-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+/* V36.1 splash fail-safe: hide even if later app scripts hit an error */
+.mongo-splash{animation:mongoSplashFailsafe .45s ease 2.8s forwards;}
+@keyframes mongoSplashFailsafe{to{opacity:0;visibility:hidden;pointer-events:none;}}
+
 .splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);}
 .splash-logo{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(31,127,134,.18));animation:splashFloat 1.8s ease-in-out infinite alternate;}
 .splash-name{font-size:38px;font-weight:950;letter-spacing:-.06em;color:#1F7F86;line-height:1.1;margin-top:12px;}
@@ -1820,6 +1824,21 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     </div>
   </div>
 </div>
+<script>
+(function(){
+  function hideMongoSplashEarly(){
+    var sp=document.getElementById('mongo-splash');
+    if(!sp) return;
+    sp.classList.add('hide');
+    sp.style.pointerEvents='none';
+    setTimeout(function(){ sp.style.display='none'; }, 550);
+  }
+  window.hideMongoSplashEarly=hideMongoSplashEarly;
+  setTimeout(hideMongoSplashEarly, 3200);
+  if(document.readyState==='complete') setTimeout(hideMongoSplashEarly, 1800);
+  else window.addEventListener('load', function(){ setTimeout(hideMongoSplashEarly, 1800); });
+})();
+</script>
 
 <!-- ── LOGIN хуудас ── -->
 <div class="auth-wrap show" id="auth-login">
