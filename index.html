@@ -19,12 +19,15 @@ V34.0: Wealth Experience — synced profile score, goal completion states, philo
 V38.0: Based on V37.0; adds Möngö Philosophy days 91–180 (Asset Building) in 7 languages.
 V39.0: Adds Möngö Philosophy days 181–270 (Wealth Building) in 7 languages.
 V40.0: Completes Möngö Philosophy days 271–365 (Financial Freedom), graduation message and Möngö Master badge.
-V41.0 Editor's Edition: Premium polish pass — clearer dashboard hierarchy, softer cards, improved focus/accessibility, transaction rows, profile philosophy, goal success states, and mobile spacing. No data logic changed.
+V41.1: Security hardening — CSP/meta protections, safer import, user-scoped backup restore, input sanitization, session auth persistence.
 -->
 <html lang="mn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
 <title>Möngö — Smart Finance</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
@@ -1865,229 +1868,10 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 
 
-/* ─────────────────────────────────────────────────────────────
-   Möngö V41 — Editor's Edition
-   Premium polish pass: UI/UX/readability only. Data logic unchanged.
-───────────────────────────────────────────────────────────── */
-:root{
-  --v41-ink:#243437;
-  --v41-muted:#6B7A7D;
-  --v41-soft:#F4FBFB;
-  --v41-card-border:rgba(73,176,182,.18);
-  --v41-glow:0 18px 44px rgba(31,127,134,.12);
-  --v41-glow-soft:0 10px 28px rgba(31,127,134,.075);
-  --v41-gold:#F7D24A;
-}
+/* ── Möngö V41.1 Security polish: privacy notice + safer surfaces ── */
+.security-note{margin-top:10px;padding:10px 12px;border-radius:18px;background:rgba(73,176,182,.08);border:1px solid rgba(73,176,182,.14);color:#2C7F85;font-size:11px;font-weight:850;line-height:1.45;}
+.security-note .material-symbols-rounded{font-size:16px;vertical-align:-3px;margin-right:4px;}
 
-/* 1) Global reading rhythm */
-body{line-height:1.45;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;}
-.main{max-width:780px!important;}
-.card,.ccrd,.inv-card,.bblock,.pdash-card,.profile-mini,.profile-badge,.help-item{
-  border-color:var(--v41-card-border)!important;
-}
-.card,.ccrd,.inv-card,.bblock{
-  box-shadow:var(--v41-glow-soft)!important;
-}
-.card:hover,.ccrd:hover,.inv-card:hover,.bblock:hover{
-  transform:translateY(-1px)!important;
-  box-shadow:var(--v41-glow)!important;
-}
-.card-title,.ctitle,.pdash-title,.score-detail-title{
-  letter-spacing:-.035em!important;
-}
-
-/* 2) Header and navigation feel calmer */
-.v27-topbar{
-  min-height:64px!important;
-  box-shadow:0 8px 24px rgba(31,127,134,.07)!important;
-}
-.v27-topbar .brand{gap:9px!important;}
-.v27-lang-btn:focus-visible,.nav-btn:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.fi:focus-visible,.auth-fi:focus-visible{
-  outline:3px solid rgba(73,176,182,.25)!important;
-  outline-offset:3px!important;
-}
-.nav{scroll-snap-type:x proximity!important;}
-.nav-btn{scroll-snap-align:start!important;}
-.nav-btn:not(.active):hover{
-  background:rgba(73,176,182,.08)!important;
-  color:#1F7F86!important;
-}
-
-/* 3) Dashboard: clearer hierarchy and 3-second understanding */
-.premium-dash{margin-top:14px!important;}
-.pdash-head{margin-bottom:12px!important;}
-.pdash-title{font-size:22px!important;}
-.pdash-sub{
-  padding:6px 10px!important;
-  border-radius:999px!important;
-  background:rgba(73,176,182,.10)!important;
-  color:#1F7F86!important;
-}
-.pdash-grid{gap:12px!important;}
-.pdash-card{
-  min-height:128px!important;
-  padding:18px 16px!important;
-  border-radius:30px!important;
-  box-shadow:0 16px 36px rgba(31,127,134,.10)!important;
-}
-.pdash-card.wide{min-height:132px!important;}
-.pdash-k{font-size:10.5px!important;color:#6B7280!important;}
-.pdash-v{font-size:24px!important;color:#223033!important;}
-.pdash-note{font-size:11.5px!important;line-height:1.45!important;max-width:82%;}
-.pdash-icon{opacity:.18!important;font-size:32px!important;}
-#pdash-net-card .pdash-v,#pdash-score-card .pdash-v,#pdash-fire-card .pdash-v{color:#1F7F86!important;}
-.net-growth-note{
-  display:inline-flex!important;
-  align-items:center!important;
-  gap:5px!important;
-  padding:5px 9px!important;
-  border-radius:999px!important;
-  background:rgba(73,176,182,.08)!important;
-  width:max-content!important;
-  max-width:100%!important;
-}
-.net-growth-note.good{background:rgba(29,158,117,.12)!important;color:#08724F!important;}
-.net-growth-note.bad{background:rgba(185,28,28,.10)!important;color:#B91C1C!important;}
-.pdash-score-ring{box-shadow:inset 0 0 0 1px rgba(73,176,182,.10),0 8px 18px rgba(31,127,134,.10)!important;}
-.fire-mini{
-  background:rgba(255,255,255,.78)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.70)!important;
-}
-
-/* 4) Transaction rows: cleaner edit/delete touch targets */
-.list-item{
-  min-height:54px!important;
-  padding:11px 0!important;
-}
-.txn-main-line .lbl1,.lbl1{font-weight:850!important;}
-.txn-auto-badge{
-  background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.13))!important;
-  border:1px solid rgba(73,176,182,.14)!important;
-}
-.list-item .ir .btn-sm{
-  min-width:30px!important;
-  min-height:30px!important;
-  border-radius:999px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-}
-.txn-editing-hint{
-  border:1px solid rgba(73,176,182,.14)!important;
-  background:linear-gradient(135deg,rgba(73,176,182,.10),rgba(247,210,74,.08))!important;
-}
-
-/* 5) Budget and goals: encouraging, not blaming */
-.budget-progress-card.is-over{
-  box-shadow:0 14px 32px rgba(185,28,28,.08)!important;
-}
-.goal-status-card.success{
-  background:linear-gradient(135deg,rgba(29,158,117,.16),rgba(73,176,182,.08),rgba(247,210,74,.10))!important;
-  box-shadow:0 8px 20px rgba(29,158,117,.08)!important;
-}
-.goal-status-card.warning,.goal-status-card.expired{
-  box-shadow:0 8px 20px rgba(183,121,31,.06)!important;
-}
-.goal-monthly-need,.goal-time-left span{
-  border:1px solid rgba(73,176,182,.12)!important;
-}
-
-/* 6) Calculators: consistent result cards */
-.calc-result,.fire-mini,.profile-mini,.profile-badge{
-  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease!important;
-}
-.calc-result:hover,.profile-mini:hover,.profile-badge:hover{
-  transform:translateY(-1px)!important;
-  box-shadow:0 12px 28px rgba(31,127,134,.09)!important;
-}
-.loan-highlight,.saving-highlight{
-  letter-spacing:-.055em!important;
-}
-
-/* 7) Profile / Philosophy: make it feel like the heart of Möngö */
-.profile-hero,.wealth-level-card,.profile-philosophy{
-  box-shadow:0 16px 38px rgba(31,127,134,.105)!important;
-}
-.profile-philosophy{
-  position:relative!important;
-  overflow:hidden!important;
-  background:linear-gradient(135deg,rgba(73,176,182,.14),rgba(247,210,74,.12),rgba(255,255,255,.82))!important;
-  border-color:rgba(73,176,182,.18)!important;
-}
-.profile-philosophy:after{
-  content:"";
-  position:absolute;
-  right:-34px;
-  top:-34px;
-  width:110px;
-  height:110px;
-  border-radius:999px;
-  background:rgba(255,255,255,.42);
-  pointer-events:none;
-}
-.profile-philosophy-day,.profile-philosophy-main{position:relative;z-index:1;}
-.profile-philosophy-day{
-  background:rgba(255,255,255,.78)!important;
-  border-color:rgba(73,176,182,.18)!important;
-}
-.profile-philosophy-main{
-  font-size:14.5px!important;
-  line-height:1.72!important;
-}
-.profile-badge.earned{
-  border-color:rgba(29,158,117,.20)!important;
-}
-.profile-badge.earned.gold{
-  background:linear-gradient(135deg,rgba(255,240,138,.32),rgba(73,176,182,.08),rgba(255,255,255,.80))!important;
-  border-color:rgba(214,162,29,.22)!important;
-}
-
-/* 8) Empty states: warmer and clearer */
-.empty,.txn-search-empty,.loan-calc-empty{
-  border-radius:22px!important;
-  background:rgba(73,176,182,.055)!important;
-  border:1px dashed rgba(73,176,182,.18)!important;
-  color:#7B8794!important;
-  font-weight:800!important;
-}
-
-/* 9) Motion: premium but gentle */
-.btn,.auth-btn,.nav-btn,.pb,.msb,.pay-rate-btn,.calc-tab-btn{
-  transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease!important;
-}
-.btn:active,.auth-btn:active,.nav-btn:active,.pb:active,.msb:active,.pay-rate-btn:active{
-  transform:scale(.985)!important;
-}
-.pf,.pdash-fill,.score-bar-fill,.wealth-level-fill,.profile-goal-fill{
-  transition:width .45s cubic-bezier(.2,.8,.2,1)!important;
-}
-
-/* 10) Mobile polish */
-@media(max-width:520px){
-  .main{padding:14px 12px 30px!important;}
-  .pdash-grid{grid-template-columns:1fr!important;gap:10px!important;}
-  .pdash-card,.pdash-card.wide{min-height:112px!important;padding:16px 14px!important;}
-  .pdash-v{font-size:22px!important;}
-  .pdash-note{max-width:88%;}
-  .fire-detail-grid{grid-template-columns:1fr!important;}
-  .nav-btn{min-width:64px!important;}
-  .card:hover,.ccrd:hover,.inv-card:hover,.bblock:hover,.calc-result:hover,.profile-mini:hover,.profile-badge:hover{transform:none!important;}
-  .profile-mini-grid,.profile-badges{gap:8px!important;}
-  .list-item .ir{min-width:92px!important;}
-}
-
-@media(prefers-color-scheme:dark){
-  :root{--v41-ink:#F3F4F6;--v41-muted:#CBD5E1;--v41-soft:#172326;}
-  .pdash-v{color:#F3F4F6!important;}
-  .pdash-sub,.net-growth-note,.profile-philosophy-day,.empty,.txn-search-empty,.loan-calc-empty{background:rgba(255,255,255,.06)!important;}
-  .fire-mini{background:rgba(255,255,255,.055)!important;}
-  .profile-philosophy{background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.07),rgba(23,35,38,.80))!important;}
-  .profile-philosophy:after{background:rgba(255,255,255,.055);}
-}
-
-@media(prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
-}
 </style>
 </head>
 <body>
@@ -7430,6 +7214,77 @@ function rDonut(type){
   leg.innerHTML=combined.length?combined.map(x=>`<div class="li2"><div class="ldot" style="background:${x.color}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
 }
 
+
+// ── Security helpers (V41.1) ──────────────────────────────────────────────
+const SECURITY_MAX_BACKUP_BYTES = 2 * 1024 * 1024;
+const SECURITY_ALLOWED_LANGS = new Set(['mn','en','zh','ja','ko','ru','de']);
+
+function secPlain(value, maxLen=180){
+  if(value===null || value===undefined) return value;
+  return String(value)
+    .replace(/[<>`]/g,'')
+    .replace(/javascript:/gi,'')
+    .replace(/on\w+\s*=/gi,'')
+    .slice(0,maxLen);
+}
+function secNum(value, fallback=0){
+  const n=Number(String(value).replace(/[^0-9.\-]/g,''));
+  return Number.isFinite(n) ? n : fallback;
+}
+function secDate(value){
+  const s=secPlain(value,20)||'';
+  return /^\d{4}[-.]\d{2}[-.]\d{2}$/.test(s) ? s.replace(/\./g,'-') : new Date().toISOString().slice(0,10);
+}
+function secCleanDeep(value, depth=0){
+  if(depth>8) return null;
+  if(value===null || value===undefined) return value;
+  if(typeof value==='string') return secPlain(value, 220);
+  if(typeof value==='number') return Number.isFinite(value) ? value : 0;
+  if(typeof value==='boolean') return value;
+  if(Array.isArray(value)) return value.slice(0,1000).map(v=>secCleanDeep(v,depth+1));
+  if(typeof value==='object'){
+    const out={};
+    Object.keys(value).slice(0,80).forEach(k=>{
+      const safeKey=secPlain(k,60);
+      if(safeKey) out[safeKey]=secCleanDeep(value[k],depth+1);
+    });
+    return out;
+  }
+  return null;
+}
+function secNormalizeData(data){
+  if(!data || typeof data!=='object') throw new Error('Invalid backup');
+  const clean=secCleanDeep(data);
+  clean.txns=(Array.isArray(clean.txns)?clean.txns:[]).map(t=>({
+    ...t,
+    id:secPlain(t.id || ('t_'+Date.now()+Math.random().toString(36).slice(2)),60),
+    type:t.type==='income'?'income':'expense',
+    name:secPlain(t.name||'',80),
+    cat:secPlain(t.cat||'',80),
+    sub:secPlain(t.sub||'',80),
+    amount:Math.abs(secNum(t.amount,0)),
+    date:secDate(t.date),
+    auto:!!t.auto,
+    payYourself:!!t.payYourself
+  })).slice(0,5000);
+  clean.goals=Array.isArray(clean.goals)?clean.goals.slice(0,300):[];
+  clean.debts=Array.isArray(clean.debts)?clean.debts.slice(0,300):[];
+  clean.invests=Array.isArray(clean.invests)?clean.invests.slice(0,500):[];
+  clean.budgets=(clean.budgets && typeof clean.budgets==='object')?clean.budgets:{};
+  clean.lang=SECURITY_ALLOWED_LANGS.has(clean.lang)?clean.lang:'mn';
+  clean.budgetMonth=Math.min(12,Math.max(1,Math.round(secNum(clean.budgetMonth,new Date().getMonth()+1))));
+  clean.budgetYear=Math.min(2100,Math.max(2020,Math.round(secNum(clean.budgetYear,new Date().getFullYear()))));
+  clean.budgetType=(clean.budgetType==='income')?'income':'expense';
+  clean.lockedCats=Array.isArray(clean.lockedCats)?clean.lockedCats.slice(0,200).map(x=>secPlain(x,80)):[];
+  clean.netWorthSnapshots=Array.isArray(clean.netWorthSnapshots)?clean.netWorthSnapshots.slice(-730):[];
+  clean.paySettings=(clean.paySettings && typeof clean.paySettings==='object')?clean.paySettings:{enabled:true,rate:20,alloc:{}};
+  return clean;
+}
+function secParseBackup(raw){
+  if(typeof raw!=='string' || raw.length>SECURITY_MAX_BACKUP_BYTES) throw new Error('Backup too large');
+  return secNormalizeData(JSON.parse(raw));
+}
+
 // ── localStorage ──────────────────────────────────────────────────────────
 const DB_KEY_BASE='mongo_v4';
 let DB_KEY=DB_KEY_BASE; // нэвтрэхээс өмнө дефолт, нэвтэрсний дараа uid-тай болно
@@ -7465,11 +7320,11 @@ function saveData(){
         color:s.color
       }))
     }));
-    const data={txns,goals,debts,invests,budgets,lang,budgetMonth,budgetYear,budgetType,
+    const data=secNormalizeData({txns,goals,debts,invests,budgets,lang,budgetMonth,budgetYear,budgetType,
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
-      bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[]};
+      bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[]});
     localStorage.setItem(getDBKey(),JSON.stringify(data));
     showSaveIndicator();
   }catch(e){console.warn('Save error:',e);}
@@ -7479,7 +7334,7 @@ function loadData(){
   try{
     const raw=localStorage.getItem(getDBKey());
     if(!raw)return false;
-    const data=JSON.parse(raw);
+    const data=secParseBackup(raw);
     if(data.txns)txns=data.txns;
     if(data.goals)goals=data.goals.map(g=>({...g,history:g.history||[]}));
     if(data.debts)debts=data.debts;
@@ -7548,8 +7403,14 @@ function exportData(){
 
 function importData(e){
   const file=e.target.files[0];if(!file)return;
+  if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
   const reader=new FileReader();
-  reader.onload=ev=>{try{JSON.parse(ev.target.result);localStorage.setItem(DB_KEY,ev.target.result);location.reload();}catch{showToast('Файл буруу байна');}};
+  reader.onload=ev=>{try{
+    const clean=secParseBackup(ev.target.result);
+    localStorage.setItem(getDBKey(),JSON.stringify(clean));
+    location.reload();
+  }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
+  finally{e.target.value='';}};
   reader.readAsText(file);
 }
 
@@ -8125,7 +7986,7 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 // Persistence — хөтөч хаагаад ч нэвтэрсэн хэвээр байна
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
 
 // ── Хэлний сонголт login хуудсанд ──
 let authLangOpen=false;
