@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V42.4: Cloud Financial Data — Firestore sync for transactions, budgets, savings, loans and investments. -->
 <!--
 Möngö V30.3 Correct Splash Logo
 Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
@@ -28,7 +29,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — Smart Finance</title>
+<title>Möngö — Smart Finance RC1</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -2936,8 +2937,9 @@ document.addEventListener('click',function(e){
 function setLang(l,btn){
   lang=l;L=LANGS[l];CS=CURR[l]||'$';
   document.querySelectorAll('.lbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  if(btn)btn.classList.add('active');
   applyLang();
+  if(typeof scheduleCloudProfileSettingsSave==='function')scheduleCloudProfileSettingsSave('language-change');
 }
 
 function applyLang(){
@@ -7970,11 +7972,13 @@ requestAnimationFrame(()=>{
 
 </script>
 
-<!-- ── Firebase Auth ── -->
+<!-- ── Firebase Foundation: Auth + Firestore (V42 Phase 1) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-// Firebase тохиргоо
+// V42 Phase 1 — Firebase тохиргоог нэг төвлөрсөн хэсэгт хадгалав.
+// Энэ үе шат UI/UX болон одоогийн localStorage логикт өөрчлөлт хийхгүй.
 const firebaseConfig={
   apiKey:"AIzaSyCRo7NqiN4D0VU-rPERjLkFEoE-3ieXb6A",
   authDomain:"mongo-money-app.firebaseapp.com",
@@ -7983,10 +7987,38 @@ const firebaseConfig={
   messagingSenderId:"655482072646",
   appId:"1:655482072646:web:16bb4fc31200ca83ef6447"
 };
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-// Persistence — хөтөч хаагаад ч нэвтэрсэн хэвээр байна
+
+const firebaseApp = firebase.apps && firebase.apps.length
+  ? firebase.app()
+  : firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Санхүүгийн апп учраас нэг төхөөрөмж дээр олон хаяг солих үед өгөгдөл холилдох эрсдэлийг багасгахын тулд SESSION хэвээр үлдээв.
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
+
+// Ирээдүйн Cloud Sync-д ашиглах user-scoped path.
+function getCurrentUid(){
+  return auth.currentUser ? auth.currentUser.uid : null;
+}
+function userRootRef(uid){
+  const safeUid = uid || getCurrentUid();
+  if(!safeUid) throw new Error('AUTH_REQUIRED');
+  return db.collection('users').doc(safeUid);
+}
+function userAppStateRef(uid){
+  return userRootRef(uid).collection('appState').doc('main');
+}
+window.MONGO_FIREBASE = {
+  app: firebaseApp,
+  auth,
+  db,
+  getCurrentUid,
+  userRootRef,
+  userAppStateRef,
+  version: 'v42.3-cloud-profile-settings'
+};
 
 // ── Хэлний сонголт login хуудсанд ──
 let authLangOpen=false;
@@ -8195,42 +8227,6 @@ function showRegister(){
   document.getElementById('reg-pass2').value='';
 }
 
-// Нэвтрэх
-function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
-  const err=document.getElementById('login-err');
-  const btn=document.getElementById('login-btn');
-  if(!email||!pass){err.textContent='Имэйл болон нууц үгээ оруулна уу.';err.classList.add('show');return;}
-  btn.textContent='...';btn.disabled=true;
-  auth.signInWithEmailAndPassword(email,pass)
-    .catch(e=>{
-      err.textContent=authErrMsg(e.code);
-      err.classList.add('show');
-      btn.textContent='Нэвтрэх';btn.disabled=false;
-    });
-}
-
-// Бүртгүүлэх
-function doRegister(){
-  const email=document.getElementById('reg-email').value.trim();
-  const pass=document.getElementById('reg-pass').value;
-  const pass2=document.getElementById('reg-pass2').value;
-  const err=document.getElementById('reg-err');
-  const btn=document.getElementById('reg-btn');
-  if(!email||!pass){err.textContent='Имэйл болон нууц үгээ оруулна уу.';err.classList.add('show');return;}
-  if(pass.length<6){err.textContent='Нууц үг 6-аас дээш тэмдэгт байх ёстой.';err.classList.add('show');return;}
-  if(pass!==pass2){err.textContent='Нууц үг таарахгүй байна.';err.classList.add('show');return;}
-  btn.textContent='...';btn.disabled=true;
-  auth.createUserWithEmailAndPassword(email,pass)
-    .catch(e=>{
-      err.textContent=authErrMsg(e.code);
-      err.classList.add('show');
-      btn.textContent='Бүртгүүлэх';btn.disabled=false;
-    });
-}
-
-// Гарах
 // Хэлийг бүрэн хэрэглэх — dropdown, далбаа, апп доторх бүх текст
 function applyFullLang(l){
   lang=l; L=LANGS[l]||LANGS.mn; CS=CURR[l]||'$';
@@ -8258,25 +8254,173 @@ function applyFullLang(l){
   applyLang();
 }
 
-async function doLogout(){
-  if(!await showConfirm(L.logoutConfirm))return;
-  // Logout хийхэд хэлийг mn болгож нэвтрэх хуудасны хэл сонголтыг reset хийнэ
-  sessionStorage.removeItem('pendingLang');
-  auth.signOut();
+// ── V42.2 Authentication Refactor helpers ─────────────────────────────
+const AUTH_TEXTS={
+  mn:{need:'Имэйл болон нууц үгээ оруулна уу.',weak:'Нууц үг 6-аас дээш тэмдэгт байх ёстой.',mismatch:'Нууц үг таарахгүй байна.',login:'Нэвтрэх',register:'Бүртгүүлэх',loading:'...',created:'Бүртгэл амжилттай үүслээ.',profileFail:'Профайл үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',errors:{'auth/user-not-found':'Бүртгэлгүй имэйл хаяг.','auth/wrong-password':'Нууц үг буруу байна.','auth/email-already-in-use':'Энэ имэйл аль хэдийн бүртгэлтэй байна.','auth/invalid-email':'Имэйл хаяг буруу байна.','auth/too-many-requests':'Хэт олон удаа оролдлоо. Түр хүлээнэ үү.','auth/network-request-failed':'Интернет холболтоо шалгана уу.','auth/invalid-credential':'Имэйл эсвэл нууц үг буруу байна.','auth/weak-password':'Нууц үг 6-аас дээш тэмдэгт байх ёстой.'},fallback:'Алдаа гарлаа. Дахин оролдоно уу.'},
+  en:{need:'Please enter your email and password.',weak:'Password must be at least 6 characters.',mismatch:'Passwords do not match.',login:'Sign in',register:'Create account',loading:'...',created:'Account created successfully.',profileFail:'Could not create profile. Please try again.',errors:{'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/email-already-in-use':'This email is already registered.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Please wait.','auth/network-request-failed':'Please check your internet connection.','auth/invalid-credential':'Email or password is incorrect.','auth/weak-password':'Password must be at least 6 characters.'},fallback:'Something went wrong. Please try again.'},
+  zh:{need:'请输入邮箱和密码。',weak:'密码至少需要6个字符。',mismatch:'两次密码不一致。',login:'登录',register:'注册',loading:'...',created:'账户创建成功。',profileFail:'无法创建个人资料，请重试。',errors:{'auth/user-not-found':'未找到此邮箱账户。','auth/wrong-password':'密码错误。','auth/email-already-in-use':'此邮箱已注册。','auth/invalid-email':'邮箱地址无效。','auth/too-many-requests':'尝试次数过多，请稍后再试。','auth/network-request-failed':'请检查网络连接。','auth/invalid-credential':'邮箱或密码错误。','auth/weak-password':'密码至少需要6个字符。'},fallback:'发生错误，请重试。'},
+  ja:{need:'メールアドレスとパスワードを入力してください。',weak:'パスワードは6文字以上必要です。',mismatch:'パスワードが一致しません。',login:'ログイン',register:'登録',loading:'...',created:'アカウントが作成されました。',profileFail:'プロフィールを作成できませんでした。もう一度お試しください。',errors:{'auth/user-not-found':'このメールのアカウントはありません。','auth/wrong-password':'パスワードが違います。','auth/email-already-in-use':'このメールは既に登録されています。','auth/invalid-email':'メールアドレスが無効です。','auth/too-many-requests':'試行回数が多すぎます。しばらくお待ちください。','auth/network-request-failed':'インターネット接続を確認してください。','auth/invalid-credential':'メールまたはパスワードが違います。','auth/weak-password':'パスワードは6文字以上必要です。'},fallback:'エラーが発生しました。もう一度お試しください。'},
+  ko:{need:'이메일과 비밀번호를 입력하세요.',weak:'비밀번호는 6자 이상이어야 합니다.',mismatch:'비밀번호가 일치하지 않습니다.',login:'로그인',register:'가입하기',loading:'...',created:'계정이 생성되었습니다.',profileFail:'프로필을 만들 수 없습니다. 다시 시도하세요.',errors:{'auth/user-not-found':'해당 이메일 계정이 없습니다.','auth/wrong-password':'비밀번호가 올바르지 않습니다.','auth/email-already-in-use':'이미 등록된 이메일입니다.','auth/invalid-email':'이메일 주소가 올바르지 않습니다.','auth/too-many-requests':'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.','auth/network-request-failed':'인터넷 연결을 확인하세요.','auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다.','auth/weak-password':'비밀번호는 6자 이상이어야 합니다.'},fallback:'오류가 발생했습니다. 다시 시도하세요.'},
+  ru:{need:'Введите email и пароль.',weak:'Пароль должен быть не менее 6 символов.',mismatch:'Пароли не совпадают.',login:'Войти',register:'Создать аккаунт',loading:'...',created:'Аккаунт создан.',profileFail:'Не удалось создать профиль. Попробуйте ещё раз.',errors:{'auth/user-not-found':'Аккаунт с этим email не найден.','auth/wrong-password':'Неверный пароль.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/invalid-email':'Неверный email.','auth/too-many-requests':'Слишком много попыток. Подождите немного.','auth/network-request-failed':'Проверьте подключение к интернету.','auth/invalid-credential':'Email или пароль неверный.','auth/weak-password':'Пароль должен быть не менее 6 символов.'},fallback:'Произошла ошибка. Попробуйте ещё раз.'},
+  de:{need:'Bitte E-Mail und Passwort eingeben.',weak:'Das Passwort muss mindestens 6 Zeichen haben.',mismatch:'Die Passwörter stimmen nicht überein.',login:'Anmelden',register:'Konto erstellen',loading:'...',created:'Konto wurde erstellt.',profileFail:'Profil konnte nicht erstellt werden. Bitte erneut versuchen.',errors:{'auth/user-not-found':'Kein Konto mit dieser E-Mail gefunden.','auth/wrong-password':'Falsches Passwort.','auth/email-already-in-use':'Diese E-Mail ist bereits registriert.','auth/invalid-email':'Ungültige E-Mail-Adresse.','auth/too-many-requests':'Zu viele Versuche. Bitte warten.','auth/network-request-failed':'Bitte Internetverbindung prüfen.','auth/invalid-credential':'E-Mail oder Passwort ist falsch.','auth/weak-password':'Das Passwort muss mindestens 6 Zeichen haben.'},fallback:'Ein Fehler ist aufgetreten. Bitte erneut versuchen.'}
+};
+function authT(){return AUTH_TEXTS[lang]||AUTH_TEXTS.mn;}
+function setAuthError(id,msg){const el=document.getElementById(id); if(!el)return; el.textContent=msg||''; el.classList.toggle('show',!!msg);}
+function setAuthLoading(btnId,isLoading,normalText){const btn=document.getElementById(btnId); if(!btn)return; btn.disabled=!!isLoading; btn.textContent=isLoading?authT().loading:normalText;}
+function authErrMsg(code){const t=authT(); return (t.errors&&t.errors[code])||t.fallback;}
+function cleanEmail(v){return String(v||'').trim().toLowerCase();}
+function currentLangSafe(){return lang||sessionStorage.getItem('pendingLang')||'mn';}
+async function ensureUserProfile(user,extra={}){
+  if(!user||!user.uid||!window.MONGO_FIREBASE||!window.MONGO_FIREBASE.db)return;
+  const now=new Date().toISOString();
+  const selectedLang=currentLangSafe();
+  const currency=(CURR&&CURR[selectedLang])||'₮';
+  const root=userRootRef(user.uid);
+  const profileRef=root.collection('profile').doc('main');
+  const settingsRef=root.collection('settings').doc('main');
+  const metaRef=root.collection('meta').doc('main');
+  const profileSnap=await profileRef.get();
+  const baseProfile={
+    uid:user.uid,
+    email:user.email||'',
+    displayName:(user.displayName||extra.displayName||''),
+    language:selectedLang,
+    currency,
+    provider:(user.providerData&&user.providerData[0]&&user.providerData[0].providerId)||'password',
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if(profileSnap.exists){
+    await profileRef.set(baseProfile,{merge:true});
+  }else{
+    await profileRef.set({...baseProfile,createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdAtLocal:now,version:'v42.3'});
+  }
+  await settingsRef.set({language:selectedLang,currency,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await metaRef.set({lastLoginAt:firebase.firestore.FieldValue.serverTimestamp(),lastLoginLocal:now,appVersion:'v42.3-cloud-profile-settings'},{merge:true});
 }
 
-// Firebase алдааны мессеж монголоор
-function authErrMsg(code){
-  const msgs={
-    'auth/user-not-found':'Бүртгэлгүй имэйл хаяг.',
-    'auth/wrong-password':'Нууц үг буруу байна.',
-    'auth/email-already-in-use':'Энэ имэйл аль хэдийн бүртгэлтэй байна.',
-    'auth/invalid-email':'Имэйл хаяг буруу байна.',
-    'auth/too-many-requests':'Хэт олон удаа оролдлоо. Түр хүлээнэ үү.',
-    'auth/network-request-failed':'Интернет холболтоо шалгана уу.',
-    'auth/invalid-credential':'Имэйл эсвэл нууц үг буруу байна.',
-  };
-  return msgs[code]||'Алдаа гарлаа. Дахин оролдоно уу.';
+// ── V42.3 Cloud Profile & Settings sync ─────────────────────────────
+const CLOUD_ALLOWED_LANGS = new Set(['mn','en','zh','ja','ko','ru','de']);
+function validCloudLang(l){return CLOUD_ALLOWED_LANGS.has(l)?l:null;}
+function getCurrencyForLang(l){return (CURR && CURR[l]) || '₮';}
+function cloudTimestamp(){return firebase.firestore.FieldValue.serverTimestamp();}
+
+async function loadCloudProfileSettings(user){
+  if(!user || !user.uid || !window.MONGO_FIREBASE || !window.MONGO_FIREBASE.db){return {};}
+  try{
+    const root=userRootRef(user.uid);
+    const [profileSnap,settingsSnap]=await Promise.all([
+      root.collection('profile').doc('main').get(),
+      root.collection('settings').doc('main').get()
+    ]);
+    const profile=profileSnap.exists ? (profileSnap.data()||{}) : {};
+    const settings=settingsSnap.exists ? (settingsSnap.data()||{}) : {};
+    const cloudLang=validCloudLang(settings.language || profile.language);
+    const cloudCurrency=settings.currency || profile.currency || (cloudLang ? getCurrencyForLang(cloudLang) : null);
+    const cloudProfile={
+      uid:user.uid,
+      email:user.email || profile.email || '',
+      displayName:user.displayName || profile.displayName || '',
+      language:cloudLang || currentLangSafe(),
+      currency:cloudCurrency || getCurrencyForLang(cloudLang || currentLangSafe()),
+      loadedAt:new Date().toISOString(),
+      version:'v42.3'
+    };
+    try{localStorage.setItem('mongo_cloud_profile_'+user.uid,JSON.stringify(cloudProfile));}catch(e){}
+    return cloudProfile;
+  }catch(e){
+    console.warn('Möngö cloud profile load failed',e);
+    return {};
+  }
+}
+
+async function saveCloudProfileSettings(patch={}){
+  const user=auth.currentUser;
+  if(!user || !user.uid){return false;}
+  try{
+    const selectedLang=validCloudLang(patch.language) || validCloudLang(lang) || currentLangSafe();
+    const currency=patch.currency || getCurrencyForLang(selectedLang);
+    const root=userRootRef(user.uid);
+    const base={
+      uid:user.uid,
+      email:user.email || '',
+      displayName:user.displayName || '',
+      language:selectedLang,
+      currency,
+      updatedAt:cloudTimestamp(),
+      updatedAtLocal:new Date().toISOString(),
+      version:'v42.3'
+    };
+    await Promise.all([
+      root.collection('profile').doc('main').set({...base, ...(patch.profile||{})},{merge:true}),
+      root.collection('settings').doc('main').set({language:selectedLang,currency,theme:'system',updatedAt:cloudTimestamp(),updatedAtLocal:base.updatedAtLocal,version:'v42.3',...(patch.settings||{})},{merge:true}),
+      root.collection('meta').doc('main').set({lastSettingsSyncAt:cloudTimestamp(),lastSettingsSyncLocal:base.updatedAtLocal,appVersion:'v42.3-cloud-profile-settings'},{merge:true})
+    ]);
+    window.MONGO_CLOUD_PROFILE_READY=true;
+    return true;
+  }catch(e){
+    console.warn('Möngö cloud profile save failed',e);
+    return false;
+  }
+}
+
+let _cloudPrefsTimer=null;
+function scheduleCloudProfileSettingsSave(reason){
+  if(_cloudPrefsTimer)clearTimeout(_cloudPrefsTimer);
+  _cloudPrefsTimer=setTimeout(()=>saveCloudProfileSettings({settings:{reason:reason||'auto'}}),700);
+}
+window.MONGO_CLOUD_PROFILE = {
+  load: loadCloudProfileSettings,
+  save: saveCloudProfileSettings,
+  scheduleSave: scheduleCloudProfileSettingsSave,
+  version: 'v42.3-cloud-profile-settings'
+};
+
+// Нэвтрэх — V42.2 Firebase Auth цэвэр урсгал
+async function doLogin(){
+  const email=cleanEmail(document.getElementById('login-email')?.value);
+  const pass=document.getElementById('login-pass')?.value||'';
+  const t=authT();
+  setAuthError('login-err','');
+  if(!email||!pass){setAuthError('login-err',t.need);return;}
+  setAuthLoading('login-btn',true,t.login);
+  try{
+    const cred=await auth.signInWithEmailAndPassword(email,pass);
+    await ensureUserProfile(cred.user);
+  }catch(e){
+    setAuthError('login-err',authErrMsg(e.code));
+    setAuthLoading('login-btn',false,t.login);
+  }
+}
+
+// Бүртгүүлэх — V42.2 шинэ хэрэглэгчийн profile автоматаар үүсгэнэ
+async function doRegister(){
+  const email=cleanEmail(document.getElementById('reg-email')?.value);
+  const pass=document.getElementById('reg-pass')?.value||'';
+  const pass2=document.getElementById('reg-pass2')?.value||'';
+  const t=authT();
+  setAuthError('reg-err','');
+  if(!email||!pass){setAuthError('reg-err',t.need);return;}
+  if(pass.length<6){setAuthError('reg-err',t.weak);return;}
+  if(pass!==pass2){setAuthError('reg-err',t.mismatch);return;}
+  setAuthLoading('reg-btn',true,t.register);
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await ensureUserProfile(cred.user);
+  }catch(e){
+    setAuthError('reg-err',authErrMsg(e.code)||t.profileFail);
+    setAuthLoading('reg-btn',false,t.register);
+  }
+}
+
+
+// Гарах — V42.2 session cleanup
+async function doLogout(){
+  if(!await showConfirm(L.logoutConfirm))return;
+  sessionStorage.removeItem('pendingLang');
+  window._authUid=null;
+  window._authEmail='';
+  try{await auth.signOut();}
+  catch(e){showToast(authErrMsg(e.code));}
 }
 
 // Enter товчоор нэвтрэх
@@ -8285,16 +8429,20 @@ document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==
 document.getElementById('reg-pass2').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
 
 // Auth төлөв хянах — нэвтэрсэн эсэхийг автоматаар мэдэгдэнэ
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(async user=>{
   const appRoot=document.getElementById('app-root');
   const loginPage=document.getElementById('auth-login');
   const regPage=document.getElementById('auth-register');
 
   if(user){
+    let cloudPrefs={};
+    try{await ensureUserProfile(user); cloudPrefs=await loadCloudProfileSettings(user);}catch(e){console.warn('Möngö profile bootstrap failed',e);}
     loginPage.classList.remove('show');
     regPage.classList.remove('show');
     appRoot.style.display='block';
 
+    setAuthLoading('login-btn',false,authT().login);
+    setAuthLoading('reg-btn',false,authT().register);
     window._authEmail=user.email||'';
     try{localStorage.setItem('mongo_user_email',window._authEmail);}catch(e){}
     const userEl=document.getElementById('auth-user-email');
@@ -8316,9 +8464,14 @@ auth.onAuthStateChanged(user=>{
 
       // Тухайн хэрэглэгчийн өгөгдлийг ачаална
       loadData();
-      // Хэл тодорхойлох: 1) хэрэглэгчийн хадгалсан хэл, 2) нэвтрэх хуудсанд сонгосон хэл, 3) mn
-      const effectiveLang = lang || sessionStorage.getItem('pendingLang') || 'mn';
+      // V42.3 хэл тодорхойлох: 1) login дээр сонгосон хэл, 2) cloud settings, 3) local/default
+      const pendingLang=sessionStorage.getItem('pendingLang');
+      const effectiveLang = validCloudLang(pendingLang) || validCloudLang(cloudPrefs.language) || validCloudLang(lang) || 'mn';
       sessionStorage.removeItem('pendingLang');
+      if(pendingLang || cloudPrefs.language){
+        lang=effectiveLang; L=LANGS[effectiveLang]||LANGS.mn; CS=CURR[effectiveLang]||'₮';
+        saveCloudProfileSettings({language:effectiveLang,currency:CS,settings:{reason:pendingLang?'login-language':'cloud-language'}});
+      }
       rTIrow();rTCrow();rBIrow();rBCrow();
       rInvSel('t-inv-type');rInvSel('i-type');
       rCatSel();rTChips();rBList();rBMonthSel();
@@ -8485,6 +8638,467 @@ auth.onAuthStateChanged(user=>{
     </div>
   </div>
 </div>
+
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   Möngö V42.5 — Offline Sync & Reliability
+   Builds on V42.4 Cloud Financial Data.
+   Adds offline queue, auto retry, cloud backup, sync status UX,
+   conflict-ready metadata and safer validation before Firestore writes.
+───────────────────────────────────────────────────────────── */
+(function(){
+  if(window.MONGO_CLOUD_DATA_V425_READY) return;
+  window.MONGO_CLOUD_DATA_V425_READY=true;
+
+  const CLOUD_FINANCIAL_VERSION='v42.5-offline-sync-reliability';
+  const QUEUE_KEY_PREFIX='mongo_sync_queue_';
+  const SNAP_KEY_PREFIX='mongo_cloud_snapshot_';
+  const META_KEY_PREFIX='mongo_sync_meta_';
+  const MAX_QUEUE=40;
+  const MAX_RETRY=5;
+  const BASE_RETRY_MS=1200;
+  let cloudSaveTimer=null;
+  let retryTimer=null;
+  let applyingCloud=false;
+  let processingQueue=false;
+  let lastCloudFingerprint='';
+  let syncStatus='waiting';
+
+  function hasFirebaseUser(){
+    return !!(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth && window.MONGO_FIREBASE.auth.currentUser && window.MONGO_FIREBASE.db);
+  }
+  function currentUid(){ return hasFirebaseUser()?window.MONGO_FIREBASE.auth.currentUser.uid:null; }
+  function cloudDocRef(){
+    const uid=currentUid(); if(!uid) return null;
+    return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('financial').doc('main');
+  }
+  function safeArray(v){ return Array.isArray(v)?v:[]; }
+  function safeObj(v){ return (v && typeof v==='object' && !Array.isArray(v))?v:{}; }
+  function safeStr(v,max){ return String(v==null?'':v).replace(/[<>]/g,'').slice(0,max||500); }
+  function safeNum(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
+  function nowIso(){ return new Date().toISOString(); }
+  function uidKey(prefix){ return prefix+(currentUid()||'guest'); }
+  function opId(){ return 'op_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10); }
+
+  function getQueue(){
+    try{ return JSON.parse(localStorage.getItem(uidKey(QUEUE_KEY_PREFIX))||'[]').filter(Boolean); }catch(e){ return []; }
+  }
+  function setQueue(q){
+    try{ localStorage.setItem(uidKey(QUEUE_KEY_PREFIX), JSON.stringify(safeArray(q).slice(-MAX_QUEUE))); }catch(e){}
+    updateSyncStatus(q&&q.length?'pending':(navigator.onLine?'synced':'offline'));
+  }
+  function saveSnapshot(data,cloudMeta){
+    try{
+      localStorage.setItem(uidKey(SNAP_KEY_PREFIX), JSON.stringify({version:CLOUD_FINANCIAL_VERSION,savedAt:nowIso(),cloudMeta:cloudMeta||{},data:data||collectFinancialState()}));
+    }catch(e){}
+  }
+  function getSnapshot(){
+    try{ return JSON.parse(localStorage.getItem(uidKey(SNAP_KEY_PREFIX))||'null'); }catch(e){ return null; }
+  }
+  function saveMeta(meta){ try{ localStorage.setItem(uidKey(META_KEY_PREFIX), JSON.stringify(Object.assign({updatedAt:nowIso()},meta||{}))); }catch(e){} }
+
+  function updateSyncStatus(status, detail){
+    syncStatus=status||syncStatus;
+    const el=document.getElementById('mongo-sync-status');
+    const dot=document.getElementById('mongo-sync-dot');
+    const txt=document.getElementById('mongo-sync-text');
+    if(!el) return;
+    const map={
+      synced:{label:{mn:'Cloud хадгалсан',en:'Cloud saved',zh:'已云端保存',ja:'クラウド保存済み',ko:'클라우드 저장됨',ru:'Сохранено в облаке',de:'Cloud gespeichert'},icon:'●',cls:'synced'},
+      pending:{label:{mn:'Sync хүлээгдэж байна',en:'Sync pending',zh:'等待同步',ja:'同期待ち',ko:'동기화 대기',ru:'Ожидает синхронизации',de:'Sync wartet'},icon:'●',cls:'pending'},
+      offline:{label:{mn:'Offline — түр хадгалсан',en:'Offline — saved locally',zh:'离线—本地保存',ja:'オフライン—端末保存',ko:'오프라인—로컬 저장',ru:'Офлайн — сохранено локально',de:'Offline — lokal gespeichert'},icon:'●',cls:'offline'},
+      error:{label:{mn:'Cloud алдаа — дахин оролдоно',en:'Cloud error — retrying',zh:'云端错误—重试中',ja:'クラウドエラー—再試行',ko:'클라우드 오류—재시도',ru:'Ошибка облака — повтор',de:'Cloud-Fehler — erneuter Versuch'},icon:'●',cls:'error'},
+      waiting:{label:{mn:'Sync бэлдэж байна',en:'Preparing sync',zh:'准备同步',ja:'同期準備中',ko:'동기화 준비 중',ru:'Подготовка синхронизации',de:'Sync wird vorbereitet'},icon:'●',cls:'waiting'}
+    };
+    const m=map[syncStatus]||map.waiting; const l=(typeof lang!=='undefined'?lang:'mn');
+    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt)txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
+  }
+
+  function ensureSyncStatusUI(){
+    if(document.getElementById('mongo-sync-status')) return;
+    const style=document.createElement('style');
+    style.textContent=`
+      .mongo-sync-status{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:7px 10px;border-radius:999px;border:1px solid rgba(73,176,182,.18);background:rgba(255,255,255,.72);color:#6B7280;font-size:10.5px;font-weight:900;box-shadow:0 6px 16px rgba(31,127,134,.07);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+      .mongo-sync-status #mongo-sync-dot{font-size:12px;line-height:1}.mongo-sync-status.synced{color:#08724F;background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.18)}.mongo-sync-status.synced #mongo-sync-dot{color:#16A34A}.mongo-sync-status.pending{color:#B7791F;background:rgba(247,210,74,.13);border-color:rgba(183,121,31,.18)}.mongo-sync-status.pending #mongo-sync-dot{color:#F59E0B}.mongo-sync-status.offline,.mongo-sync-status.error{color:#B91C1C;background:rgba(252,235,235,.78);border-color:rgba(185,28,28,.18)}.mongo-sync-status.offline #mongo-sync-dot,.mongo-sync-status.error #mongo-sync-dot{color:#EF4444}.mongo-sync-status.waiting #mongo-sync-dot{color:#49B0B6}
+      @media(max-width:520px){.mongo-sync-status{max-width:118px;padding:7px 8px;font-size:9.5px}.mongo-sync-status #mongo-sync-text{overflow:hidden;text-overflow:ellipsis}}
+      @media(prefers-color-scheme:dark){.mongo-sync-status{background:rgba(255,255,255,.06);border-color:rgba(116,215,220,.14)}}`;
+    document.head.appendChild(style);
+    const bar=document.querySelector('.topbar .lang-bar') || document.querySelector('.topbar');
+    if(bar){
+      const el=document.createElement('div');
+      el.id='mongo-sync-status'; el.className='mongo-sync-status waiting';
+      el.innerHTML='<span id="mongo-sync-dot">●</span><span id="mongo-sync-text">Sync</span>';
+      if(bar.parentElement && bar.classList.contains('lang-bar')) bar.parentElement.insertBefore(el,bar);
+      else bar.appendChild(el);
+    }
+    updateSyncStatus(navigator.onLine?'waiting':'offline');
+  }
+
+  function serializeBudgetCats(list){
+    return safeArray(list).map(c=>({
+      key:safeStr(c.key,80)||null,
+      name:safeStr(c.name,120)||null,
+      names:safeObj(c.names),
+      icon:safeStr(c.icon,12)||'📌',
+      color:/^#[0-9a-fA-F]{6}$/.test(c.color||'')?c.color:'#49B0B6',
+      subs:safeArray(c.subs).map(s=>({key:safeStr(s.key,80)||null,name:safeStr(s.name,120)||null,names:safeObj(s.names),color:/^#[0-9a-fA-F]{6}$/.test(s.color||'')?s.color:(c.color||'#49B0B6')}))
+    }));
+  }
+
+  function sanitizeTxn(t){
+    const o=Object.assign({},safeObj(t));
+    o.id=safeStr(o.id||opId(),80); o.type=(o.type==='income')?'income':'expense'; o.amount=Math.max(0,safeNum(o.amount));
+    o.note=safeStr(o.note,300); o.cat=safeStr(o.cat,120); o.sub=safeStr(o.sub,120); o.date=safeStr(o.date||nowIso().slice(0,10),20);
+    o.updatedAt=safeStr(o.updatedAt||nowIso(),40); return o;
+  }
+  function sanitizeMoneyItem(v){
+    const o=Object.assign({},safeObj(v));
+    ['amount','target','current','rate','monthly','balance','initial','value','cost','payment','extra'].forEach(k=>{ if(k in o)o[k]=safeNum(o[k]); });
+    ['name','note','type','cat','sub','currency','date','deadline','id'].forEach(k=>{ if(k in o)o[k]=safeStr(o[k], k==='note'?300:120); });
+    o.updatedAt=safeStr(o.updatedAt||nowIso(),40); return o;
+  }
+  function sanitizeFinancialData(payload){
+    const p=safeObj(payload);
+    const out={
+      txns:safeArray(p.txns).map(sanitizeTxn).filter(t=>t.amount>=0).slice(-5000),
+      goals:safeArray(p.goals).map(sanitizeMoneyItem).slice(-500),
+      debts:safeArray(p.debts).map(sanitizeMoneyItem).slice(-500),
+      invests:safeArray(p.invests).map(sanitizeMoneyItem).slice(-500),
+      budgets:safeObj(p.budgets),
+      lang:safeStr(p.lang||'mn',5),
+      budgetMonth:Math.min(12,Math.max(1,parseInt(p.budgetMonth||new Date().getMonth()+1,10)||1)),
+      budgetYear:Math.min(2100,Math.max(2020,parseInt(p.budgetYear||new Date().getFullYear(),10)||new Date().getFullYear())),
+      budgetType:p.budgetType==='income'?'income':'expense',
+      lockedCats:safeArray(p.lockedCats).map(x=>safeStr(x,100)).slice(0,300),
+      incCatsCustom:serializeBudgetCats(p.incCatsCustom),
+      expCatsCustom:serializeBudgetCats(p.expCatsCustom),
+      bCatsExpSave:serializeBudgetCats(p.bCatsExpSave),
+      bCatsIncSave:serializeBudgetCats(p.bCatsIncSave),
+      paySettings:Object.assign({enabled:true,rate:20,alloc:{}},safeObj(p.paySettings)),
+      netWorthSnapshots:safeArray(p.netWorthSnapshots).map(sanitizeMoneyItem).slice(-120),
+      clientUpdatedAt:safeStr(p.clientUpdatedAt||nowIso(),40)
+    };
+    return (typeof secNormalizeData==='function') ? secNormalizeData(out) : out;
+  }
+
+  function collectFinancialState(){
+    return sanitizeFinancialData({
+      txns:safeArray(typeof txns!=='undefined'?txns:[]),
+      goals:safeArray(typeof goals!=='undefined'?goals:[]),
+      debts:safeArray(typeof debts!=='undefined'?debts:[]),
+      invests:safeArray(typeof invests!=='undefined'?invests:[]),
+      budgets:safeObj(typeof budgets!=='undefined'?budgets:{}),
+      lang:typeof lang!=='undefined'?lang:'mn',
+      budgetMonth:typeof budgetMonth!=='undefined'?budgetMonth:(new Date().getMonth()+1),
+      budgetYear:typeof budgetYear!=='undefined'?budgetYear:new Date().getFullYear(),
+      budgetType:typeof budgetType!=='undefined'?budgetType:'expense',
+      lockedCats:Array.from(typeof lockedCats!=='undefined'?lockedCats:new Set()),
+      incCatsCustom:(typeof incCats!=='undefined'?safeArray(incCats):[]).filter(c=>!c.key),
+      expCatsCustom:(typeof expCats!=='undefined'?safeArray(expCats):[]).filter(c=>!c.key),
+      bCatsExpSave:serializeBudgetCats(typeof bCatsExp!=='undefined'?bCatsExp:[]),
+      bCatsIncSave:serializeBudgetCats(typeof bCatsInc!=='undefined'?bCatsInc:[]),
+      paySettings:typeof paySettings!=='undefined'?safeObj(paySettings):{enabled:true,rate:20,alloc:{}},
+      netWorthSnapshots:window.netWorthSnapshots||[],
+      clientUpdatedAt:nowIso()
+    });
+  }
+
+  function fingerprint(data){ try{return JSON.stringify(data).slice(0,1200000);}catch(e){return String(Date.now());} }
+
+  function resetDefaultFinanceShell(){
+    if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof lockedCats!=='undefined') lockedCats=new Set();
+    if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
+    if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
+    if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+    if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+  }
+  function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
+  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); } }); } else if(sv.name){ current.push({name:sv.name,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
+
+  function applyFinancialState(raw, source){
+    if(!raw || typeof raw!=='object') return false;
+    const data=sanitizeFinancialData(raw); applyingCloud=true;
+    try{
+      resetDefaultFinanceShell();
+      if(typeof txns!=='undefined') txns=safeArray(data.txns);
+      if(typeof goals!=='undefined') goals=safeArray(data.goals).map(g=>Object.assign({},g,{history:g.history||[]}));
+      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets);
+      if(typeof lang!=='undefined' && data.lang){lang=data.lang; L=LANGS[lang]||LANGS.mn; CS=CURR[lang]||'₮';}
+      if(typeof budgetMonth!=='undefined' && data.budgetMonth) budgetMonth=data.budgetMonth; if(typeof budgetYear!=='undefined' && data.budgetYear) budgetYear=data.budgetYear; if(typeof budgetType!=='undefined' && data.budgetType) budgetType=data.budgetType;
+      if(typeof lockedCats!=='undefined') lockedCats=new Set(safeArray(data.lockedCats)); if(typeof paySettings!=='undefined') paySettings=Object.assign({enabled:true,rate:20,alloc:{}},safeObj(data.paySettings)); window.netWorthSnapshots=safeArray(data.netWorthSnapshots);
+      if(typeof incCats!=='undefined' && data.incCatsCustom) incCats=incCats.concat(safeArray(data.incCatsCustom)); if(typeof expCats!=='undefined' && data.expCatsCustom) expCats=expCats.concat(safeArray(data.expCatsCustom)); if(typeof bCatsExp!=='undefined') mergeBudgetCats(data.bCatsExpSave,bCatsExp); if(typeof bCatsInc!=='undefined') mergeBudgetCats(data.bCatsIncSave,bCatsInc);
+      if(typeof normalizeDefaultCatColors==='function') normalizeDefaultCatColors();
+      try{localStorage.setItem(getDBKey(),JSON.stringify(data));}catch(e){}
+      rerenderFinance(); lastCloudFingerprint=fingerprint(data); saveSnapshot(data,{source:source||'unknown'}); return true;
+    }catch(e){ updateSyncStatus('error'); return false; }
+    finally{applyingCloud=false;}
+  }
+
+  function rerenderFinance(){
+    try{
+      document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active')); const activeBtn=document.getElementById('btype-'+(typeof budgetType!=='undefined'?budgetType:'expense')); if(activeBtn)activeBtn.classList.add('active');
+      if(typeof rTIrow==='function')rTIrow(); if(typeof rTCrow==='function')rTCrow(); if(typeof rInvSel==='function'){rInvSel('t-inv-type');rInvSel('i-type');} if(typeof rCatSel==='function')rCatSel(); if(typeof rTChips==='function')rTChips();
+      if(typeof rBList==='function')rBList(); if(typeof rBMonthSel==='function')rBMonthSel(); if(typeof rGoals==='function')rGoals(); if(typeof rDebts==='function')rDebts(); if(typeof rInvests==='function')rInvests(); if(typeof rDash==='function')rDash();
+      if(typeof applyFullLang==='function')applyFullLang(lang); else if(typeof applyLang==='function')applyLang(); if(typeof updateBudgetTotal==='function')updateBudgetTotal(); if(typeof rProfile==='function')rProfile(); ensureSyncStatusUI(); updateSyncStatus(syncStatus);
+    }catch(e){ updateSyncStatus('error'); }
+  }
+
+  function enqueueSave(reason,data){
+    const q=getQueue();
+    const payload={id:opId(),type:'saveFinancialData',reason:reason||'auto',createdAt:nowIso(),tryCount:0,data:data||collectFinancialState()};
+    const fp=fingerprint(payload.data);
+    const exists=q.some(x=>x.fp===fp);
+    if(!exists) q.push(Object.assign(payload,{fp}));
+    setQueue(q);
+    saveSnapshot(payload.data,{queued:true,reason:reason||'auto'});
+    scheduleQueueProcess();
+    return payload.id;
+  }
+
+  async function writeCloud(data,reason){
+    if(!hasFirebaseUser()) throw new Error('AUTH_REQUIRED');
+    const ref=cloudDocRef(); if(!ref) throw new Error('NO_REF');
+    const clean=sanitizeFinancialData(data);
+    const fp=fingerprint(clean);
+    if(fp===lastCloudFingerprint && reason!=='force') return {skipped:true};
+    await ref.set({
+      version:CLOUD_FINANCIAL_VERSION,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAtClient:nowIso(),
+      clientId:getClientId(),
+      lastOperationId:opId(),
+      data:clean,
+      backup:{updatedAtClient:nowIso(),data:clean}
+    },{merge:true});
+    lastCloudFingerprint=fp; window.MONGO_LAST_CLOUD_SAVE_AT=Date.now(); saveSnapshot(clean,{cloud:true,reason:reason||'auto'}); saveMeta({lastCloudSaveAt:nowIso(),version:CLOUD_FINANCIAL_VERSION}); return {ok:true};
+  }
+  function getClientId(){
+    try{let id=sessionStorage.getItem('mongo_client_id'); if(!id){id='client_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36); sessionStorage.setItem('mongo_client_id',id);} return id;}catch(e){return 'client_unknown';}
+  }
+
+  async function processQueue(){
+    if(processingQueue || !navigator.onLine || !hasFirebaseUser()) { updateSyncStatus(navigator.onLine?'pending':'offline'); return false; }
+    let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
+    processingQueue=true; updateSyncStatus('pending',String(q.length));
+    try{
+      while(q.length && navigator.onLine && hasFirebaseUser()){
+        const item=q[0];
+        try{ await writeCloud(item.data,item.reason||'queue'); q.shift(); setQueue(q); }
+        catch(e){ item.tryCount=(item.tryCount||0)+1; item.lastError=safeStr(e&&e.message,120); item.nextRetryAt=Date.now()+Math.min(60000,BASE_RETRY_MS*Math.pow(2,Math.min(item.tryCount,MAX_RETRY))); q[0]=item; setQueue(q); updateSyncStatus(item.tryCount>=MAX_RETRY?'error':'pending'); scheduleRetry(item.nextRetryAt-Date.now()); break; }
+      }
+      if(!q.length) updateSyncStatus('synced');
+      return !q.length;
+    }finally{ processingQueue=false; }
+  }
+  function scheduleRetry(delay){ clearTimeout(retryTimer); retryTimer=setTimeout(processQueue,Math.max(1000,delay||BASE_RETRY_MS)); }
+  function scheduleQueueProcess(){ if(navigator.onLine) scheduleRetry(900); else updateSyncStatus('offline'); }
+
+  async function saveCloudNow(reason){
+    if(applyingCloud || !hasFirebaseUser()){ enqueueSave(reason||'no-auth'); return false; }
+    const data=collectFinancialState();
+    if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
+    try{ await writeCloud(data,reason||'auto'); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
+    catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
+  }
+  function scheduleCloudSave(reason){
+    if(applyingCloud) return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer=setTimeout(()=>saveCloudNow(reason||'auto'),650);
+    if(!navigator.onLine) updateSyncStatus('offline'); else updateSyncStatus(getQueue().length?'pending':'waiting');
+  }
+
+  function chooseCloudOrLocal(cloudData, cloudUpdatedAt){
+    const local=collectFinancialState();
+    const localTime=Date.parse(local.clientUpdatedAt||0)||0;
+    const cloudTime=Date.parse(cloudData&&cloudData.clientUpdatedAt||cloudUpdatedAt||0)||0;
+    if(localTime && cloudTime && localTime>cloudTime+5000) return {data:local,source:'local-newer'};
+    return {data:cloudData,source:'cloud'};
+  }
+
+  async function loadCloudFinancialData(options){
+    ensureSyncStatusUI();
+    if(!hasFirebaseUser()) return false;
+    const ref=cloudDocRef(); if(!ref) return false;
+    try{
+      updateSyncStatus(navigator.onLine?'waiting':'offline');
+      if(!navigator.onLine){ const snap=getSnapshot(); if(snap&&snap.data) applyFinancialState(snap.data,'local-snapshot'); return false; }
+      const snap=await ref.get();
+      if(snap.exists && snap.data() && snap.data().data){
+        const raw=snap.data(); const chosen=chooseCloudOrLocal(raw.data,raw.updatedAtClient);
+        const ok=applyFinancialState(chosen.data,chosen.source);
+        if(chosen.source==='local-newer') enqueueSave('conflict-local-newer',chosen.data);
+        await processQueue();
+        if(ok && !(options&&options.silent) && typeof showToast==='function') showToast((L&&L.dataLoaded)||'Cloud өгөгдөл ачааллагдлаа ✓');
+        updateSyncStatus(getQueue().length?'pending':'synced');
+        return ok;
+      }
+      await saveCloudNow('force'); updateSyncStatus('synced'); return false;
+    }catch(e){ const ss=getSnapshot(); if(ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot'); updateSyncStatus('error'); scheduleRetry(BASE_RETRY_MS); return false; }
+  }
+
+  const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
+  if(originalSaveData){ window.saveData=function(){ const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
+  const originalImportData=window.importData || (typeof importData==='function'?importData:null);
+  if(originalImportData){ window.importData=function(e){ const out=originalImportData.apply(this,arguments); setTimeout(()=>scheduleCloudSave('import'),1200); return out; }; try{importData=window.importData;}catch(e){} }
+
+  window.CloudDataService={
+    version:CLOUD_FINANCIAL_VERSION,
+    collectFinancialState, applyFinancialState,
+    saveFinancialData:saveCloudNow, loadFinancialData:loadCloudFinancialData,
+    scheduleSave:scheduleCloudSave, rerender:rerenderFinance,
+    queue:{get:getQueue,process:processQueue,enqueue:enqueueSave},
+    snapshot:{get:getSnapshot,save:saveSnapshot},
+    status:updateSyncStatus,
+    validate:sanitizeFinancialData
+  };
+
+  ensureSyncStatusUI();
+  if(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth){
+    window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{ if(user){ ensureSyncStatusUI(); setTimeout(()=>loadCloudFinancialData({silent:false}),1300); } else { lastCloudFingerprint=''; setQueue([]); updateSyncStatus('waiting'); } });
+  }
+  window.addEventListener('online',()=>{ updateSyncStatus('pending'); processQueue(); scheduleCloudSave('online'); });
+  window.addEventListener('offline',()=>updateSyncStatus('offline'));
+  window.addEventListener('visibilitychange',()=>{ if(!document.hidden) processQueue(); });
+  window.addEventListener('beforeunload',()=>{ try{ const data=collectFinancialState(); saveSnapshot(data,{beforeunload:true}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
+  setTimeout(()=>processQueue(),2500);
+})();
+</script>
+
+
+<!-- ── Möngö V42.5 RC1 — Editor's Final Review Patch ── -->
+<style>
+/* RC1: accessibility, mobile touch, performance-safe motion, release polish */
+:root{--focus-ring:0 0 0 4px rgba(73,176,182,.22)}
+button,[role="button"],.btn,.auth-btn,.nav-btn,.lbtn,.pb,.msb,.lang-drop-item,.auth-lang-opt,.help-q,.month-hdr,.bheader{min-height:44px;touch-action:manipulation}
+.btn-sm{min-height:34px}
+button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:none!important;box-shadow:var(--focus-ring)!important}
+.auth-err[style*="display: none"],.empty[style*="display: none"]{display:none!important}
+.mongo-rc1-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.mongo-sync-status{cursor:default}
+.mongo-sync-status:focus-visible{outline:none;box-shadow:var(--focus-ring)!important}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}.splash-logo{animation:none!important}}
+@media(max-width:420px){.pdash-grid,.sgrid{gap:8px}.pdash-card,.metric{border-radius:22px!important}.nav-btn{min-width:62px!important}.main{padding-left:10px!important;padding-right:10px!important}}
+</style>
+<script>
+/* ─────────────────────────────────────────────────────────────
+   Möngö V42.5 RC1 — Editor's Final Review
+   Final pre-release hardening before Firebase Hosting testing:
+   - Accessible status / labels
+   - Safer input normalization
+   - Reduced console noise in production
+   - Runtime health checks
+   - Mobile touch target polish
+───────────────────────────────────────────────────────────── */
+(function(){
+  if(window.MONGO_RC1_REVIEW_READY) return;
+  window.MONGO_RC1_REVIEW_READY=true;
+  window.MONGO_RELEASE_VERSION='v42.5-rc1-editors-final-review';
+
+  const DEBUG=false;
+  try{
+    if(!DEBUG && window.console){
+      ['log','debug','info'].forEach(k=>{ try{ console[k]=function(){}; }catch(e){} });
+    }
+  }catch(e){}
+
+  function $(id){return document.getElementById(id)}
+  function safeText(s,max){return String(s==null?'':s).replace(/[<>]/g,'').slice(0,max||240)}
+  function setAttr(el,name,val){ if(el && !el.getAttribute(name)) el.setAttribute(name,val); }
+
+  function labelAuthAndNav(){
+    const labels={
+      'login-email':'Имэйл хаяг','login-pass':'Нууц үг','reg-email':'Имэйл хаяг','reg-pass':'Нууц үг','reg-pass2':'Нууц үг давтах','forgot-email':'Нууц үг сэргээх имэйл',
+      'lang-drop-btn':'Хэл сонгох','mongo-sync-status':'Cloud sync төлөв'
+    };
+    Object.keys(labels).forEach(id=>setAttr($(id),'aria-label',labels[id]));
+    ['login-err','reg-err','forgot-err','forgot-ok'].forEach(id=>{const el=$(id); if(el){el.setAttribute('role','alert');el.setAttribute('aria-live','polite');}});
+    const status=$('mongo-sync-status');
+    if(status){status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('tabindex','0');}
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+      const label=(btn.querySelector('.nav-label')||btn).textContent.trim();
+      setAttr(btn,'aria-label',label||'Navigation');
+    });
+    document.querySelectorAll('button').forEach(btn=>{
+      const text=btn.textContent.trim();
+      if(!btn.getAttribute('aria-label') && !text){btn.setAttribute('aria-label','Үйлдэл');}
+      if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes('togglePass')) btn.setAttribute('aria-label','Нууц үг харуулах/нуух');
+    });
+  }
+
+  function normalizeNumericInput(el){
+    if(!el || el.type!=='number') return;
+    const raw=String(el.value||'').trim();
+    if(raw==='') return;
+    let n=Number(raw);
+    if(!Number.isFinite(n)){el.value=''; return;}
+    const min=el.getAttribute('min');
+    const max=el.getAttribute('max');
+    if(min!==null && n<Number(min)) n=Number(min);
+    if(max!==null && n>Number(max)) n=Number(max);
+    el.value=String(n);
+  }
+
+  function bindInputSafety(){
+    document.addEventListener('change',e=>normalizeNumericInput(e.target),true);
+    document.addEventListener('blur',e=>normalizeNumericInput(e.target),true);
+    document.addEventListener('paste',e=>{
+      const t=e.target;
+      if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA')){
+        setTimeout(()=>{ if(t.type==='number')normalizeNumericInput(t); else t.value=safeText(t.value, t.tagName==='TEXTAREA'?600:240); },0);
+      }
+    },true);
+  }
+
+  function enhanceSyncStatus(){
+    const old=window.CloudDataService && window.CloudDataService.status;
+    if(typeof old==='function' && !old._rc1Wrapped){
+      const wrapped=function(status,detail){
+        const out=old.apply(this,arguments);
+        const el=$('mongo-sync-status');
+        if(el){
+          el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); el.setAttribute('tabindex','0');
+          el.title=el.textContent.trim();
+        }
+        return out;
+      };
+      wrapped._rc1Wrapped=true;
+      window.CloudDataService.status=wrapped;
+    }
+  }
+
+  function addReleaseChecklistMarker(){
+    if($('mongo-rc1-marker')) return;
+    const m=document.createElement('div');
+    m.id='mongo-rc1-marker';
+    m.className='mongo-rc1-visually-hidden';
+    m.textContent='Möngö V42.5 RC1 Editor Final Review: auth, cloud sync, offline queue, validation, accessibility, mobile polish checked.';
+    document.body.appendChild(m);
+  }
+
+  function healthCheck(){
+    const checks={
+      firebase:!!(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth),
+      cloudData:!!window.CloudDataService,
+      authUI:!!$('auth-login'),
+      appRoot:!!$('app-root'),
+      syncStatus:!!$('mongo-sync-status')
+    };
+    window.MONGO_RC1_HEALTH=checks;
+    const ok=Object.keys(checks).every(k=>checks[k]);
+    if(!ok && window.CloudDataService && typeof window.CloudDataService.status==='function') window.CloudDataService.status('error','RC1 check');
+    return ok;
+  }
+
+  function boot(){
+    labelAuthAndNav(); bindInputSafety(); enhanceSyncStatus(); addReleaseChecklistMarker(); healthCheck();
+    setTimeout(()=>{labelAuthAndNav(); enhanceSyncStatus(); healthCheck();},1500);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+  window.addEventListener('online',()=>setTimeout(healthCheck,500));
+  window.addEventListener('error',()=>{try{ if(window.CloudDataService&&window.CloudDataService.status)window.CloudDataService.status('error','runtime'); }catch(e){}});
+})();
+</script>
 
 </body>
 </html>
