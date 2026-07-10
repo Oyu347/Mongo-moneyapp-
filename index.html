@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V42.5 RC2: Verification fixes — per-user philosophy, legacy transaction IDs, compact mobile header and language popover. -->
+<!-- Möngö V42.5 RC2.2 Final: header, cloud status popup, language popover and category toggle polish. -->
 <!--
 Möngö V30.3 Correct Splash Logo
 Base: user-confirmed latest V27 file “Профайл нэр гараагүй.html”.
@@ -29,7 +29,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — Money Flow System RC2</title>
+<title>Möngö — Money Flow System RC2.2 Final</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -2023,7 +2023,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   <div class="brand">
       <div class="logo"><img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E" width="30" height="30" style="border-radius:8px;display:block"></div>
       <span class="brand-name">Möngö</span>
-      <span style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">MONEY FLOW SYSTEM</span>
+      <span class="brand-subtitle" style="font-size:10px;color:var(--text3);margin-left:4px;font-weight:400">MONEY FLOW SYSTEM</span>
     </div>
   <div class="lang-bar" style="position:relative">
     <button onclick="tglLangDrop()" id="lang-drop-btn" class="v27-lang-btn">
@@ -9236,6 +9236,316 @@ button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-v
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
+
+
+
+<!-- ── Möngö V42.5 RC2.2 Final — Header, Cloud Status & UI polish ── -->
+<style id="mongo-rc2-2-final-style">
+/* Final header balance */
+.v27-topbar{
+  min-height:68px!important;
+  padding:8px 12px!important;
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:8px!important;
+  box-shadow:0 8px 22px rgba(31,127,134,.065)!important;
+}
+.v27-topbar .brand{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  overflow:visible!important;
+}
+.v27-topbar .brand-name{
+  flex:0 0 auto!important;
+  font-weight:900!important;
+}
+.v27-topbar .brand-subtitle{
+  display:inline-block!important;
+  flex:0 1 auto!important;
+  min-width:0!important;
+  margin-left:1px!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+  letter-spacing:1.15px!important;
+  color:#8B97A3!important;
+  font-weight:850!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.v27-topbar .lang-bar{flex:0 0 auto!important}
+.v27-lang-btn,#mongo-sync-status{
+  width:44px!important;
+  min-width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  border-radius:16px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-shadow:0 6px 16px rgba(31,127,134,.075)!important;
+}
+#mongo-sync-status{position:relative!important;overflow:visible!important}
+#mongo-sync-status #mongo-sync-text{display:none!important}
+#mongo-sync-status #mongo-sync-dot{font-size:15px!important;line-height:1!important}
+#mongo-sync-status::before{
+  content:'cloud';
+  font-family:'Material Symbols Rounded';
+  font-size:22px;
+  line-height:1;
+  color:currentColor;
+}
+#mongo-sync-status::after{
+  content:'';
+  position:absolute;
+  right:7px;
+  bottom:7px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#49B0B6;
+  box-shadow:0 0 0 2px rgba(255,255,255,.92);
+}
+#mongo-sync-status.synced::after{background:#16A34A}
+#mongo-sync-status.pending::after,#mongo-sync-status.waiting::after{background:#F59E0B}
+#mongo-sync-status.offline::after,#mongo-sync-status.error::after{background:#EF4444}
+#mongo-sync-dot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}
+
+/* Language popup */
+.v27-lang-list{
+  position:fixed!important;
+  top:72px!important;
+  right:12px!important;
+  left:auto!important;
+  width:184px!important;
+  min-width:184px!important;
+  max-height:min(420px,calc(100vh - 88px))!important;
+  overflow-y:auto!important;
+  z-index:21000!important;
+  border-radius:20px!important;
+  transform-origin:top right!important;
+  animation:mongoPopoverIn .16s ease-out!important;
+}
+@keyframes mongoPopoverIn{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}
+
+/* Category manager toggle: true centered Material icon */
+.budget-cat-toggle{
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  min-height:44px!important;
+  right:12px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:50%!important;
+  line-height:1!important;
+  overflow:hidden!important;
+}
+.budget-cat-toggle::before{content:none!important}
+.budget-cat-toggle::after{
+  content:'expand_more'!important;
+  font-family:'Material Symbols Rounded'!important;
+  font-size:22px!important;
+  font-weight:500!important;
+  width:22px!important;
+  height:22px!important;
+  line-height:22px!important;
+  display:block!important;
+  text-align:center!important;
+  margin:0!important;
+  transform:rotate(-90deg)!important;
+  transform-origin:50% 50%!important;
+  transition:transform .2s ease!important;
+}
+.budget-cat-card:not(.collapsed) .budget-cat-toggle{
+  transform:translateY(-50%)!important;
+}
+.budget-cat-card:not(.collapsed) .budget-cat-toggle::after{transform:rotate(0deg)!important}
+.budget-cat-title{padding-right:58px!important}
+
+/* Cloud detail popover */
+.mongo-cloud-popover{
+  display:none;
+  position:fixed;
+  top:72px;
+  right:64px;
+  z-index:22000;
+  width:min(300px,calc(100vw - 24px));
+  padding:16px;
+  border-radius:22px;
+  border:1px solid rgba(73,176,182,.18);
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(18px);
+  box-shadow:0 20px 52px rgba(31,127,134,.20);
+  animation:mongoPopoverIn .16s ease-out;
+}
+.mongo-cloud-popover.show{display:block}
+.mongo-cloud-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mongo-cloud-state-dot{width:11px;height:11px;border-radius:50%;background:#49B0B6;box-shadow:0 0 0 5px rgba(73,176,182,.10);flex:0 0 auto}
+.mongo-cloud-popover.synced .mongo-cloud-state-dot{background:#16A34A;box-shadow:0 0 0 5px rgba(22,163,74,.10)}
+.mongo-cloud-popover.pending .mongo-cloud-state-dot,.mongo-cloud-popover.waiting .mongo-cloud-state-dot{background:#F59E0B;box-shadow:0 0 0 5px rgba(245,158,11,.10)}
+.mongo-cloud-popover.offline .mongo-cloud-state-dot,.mongo-cloud-popover.error .mongo-cloud-state-dot{background:#EF4444;box-shadow:0 0 0 5px rgba(239,68,68,.10)}
+.mongo-cloud-title{font-size:14px;font-weight:950;color:#374151;line-height:1.3}
+.mongo-cloud-meta{font-size:12px;color:#6B7280;font-weight:750;line-height:1.55;padding:10px 12px;border-radius:16px;background:rgba(73,176,182,.07);margin-bottom:10px}
+.mongo-cloud-queue{font-size:11px;color:#6B7280;font-weight:800;margin-bottom:10px}
+.mongo-cloud-sync-btn{width:100%;min-height:42px!important;border-radius:16px!important}
+
+@media(max-width:520px){
+  .v27-topbar{min-height:64px!important;padding:7px 10px!important;gap:6px!important}
+  .v27-topbar .logo,.v27-topbar .logo img{width:40px!important;height:40px!important}
+  .v27-topbar .brand-name{font-size:18px!important}
+  .v27-topbar .brand-subtitle{display:inline-block!important;font-size:7.7px!important;letter-spacing:.62px!important;max-width:92px!important}
+  .v27-lang-btn,#mongo-sync-status{width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;border-radius:14px!important}
+  #mongo-sync-status::before{font-size:20px}
+  #mongo-sync-status::after{right:6px;bottom:6px;width:7px;height:7px}
+  .v27-lang-list{top:66px!important;right:10px!important;width:178px!important;min-width:178px!important}
+  .mongo-cloud-popover{top:66px;right:10px;width:min(300px,calc(100vw - 20px))}
+}
+@media(max-width:370px){
+  .v27-topbar .brand{gap:5px!important}
+  .v27-topbar .brand-name{font-size:17px!important}
+  .v27-topbar .brand-subtitle{font-size:6.9px!important;letter-spacing:.35px!important;max-width:76px!important}
+  .v27-lang-btn,#mongo-sync-status{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}
+}
+@media(prefers-color-scheme:dark){
+  .mongo-cloud-popover{background:rgba(23,35,38,.97);border-color:rgba(116,215,220,.16)}
+  .mongo-cloud-title{color:#F3F4F6}
+  .mongo-cloud-meta{background:rgba(255,255,255,.05);color:#CBD5E1}
+  #mongo-sync-status::after{box-shadow:0 0 0 2px rgba(23,35,38,.92)}
+}
+</style>
+<script id="mongo-rc2-2-final-script">
+(function(){
+  'use strict';
+  if(window.MONGO_RC22_FINAL_READY)return;
+  window.MONGO_RC22_FINAL_READY=true;
+  window.MONGO_RELEASE_VERSION='v42.5-rc2.2-final';
+  const LAST_SYNC_PREFIX='mongo_last_sync_';
+  let lastStatus='waiting';
+
+  function uid(){
+    try{return window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser?window.MONGO_FIREBASE.auth.currentUser.uid:'guest'}catch(e){return'guest'}
+  }
+  function lastSyncKey(){return LAST_SYNC_PREFIX+uid()}
+  function formatDateTime(value){
+    const d=new Date(value||Date.now());
+    if(Number.isNaN(d.getTime()))return{date:'—',time:'—'};
+    const date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+    const time=[String(d.getHours()).padStart(2,'0'),String(d.getMinutes()).padStart(2,'0')].join(':');
+    return{date,time};
+  }
+  function labels(){
+    const l=typeof lang!=='undefined'?lang:'mn';
+    const all={
+      mn:{synced:'Cloud-д хадгалагдсан',pending:'Sync хүлээгдэж байна',offline:'Cloud холболт тасарсан',error:'Cloud холболтын алдаа',waiting:'Sync бэлдэж байна',last:'Сүүлд синк',queue:'Хүлээгдэж буй өөрчлөлт',offlineNote:'Интернет холбогдоход автоматаар синк хийнэ.',sync:'Одоо синк хийх',none:'Байхгүй'},
+      en:{synced:'Saved to cloud',pending:'Sync pending',offline:'Cloud connection offline',error:'Cloud connection error',waiting:'Preparing sync',last:'Last sync',queue:'Pending changes',offlineNote:'Will sync automatically when internet returns.',sync:'Sync now',none:'None'},
+      zh:{synced:'已保存到云端',pending:'等待同步',offline:'云端连接已断开',error:'云端连接错误',waiting:'正在准备同步',last:'上次同步',queue:'待同步更改',offlineNote:'网络恢复后将自动同步。',sync:'立即同步',none:'无'},
+      ja:{synced:'クラウドに保存済み',pending:'同期待ち',offline:'クラウド接続オフライン',error:'クラウド接続エラー',waiting:'同期準備中',last:'最終同期',queue:'保留中の変更',offlineNote:'接続回復時に自動同期します。',sync:'今すぐ同期',none:'なし'},
+      ko:{synced:'클라우드에 저장됨',pending:'동기화 대기 중',offline:'클라우드 연결 끊김',error:'클라우드 연결 오류',waiting:'동기화 준비 중',last:'마지막 동기화',queue:'대기 중 변경',offlineNote:'인터넷 연결 시 자동 동기화됩니다.',sync:'지금 동기화',none:'없음'},
+      ru:{synced:'Сохранено в облаке',pending:'Ожидает синхронизации',offline:'Нет связи с облаком',error:'Ошибка облачного соединения',waiting:'Подготовка синхронизации',last:'Последняя синхронизация',queue:'Ожидающие изменения',offlineNote:'Синхронизация начнётся после подключения.',sync:'Синхронизировать',none:'Нет'},
+      de:{synced:'In der Cloud gespeichert',pending:'Synchronisierung ausstehend',offline:'Cloud-Verbindung offline',error:'Cloud-Verbindungsfehler',waiting:'Synchronisierung wird vorbereitet',last:'Letzte Synchronisierung',queue:'Ausstehende Änderungen',offlineNote:'Wird bei Internetverbindung automatisch synchronisiert.',sync:'Jetzt synchronisieren',none:'Keine'}
+    };
+    return all[l]||all.mn;
+  }
+  function queueCount(){
+    try{return window.CloudDataService&&window.CloudDataService.queue?window.CloudDataService.queue.get().length:0}catch(e){return 0}
+  }
+  function getLastSync(){
+    try{return localStorage.getItem(lastSyncKey())||''}catch(e){return''}
+  }
+  function saveLastSync(){
+    try{localStorage.setItem(lastSyncKey(),new Date().toISOString())}catch(e){}
+  }
+  function ensurePopover(){
+    let p=document.getElementById('mongo-cloud-popover');
+    if(p)return p;
+    p=document.createElement('div');
+    p.id='mongo-cloud-popover';
+    p.className='mongo-cloud-popover waiting';
+    p.setAttribute('role','dialog');
+    p.setAttribute('aria-modal','false');
+    p.innerHTML='<div class="mongo-cloud-head"><span class="mongo-cloud-state-dot"></span><div class="mongo-cloud-title" id="mongo-cloud-title"></div></div><div class="mongo-cloud-meta" id="mongo-cloud-meta"></div><div class="mongo-cloud-queue" id="mongo-cloud-queue"></div><button type="button" class="btn btn-p mongo-cloud-sync-btn" id="mongo-cloud-sync-btn"></button>';
+    document.body.appendChild(p);
+    const b=p.querySelector('#mongo-cloud-sync-btn');
+    b.addEventListener('click',async()=>{
+      b.disabled=true;
+      try{
+        if(window.CloudDataService){
+          if(window.CloudDataService.queue)await window.CloudDataService.queue.process();
+          await window.CloudDataService.saveFinancialData('manual-sync');
+        }
+      }catch(e){}finally{b.disabled=false;refreshPopover();}
+    });
+    return p;
+  }
+  function refreshPopover(){
+    const p=ensurePopover(),t=labels(),q=queueCount();
+    p.className='mongo-cloud-popover '+lastStatus+(p.classList.contains('show')?' show':'');
+    const title=p.querySelector('#mongo-cloud-title');
+    const meta=p.querySelector('#mongo-cloud-meta');
+    const queue=p.querySelector('#mongo-cloud-queue');
+    const btn=p.querySelector('#mongo-cloud-sync-btn');
+    title.textContent=t[lastStatus]||t.waiting;
+    const dt=formatDateTime(getLastSync());
+    meta.innerHTML='<strong>'+t.last+':</strong><br>'+dt.date+'<br>'+dt.time+(lastStatus==='offline'?'<br><br>'+t.offlineNote:'');
+    queue.textContent=t.queue+': '+(q||t.none);
+    btn.textContent=t.sync;
+    btn.style.display=(lastStatus==='synced'&&q===0)?'none':'block';
+    const status=document.getElementById('mongo-sync-status');
+    if(status){status.setAttribute('aria-label',title.textContent);status.title=title.textContent;status.setAttribute('aria-expanded',p.classList.contains('show')?'true':'false')}
+  }
+  function togglePopover(force){
+    const p=ensurePopover();
+    const show=typeof force==='boolean'?force:!p.classList.contains('show');
+    p.classList.toggle('show',show);
+    refreshPopover();
+  }
+  function observeStatus(){
+    const status=document.getElementById('mongo-sync-status');
+    if(!status){setTimeout(observeStatus,250);return}
+    status.setAttribute('role','button');status.setAttribute('tabindex','0');status.setAttribute('aria-haspopup','dialog');
+    const syncState=()=>{
+      const cls=['synced','pending','offline','error','waiting'].find(c=>status.classList.contains(c))||'waiting';
+      lastStatus=cls;
+      if(cls==='synced')saveLastSync();
+      refreshPopover();
+    };
+    new MutationObserver(syncState).observe(status,{attributes:true,childList:true,subtree:true});
+    status.addEventListener('click',e=>{e.stopPropagation();togglePopover()});
+    status.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();togglePopover()}});
+    syncState();
+  }
+  function bindOutside(){
+    document.addEventListener('click',e=>{
+      const p=document.getElementById('mongo-cloud-popover');
+      if(p&&p.classList.contains('show')&&!p.contains(e.target)&&!e.target.closest('#mongo-sync-status'))togglePopover(false);
+      const langList=document.getElementById('lang-drop-list');
+      if(langList&&langList.style.display!=='none'&&!langList.contains(e.target)&&!e.target.closest('#lang-drop-btn')){
+        langList.style.display='none';
+        const a=document.getElementById('lang-drop-arrow');if(a)a.textContent='▼';
+      }
+    });
+  }
+  function fixCategoryToggle(){
+    const btn=document.querySelector('.budget-cat-toggle');
+    if(btn){btn.textContent='';btn.setAttribute('aria-label','Ангилал нэмэх хэсгийг нээх эсвэл хаах');}
+  }
+  function init(){ensurePopover();observeStatus();bindOutside();fixCategoryToggle();setTimeout(fixCategoryToggle,800)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<!-- Möngö V42.5 RC2.2 Final applied -->
 
 </body>
 </html>
