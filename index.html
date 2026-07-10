@@ -1874,6 +1874,44 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .security-note .material-symbols-rounded{font-size:16px;vertical-align:-3px;margin-right:4px;}
 
 </style>
+
+<style id="v42-5-rc2-1-header-arrow-fix">
+/* Möngö V42.5 RC2.1 — mobile header alignment + category arrow centering */
+.budget-cat-toggle{
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+.budget-cat-toggle::after{
+  display:block!important;
+  width:1em!important;
+  height:1em!important;
+  line-height:1em!important;
+  margin:0!important;
+  transform-origin:50% 50%!important;
+}
+.budget-cat-card:not(.collapsed) .budget-cat-toggle::after{transform:rotate(90deg)!important;}
+
+.v27-topbar .brand{justify-content:flex-start!important;}
+@media(max-width:520px){
+  .v27-topbar{
+    min-height:64px!important;
+    padding:7px 12px!important;
+    gap:7px!important;
+  }
+  .v27-topbar .brand{
+    flex:1 1 auto!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+  }
+  .v27-topbar .logo,.v27-topbar .logo img{width:44px!important;height:44px!important;}
+  .v27-topbar .brand-name{font-size:20px!important;}
+  #mongo-sync-status{width:40px!important;height:40px!important;min-width:40px!important;}
+  .v27-lang-btn{width:48px!important;min-width:48px!important;height:40px!important;padding:0!important;}
+}
+</style>
 </head>
 <body>
 
