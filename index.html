@@ -1957,6 +1957,55 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   #mongo-splash{animation-duration:.01ms!important;animation-delay:2.2s!important}
 }
 </style>
+
+<!-- Möngö V42.5 RC2.2.4 — Early splash runtime hotfix -->
+<script id="mongo-early-splash-exit">
+(function () {
+  "use strict";
+
+  function removeSplash() {
+    var splash = document.getElementById("mongo-splash");
+    if (!splash) return;
+
+    splash.classList.add("hide");
+    splash.setAttribute("aria-hidden", "true");
+    splash.style.pointerEvents = "none";
+    splash.style.opacity = "0";
+    splash.style.visibility = "hidden";
+
+    window.setTimeout(function () {
+      if (splash && splash.parentNode) {
+        splash.parentNode.removeChild(splash);
+      }
+    }, 80);
+  }
+
+  function scheduleSplashExit() {
+    window.setTimeout(removeSplash, 2600);
+    window.setTimeout(removeSplash, 4200);
+    window.setTimeout(removeSplash, 6500);
+  }
+
+  scheduleSplashExit();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleSplashExit, { once: true });
+  } else {
+    scheduleSplashExit();
+  }
+
+  window.addEventListener("pageshow", function () {
+    window.setTimeout(removeSplash, 500);
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      window.setTimeout(removeSplash, 250);
+    }
+  });
+})();
+</script>
+
 </head>
 <body>
 
