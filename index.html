@@ -24,6 +24,86 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+
+<!-- Möngö V42.5 RC2.3 Diagnostic — early runtime logger -->
+<style id="mongo-diagnostic-style">
+#mongo-diagnostic{
+  position:fixed;left:10px;right:10px;bottom:10px;z-index:30000;
+  max-height:42vh;overflow:auto;padding:10px 12px;border-radius:18px;
+  background:rgba(13,28,30,.94);color:#eaffff;
+  box-shadow:0 14px 36px rgba(0,0,0,.28);
+  font:600 11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+#mongo-diagnostic strong{display:block;color:#7de2e5;font-size:12px;margin-bottom:5px}
+#mongo-diagnostic-log{white-space:pre-wrap;word-break:break-word}
+#mongo-diagnostic-actions{display:flex;gap:7px;margin-top:8px}
+#mongo-diagnostic button{
+  flex:1;min-height:36px;border:0;border-radius:12px;padding:7px 9px;
+  font:800 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer
+}
+#mongo-diag-continue{background:#49b0b6;color:#fff}
+#mongo-diag-copy{background:#fff;color:#245f64}
+</style>
+<script id="mongo-diagnostic-early">
+(function(){
+  "use strict";
+  var started=Date.now(), rows=[], maxRows=35;
+
+  function stamp(){ return ((Date.now()-started)/1000).toFixed(2)+"s"; }
+  function safeText(v){
+    try{
+      if(v instanceof Error) return v.name+": "+v.message;
+      if(typeof v==="string") return v;
+      return JSON.stringify(v);
+    }catch(e){ return String(v); }
+  }
+  function render(){
+    var box=document.getElementById("mongo-diagnostic-log");
+    if(box) box.textContent=rows.slice(-maxRows).join("\n");
+  }
+  function log(label, detail){
+    var line="["+stamp()+"] "+label+(detail!==undefined?" — "+safeText(detail):"");
+    rows.push(line); render();
+  }
+  window.__MONGO_DIAG__={log:log,rows:rows,started:started};
+  log("Diagnostic эхэллээ");
+  log("document.readyState",document.readyState);
+
+  window.addEventListener("error",function(e){
+    log("JS ERROR",(e.message||"unknown")+" @ "+(e.filename||"inline")+":"+(e.lineno||0)+":"+(e.colno||0));
+  },true);
+  window.addEventListener("unhandledrejection",function(e){
+    log("PROMISE ERROR",e.reason||"unknown");
+  });
+
+  document.addEventListener("readystatechange",function(){
+    log("readyState",document.readyState);
+  });
+  document.addEventListener("DOMContentLoaded",function(){
+    log("DOMContentLoaded");
+  },{once:true});
+  window.addEventListener("load",function(){
+    log("window.load");
+  },{once:true});
+
+  window.setInterval(function(){
+    var splash=document.getElementById("mongo-splash");
+    var login=document.getElementById("auth-login");
+    var app=document.getElementById("app-root");
+    log(
+      "STATE",
+      "splash="+(splash?"present/"+getComputedStyle(splash).visibility+"/"+getComputedStyle(splash).opacity:"removed")+
+      ", login="+(login?getComputedStyle(login).display:"missing")+
+      ", app="+(app?getComputedStyle(app).display:"missing")+
+      ", firebase="+(typeof window.firebase)+
+      ", user="+(window.currentUser&&window.currentUser.uid?"yes":"no")
+    );
+  },2500);
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -32,7 +112,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <script>
 (function(){
   'use strict';
-  var BUILD='v42.5-rc2.2.2-20260711';
+  var BUILD='v42.5-rc2.3-diagnostic-20260712';
   window.__MONGO_BUILD__=BUILD;
   try{
     var previous=localStorage.getItem('__mongo_app_build__');
@@ -55,7 +135,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — Money Flow System RC2.2.3 Splash Exit</title>
+<title>Möngö — RC2.3 Diagnostic Build</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -2008,6 +2088,57 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 </head>
 <body>
+
+<!-- RC2.3 visible diagnostic panel -->
+<div id="mongo-diagnostic" role="status" aria-live="polite">
+  <strong>🩺 Möngö RC2.3 Diagnostic</strong>
+  <div id="mongo-diagnostic-log">Diagnostic panel ачаалж байна...</div>
+  <div id="mongo-diagnostic-actions">
+    <button id="mongo-diag-continue" type="button">Splash хааж үргэлжлүүлэх</button>
+    <button id="mongo-diag-copy" type="button">Оношлогоо хуулах</button>
+  </div>
+</div>
+<script id="mongo-diagnostic-controls">
+(function(){
+  "use strict";
+  function diag(){return window.__MONGO_DIAG__;}
+  function log(a,b){if(diag())diag().log(a,b);}
+  document.getElementById("mongo-diag-continue").addEventListener("click",function(){
+    var sp=document.getElementById("mongo-splash");
+    if(sp){sp.classList.add("hide");sp.style.display="none";sp.remove();}
+    log("MANUAL","Splash хэрэглэгчийн товчоор хаагдав");
+  });
+  document.getElementById("mongo-diag-copy").addEventListener("click",async function(){
+    var out=diag()?diag().rows.join("\n"):"Diagnostic unavailable";
+    try{
+      await navigator.clipboard.writeText(out);
+      this.textContent="Хууллаа ✓";
+    }catch(e){
+      this.textContent="Screenshot аваарай";
+    }
+  });
+
+  var checks=[
+    [500,"DOM шалгалт"],
+    [1800,"Firebase шалгалт"],
+    [3500,"Auth/Firestore шалгалт"],
+    [7000,"7 секундын шалгалт"]
+  ];
+  checks.forEach(function(item){
+    setTimeout(function(){
+      var sp=document.getElementById("mongo-splash");
+      var auth=window.firebase&&firebase.auth?firebase.auth():null;
+      log(item[1],
+        "splash="+(sp?"present":"removed")+
+        ", firebaseApps="+(window.firebase&&firebase.apps?firebase.apps.length:"n/a")+
+        ", authUser="+(auth&&auth.currentUser?"yes":"no")+
+        ", online="+navigator.onLine
+      );
+    },item[0]);
+  });
+})();
+</script>
+
 
 <!-- ── Möngö V30 Premium Splash ── -->
 <div class="mongo-splash" id="mongo-splash">
