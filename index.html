@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Möngö V42.5 RC2.5: Premium chart rendering — dark outlines removed, richer gradients and soft separators. -->
-<!-- Möngö V42.5 RC2.6: Distinct premium chart colors — per-user philosophy, legacy transaction IDs, compact mobile header and language popover. -->
+<!-- Möngö V42.5 RC2.9: Savings chart colors synchronized with its legend and the shared premium chart engine. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
 <!--
 Möngö V30.3 Correct Splash Logo
@@ -2167,6 +2167,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 }
 </style>
 
+<!-- RC2.9: Savings goals now use the same palette object for donut segments and legend dots. -->
 </head>
 <body>
 
@@ -7704,10 +7705,10 @@ function rDonut(type){
       const manual=Math.max(0,g.saved||0);
       const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((s,t)=>s+t.amount,0);
       const v=manual+auto;
-      if(v>0){const col=PAL[i%PAL.length];data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});}
+      if(v>0){const col=CHART_PALETTES.gls[i%CHART_PALETTES.gls.length];data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});}
     });
   }
-  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=PAL[i%PAL.length];data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
+  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=CHART_PALETTES.dbt[i%CHART_PALETTES.dbt.length];data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
   else if(type==='inv'){
     cid='c-inv';lid='l-inv';
     const byT={};invests.forEach(inv=>{byT[inv.typeKey]=(byT[inv.typeKey]||0)+inv.current;});
