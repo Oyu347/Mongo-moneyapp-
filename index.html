@@ -7557,22 +7557,13 @@ function drawDonut(canvas,data,colors){
     const start=angle+gap/2;
     const end=angle+full-gap/2;
     const base=colors[i%colors.length]||'#49B0B6';
-    // Mobile canvas дээр өнгө өөр өнгөтэй холилдохоос сэргийлж,
-    // тухайн хэсгийн үндсэн өнгийг хадгалсан маш зөөлөн gradient хэрэглэнэ.
-    const x1=cx+Math.cos((start+end)/2)*r*.20;
-    const y1=cy+Math.sin((start+end)/2)*r*.20;
-    const x2=cx+Math.cos((start+end)/2)*R;
-    const y2=cy+Math.sin((start+end)/2)*R;
-    const grad=ctx.createLinearGradient(x1,y1,x2,y2);
-    grad.addColorStop(0,mixCanvasColor(base,'#ffffff',.08));
-    grad.addColorStop(.55,base);
-    grad.addColorStop(1,mixCanvasColor(base,'#102f33',.08));
-
+    // RC2.7: solid base color keeps the donut segment exactly synced with its legend dot.
+    // No gradient tinting and no dark outline, including the investment allocation chart.
     ctx.beginPath();
     ctx.arc(cx,cy,R,start,end);
     ctx.arc(cx,cy,r,end,start,true);
     ctx.closePath();
-    ctx.fillStyle=grad;
+    ctx.fillStyle=base;
     ctx.fill();
     angle+=full;
   });
@@ -7600,11 +7591,7 @@ function drawDonut(canvas,data,colors){
   ctx.fillStyle=surface;
   ctx.fill();
 
-  // Дотор болон гадна ирмэгийг зөвхөн маш зөөлөн гэрлээр тодруулна.
-  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
-  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.strokeStyle='rgba(73,176,182,.08)';ctx.lineWidth=1;ctx.stroke();
+  // RC2.7: outer/inner black-looking outlines removed completely.
   ctx.restore();
 }
 
@@ -7675,8 +7662,9 @@ function rDonut(type){
   const palette=CHART_PALETTES[type]||PAL;
   const combined=data.map((v,i)=>({
     v,
-    // Хэсэг бүрт ялгаатай өнгө оноож, legend болон donut-ыг яг ижил өнгөөр синк хийнэ.
-    color:palette[i%palette.length],
+    // RC2.7: category, value and color remain one object while sorting.
+    // Prefer the category's own color; fall back to the chart palette only when missing.
+    color:(labels[i]&&labels[i].color)||colors[i]||palette[i%palette.length],
     label:labels[i]
   })).sort((a,b)=>b.v-a.v);
   drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color));
