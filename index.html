@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.0 Phase 1: Unified Color Engine — one object, one stored color across cards, progress bars, donuts and legends. -->
+<!-- Möngö V43.1: Typed Unified Colors — Savings goals sync only with Savings budget subcategories; Loans sync only with Loan budget subcategories. Full color pickers added to category/subcategory creation. -->
 <!-- Möngö V42.5 RC2.12: Savings chart uses one synchronized vivid palette for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
@@ -2184,6 +2184,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .mongo-object-title{display:flex;align-items:center;gap:8px}
 .mongo-inline-color{width:30px;height:30px;padding:2px;border-radius:10px;flex:0 0 auto}
 @media(max-width:520px){.mongo-color-input{width:40px;height:40px}.mongo-inline-color{width:28px;height:28px}}
+.asr .mongo-inline-color,#b-crow .mongo-inline-color{width:30px!important;height:30px!important;margin-left:4px}.bbody .mongo-inline-color{width:29px!important;height:29px!important}
 </style>
 </head>
 <body>
@@ -3112,9 +3113,47 @@ function ensureUnifiedObjectColors(){
   debts.forEach((d,i)=>d.color=mongoColor(d.color,mongoNextColor(i,'debt')));
   invests.forEach((inv,i)=>inv.color=mongoColor(inv.color,ICOLS?.[inv.typeKey]||mongoNextColor(i,'invest')));
 }
-function updateGoalColor(id,color){const g=goals.find(x=>String(x.id)===String(id));if(!g)return;g.color=mongoColor(color,g.color);saveData();rGoals();rDonut('gls');rProfile();}
-function updateDebtColor(id,color){const d=debts.find(x=>String(x.id)===String(id));if(!d)return;d.color=mongoColor(color,d.color);saveData();rDebts();rDonut('dbt');}
+function mongoNormName(v){return String(v||'').trim().toLocaleLowerCase().replace(/\s+/g,' ');}
+function mongoObjectNames(obj){
+  const vals=[obj?.name,obj?.key,cN?.(obj),...Object.values(obj?.names||{})];
+  return new Set(vals.map(mongoNormName).filter(Boolean));
+}
+function mongoSameObjectName(a,b){
+  const A=mongoObjectNames(a),B=mongoObjectNames(b);
+  for(const n of A)if(B.has(n))return true;
+  return false;
+}
+function mongoBudgetObjectParent(kind){
+  const key=kind==='goal'?'savings_cat':'loan_cat';
+  return (bCatsExp||[]).find(c=>c.key===key)||null;
+}
+function syncObjectColorToBudget(kind,obj,color){
+  const parent=mongoBudgetObjectParent(kind);if(!parent)return;
+  (parent.subs||[]).forEach(sub=>{if(mongoSameObjectName(sub,obj))sub.color=color;});
+}
+function syncBudgetSubColorToObject(parent,sub,color){
+  if(!parent||!sub)return;
+  if(parent.key==='savings_cat')goals.forEach(g=>{if(mongoSameObjectName(g,sub))g.color=color;});
+  if(parent.key==='loan_cat')debts.forEach(d=>{if(mongoSameObjectName(d,sub))d.color=color;});
+}
+function updateGoalColor(id,color){
+  const g=goals.find(x=>String(x.id)===String(id));if(!g)return;
+  g.color=mongoColor(color,g.color);syncObjectColorToBudget('goal',g,g.color);
+  saveData();rGoals();rBList();rDonut('gls');rProfile();rDash();
+}
+function updateDebtColor(id,color){
+  const d=debts.find(x=>String(x.id)===String(id));if(!d)return;
+  d.color=mongoColor(color,d.color);syncObjectColorToBudget('debt',d,d.color);
+  saveData();rDebts();rBList();rDonut('dbt');rDash();
+}
 function updateInvestColor(id,color){const inv=invests.find(x=>String(x.id)===String(id));if(!inv)return;inv.color=mongoColor(color,inv.color);saveData();rInvests();rDonut('inv');}
+function updateBudgetSubColor(type,catIndex,subIndex,color){
+  const cats=type==='income'?bCatsInc:bCatsExp;
+  const parent=cats?.[catIndex],sub=parent?.subs?.[subIndex];if(!sub)return;
+  sub.color=mongoColor(color,parent?.color||'#49B0B6');
+  if(type==='expense')syncBudgetSubColorToObject(parent,sub,sub.color);
+  saveData();rBList();rGoals();rDebts();rDonut('gls');rDonut('dbt');rTxns();rDash();rProfile();
+}
 function updateCategoryColor(type,keyOrName,color){
   const col=mongoColor(color);
   const primary=type==='income'?incCats:expCats;
@@ -6495,7 +6534,7 @@ function rBIrow(){
     '<div class="ic" style="font-size:10px;color:var(--text2);width:auto;padding:0 6px" onclick="irowOpenB=!irowOpenB;rBIrow()">'+(open?'▲':'▼')+'</div></div>'+
     (open?'<div style="display:flex;flex-wrap:wrap;gap:3px">'+rest.map(ic=>'<div class="ic'+(sIcon.b===ic?' sel':'')+'" onclick="sIcon.b=\''+ic+'\';rBIrow()">'+ic+'</div>').join('')+'</div>':'');
 }
-function rBCrow(){document.getElementById('b-crow').innerHTML=PAL.map(c=>`<div class="cp${sColor.b===c?' sel':''}" style="background:${c}" onclick="sColor.b='${c}';rBCrow()"></div>`).join('');}
+function rBCrow(){const el=document.getElementById('b-crow');if(!el)return;el.innerHTML=PAL.map(c=>`<div class="cp${sColor.b===c?' sel':''}" style="background:${c}" onclick="sColor.b='${c}';rBCrow()"></div>`).join('')+`<input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(sColor.b)}" title="Өнгөний бүрэн сонголт" onchange="sColor.b=this.value;rBCrow()">`; }
 function addBudgetCat(){
   const inp=document.getElementById('b-newcat');const v=inp.value.trim();if(!v)return;
   const cats=getBCats();if(cats.find(c=>cN(c)===v))return;
@@ -6545,6 +6584,7 @@ function rBList(){
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
             <span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span>
             <span style="font-size:12px;color:${sb.color};flex:1">${snm}</span>
+            <input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(sb.color,cat.color)}" title="Өнгө солих" onchange="updateBudgetSubColor('${budgetType}',${ci},${si},this.value)">
           </div>
           <div style="display:flex;gap:5px;align-items:center">
             <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))">
@@ -6552,7 +6592,7 @@ function rBList(){
           </div>
         </div>`}).join('')}
         <div class="asr">
-          <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px">${PAL.map(c=>`<div class="cp-sm${subSC[sk]===c?' sel':''}" style="background:${c}" onclick="subSC['${sk}']='${c}';rBList()"></div>`).join('')}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;align-items:center">${PAL.map(c=>`<div class="cp-sm${subSC[sk]===c?' sel':''}" style="background:${c}" onclick="subSC['${sk}']='${c}';rBList()"></div>`).join('')}<input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(subSC[sk],cat.color)}" title="Өнгөний бүрэн сонголт" onchange="subSC['${sk}']=this.value;rBList()"></div>
           <input type="text" class="fi" id="si-${budgetType}-${ci}" placeholder="${L.addSubPh||L.newcat}" style="font-size:12px;padding:4px 7px">
           <button class="btn btn-p" style="font-size:11px;padding:4px 8px" onclick="addSub('${budgetType}',${ci})">${L.add}</button>
         </div>
