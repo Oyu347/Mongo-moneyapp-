@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V43.2: Premium Budget Timeline + grouped investment portfolio. -->
 <!-- Möngö V43.1: Typed Unified Colors — Savings goals sync only with Savings budget subcategories; Loans sync only with Loan budget subcategories. Full color pickers added to category/subcategory creation. -->
 <!-- Möngö V42.5 RC2.12: Savings chart uses one synchronized vivid palette for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
@@ -2186,6 +2187,22 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 @media(max-width:520px){.mongo-color-input{width:40px;height:40px}.mongo-inline-color{width:28px;height:28px}}
 .asr .mongo-inline-color,#b-crow .mongo-inline-color{width:30px!important;height:30px!important;margin-left:4px}.bbody .mongo-inline-color{width:29px!important;height:29px!important}
 </style>
+
+<style id="mongo-v432-budget-portfolio-style">
+/* Möngö V43.2 — budget timeline and grouped investment portfolio */
+.budget-timeline{display:grid;grid-template-columns:46px minmax(92px,1fr) minmax(118px,1.3fr) 46px;gap:8px;align-items:center;margin-top:8px}
+.budget-nav-btn{height:46px;border-radius:16px;border:1px solid rgba(73,176,182,.18);background:#fff;color:#2C7F85;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 7px 18px rgba(31,127,134,.07)}
+.budget-select{height:46px;border-radius:16px;border:1px solid rgba(73,176,182,.22);background:rgba(255,255,255,.9);color:#374151;font-size:14px;font-weight:900;padding:0 12px;outline:none;box-shadow:0 7px 18px rgba(31,127,134,.06)}
+.budget-mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;margin-top:10px;border-radius:18px;background:rgba(73,176,182,.09)}
+.budget-mode-btn{min-height:38px;border:0;border-radius:14px;background:transparent;color:#6B7280;font-size:12px;font-weight:900;cursor:pointer}
+.budget-mode-btn.active{background:linear-gradient(135deg,#49B0B6,#1F7F86);color:#fff;box-shadow:0 8px 18px rgba(31,127,134,.18)}
+.budget-health{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 12px}
+.budget-health-item{padding:10px 8px;border-radius:18px;text-align:center;border:1px solid rgba(73,176,182,.12);background:#fff}
+.budget-health-num{font-size:18px;font-weight:1000;line-height:1}.budget-health-label{font-size:10px;font-weight:850;color:#6B7280;margin-top:5px;line-height:1.2}
+.budget-health-item.good .budget-health-num{color:#08724F}.budget-health-item.warn .budget-health-num{color:#B7791F}.budget-health-item.bad .budget-health-num{color:#B91C1C}
+.portfolio-group{overflow:visible!important}.portfolio-group-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.portfolio-group-title{display:flex;align-items:center;gap:9px;min-width:0}.portfolio-group-icon{width:40px;height:40px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto}.portfolio-group-name{font-size:15px;font-weight:1000;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.portfolio-group-meta{font-size:11px;font-weight:800;color:#6B7280;margin-top:3px}.portfolio-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.portfolio-stat{padding:9px 8px;border-radius:16px;background:rgba(73,176,182,.055);border:1px solid rgba(73,176,182,.10)}.portfolio-stat .k{font-size:9.5px;color:#6B7280;font-weight:850}.portfolio-stat .v{font-size:13px;color:#374151;font-weight:1000;margin-top:4px;white-space:nowrap}.portfolio-history-toggle{width:100%;min-height:38px;border-radius:16px;border:1px solid rgba(73,176,182,.16);background:rgba(73,176,182,.06);color:#2C7F85;font-size:12px;font-weight:950;cursor:pointer}.portfolio-history{display:none;margin-top:9px;padding-top:4px;border-top:1px solid rgba(73,176,182,.11)}.portfolio-history.show{display:block}.portfolio-lot{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(73,176,182,.09)}.portfolio-lot:last-child{border-bottom:0}.portfolio-lot-main{min-width:0}.portfolio-lot-date{font-size:11px;color:#6B7280;font-weight:850}.portfolio-lot-values{font-size:12px;color:#374151;font-weight:900;margin-top:3px}.portfolio-lot-actions{display:flex;align-items:center;gap:5px}.portfolio-lot-actions .fi{width:105px!important;min-height:36px!important;padding:6px 8px!important;font-size:11px!important}.portfolio-chevron{display:inline-block;transition:transform .2s}.portfolio-chevron.open{transform:rotate(180deg)}
+@media(max-width:520px){.budget-timeline{grid-template-columns:42px 1fr 1.15fr 42px;gap:6px}.budget-nav-btn,.budget-select{height:43px}.budget-select{font-size:12px;padding:0 8px}.budget-health{gap:6px}.budget-health-item{padding:9px 5px}.portfolio-summary-grid{grid-template-columns:1fr 1fr}.portfolio-stat:last-child{grid-column:1/-1}.portfolio-lot{grid-template-columns:1fr}.portfolio-lot-actions{justify-content:space-between}.portfolio-lot-actions .fi{width:130px!important}}
+</style>
 </head>
 <body>
 
@@ -2476,7 +2493,11 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       <button class="btype-btn" id="btype-expense" onclick="setBudgetType('expense',this)" id="lbl-btype-expense"></button>
     </div>
     <div class="card-title" id="lbl-budget-month-title" style="margin-bottom:7px"></div>
-    <div class="month-sel" id="budget-month-sel"></div>
+    <div id="budget-month-sel"></div>
+    <div class="budget-mode-toggle" id="budget-mode-toggle">
+      <button class="budget-mode-btn active" id="budget-mode-actual" onclick="setBudgetViewMode('actual')">Бодит</button>
+      <button class="budget-mode-btn" id="budget-mode-plan" onclick="setBudgetViewMode('plan')">Төлөвлөгөө</button>
+    </div>
   </div>
   <!-- Budget total summary -->
   <div class="budget-total-bar" id="budget-total-bar">
@@ -2494,7 +2515,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   </div>
   <div id="b-cats-list"></div>
   <button class="btn btn-p" style="margin-bottom:11px;width:100%" onclick="saveBudget()" id="btn-save"></button>
-  <div class="card"><div class="card-title" id="lbl-budgetprog2"></div><div id="budget-progress"><div class="empty" id="lbl-nobudget-bp"></div></div></div>
+  <div class="card"><div class="card-title" id="lbl-budgetprog2"></div><div id="budget-health-summary"></div><div id="budget-progress"><div class="empty" id="lbl-nobudget-bp"></div></div></div>
 </div>
 
 <!-- GOALS -->
@@ -3169,6 +3190,7 @@ let period='7d',cfrom=null,cto=null;
 let openB=new Set(['food']),subSI={},subSC={};
 let budgetMonth=new Date().getMonth()+1;
 let budgetYear=new Date().getFullYear();
+let budgetViewMode='actual';
 let monthSelOpen=false;
 let budgetType='income'; // 'income' or 'expense'
 let selSubcat=null; // currently selected sub-cat key/name for txn
@@ -3460,35 +3482,38 @@ function rInvSel(id){
   document.getElementById(id).innerHTML=t.map(x=>`<option value="${x.k}">${x.icon} ${x.label}</option>`).join('');
 }
 
+function budgetUiText(){
+  const d={
+    mn:{actual:'Бодит',plan:'Төлөвлөгөө',good:'Төсөвт багтаж байна',warn:'Анхаарах',bad:'Хэтэрсэн'},
+    en:{actual:'Actual',plan:'Plan',good:'Within budget',warn:'Watch',bad:'Over budget'},
+    zh:{actual:'实际',plan:'计划',good:'预算内',warn:'注意',bad:'超预算'},
+    ja:{actual:'実績',plan:'計画',good:'予算内',warn:'注意',bad:'予算超過'},
+    ko:{actual:'실제',plan:'계획',good:'예산 내',warn:'주의',bad:'예산 초과'},
+    ru:{actual:'Факт',plan:'План',good:'В бюджете',warn:'Внимание',bad:'Превышено'},
+    de:{actual:'Ist',plan:'Plan',good:'Im Budget',warn:'Achtung',bad:'Überschritten'}
+  };return d[lang]||d.mn;
+}
 function rBMonthSel(){
-  const el=document.getElementById('budget-month-sel');
-  if(!el)return;
+  const el=document.getElementById('budget-month-sel');if(!el)return;
   const months=L.months||[];
-  const curMoLabel=months[budgetMonth-1]||budgetMonth;
-  // Он солих товч + одоогийн сар харуулах + задрах сум
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:${monthSelOpen?'8px':'0'}">
-      <button onclick="changeBudgetYear(-1)" style="padding:3px 9px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer">‹</button>
-      <span style="font-size:13px;font-weight:600;color:var(--brand)">${budgetYear}</span>
-      <button onclick="changeBudgetYear(1)" style="padding:3px 9px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer">›</button>
-      <div onclick="monthSelOpen=!monthSelOpen;rBMonthSel()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:4px 10px;border:0.5px solid var(--brand);border-radius:var(--radius);cursor:pointer;background:var(--brand-light)">
-        <span style="font-size:12px;font-weight:600;color:var(--brand)">${curMoLabel}</span>
-        <span style="font-size:10px;color:var(--brand)">${monthSelOpen?'▲':'▼'}</span>
-      </div>
-    </div>
-    ${monthSelOpen?`<div style="display:flex;flex-wrap:wrap;gap:4px">
-      ${months.map((m,i)=>`<button class="msb${budgetMonth===i+1?' active':''}" onclick="setBudgetMonth(${i+1})">${m}</button>`).join('')}
-    </div>`:''}
-  `;
+  const y0=new Date().getFullYear();
+  const years=[];for(let y=y0-7;y<=y0+7;y++)years.push(y);
+  el.innerHTML=`<div class="budget-timeline">
+    <button class="budget-nav-btn" onclick="shiftBudgetPeriod(-1)" aria-label="Previous month">‹</button>
+    <select class="budget-select" onchange="setBudgetYear(Number(this.value))">${years.map(y=>`<option value="${y}"${y===budgetYear?' selected':''}>${y}</option>`).join('')}</select>
+    <select class="budget-select" onchange="setBudgetMonth(Number(this.value))">${months.map((m,i)=>`<option value="${i+1}"${budgetMonth===i+1?' selected':''}>${m}</option>`).join('')}</select>
+    <button class="budget-nav-btn" onclick="shiftBudgetPeriod(1)" aria-label="Next month">›</button>
+  </div>`;
+  const T=budgetUiText();
+  const a=document.getElementById('budget-mode-actual'),p=document.getElementById('budget-mode-plan');
+  if(a){a.textContent=T.actual;a.classList.toggle('active',budgetViewMode==='actual');}
+  if(p){p.textContent=T.plan;p.classList.toggle('active',budgetViewMode==='plan');}
 }
-function setBudgetMonth(m){
-  budgetMonth=m;monthSelOpen=false;
-  rBMonthSel();rBList();rBProg();updateBudgetTotal();
-}
-function changeBudgetYear(dir){
-  budgetYear+=dir;
-  rBMonthSel();rBList();rBProg();updateBudgetTotal();rBOv();
-}
+function setBudgetMonth(m){budgetMonth=Math.max(1,Math.min(12,Number(m)||1));rBMonthSel();rBList();rBProg();updateBudgetTotal();}
+function setBudgetYear(y){budgetYear=Math.max(2020,Math.min(2100,Number(y)||new Date().getFullYear()));rBMonthSel();rBList();rBProg();updateBudgetTotal();rBOv();}
+function changeBudgetYear(dir){setBudgetYear(budgetYear+dir);}
+function shiftBudgetPeriod(dir){budgetMonth+=dir;if(budgetMonth<1){budgetMonth=12;budgetYear--;}if(budgetMonth>12){budgetMonth=1;budgetYear++;}rBMonthSel();rBList();rBProg();updateBudgetTotal();rBOv();}
+function setBudgetViewMode(mode){budgetViewMode=mode==='plan'?'plan':'actual';rBMonthSel();rBProg();}
 function setBudgetType(t,btn){
   budgetType=t;
   document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active'));
@@ -7321,7 +7346,11 @@ function rBProg(){
   const mo=budgetMonth;const cats=getBCats();
   const isIncomePlan=budgetType==='income';
   const has=cats.some(c=>getBudgetVal(bKeyFor(c),mo)>0||(c.subs||[]).some(s=>getBudgetVal(bSubKey(c,s),mo)>0));
-  if(!has){el.innerHTML=`<div class="empty">${L.nobudget}</div>`;return;}
+  const summary=document.getElementById('budget-health-summary');
+  if(!has){if(summary)summary.innerHTML='';el.innerHTML=`<div class="empty">${L.nobudget}</div>`;return;}
+  let goodCount=0,warnCount=0,badCount=0;
+  cats.forEach(cat=>{const cb=getBudgetVal(bKeyFor(cat),mo)+(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);if(!cb)return;const actual=isIncomePlan?gIncome(cN(cat),mo):gSpent(cN(cat),null,mo);const pct=cb?actual/cb*100:0;if(!isIncomePlan&&pct>100)badCount++;else if((isIncomePlan&&pct<80)||(!isIncomePlan&&pct>=80))warnCount++;else goodCount++;});
+  if(summary){const T=budgetUiText();summary.innerHTML=`<div class="budget-health"><div class="budget-health-item good"><div class="budget-health-num">${goodCount}</div><div class="budget-health-label">${T.good}</div></div><div class="budget-health-item warn"><div class="budget-health-num">${warnCount}</div><div class="budget-health-label">${T.warn}</div></div><div class="budget-health-item bad"><div class="budget-health-num">${badCount}</div><div class="budget-health-label">${T.bad}</div></div></div>`;}
   el.innerHTML=cats.map(cat=>{
     const nm=cN(cat);const subs=cat.subs||[];
     const bk=bKeyFor(cat);
@@ -7329,7 +7358,8 @@ function rBProg(){
     const subBudget=subs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
     const cb=catBudget+subBudget;
     if(!cb)return '';
-    const tot=isIncomePlan?gIncome(nm,mo):gSpent(nm,null,mo);
+    const actualTot=isIncomePlan?gIncome(nm,mo):gSpent(nm,null,mo);
+    const tot=budgetViewMode==='plan'?cb:actualTot;
     const realPct=cb>0?Math.round(tot/cb*100):0;
     const isOver=!isIncomePlan&&tot>cb;
     const overAmt=isOver?tot-cb:0;
@@ -7356,13 +7386,14 @@ function rBProg(){
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
           const snm=cN(sb)||sb.key||'';
           const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const ss=isIncomePlan
+          const actualSS=isIncomePlan
             ?txns.filter(t=>{
               const ymd=(t.date||'').split('-');
               const subKey=sb.key||sb.name||snm;
               return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;
             }).reduce((a,t)=>a+t.amount,0)
             :gSpent(nm,snm,mo);
+          const ss=budgetViewMode==='plan'?sv:actualSS;
           const subOver=!isIncomePlan&&ss>sv;
           const subOverAmt=subOver?ss-sv:0;
           const subRealPct=sv>0?Math.round(ss/sv*100):0;
@@ -7588,55 +7619,40 @@ function rDebts(){
   }).join('');
 }
 
+const openInvestGroups=new Set();
+function normInvestName(v){return String(v||'').trim().toLocaleLowerCase();}
+function investGroupKey(inv){return `${inv.typeKey||'other'}:::${normInvestName(inv.name)}`;}
+function getInvestGroups(){
+  const map=new Map();
+  invests.forEach((inv,i)=>{const key=investGroupKey(inv);if(!map.has(key))map.set(key,{key,name:inv.name,typeKey:inv.typeKey,color:mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(i,'invest')),items:[]});map.get(key).items.push(inv);});
+  return [...map.values()].map(g=>({...g,invested:g.items.reduce((s,x)=>s+(Number(x.invested)||0),0),current:g.items.reduce((s,x)=>s+(Number(x.current)||0),0)}));
+}
+function toggleInvestGroup(key){openInvestGroups.has(key)?openInvestGroups.delete(key):openInvestGroups.add(key);rInvests();}
+function updateInvestGroupColor(key,color){invests.filter(x=>investGroupKey(x)===key).forEach(x=>x.color=color);saveData();rInvests();rDonut('inv');}
 function rInvests(){
   const el=document.getElementById('invest-list');
   if(!invests.length){el.innerHTML=`<div class="empty">${L.nodata}</div>`;return;}
-  const tIn=invests.reduce((s,i)=>s+i.invested,0);const tCur=invests.reduce((s,i)=>s+i.current,0);
-  const pnl=tCur-tIn;const pct2=tIn>0?(pnl/tIn)*100:0;
-  document.getElementById('i-total-in').textContent=fmt(tIn);
-  document.getElementById('i-total-cur').textContent=fmt(tCur);
-  const pnlVal=document.getElementById('i-pnl-val');
-  const pctVal=document.getElementById('i-pct-val');
-  pnlVal.textContent=(pnl>=0?'+':'')+fmt(pnl);
-  pctVal.textContent=fmtP(pct2);
-  pnlVal.className='metric-val '+(pnl>0?'inv-positive':pnl<0?'inv-negative':'inv-neutral');
-  pctVal.className='metric-val '+(pct2>0?'inv-positive':pct2<0?'inv-negative':'inv-neutral');
+  const groups=getInvestGroups();
+  const tIn=groups.reduce((s,i)=>s+i.invested,0),tCur=groups.reduce((s,i)=>s+i.current,0);
+  const pnl=tCur-tIn,pct2=tIn>0?(pnl/tIn)*100:0;
+  document.getElementById('i-total-in').textContent=fmt(tIn);document.getElementById('i-total-cur').textContent=fmt(tCur);
+  const pnlVal=document.getElementById('i-pnl-val'),pctVal=document.getElementById('i-pct-val');
+  pnlVal.textContent=(pnl>=0?'+':'')+fmt(pnl);pctVal.textContent=fmtP(pct2);
+  pnlVal.className='metric-val '+(pnl>0?'inv-positive':pnl<0?'inv-negative':'inv-neutral');pctVal.className='metric-val '+(pct2>0?'inv-positive':pct2<0?'inv-negative':'inv-neutral');
   const pc=document.getElementById('i-pnl-card');pc.style.background=pnl>=0?'#E1F5EE':'#FCEBEB';pc.querySelector('.metric-lbl').style.color=pnl>=0?'#085041':'#791F1F';pc.querySelector('.metric-val').style.color=pnl>=0?'#085041':'#791F1F';
   const pp=document.getElementById('i-pct-card');pp.style.background=pct2>=0?'#E1F5EE':'#FCEBEB';pp.querySelector('.metric-lbl').style.color=pct2>=0?'#085041':'#791F1F';pp.querySelector('.metric-val').style.color=pct2>=0?'#085041':'#791F1F';
   const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
-  el.innerHTML=invests.map(inv=>{
-    const p2=inv.current-inv.invested;const pct3=inv.invested>0?(p2/inv.invested)*100:0;
-    const col=mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(invests.indexOf(inv),'invest'));const icon=IICONS[inv.typeKey]||'💡';
-    const tObj=types.find(x=>x.k===inv.typeKey);const tlbl=tObj?tObj.label:inv.typeKey;
-    return`<div class="inv-card mongo-object-card" style="--object-color:${col}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:7px">
-          <div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:${col}22">${icon}</div>
-          <div>
-            <div style="font-size:13px;font-weight:600">${inv.name}</div>
-            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-              <span style="font-size:11px;color:${col}">${tlbl} · ${inv.date}</span>
-              ${inv.autoAdded?`<span style="font-size:9px;background:#e0f5f6;color:#337a7f;padding:1px 4px;border-radius:5px">${L.automark}</span>`:''}
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestColor(${inv.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div>
-      </div>
-      <div class="mgrid" style="margin-bottom:7px">
-        <div style="background:var(--bg2);border-radius:var(--radius);padding:6px">
-          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${L.totalin}</div>
-          <div style="font-size:12px;font-weight:600">${fmt(inv.invested)}</div>
-        </div>
-        <div style="background:${p2>=0?'#E1F5EE':'#FCEBEB'};border-radius:var(--radius);padding:6px">
-          <div style="font-size:10px;color:${p2>=0?'#085041':'#791F1F'};margin-bottom:2px">${L.pnl2}</div>
-          <div style="font-size:12px;font-weight:600;color:${p2>=0?'#085041':'#791F1F'}">${p2>=0?'+':''}${fmt(p2)}</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:7px">
-        <span style="font-size:11px;color:var(--text2)">${L.curval}:</span>
-        <input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" style="width:115px;font-size:12px;padding:4px 7px" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)">
-        <span class="tag ${pct3>=0?'gain':'loss'}">${fmtP(pct3)}</span>
-      </div>
+  const texts={mn:{buys:'худалдан авалт',history:'Худалдан авалтын түүх',invested:'Оруулсан',current:'Одоогийн үнэ',profit:'Ашиг/алдагдал'},en:{buys:'purchases',history:'Purchase history',invested:'Invested',current:'Current',profit:'Profit/loss'}};
+  const T=texts[lang]||texts.en;
+  el.innerHTML=groups.sort((a,b)=>b.current-a.current).map(g=>{
+    const p=g.current-g.invested,pct=g.invested>0?p/g.invested*100:0,col=g.color,icon=IICONS[g.typeKey]||'💡',typeObj=types.find(x=>x.k===g.typeKey),tlbl=typeObj?typeObj.label:g.typeKey,isOpen=openInvestGroups.has(g.key);
+    const safeKey=g.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div class="inv-card mongo-object-card portfolio-group" style="--object-color:${col}">
+      <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}</div></div></div>
+      <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)" title="Өнгө солих"></div></div>
+      <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${T.invested}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
+      <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
+      <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
     </div>`;
   }).join('');
 }
@@ -7840,12 +7856,7 @@ function rDonut(type){
   else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=mongoColor(d.color,mongoNextColor(i,'debt'));data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
   else if(type==='inv'){
     cid='c-inv';lid='l-inv';
-    invests.forEach((inv,i)=>{
-      const v=Math.max(0,Number(inv.current)||0);
-      if(!v)return;
-      const col=mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(i,'invest'));
-      data.push(v);colors.push(col);labels.push({name:(IICONS[inv.typeKey]||'💡')+' '+inv.name,val:v,color:col});
-    });
+    getInvestGroups().forEach((g,i)=>{const v=Math.max(0,Number(g.current)||0);if(!v)return;const col=mongoColor(g.color,ICOLS[g.typeKey]||mongoNextColor(i,'invest'));data.push(v);colors.push(col);labels.push({name:(IICONS[g.typeKey]||'💡')+' '+g.name,val:v,color:col});});
   }
 
   const canvas=document.getElementById(cid);if(!canvas)return;
