@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V43.0 Phase 1: Unified Color Engine — one object, one stored color across cards, progress bars, donuts and legends. -->
 <!-- Möngö V42.5 RC2.12: Savings chart uses one synchronized vivid palette for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
@@ -2172,6 +2173,18 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 </style>
 
 <!-- RC2.10: Savings goals use their own stored color for donut segments, legend dots and selected-state rendering. -->
+
+<style id="mongo-v43-unified-color-engine-style">
+/* Möngö V43 Phase 1 — one object = one color */
+.mongo-color-field{display:flex;align-items:center;gap:8px;min-width:94px}
+.mongo-color-input{width:42px;height:42px;padding:3px;border:1px solid rgba(73,176,182,.24);border-radius:14px;background:#fff;cursor:pointer;box-shadow:0 5px 13px rgba(31,127,134,.07)}
+.mongo-color-input::-webkit-color-swatch-wrapper{padding:0}.mongo-color-input::-webkit-color-swatch{border:0;border-radius:10px}.mongo-color-input::-moz-color-swatch{border:0;border-radius:10px}
+.mongo-object-card{border-left:5px solid var(--object-color,#49B0B6)!important}
+.mongo-object-dot{width:12px;height:12px;border-radius:50%;background:var(--object-color,#49B0B6);box-shadow:0 0 0 4px color-mix(in srgb,var(--object-color,#49B0B6) 14%,transparent);flex:0 0 auto}
+.mongo-object-title{display:flex;align-items:center;gap:8px}
+.mongo-inline-color{width:30px;height:30px;padding:2px;border-radius:10px;flex:0 0 auto}
+@media(max-width:520px){.mongo-color-input{width:40px;height:40px}.mongo-inline-color{width:28px;height:28px}}
+</style>
 </head>
 <body>
 
@@ -2513,6 +2526,9 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
           <span class="slbl" id="lbl-g-dead-lbl"></span>
           <input type="date" class="fi" id="g-dead">
         </div>
+        <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="g-color" value="#6C4CF5" title="Зорилгын өнгө">
+        </div>
       </div>
       <button class="btn btn-p" onclick="addGoal()" id="btn-addgoal" style="font-size:16px;padding:6px 16px;min-width:44px;width:100%;margin-top:2px">＋</button>
       <p style="font-size:11px;color:var(--text2);margin-top:7px" id="lbl-savinginfo"></p>
@@ -2643,6 +2659,9 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <span class="slbl" id="lbl-d-rate-lbl"></span>
         <input type="number" class="fi" id="d-rate" placeholder="0" step="0.1">
       </div>
+      <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
+        <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="d-color" value="#FF6B1A" title="Зээлийн өнгө">
+      </div>
       <button class="btn btn-p" onclick="addDebt()" id="btn-adddebt" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
     </div>
     <p style="font-size:11px;color:var(--text2);margin-top:5px" id="lbl-debtinfo"></p>
@@ -2735,6 +2754,9 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <div style="flex:1;min-width:80px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lbl-i-current-lbl"></span>
           <input type="text" class="fi" id="i-current" placeholder="0" inputmode="decimal">
+        </div>
+        <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
+          <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="i-color" value="#F2A91E" title="Хөрөнгийн өнгө">
         </div>
         <button class="btn btn-p" onclick="addInvest()" id="btn-addinvest" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
       </div>
@@ -3074,6 +3096,35 @@ Object.assign(LANGS.de,{
 let curType='income';
 let editingTxnId=null;
 let txns=[],goals=[],debts=[],invests=[];
+
+// ── Möngö V43 Unified Color Engine ────────────────────────────────────────
+const MONGO_OBJECT_COLORS=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8','#8B5CF6','#0EA5A8'];
+function mongoColor(value,fallback='#49B0B6'){
+  const v=String(value||'').trim();
+  return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;
+}
+function mongoNextColor(index,kind='object'){
+  const offsets={goal:0,debt:3,invest:5};
+  return MONGO_OBJECT_COLORS[((Number(index)||0)+(offsets[kind]||0))%MONGO_OBJECT_COLORS.length];
+}
+function ensureUnifiedObjectColors(){
+  goals.forEach((g,i)=>g.color=mongoColor(g.color,mongoNextColor(i,'goal')));
+  debts.forEach((d,i)=>d.color=mongoColor(d.color,mongoNextColor(i,'debt')));
+  invests.forEach((inv,i)=>inv.color=mongoColor(inv.color,ICOLS?.[inv.typeKey]||mongoNextColor(i,'invest')));
+}
+function updateGoalColor(id,color){const g=goals.find(x=>String(x.id)===String(id));if(!g)return;g.color=mongoColor(color,g.color);saveData();rGoals();rDonut('gls');rProfile();}
+function updateDebtColor(id,color){const d=debts.find(x=>String(x.id)===String(id));if(!d)return;d.color=mongoColor(color,d.color);saveData();rDebts();rDonut('dbt');}
+function updateInvestColor(id,color){const inv=invests.find(x=>String(x.id)===String(id));if(!inv)return;inv.color=mongoColor(color,inv.color);saveData();rInvests();rDonut('inv');}
+function updateCategoryColor(type,keyOrName,color){
+  const col=mongoColor(color);
+  const primary=type==='income'?incCats:expCats;
+  const budget=type==='income'?bCatsInc:bCatsExp;
+  const match=c=>(c.key&&c.key===keyOrName)||(!c.key&&cN(c)===keyOrName)||(c.name===keyOrName);
+  primary.filter(match).forEach(c=>c.color=col);
+  budget.filter(match).forEach(c=>c.color=col);
+  saveData();rCatSel();rBList();rTxns();rDash();
+}
+
 let budgets={};
 let period='7d',cfrom=null,cto=null;
 let openB=new Set(['food']),subSI={},subSC={};
@@ -6479,6 +6530,7 @@ function rBList(){
       <div class="bheader" onclick="tglB('${(cat.key||nm).replace(/'/g,"\\'")}')">
         <div class="bicon" style="background:${cat.color}22">${cat.icon}</div>
         <span style="font-size:13px;font-weight:600;color:${cat.color};flex:1">${nm}</span>
+        <input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(cat.color)}" title="Өнгө солих" onclick="event.stopPropagation()" onchange="event.stopPropagation();updateCategoryColor('${budgetType}','${(cat.key||nm).replace(/'/g,"\\'")}',this.value)">
         <span style="font-size:11px;color:var(--text2)">${tot>0?fmt(tot):''}</span>
         ${!iDef?`<button class="lock-btn" onclick="event.stopPropagation();tglLock('${(cat.key||nm).replace(/'/g,"\\'")}','b')" title="${isLocked?L.unlock:L.lock}">${isLocked?'🔒':'🔓'}</button>`:''}
         <span class="chevron${isO?' open':''}">▶</span>
@@ -6561,9 +6613,10 @@ function syncAutoInvestmentForTxn(txn){
     inv.invested=txn.amount;
     if(!inv.current||inv.current===inv.invested||inv.autoAdded)inv.current=txn.amount;
     inv.date=txn.date;
+    inv.color=mongoColor(inv.color,ICOLS[typeKey]||mongoNextColor(invests.indexOf(inv),'invest'));
     inv.autoAdded=true;
   }else{
-    invests.unshift({id:Date.now()+Math.floor(Math.random()*1000),sourceTxnId:txn.id,name:txn.desc,typeKey,invested:txn.amount,current:txn.amount,date:txn.date,autoAdded:true});
+    invests.unshift({id:Date.now()+Math.floor(Math.random()*1000),sourceTxnId:txn.id,name:txn.desc,typeKey,invested:txn.amount,current:txn.amount,date:txn.date,color:mongoColor(null,ICOLS[typeKey]||mongoNextColor(invests.length,'invest')),autoAdded:true});
   }
 }
 function removeLinkedInvestmentForTxn(id){
@@ -6669,9 +6722,10 @@ function addGoal(){
   const saved=parseAmt(document.getElementById('g-saved').value);
   const dead=document.getElementById('g-dead').value.trim();
   if(!name||!target)return;
-  goals.push({id:Date.now(),name,target,saved,dead,createdAt:new Date().toISOString().substring(0,10),history:[]});
+  const color=mongoColor(document.getElementById('g-color')?.value,mongoNextColor(goals.length,'goal'));
+  goals.push({id:Date.now(),name,target,saved,dead,color,createdAt:new Date().toISOString().substring(0,10),history:[]});
   document.getElementById('g-name').value='';document.getElementById('g-target').value='';
-  document.getElementById('g-saved').value='';document.getElementById('g-dead').value='';
+  document.getElementById('g-saved').value='';document.getElementById('g-dead').value='';if(document.getElementById('g-color'))document.getElementById('g-color').value=mongoNextColor(goals.length,'goal');
   saveData();rGoals();rDonut('gls');
 }
 function updGoal(id,v){
@@ -6695,9 +6749,10 @@ function addDebt(){
   const mon=parseAmt(document.getElementById('d-mon').value);
   const rate=parseFloat(document.getElementById('d-rate').value)||0;
   if(!name||!total)return;
-  debts.push({id:Date.now(),name,total,remaining:rem,monthly:mon,rate});
+  const color=mongoColor(document.getElementById('d-color')?.value,mongoNextColor(debts.length,'debt'));
+  debts.push({id:Date.now(),name,total,remaining:rem,monthly:mon,rate,color});
   document.getElementById('d-name').value='';document.getElementById('d-total').value='';
-  document.getElementById('d-rem').value='';document.getElementById('d-mon').value='';document.getElementById('d-rate').value='';
+  document.getElementById('d-rem').value='';document.getElementById('d-mon').value='';document.getElementById('d-rate').value='';if(document.getElementById('d-color'))document.getElementById('d-color').value=mongoNextColor(debts.length,'debt');
   saveData();rDebts();rDonut('dbt');uDash();
 }
 async function delDebt(id){
@@ -6713,8 +6768,9 @@ function addInvest(){
   const current=parseAmt(document.getElementById('i-current').value)||invested;
   const date=document.getElementById('i-date').value;
   if(!name||!invested)return;
-  invests.unshift({id:Date.now(),name,typeKey:tK,invested,current,date,autoAdded:false});
-  document.getElementById('i-name').value='';document.getElementById('i-invested').value='';document.getElementById('i-current').value='';
+  const color=mongoColor(document.getElementById('i-color')?.value,ICOLS[tK]||mongoNextColor(invests.length,'invest'));
+  invests.unshift({id:Date.now(),name,typeKey:tK,invested,current,date,color,autoAdded:false});
+  document.getElementById('i-name').value='';document.getElementById('i-invested').value='';document.getElementById('i-current').value='';if(document.getElementById('i-color'))document.getElementById('i-color').value=mongoNextColor(invests.length,'invest');
   saveData();rInvests();rDonut('inv');uDash();
 }
 function updInvCur(id,v){
@@ -6741,7 +6797,7 @@ function toggleBudgetCatPanel(){
   if(!card)return;
   card.classList.toggle('collapsed');
 }
-function rAll(){rTxns();rDash();rGoals();rPaySettings();rDebts();rInvests();}
+function rAll(){ensureUnifiedObjectColors();rTxns();rDash();rGoals();rPaySettings();rDebts();rInvests();}
 function rDash(){uDash();updateWelcomeCard();rRecent();rBOv();['inc','exp','gls','dbt','inv'].forEach(rDonut);}
 
 
@@ -7442,21 +7498,22 @@ function rGoals(){
         </div>
       </div>`;
     }
-    return`<div class="inv-card">
+    const col=mongoColor(g.color,mongoNextColor(goals.indexOf(g),'goal'));
+    return`<div class="inv-card mongo-object-card" style="--object-color:${col}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600">${g.name}</div>
+          <div class="mongo-object-title"><span class="mongo-object-dot"></span><div style="font-size:13px;font-weight:600;color:${col}">${g.name}</div></div>
           <div style="font-size:12px;color:var(--brand);font-weight:600;margin-top:1px">${fmt(effectiveSaved)} / ${fmt(g.target)}${g.dead?` · ${g.dead}`:''}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">
             ${manualSaved>0?`<span style="font-size:10px;color:var(--text2)">✏️ ${fmt(manualSaved)}</span>`:''}
             ${autoPaid>0?`<span style="font-size:10px;color:#1D9E75">⚡ ${L.autosave||'Автомат'}: ${fmt(autoPaid)}</span>`:''}
           </div>
         </div>
-        <button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
       </div>
       <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
-        <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:var(--brand)"></div></div>
-        <span style="font-size:12px;color:var(--brand);font-weight:800;min-width:38px;text-align:right">${pct}%</span>
+        <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
+        <span style="font-size:12px;color:${col};font-weight:800;min-width:38px;text-align:right">${pct}%</span>
       </div>
       ${(()=>{const months=parseGoalMonths(g);const left=Math.max(0,g.target-effectiveSaved);const st=goalStatusInfo(g);const T=v34Text();if(st.done)return `<div class="goal-status-card success">${st.msg}</div>`;if(st.expired)return `<div class="goal-status-card expired">${st.msg}<br><button class="btn goal-extend-btn" onclick="extendGoalDeadline(${g.id})">${T.extend}</button></div>`;return months&&left>0?`<div class="goal-time-left"><span>⏳ ${st.msg}</span></div><div class="goal-monthly-need">💡 ${L.monthlyNeed||'Сард'}: ${fmt(Math.ceil(left/months))} · ${months} ${T.month}</div>`:(st.msg?`<div class="goal-time-left"><span>⏳ ${st.msg}</span></div>`:'')})()}
       ${cumulHtml}
@@ -7470,10 +7527,11 @@ function rDebts(){
   el.innerHTML=debts.map(d=>{
     const paid=txns.filter(t=>t.type==='expense'&&(t.catName===d.name||t.desc===d.name)).reduce((s,t)=>s+t.amount,0);
     const pct=Math.min(100,d.total>0?Math.round((d.total-d.remaining)/d.total*100):0);
-    return`<div class="inv-card">
+    const col=mongoColor(d.color,mongoNextColor(debts.indexOf(d),'debt'));
+    return`<div class="inv-card mongo-object-card" style="--object-color:${col}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
         <div>
-          <div style="font-size:13px;font-weight:600">${d.name}</div>
+          <div class="mongo-object-title"><span class="mongo-object-dot"></span><div style="font-size:13px;font-weight:600;color:${col}">${d.name}</div></div>
           <div style="font-size:11px;color:var(--text2);display:flex;gap:9px;flex-wrap:wrap;margin-top:2px">
             <span>${L.total}: ${fmt(d.total)}</span>
             <span style="color:var(--red);font-weight:500">${L.remaining}: ${fmt(d.remaining)}</span>
@@ -7482,9 +7540,9 @@ function rDebts(){
           </div>
           ${paid>0?`<div style="font-size:10px;color:#1D9E75;margin-top:2px">${L.paid}: ${fmt(paid)}</div>`:''}
         </div>
-        <button class="btn btn-sm btn-d" onclick="delDebt(${d.id})">✕</button>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateDebtColor(${d.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delDebt(${d.id})">✕</button></div>
       </div>
-      <div class="pbar"><div class="pf" style="width:${pct}%;background:#1D9E75"></div></div>
+      <div class="pbar"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
       <div style="font-size:10px;color:var(--text2);margin-top:2px">${L.paidpct}: ${pct}%</div>
     </div>`;
   }).join('');
@@ -7508,9 +7566,9 @@ function rInvests(){
   const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
   el.innerHTML=invests.map(inv=>{
     const p2=inv.current-inv.invested;const pct3=inv.invested>0?(p2/inv.invested)*100:0;
-    const col=ICOLS[inv.typeKey]||'#49b0b6';const icon=IICONS[inv.typeKey]||'💡';
+    const col=mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(invests.indexOf(inv),'invest'));const icon=IICONS[inv.typeKey]||'💡';
     const tObj=types.find(x=>x.k===inv.typeKey);const tlbl=tObj?tObj.label:inv.typeKey;
-    return`<div class="inv-card">
+    return`<div class="inv-card mongo-object-card" style="--object-color:${col}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:7px">
           <div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:${col}22">${icon}</div>
@@ -7522,7 +7580,7 @@ function rInvests(){
             </div>
           </div>
         </div>
-        <button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestColor(${inv.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div>
       </div>
       <div class="mgrid" style="margin-bottom:7px">
         <div style="background:var(--bg2);border-radius:var(--radius);padding:6px">
@@ -7727,25 +7785,27 @@ function rDonut(type){
   else if(type==='exp'){cid='c-exp';lid='l-exp';sumByKey(expCats,'expense');}
   else if(type==='gls'){
     cid='c-gls';lid='l-gls';
-    // RC2.12: one vivid, deterministic palette is the single source of truth.
-    // Goal name, value and color are kept together, so sorting can never desync the legend.
+    // RC2.13: Savings chart represents goal completion, not share of total savings.
+    // Example: 279,900 / 5,000,000 = 6%, so the legend must show 6% (not 0%).
     const savingsPalette=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8'];
     goals.forEach((g,i)=>{
-      const manual=Math.max(0,Number(g.saved)||0);
-      const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
-      const v=manual+auto;
-      if(v>0){
-        const col=savingsPalette[i%savingsPalette.length];
-        data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});
-      }
+      const saved=Math.max(0,Number(getGoalEffectiveSaved(g))||0);
+      const target=Math.max(0,Number(g.target)||0);
+      const pct=target>0?Math.max(0,Math.min(100,Math.round(saved/target*100))):0;
+      const col=resolveCanvasColor(g.color||savingsPalette[i%savingsPalette.length],savingsPalette[i%savingsPalette.length]);
+      // Keep completed/active goals visible. A true 0% goal remains in the legend but gets no arc.
+      data.push(pct);colors.push(col);labels.push({name:g.name,val:pct,color:col,saved,target,goalPct:pct});
     });
   }
-  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=CHART_PALETTES.dbt[i%CHART_PALETTES.dbt.length];data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
+  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=mongoColor(d.color,mongoNextColor(i,'debt'));data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
   else if(type==='inv'){
     cid='c-inv';lid='l-inv';
-    const byT={};invests.forEach(inv=>{byT[inv.typeKey]=(byT[inv.typeKey]||0)+inv.current;});
-    const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
-    Object.entries(byT).forEach(([k,v])=>{const col=ICOLS[k]||PAL[0];const tObj=types.find(x=>x.k===k);data.push(v);colors.push(col);labels.push({name:(IICONS[k]||'💡')+' '+(tObj?tObj.label:k),val:v,color:col});});
+    invests.forEach((inv,i)=>{
+      const v=Math.max(0,Number(inv.current)||0);
+      if(!v)return;
+      const col=mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(i,'invest'));
+      data.push(v);colors.push(col);labels.push({name:(IICONS[inv.typeKey]||'💡')+' '+inv.name,val:v,color:col});
+    });
   }
 
   const canvas=document.getElementById(cid);if(!canvas)return;
@@ -7757,13 +7817,21 @@ function rDonut(type){
     color:(labels[i]&&labels[i].color)||colors[i]||palette[i%palette.length],
     label:labels[i]
   })).sort((a,b)=>b.v-a.v);
-  const chartOptions={centerValue:compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),centerLabel:(L.total||'Нийт'),labels:combined.map(x=>x.label.name)};
+  const savingsTotal=type==='gls'?goals.reduce((sum,g)=>sum+Math.max(0,Number(getGoalEffectiveSaved(g))||0),0):0;
+  const chartOptions={
+    centerValue:type==='gls'?compactChartAmount(savingsTotal):compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),
+    centerLabel:(L.total||'Нийт'),
+    labels:combined.map(x=>x.label.name)
+  };
   // RC2.12: every donut, including Savings, uses the same renderer and exact object colors.
   canvas._mongoActiveIndex=-1;
   drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),chartOptions);
   const leg=document.getElementById(lid);const total=combined.reduce((s,x)=>s+x.v,0);
   const exactColors=(canvas._mongoChartState&&canvas._mongoChartState.colors)||combined.map(x=>x.color);
-  leg.innerHTML=combined.length?combined.map((x,i)=>`<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
+  leg.innerHTML=combined.length?combined.map((x,i)=>{
+    const shownPct=type==='gls'?(x.label.goalPct??x.v):(total>0?Math.round(x.v/total*100):0);
+    return `<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${shownPct}%</span></div>`;
+  }).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
 }
 
 
@@ -7891,6 +7959,7 @@ function loadData(){
     if(data.goals)goals=data.goals.map(g=>({...g,history:g.history||[]}));
     if(data.debts)debts=data.debts;
     if(data.invests)invests=data.invests;
+    ensureUnifiedObjectColors();
     if(data.budgets)budgets=data.budgets;
     if(data.lang){lang=data.lang;L=LANGS[lang]||LANGS.mn;CS=CURR[lang]||'$';}
     if(data.budgetMonth)budgetMonth=data.budgetMonth;
@@ -9373,7 +9442,7 @@ auth.onAuthStateChanged(async user=>{
       resetDefaultFinanceShell();
       if(typeof txns!=='undefined') txns=safeArray(data.txns);
       if(typeof goals!=='undefined') goals=safeArray(data.goals).map(g=>Object.assign({},g,{history:g.history||[]}));
-      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets);
+      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets); if(typeof ensureUnifiedObjectColors==='function') ensureUnifiedObjectColors();
       if(typeof lang!=='undefined' && data.lang){lang=data.lang; L=LANGS[lang]||LANGS.mn; CS=CURR[lang]||'₮';}
       if(typeof budgetMonth!=='undefined' && data.budgetMonth) budgetMonth=data.budgetMonth; if(typeof budgetYear!=='undefined' && data.budgetYear) budgetYear=data.budgetYear; if(typeof budgetType!=='undefined' && data.budgetType) budgetType=data.budgetType;
       if(typeof lockedCats!=='undefined') lockedCats=new Set(safeArray(data.lockedCats)); if(typeof paySettings!=='undefined') paySettings=Object.assign({enabled:true,rate:20,alloc:{}},safeObj(data.paySettings)); window.netWorthSnapshots=safeArray(data.netWorthSnapshots);
