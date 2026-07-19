@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V42.5 RC2.5: Premium chart rendering — dark outlines removed, richer gradients and soft separators. -->
+<!-- Möngö V42.5 RC2.12: Savings chart uses one synchronized vivid palette for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
 <!--
@@ -7727,14 +7727,15 @@ function rDonut(type){
   else if(type==='exp'){cid='c-exp';lid='l-exp';sumByKey(expCats,'expense');}
   else if(type==='gls'){
     cid='c-gls';lid='l-gls';
+    // RC2.12: one vivid, deterministic palette is the single source of truth.
+    // Goal name, value and color are kept together, so sorting can never desync the legend.
+    const savingsPalette=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8'];
     goals.forEach((g,i)=>{
-      const manual=Math.max(0,g.saved||0);
-      const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((s,t)=>s+t.amount,0);
+      const manual=Math.max(0,Number(g.saved)||0);
+      const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       const v=manual+auto;
       if(v>0){
-        // RC2.10: use the saving goal's own color as the single source of truth.
-        // This same resolved color is passed to both the donut and the legend.
-        const col=CHART_PALETTES.gls[i%CHART_PALETTES.gls.length];
+        const col=savingsPalette[i%savingsPalette.length];
         data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});
       }
     });
@@ -7757,8 +7758,9 @@ function rDonut(type){
     label:labels[i]
   })).sort((a,b)=>b.v-a.v);
   const chartOptions={centerValue:compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),centerLabel:(L.total||'Нийт'),labels:combined.map(x=>x.label.name)};
-  if(type==='gls') drawSavingsDonutHardSync(canvas,combined,chartOptions);
-  else drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),chartOptions);
+  // RC2.12: every donut, including Savings, uses the same renderer and exact object colors.
+  canvas._mongoActiveIndex=-1;
+  drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),chartOptions);
   const leg=document.getElementById(lid);const total=combined.reduce((s,x)=>s+x.v,0);
   const exactColors=(canvas._mongoChartState&&canvas._mongoChartState.colors)||combined.map(x=>x.color);
   leg.innerHTML=combined.length?combined.map((x,i)=>`<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
