@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Möngö V42.5 RC2.5: Premium chart rendering — dark outlines removed, richer gradients and soft separators. -->
-<!-- Möngö V42.5 RC2.9: Savings chart colors synchronized with its legend and the shared premium chart engine. -->
+<!-- Möngö V42.5 RC2.10: Savings goal colors use one source of truth for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
 <!--
 Möngö V30.3 Correct Splash Logo
@@ -2167,7 +2167,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 }
 </style>
 
-<!-- RC2.9: Savings goals now use the same palette object for donut segments and legend dots. -->
+<!-- RC2.10: Savings goals use their own stored color for donut segments, legend dots and selected-state rendering. -->
 </head>
 <body>
 
@@ -7705,7 +7705,12 @@ function rDonut(type){
       const manual=Math.max(0,g.saved||0);
       const auto=txns.filter(t=>t.type==='expense'&&(t.catName===g.name||t.desc===g.name||t.subcatName===g.name)).reduce((s,t)=>s+t.amount,0);
       const v=manual+auto;
-      if(v>0){const col=CHART_PALETTES.gls[i%CHART_PALETTES.gls.length];data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});}
+      if(v>0){
+        // RC2.10: use the saving goal's own color as the single source of truth.
+        // This same resolved color is passed to both the donut and the legend.
+        const col=resolveCanvasColor(g.color||CHART_PALETTES.gls[i%CHART_PALETTES.gls.length],CHART_PALETTES.gls[i%CHART_PALETTES.gls.length]);
+        data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});
+      }
     });
   }
   else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=CHART_PALETTES.dbt[i%CHART_PALETTES.dbt.length];data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
@@ -7727,7 +7732,8 @@ function rDonut(type){
   })).sort((a,b)=>b.v-a.v);
   drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),{centerValue:compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),centerLabel:(L.total||'Нийт'),labels:combined.map(x=>x.label.name)});
   const leg=document.getElementById(lid);const total=combined.reduce((s,x)=>s+x.v,0);
-  leg.innerHTML=combined.length?combined.map(x=>`<div class="li2"><div class="ldot" style="background:${x.color}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
+  const exactColors=(canvas._mongoChartState&&canvas._mongoChartState.colors)||combined.map(x=>x.color);
+  leg.innerHTML=combined.length?combined.map((x,i)=>`<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
 }
 
 
