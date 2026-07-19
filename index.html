@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Möngö V42.5 RC2.5: Premium chart rendering — dark outlines removed, richer gradients and soft separators. -->
-<!-- Möngö V42.5 RC2.10: Savings goal colors use one source of truth for donut, legend and interaction. -->
+<!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
 <!-- Möngö V42.5 RC2.8: Premium Chart Engine — resolved CSS colors, synced legends, center totals, touch selection. -->
 <!--
 Möngö V30.3 Correct Splash Logo
@@ -28,6 +28,10 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style id="mongo-critical-first-paint">
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);}
+body{visibility:visible;}
+</style>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
@@ -7665,6 +7669,28 @@ function mixCanvasColor(color,mix,amount){
   return `rgb(${Math.round(a[0]*(1-t)+b[0]*t)},${Math.round(a[1]*(1-t)+b[1]*t)},${Math.round(a[2]*(1-t)+b[2]*t)})`;
 }
 
+function drawSavingsDonutHardSync(canvas,items,options={}){
+  if(!canvas)return;
+  const values=items.map(x=>Math.max(0,Number(x.v)||0));
+  const colors=items.map(x=>String(x.color||'#49B0B6'));
+  const total=values.reduce((a,b)=>a+b,0);
+  const paint=()=>{
+    const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
+    const R=Math.min(W,H)/2-8,r=R*.54;
+    ctx.clearRect(0,0,W,H);
+    ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    if(!total){ctx.beginPath();ctx.arc(cx,cy,(R+r)/2,0,Math.PI*2);ctx.strokeStyle='rgba(73,176,182,.14)';ctx.lineWidth=R-r;ctx.stroke();ctx.restore();return;}
+    let a=-Math.PI/2;const positive=values.filter(v=>v>0).length;const gap=Math.min(.018,Math.PI*2/(Math.max(positive,1)*24));
+    values.forEach((v,i)=>{if(v<=0)return;const full=Math.PI*2*v/total;ctx.beginPath();ctx.arc(cx,cy,R,a+gap/2,a+full-gap/2);ctx.arc(cx,cy,r,a+full-gap/2,a+gap/2,true);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();a+=full;});
+    a=-Math.PI/2;ctx.strokeStyle='rgba(255,255,255,.96)';ctx.lineWidth=1.4;values.forEach(v=>{if(v<=0)return;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.stroke();a+=Math.PI*2*v/total;});
+    ctx.beginPath();ctx.arc(cx,cy,r-.5,0,Math.PI*2);ctx.fillStyle='#FFFFFF';ctx.fill();
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#374151';ctx.font='900 18px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.fillText(options.centerValue||compactChartAmount(total),cx,cy-5);
+    ctx.fillStyle='#6B7280';ctx.font='800 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.fillText(options.centerLabel||'Нийт',cx,cy+15);ctx.restore();
+    canvas._mongoChartState={values,colors,total,options};
+  };
+  paint();requestAnimationFrame(paint);setTimeout(paint,120);setTimeout(paint,450);
+}
+
 function rDonut(type){
   let data=[],colors=[],labels=[],cid,lid;
   const ft=fT();
@@ -7708,7 +7734,7 @@ function rDonut(type){
       if(v>0){
         // RC2.10: use the saving goal's own color as the single source of truth.
         // This same resolved color is passed to both the donut and the legend.
-        const col=resolveCanvasColor(g.color||CHART_PALETTES.gls[i%CHART_PALETTES.gls.length],CHART_PALETTES.gls[i%CHART_PALETTES.gls.length]);
+        const col=CHART_PALETTES.gls[i%CHART_PALETTES.gls.length];
         data.push(v);colors.push(col);labels.push({name:g.name,val:v,color:col});
       }
     });
@@ -7730,7 +7756,9 @@ function rDonut(type){
     color:(labels[i]&&labels[i].color)||colors[i]||palette[i%palette.length],
     label:labels[i]
   })).sort((a,b)=>b.v-a.v);
-  drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),{centerValue:compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),centerLabel:(L.total||'Нийт'),labels:combined.map(x=>x.label.name)});
+  const chartOptions={centerValue:compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),centerLabel:(L.total||'Нийт'),labels:combined.map(x=>x.label.name)};
+  if(type==='gls') drawSavingsDonutHardSync(canvas,combined,chartOptions);
+  else drawDonut(canvas,combined.map(x=>x.v),combined.map(x=>x.color),chartOptions);
   const leg=document.getElementById(lid);const total=combined.reduce((s,x)=>s+x.v,0);
   const exactColors=(canvas._mongoChartState&&canvas._mongoChartState.colors)||combined.map(x=>x.color);
   leg.innerHTML=combined.length?combined.map((x,i)=>`<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${total>0?Math.round(x.v/total*100):0}%</span></div>`).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
