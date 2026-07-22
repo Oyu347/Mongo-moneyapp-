@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- Möngö V43.2: Premium Budget Timeline + grouped investment portfolio. -->
+<!-- Möngö V43.3: Interactive budget status filters + fully differentiated Actual/Plan views. -->
 <!-- Möngö V43.1: Typed Unified Colors — Savings goals sync only with Savings budget subcategories; Loans sync only with Loan budget subcategories. Full color pickers added to category/subcategory creation. -->
 <!-- Möngö V42.5 RC2.12: Savings chart uses one synchronized vivid palette for donut, legend and interaction. -->
 <!-- Möngö V42.5 RC2.11: Savings chart hard-sync + splash first-paint fix. -->
@@ -2202,6 +2203,18 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .budget-health-item.good .budget-health-num{color:#08724F}.budget-health-item.warn .budget-health-num{color:#B7791F}.budget-health-item.bad .budget-health-num{color:#B91C1C}
 .portfolio-group{overflow:visible!important}.portfolio-group-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.portfolio-group-title{display:flex;align-items:center;gap:9px;min-width:0}.portfolio-group-icon{width:40px;height:40px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto}.portfolio-group-name{font-size:15px;font-weight:1000;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.portfolio-group-meta{font-size:11px;font-weight:800;color:#6B7280;margin-top:3px}.portfolio-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.portfolio-stat{padding:9px 8px;border-radius:16px;background:rgba(73,176,182,.055);border:1px solid rgba(73,176,182,.10)}.portfolio-stat .k{font-size:9.5px;color:#6B7280;font-weight:850}.portfolio-stat .v{font-size:13px;color:#374151;font-weight:1000;margin-top:4px;white-space:nowrap}.portfolio-history-toggle{width:100%;min-height:38px;border-radius:16px;border:1px solid rgba(73,176,182,.16);background:rgba(73,176,182,.06);color:#2C7F85;font-size:12px;font-weight:950;cursor:pointer}.portfolio-history{display:none;margin-top:9px;padding-top:4px;border-top:1px solid rgba(73,176,182,.11)}.portfolio-history.show{display:block}.portfolio-lot{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(73,176,182,.09)}.portfolio-lot:last-child{border-bottom:0}.portfolio-lot-main{min-width:0}.portfolio-lot-date{font-size:11px;color:#6B7280;font-weight:850}.portfolio-lot-values{font-size:12px;color:#374151;font-weight:900;margin-top:3px}.portfolio-lot-actions{display:flex;align-items:center;gap:5px}.portfolio-lot-actions .fi{width:105px!important;min-height:36px!important;padding:6px 8px!important;font-size:11px!important}.portfolio-chevron{display:inline-block;transition:transform .2s}.portfolio-chevron.open{transform:rotate(180deg)}
 @media(max-width:520px){.budget-timeline{grid-template-columns:42px 1fr 1.15fr 42px;gap:6px}.budget-nav-btn,.budget-select{height:43px}.budget-select{font-size:12px;padding:0 8px}.budget-health{gap:6px}.budget-health-item{padding:9px 5px}.portfolio-summary-grid{grid-template-columns:1fr 1fr}.portfolio-stat:last-child{grid-column:1/-1}.portfolio-lot{grid-template-columns:1fr}.portfolio-lot-actions{justify-content:space-between}.portfolio-lot-actions .fi{width:130px!important}}
+.budget-health-item{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease;user-select:none}
+.budget-health-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,127,134,.10)}
+.budget-health-item.active{transform:translateY(-2px);box-shadow:0 12px 25px rgba(31,127,134,.16)}
+.budget-health-item.good.active{background:linear-gradient(145deg,#EAF8F3,#fff);border-color:rgba(8,114,79,.28)}
+.budget-health-item.warn.active{background:linear-gradient(145deg,#FFF8E8,#fff);border-color:rgba(183,121,31,.30)}
+.budget-health-item.bad.active{background:linear-gradient(145deg,#FFF0EF,#fff);border-color:rgba(185,28,28,.28)}
+.budget-filter-chip{display:none;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:9px 12px;border-radius:18px;background:rgba(73,176,182,.08);border:1px solid rgba(73,176,182,.14);font-size:11px;font-weight:900;color:#2C7F85}
+.budget-filter-chip.show{display:flex}.budget-filter-clear{border:0;background:transparent;color:#6B7280;font-size:16px;font-weight:900;cursor:pointer;padding:0 2px}
+.budget-card-mode-note{margin-top:6px;font-size:10.5px;font-weight:850;color:#6B7280;line-height:1.35}
+.budget-card-mode-note strong{color:#2C7F85}
+.budget-progress-card{animation:budgetCardIn .22s ease both}
+@keyframes budgetCardIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -2515,7 +2528,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   </div>
   <div id="b-cats-list"></div>
   <button class="btn btn-p" style="margin-bottom:11px;width:100%" onclick="saveBudget()" id="btn-save"></button>
-  <div class="card"><div class="card-title" id="lbl-budgetprog2"></div><div id="budget-health-summary"></div><div id="budget-progress"><div class="empty" id="lbl-nobudget-bp"></div></div></div>
+  <div class="card"><div class="card-title" id="lbl-budgetprog2"></div><div id="budget-health-summary"></div><div id="budget-filter-chip" class="budget-filter-chip"></div><div id="budget-progress"><div class="empty" id="lbl-nobudget-bp"></div></div></div>
 </div>
 
 <!-- GOALS -->
@@ -3191,6 +3204,7 @@ let openB=new Set(['food']),subSI={},subSC={};
 let budgetMonth=new Date().getMonth()+1;
 let budgetYear=new Date().getFullYear();
 let budgetViewMode='actual';
+let budgetHealthFilter='all';
 let monthSelOpen=false;
 let budgetType='income'; // 'income' or 'expense'
 let selSubcat=null; // currently selected sub-cat key/name for txn
@@ -3514,6 +3528,8 @@ function setBudgetYear(y){budgetYear=Math.max(2020,Math.min(2100,Number(y)||new 
 function changeBudgetYear(dir){setBudgetYear(budgetYear+dir);}
 function shiftBudgetPeriod(dir){budgetMonth+=dir;if(budgetMonth<1){budgetMonth=12;budgetYear--;}if(budgetMonth>12){budgetMonth=1;budgetYear++;}rBMonthSel();rBList();rBProg();updateBudgetTotal();rBOv();}
 function setBudgetViewMode(mode){budgetViewMode=mode==='plan'?'plan':'actual';rBMonthSel();rBProg();}
+function setBudgetHealthFilter(filter){budgetHealthFilter=budgetHealthFilter===filter?'all':filter;rBProg();}
+function clearBudgetHealthFilter(){budgetHealthFilter='all';rBProg();}
 function setBudgetType(t,btn){
   budgetType=t;
   document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active'));
@@ -7347,72 +7363,77 @@ function rBProg(){
   const isIncomePlan=budgetType==='income';
   const has=cats.some(c=>getBudgetVal(bKeyFor(c),mo)>0||(c.subs||[]).some(s=>getBudgetVal(bSubKey(c,s),mo)>0));
   const summary=document.getElementById('budget-health-summary');
-  if(!has){if(summary)summary.innerHTML='';el.innerHTML=`<div class="empty">${L.nobudget}</div>`;return;}
-  let goodCount=0,warnCount=0,badCount=0;
-  cats.forEach(cat=>{const cb=getBudgetVal(bKeyFor(cat),mo)+(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);if(!cb)return;const actual=isIncomePlan?gIncome(cN(cat),mo):gSpent(cN(cat),null,mo);const pct=cb?actual/cb*100:0;if(!isIncomePlan&&pct>100)badCount++;else if((isIncomePlan&&pct<80)||(!isIncomePlan&&pct>=80))warnCount++;else goodCount++;});
-  if(summary){const T=budgetUiText();summary.innerHTML=`<div class="budget-health"><div class="budget-health-item good"><div class="budget-health-num">${goodCount}</div><div class="budget-health-label">${T.good}</div></div><div class="budget-health-item warn"><div class="budget-health-num">${warnCount}</div><div class="budget-health-label">${T.warn}</div></div><div class="budget-health-item bad"><div class="budget-health-num">${badCount}</div><div class="budget-health-label">${T.bad}</div></div></div>`;}
-  el.innerHTML=cats.map(cat=>{
-    const nm=cN(cat);const subs=cat.subs||[];
-    const bk=bKeyFor(cat);
-    const catBudget=getBudgetVal(bk,mo);
-    const subBudget=subs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
-    const cb=catBudget+subBudget;
-    if(!cb)return '';
-    const actualTot=isIncomePlan?gIncome(nm,mo):gSpent(nm,null,mo);
+  const chip=document.getElementById('budget-filter-chip');
+  if(!has){if(summary)summary.innerHTML='';if(chip)chip.className='budget-filter-chip';el.innerHTML=`<div class="empty">${L.nobudget}</div>`;return;}
+  const rows=[];let goodCount=0,warnCount=0,badCount=0;
+  cats.forEach(cat=>{
+    const cb=getBudgetVal(bKeyFor(cat),mo)+(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
+    if(!cb)return;
+    const actual=isIncomePlan?gIncome(cN(cat),mo):gSpent(cN(cat),null,mo);
+    const pct=cb?actual/cb*100:0;
+    let health='good';
+    if(!isIncomePlan&&pct>100)health='bad';
+    else if((isIncomePlan&&pct<80)||(!isIncomePlan&&pct>=80))health='warn';
+    if(health==='good')goodCount++;else if(health==='warn')warnCount++;else badCount++;
+    rows.push({cat,cb,actual,health,pct});
+  });
+  const T=budgetUiText();
+  if(summary)summary.innerHTML=`<div class="budget-health">
+    <div class="budget-health-item good${budgetHealthFilter==='good'?' active':''}" onclick="setBudgetHealthFilter('good')"><div class="budget-health-num">${goodCount}</div><div class="budget-health-label">${T.good}</div></div>
+    <div class="budget-health-item warn${budgetHealthFilter==='warn'?' active':''}" onclick="setBudgetHealthFilter('warn')"><div class="budget-health-num">${warnCount}</div><div class="budget-health-label">${T.warn}</div></div>
+    <div class="budget-health-item bad${budgetHealthFilter==='bad'?' active':''}" onclick="setBudgetHealthFilter('bad')"><div class="budget-health-num">${badCount}</div><div class="budget-health-label">${T.bad}</div></div>
+  </div>`;
+  if(chip){
+    const map={good:'🟢 '+T.good,warn:'🟡 '+T.warn,bad:'🔴 '+T.bad};
+    if(budgetHealthFilter==='all'){chip.className='budget-filter-chip';chip.innerHTML='';}
+    else{chip.className='budget-filter-chip show';chip.innerHTML=`<span>${map[budgetHealthFilter]}</span><button class="budget-filter-clear" onclick="clearBudgetHealthFilter()" aria-label="Clear filter">×</button>`;}
+  }
+  const visible=rows.filter(r=>budgetHealthFilter==='all'||r.health===budgetHealthFilter);
+  if(!visible.length){el.innerHTML=`<div class="empty">${lang==='mn'?'Энэ төлөвт ангилал алга байна.':'No categories in this status.'}</div>`;return;}
+  el.innerHTML=visible.map(({cat,cb,actual:actualTot})=>{
+    const nm=cN(cat);const subs=cat.subs||[];const bk=bKeyFor(cat);
     const tot=budgetViewMode==='plan'?cb:actualTot;
-    const realPct=cb>0?Math.round(tot/cb*100):0;
-    const isOver=!isIncomePlan&&tot>cb;
-    const overAmt=isOver?tot-cb:0;
-    const col=isIncomePlan?(realPct>=100?'#1D9E75':cat.color):cat.color;
-    const softBg=hexToRgba(cat.color,.14);
-    const softBorder=hexToRgba(cat.color,.30);
+    const actualPct=cb>0?Math.round(actualTot/cb*100):0;
+    const shownPct=budgetViewMode==='plan'?100:actualPct;
+    const isOver=!isIncomePlan&&actualTot>cb;
+    const overAmt=isOver?actualTot-cb:0;
+    const remaining=isIncomePlan?Math.max(0,cb-actualTot):cb-actualTot;
+    const col=isIncomePlan?(actualPct>=100?'#1D9E75':cat.color):cat.color;
+    const softBg=hexToRgba(cat.color,.14);const softBorder=hexToRgba(cat.color,.30);
     const hasSubs=subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).length>0;
-    const isOpen=openBProg.has(bk);
-    const safeKey=bk.replace(/'/g,"\'");
+    const isOpen=openBProg.has(bk);const safeKey=bk.replace(/'/g,"\\'");
+    const mainLine=budgetViewMode==='plan'
+      ? `${fmt(cb)}`
+      : `${fmt(actualTot)} / ${fmt(cb)} (${actualPct}%)`;
+    const modeNote=budgetViewMode==='plan'
+      ? `<div class="budget-card-mode-note">${lang==='mn'?'Төлөвлөсөн дүн':'Planned amount'}: <strong>${fmt(cb)}</strong> · ${lang==='mn'?'Бодит':'Actual'}: ${fmt(actualTot)} · ${remaining>=0?(lang==='mn'?'Үлдэгдэл':'Remaining'):(lang==='mn'?'Хэтрэлт':'Over')}: <strong>${fmt(Math.abs(remaining))}</strong></div>`
+      : '';
     return `<div class="bblock budget-progress-card${isOver?' is-over':''}" style="--budget-soft-bg:${softBg};--budget-soft-border:${softBorder};${getSoftCatVars(cat.color)}${isOver?'border-color:#e5393540':''}">
       <div class="bheader" ${hasSubs?`onclick="tglBProg('${safeKey}')" style="cursor:pointer"`:'style="cursor:default"'}>
         <div class="bicon">${cat.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;flex-wrap:wrap">
             <span style="font-size:12px;font-weight:800;color:${cat.color};flex:1">${nm}</span>
-            <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'};font-weight:${isOver?'800':'600'}">${fmt(tot)} / ${fmt(cb)} (${realPct}%)</span>
-            ${isOver?`<span class="budget-over-amount">+${fmt(overAmt)}</span>`:''}
+            <span style="font-size:10px;color:${isOver?'#A32D2D':'var(--text2)'};font-weight:${isOver?'800':'600'}">${mainLine}</span>
+            ${budgetViewMode==='actual'&&isOver?`<span class="budget-over-amount">+${fmt(overAmt)}</span>`:''}
           </div>
-          ${overBar(tot,cb,col,isOver)}
+          ${budgetViewMode==='plan'?overBar(cb,cb,col,false):overBar(actualTot,cb,col,isOver)}
+          ${modeNote}
         </div>
         ${hasSubs?`<span class="chevron${isOpen?' open':''}" style="margin-left:6px">▶</span>`:''}
       </div>
       ${hasSubs&&isOpen?`<div class="bbody" style="padding:8px 12px">
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
-          const snm=cN(sb)||sb.key||'';
-          const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const actualSS=isIncomePlan
-            ?txns.filter(t=>{
-              const ymd=(t.date||'').split('-');
-              const subKey=sb.key||sb.name||snm;
-              return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;
-            }).reduce((a,t)=>a+t.amount,0)
-            :gSpent(nm,snm,mo);
-          const ss=budgetViewMode==='plan'?sv:actualSS;
-          const subOver=!isIncomePlan&&ss>sv;
-          const subOverAmt=subOver?ss-sv:0;
-          const subRealPct=sv>0?Math.round(ss/sv*100):0;
-          const sc=isIncomePlan?(subRealPct>=100?'#1D9E75':sb.color):sb.color;
-          return `<div style="margin-bottom:8px">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap">
-              <span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span>
-              <span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span>
-              <span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${fmt(ss)} / ${fmt(sv)} (${subRealPct}%)</span>
-              ${subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}
-            </div>
-            ${overSubBar(ss,sv,sc,subOver)}
-          </div>`;
+          const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
+          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo);
+          const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
+          const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
+          return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
         }).join('')}
       </div>`:''}
     </div>`;
   }).join('');
 }
-
 function rBOv(){
   const el=document.getElementById('budget-overview');
   const mo=budgetMonth;const cats=bCatsExp;
