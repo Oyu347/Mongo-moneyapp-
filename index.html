@@ -1,4 +1,16 @@
 <!DOCTYPE html>
+<!-- Möngö V43.16 TEST BUILD: Day 8 access polish — reliable test-day card, hardened read-only writes, free loan calculator, Premium savings/investment calculators. -->
+<!-- Möngö V43.15 TEST BUILD: trial day simulation via ?trialTestDay=5|6|7|8. Does not modify Firestore billing dates. -->
+<!-- Möngö V43.14: Trial soft paywall foundation — Day 5/6/7 reminders, Day 8 read-only soft paywall. -->
+<!-- Möngö V43.13: Trial card reliable Profile render fix. -->
+<!-- Möngö V43.12: Trial Status UI — 7-day trial card in Profile; no access blocking yet. -->
+<!-- Möngö V43.11: Billing Day 1 migration — legacy accounts get one-time lifecycle initialization from Firebase Auth creationTime; no trial reset on login. -->
+<!-- Möngö V43.10: Billing Day 1 foundation — per-UID account/trial start dates stored in Firestore on successful registration; philosophy timeline remains separate. -->
+<!-- Möngö V43.9: FIRE zero-state fix — no expense history now shows Remaining — instead of ₮25. -->
+<!-- Möngö V43.8: Account Isolation Security Fix — blocks cross-account cloud writes during auth transitions; cloud-aware delete. -->
+<!-- Möngö V43.7: Password-reset return UX — Firebase standard reset returns directly to Möngö login with localized success state. -->
+<!-- Möngö V43.5: Account & Philosophy — custom 7-language password reset handler + registration Day 1 philosophy start. -->
+<!-- Möngö V43.4: Safe Cloud Sync migration — fresh tabs load cloud, restore uploads before reload, local/cloud timestamps fixed. -->
 <!-- Möngö V43.2: Premium Budget Timeline + grouped investment portfolio. -->
 <!-- Möngö V43.3: Interactive budget status filters + fully differentiated Actual/Plan views. -->
 <!-- Möngö V43.1: Typed Unified Colors — Savings goals sync only with Savings budget subcategories; Loans sync only with Loan budget subcategories. Full color pickers added to category/subcategory creation. -->
@@ -2216,6 +2228,58 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .budget-progress-card{animation:budgetCardIn .22s ease both}
 @keyframes budgetCardIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 </style>
+
+<style id="mongo-v435-account-philosophy-style">
+/* Möngö V43.5 — custom reset experience */
+#auth-reset{z-index:13050}
+.reset-card{max-width:390px!important}
+.reset-brand-note{margin:-8px 0 16px;text-align:center;color:var(--text2);font-size:12px;font-weight:750;line-height:1.5}
+.reset-strength{margin:-3px 2px 10px;font-size:11px;color:var(--text3);font-weight:750;line-height:1.4}
+.reset-success{display:none;text-align:center;padding:6px 0 2px}
+.reset-success.show{display:block}
+.reset-success-icon{width:66px;height:66px;margin:0 auto 14px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EAF8F3,#E8F8F8);color:#08724F;font-size:34px;box-shadow:0 12px 28px rgba(31,127,134,.12)}
+.reset-success-title{font-size:20px;font-weight:1000;color:#1F7F86;margin-bottom:7px}
+.reset-success-copy{font-size:12px;color:var(--text2);font-weight:750;line-height:1.55;margin-bottom:16px}
+#reset-form-wrap[hidden]{display:none!important}
+@media(prefers-color-scheme:dark){.reset-success-icon{background:rgba(73,176,182,.12);color:#74D7DC}.reset-success-title{color:#74D7DC}}
+</style>
+
+
+<style id="mongo-trial-ui-v4312">
+.mongo-trial-card{margin:0 0 18px;padding:18px;border-radius:30px;background:linear-gradient(135deg,rgba(73,176,182,.17),rgba(247,210,74,.13),rgba(255,255,255,.9));border:1px solid rgba(255,255,255,.88);box-shadow:0 12px 28px rgba(47,94,99,.07)}
+.mongo-trial-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.mongo-trial-title{font-weight:900;font-size:18px;color:var(--text)}
+.mongo-trial-badge{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;background:#e9f7f6;color:#178f95;white-space:nowrap}
+.mongo-trial-badge.expired{background:#fff1f2;color:#be123c}.mongo-trial-badge.active{background:#ecfdf5;color:#047857}
+.mongo-trial-main{font-size:24px;font-weight:900;color:#178f95}.mongo-trial-sub{margin-top:4px;color:var(--text2);font-size:13px;font-weight:800}
+.mongo-trial-progress{height:10px;margin-top:13px;border-radius:999px;background:rgba(73,176,182,.13);overflow:hidden}
+.mongo-trial-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#49B0B6,#2f969c)}
+</style>
+
+
+<style id="mongo-soft-paywall-v4314">
+#mongo-trial-reminder{position:fixed;left:14px;right:14px;top:calc(72px + env(safe-area-inset-top));z-index:9998;display:none}
+.mongo-reminder-card{max-width:620px;margin:auto;padding:14px 16px;border-radius:20px;background:rgba(255,255,255,.97);box-shadow:0 12px 34px rgba(24,57,62,.16);border:1px solid rgba(73,176,182,.2);display:flex;gap:12px;align-items:center}
+.mongo-reminder-copy{flex:1}.mongo-reminder-title{font-weight:900;color:var(--text);font-size:14px}.mongo-reminder-sub{font-size:12px;color:var(--text2);margin-top:2px;font-weight:700}
+.mongo-reminder-close{border:0;background:#eef8f8;color:#178f95;width:32px;height:32px;border-radius:50%;font-size:18px;font-weight:900}
+#mongo-paywall{position:fixed;inset:0;z-index:10050;display:none;align-items:flex-end;justify-content:center;background:rgba(20,39,44,.38);backdrop-filter:blur(7px);padding:14px}
+.mongo-paywall-sheet{width:min(620px,100%);max-height:90vh;overflow:auto;border-radius:32px 32px 24px 24px;background:var(--card,#fff);padding:26px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -18px 55px rgba(20,39,44,.22)}
+.mongo-paywall-icon{width:66px;height:66px;border-radius:22px;display:grid;place-items:center;margin:0 auto 14px;font-size:32px;background:linear-gradient(135deg,rgba(73,176,182,.2),rgba(255,204,51,.22))}
+.mongo-paywall-sheet h2{text-align:center;margin:0;font-size:24px;color:var(--text)}.mongo-paywall-desc{text-align:center;color:var(--text2);font-weight:700;line-height:1.5;margin:9px 4px 18px}
+.mongo-plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.mongo-plan{border:1.5px solid rgba(73,176,182,.22);border-radius:20px;padding:15px;background:rgba(73,176,182,.06);text-align:left}.mongo-plan strong{display:block;color:var(--text);font-size:16px}.mongo-plan span{font-size:12px;color:var(--text2)}
+.mongo-plan.recommended{border-color:#49B0B6;box-shadow:0 0 0 2px rgba(73,176,182,.08)}
+.mongo-paywall-primary,.mongo-paywall-later{width:100%;border:0;border-radius:18px;padding:15px;font-weight:900;font-size:15px}
+.mongo-paywall-primary{background:linear-gradient(135deg,#49B0B6,#318f96);color:white;margin-top:2px}.mongo-paywall-later{background:transparent;color:var(--text2);margin-top:8px}
+.mongo-readonly-note{margin-top:12px;padding:11px 13px;border-radius:15px;background:rgba(73,176,182,.08);color:var(--text2);font-size:12px;font-weight:700;line-height:1.45}
+body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
+</style>
+
+
+<style id="mongo-trial-test-v4315">
+#mongo-trial-test-indicator{position:fixed;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:10070;display:none;padding:8px 11px;border-radius:999px;background:#111827;color:#fff;font-size:11px;font-weight:900;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+</style>
+
 </head>
 <body>
 
@@ -2261,6 +2325,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
       </div>
     </div>
     <div class="auth-err" id="login-err"></div>
+    <div class="auth-err" id="login-ok" style="background:var(--green-light);color:var(--green-dark);border-color:var(--green);border-left-color:var(--green)"></div>
     <input type="email" class="auth-fi" id="login-email" placeholder="Имэйл хаяг">
     <div class="pass-wrap">
       <input type="password" class="auth-fi" id="login-pass" placeholder="Нууц үг">
@@ -2290,6 +2355,38 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
     <button class="auth-btn auth-btn-p" onclick="doForgot()" id="forgot-btn">Сэргээх имэйл илгээх</button>
     <div class="auth-divider"></div>
     <button class="auth-btn auth-btn-o" onclick="showLogin()" id="forgot-back-btn">Нэвтрэх хуудас руу буцах</button>
+  </div>
+</div>
+
+
+<!-- ── Möngö V43.5 CUSTOM PASSWORD RESET ── -->
+<div class="auth-wrap" id="auth-reset" style="display:none">
+  <div class="auth-card reset-card">
+    <div class="auth-logo">
+      <img id="auth-reset-logo" alt="Möngö logo">
+      <div><div class="auth-logo-name">Möngö</div><div class="auth-logo-sub">Money Flow System</div></div>
+    </div>
+    <div id="reset-form-wrap">
+      <div class="auth-title" id="reset-title">Нууц үг шинэчлэх</div>
+      <div class="reset-brand-note" id="reset-note">Шинэ нууц үгээ хоёр удаа ижил оруулна уу.</div>
+      <div class="auth-err" id="reset-err"></div>
+      <div class="pass-wrap">
+        <input type="password" class="auth-fi" id="reset-pass" placeholder="Шинэ нууц үг" autocomplete="new-password">
+        <button type="button" class="pass-eye" onclick="togglePass('reset-pass',this)" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+      </div>
+      <div class="pass-wrap">
+        <input type="password" class="auth-fi" id="reset-pass2" placeholder="Нууц үг давтах" autocomplete="new-password">
+        <button type="button" class="pass-eye" onclick="togglePass('reset-pass2',this)" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+      </div>
+      <div class="reset-strength" id="reset-strength">Доод тал нь 6 тэмдэгт.</div>
+      <button class="auth-btn auth-btn-p" id="reset-submit" onclick="doCustomPasswordReset()">Нууц үг шинэчлэх</button>
+    </div>
+    <div class="reset-success" id="reset-success">
+      <div class="reset-success-icon">✓</div>
+      <div class="reset-success-title" id="reset-success-title">Нууц үг амжилттай шинэчлэгдлээ</div>
+      <div class="reset-success-copy" id="reset-success-copy">Одоо шинэ нууц үгээрээ нэвтэрч болно.</div>
+      <button class="auth-btn auth-btn-p" id="reset-login-btn" onclick="finishResetToLogin()">Нэвтрэх</button>
+    </div>
   </div>
 </div>
 
@@ -2884,6 +2981,18 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
         <div class="card-title" id="lbl-profile-title" style="margin-bottom:3px"></div>
         <div id="profile-email-main" style="font-size:13px;color:var(--text2);font-weight:800;word-break:break-word"></div>
       </div>
+    </div>
+  </div>
+
+  <div id="mongo-trial-card-root">
+    <div class="mongo-trial-card" id="mongo-trial-card">
+      <div class="mongo-trial-head">
+        <div class="mongo-trial-title">🎁 Үнэгүй туршилт</div>
+        <div class="mongo-trial-badge" id="mongo-trial-badge">Туршилт</div>
+      </div>
+      <div class="mongo-trial-main" id="mongo-trial-main">Өдөр 1 / 7</div>
+      <div class="mongo-trial-sub" id="mongo-trial-sub">Үлдсэн: 6 өдөр</div>
+      <div class="mongo-trial-progress"><span id="mongo-trial-progress" style="width:14.2857%"></span></div>
     </div>
   </div>
 
@@ -6245,7 +6354,14 @@ function wealthLevelInfo(score, net){
   let next=levels.find(l=>l.min>score); let pct=next?Math.max(0,Math.min(100,Math.round((score-lv.min)/(next.min-lv.min)*100))):100;
   return {lv,next,pct};
 }
+function hasFinancialScoreData(){
+  // A brand-new account should not receive a synthetic score from default baselines.
+  // Once the user has entered any real financial record, the normal scoring model applies.
+  const hasBudget=Object.values(budgets||{}).some(v=>Number(v)>0);
+  return !!((txns&&txns.length)||(goals&&goals.length)||(debts&&debts.length)||(invests&&invests.length)||hasBudget);
+}
 function getCurrentFinancialScore(){
+  if(!hasFinancialScoreData()) return 0;
   if(window.lastScoreBreakdown&&Number.isFinite(Number(lastScoreBreakdown.total)))return Number(lastScoreBreakdown.total)||0;
   const small=document.getElementById('pdash-score-small');
   const val=document.getElementById('pdash-score-val');
@@ -6262,7 +6378,8 @@ function renderWealthLevel(){
   if(badge)badge.textContent=info.lv.ico;
   if(fill)fill.style.width=info.pct+'%';
   if(note){
-    if(info.next) note.textContent=`${PT.nextLevel}: ${info.next.name}. ${PT.pointsLeft.replace('{n}',Math.max(0,info.next.min-score))}`;
+    if(!hasFinancialScoreData()) note.textContent=pDashText().needData;
+    else if(info.next) note.textContent=`${PT.nextLevel}: ${info.next.name}. ${PT.pointsLeft.replace('{n}',Math.max(0,info.next.min-score))}`;
     else note.textContent=PT.topLevel;
   }
 }
@@ -6275,7 +6392,10 @@ function renderProfileProgress(){
   const gm=document.getElementById('profile-growth-mini'); if(gm)gm.className='profile-mini '+(delta>0?'good':delta<0?'bad':'');
   set('profile-savings-v',fmt(savings));
   const scoreEl=document.getElementById('profile-score-v');
-  if(scoreEl) scoreEl.innerHTML=`⭐ ${score} / 100<div class="profile-score-bar"><div class="profile-score-fill" style="width:${Math.max(0,Math.min(100,score))}%"></div></div>`;
+  if(scoreEl){
+    if(!hasFinancialScoreData()) scoreEl.innerHTML=`— / 100<div class="profile-score-bar"><div class="profile-score-fill" style="width:0%"></div></div><div style="font-size:10px;color:var(--text2);margin-top:5px;font-weight:800">${pDashText().needData}</div>`;
+    else scoreEl.innerHTML=`⭐ ${score} / 100<div class="profile-score-bar"><div class="profile-score-fill" style="width:${Math.max(0,Math.min(100,score))}%"></div></div>`;
+  }
 }
 
 function phase1Text(){
@@ -7001,6 +7121,11 @@ function renderScoreDetail(){
   if(!lastScoreBreakdown)return;
   const T=scoreDetailText();
   const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
+  if(lastScoreBreakdown.noData||!hasFinancialScoreData()){
+    setTxt('score-detail-title',T.title); setTxt('score-detail-sub',pDashText().needData); setTxt('score-detail-total','— / 100');
+    const list=document.getElementById('score-detail-list'); if(list) list.innerHTML=`<div class="empty">${pDashText().needData}</div>`;
+    return;
+  }
   setTxt('score-detail-title',T.title); setTxt('score-detail-sub',T.sub); setTxt('score-detail-total',lastScoreBreakdown.total+' / 100');
   const rows=[
     {name:T.cash,score:lastScoreBreakdown.cashScore,max:25,note:T.cashNote},
@@ -7076,34 +7201,40 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
     else growthScore=2;
   }
 
+  const scoreDataReady=hasFinancialScoreData();
   const score=Math.max(0,Math.min(100,Math.round(cashScore+saveScore+budgetScore+debtScore+growthScore)));
-  lastScoreBreakdown={total:score,cashScore,saveScore,budgetScore,debtScore,growthScore,saveRate,cashflow,budgetPct,debtRatio};
+  lastScoreBreakdown=scoreDataReady?{total:score,cashScore,saveScore,budgetScore,debtScore,growthScore,saveRate,cashflow,budgetPct,debtRatio}:{total:null,noData:true,cashScore:0,saveScore:0,budgetScore:0,debtScore:0,growthScore:0,saveRate:0,cashflow:0,budgetPct:0,debtRatio:0};
   // FIRE is a long-term strategic number, so it must not change when the
   // dashboard period filter changes. It uses all-time average monthly expense.
   const avgMonthlyExpense=avgMonthlyExpenseAll();
-  const annualExpense=Math.max(avgMonthlyExpense*12,1);
-  const fireTarget=annualExpense*25;
-  const firePct=Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100)));
+  // V43.9 FIRE zero-state fix:
+  // No expense history => no FIRE target yet. Do not manufacture a minimum ₮25 target.
+  const annualExpense=Math.max(avgMonthlyExpense*12,0);
+  const fireTarget=avgMonthlyExpense>0 ? annualExpense*25 : 0;
+  const firePct=fireTarget>0 ? Math.max(0,Math.min(100,Math.round((netWorth/fireTarget)*100))) : 0;
 
   const setTxt=(id,txt)=>{const el=document.getElementById(id); if(el)el.textContent=txt;};
   setTxt('pdash-title',T.title); setTxt('pdash-sub',T.sub);
   setTxt('pdash-cashflow-lbl',T.cashflow); setTxt('pdash-cashflow-val',fmt(cashflow)); setTxt('pdash-cashflow-note',cashflow>=0?T.positive:T.negative);
   setTxt('pdash-save-lbl',T.saveRate); setTxt('pdash-save-val',saveRate+'%'); setTxt('pdash-save-note',saveRate>=20?T.good:(saveRate>=10?T.ok:T.watch));
   setTxt('pdash-net-lbl',T.net); setTxt('pdash-net-val',fmt(netWorth)); setTxt('pdash-net-note',T.netNote); updateNetWorthGrowth(netWorth);
-  setTxt('pdash-score-lbl',T.score); setTxt('pdash-score-val',score+' / 100'); setTxt('pdash-score-small',score); setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));
+  setTxt('pdash-score-lbl',T.score);
+  if(scoreDataReady){setTxt('pdash-score-val',score+' / 100');setTxt('pdash-score-small',score);setTxt('pdash-score-note',score>=80?T.good:(score>=55?T.ok:T.watch));}
+  else{setTxt('pdash-score-val','— / 100');setTxt('pdash-score-small','—');setTxt('pdash-score-note',T.needData);}
   setTxt('pdash-fire-lbl',T.fire); setTxt('pdash-fire-val',firePct+'%'); setTxt('pdash-fire-note',avgMonthlyExpense>0?(T.fireNote+' • '+T.fireTargetLabel+': '+fmt(fireTarget)):T.needData);
   const V30=v30DashText();
   setTxt('pdash-fire-current-lbl',V30.current); setTxt('pdash-fire-current',fmt(netWorth));
-  setTxt('pdash-fire-remaining-lbl',V30.remaining); setTxt('pdash-fire-remaining',fmt(Math.max(0,fireTarget-netWorth)));
-  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',avgMonthlySavingsAll()>0?fireForecastText(netWorth,fireTarget):V30.noForecast);
+  setTxt('pdash-fire-remaining-lbl',V30.remaining);
+  setTxt('pdash-fire-remaining',avgMonthlyExpense>0 ? fmt(Math.max(0,fireTarget-netWorth)) : '—');
+  setTxt('pdash-fire-forecast-lbl',V30.forecast); setTxt('pdash-fire-forecast',(avgMonthlyExpense>0&&avgMonthlySavingsAll()>0)?fireForecastText(netWorth,fireTarget):V30.noForecast);
   const fill=document.getElementById('pdash-fire-fill'); if(fill)fill.style.width=firePct+'%';
-  const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',(score*3.6)+'deg');
+  const ring=document.getElementById('pdash-score-ring'); if(ring)ring.style.setProperty('--score-deg',((scoreDataReady?score:0)*3.6)+'deg');
   const scoreCard=document.getElementById('pdash-score-card'); if(scoreCard&&!scoreCard.dataset.scoreClick){scoreCard.dataset.scoreClick='1';scoreCard.addEventListener('click',toggleScoreDetail);}
   renderScoreDetail();
   setPCardState('pdash-cashflow-card',cashflow>=0?'pdash-good':'pdash-bad');
   setPCardState('pdash-save-card',saveRate>=20?'pdash-good':(saveRate>=10?'pdash-warn':'pdash-bad'));
   setPCardState('pdash-net-card',netWorth>=0?'pdash-good':'pdash-bad');
-  setPCardState('pdash-score-card',score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad'));
+  setPCardState('pdash-score-card',scoreDataReady?(score>=80?'pdash-good':(score>=55?'pdash-warn':'pdash-bad')):'');
   updateWelcomeCard();
 }
 
@@ -7652,7 +7783,13 @@ function toggleInvestGroup(key){openInvestGroups.has(key)?openInvestGroups.delet
 function updateInvestGroupColor(key,color){invests.filter(x=>investGroupKey(x)===key).forEach(x=>x.color=color);saveData();rInvests();rDonut('inv');}
 function rInvests(){
   const el=document.getElementById('invest-list');
-  if(!invests.length){el.innerHTML=`<div class="empty">${L.nodata}</div>`;return;}
+  if(!invests.length){
+    const tin=document.getElementById('i-total-in'),tcur=document.getElementById('i-total-cur'),pnlVal=document.getElementById('i-pnl-val'),pctVal=document.getElementById('i-pct-val');
+    if(tin)tin.textContent=fmt(0); if(tcur)tcur.textContent=fmt(0); if(pnlVal){pnlVal.textContent=fmt(0);pnlVal.className='metric-val inv-neutral';} if(pctVal){pctVal.textContent='0%';pctVal.className='metric-val inv-neutral';}
+    const pc=document.getElementById('i-pnl-card'),pp=document.getElementById('i-pct-card');
+    [pc,pp].forEach(card=>{if(card){card.style.background='var(--bg2)';const k=card.querySelector('.metric-lbl'),v=card.querySelector('.metric-val');if(k)k.style.color='var(--text2)';if(v)v.style.color='var(--text)';}});
+    el.innerHTML=`<div class="empty">${L.nodata}</div>`;return;
+  }
   const groups=getInvestGroups();
   const tIn=groups.reduce((s,i)=>s+i.invested,0),tCur=groups.reduce((s,i)=>s+i.current,0);
   const pnl=tCur-tIn,pct2=tIn>0?(pnl/tIn)*100:0;
@@ -7970,6 +8107,7 @@ function secNormalizeData(data){
   clean.lockedCats=Array.isArray(clean.lockedCats)?clean.lockedCats.slice(0,200).map(x=>secPlain(x,80)):[];
   clean.netWorthSnapshots=Array.isArray(clean.netWorthSnapshots)?clean.netWorthSnapshots.slice(-730):[];
   clean.paySettings=(clean.paySettings && typeof clean.paySettings==='object')?clean.paySettings:{enabled:true,rate:20,alloc:{}};
+  clean.clientUpdatedAt=(typeof clean.clientUpdatedAt==='string' && !Number.isNaN(Date.parse(clean.clientUpdatedAt)))?clean.clientUpdatedAt:'';
   return clean;
 }
 function secParseBackup(raw){
@@ -8012,11 +8150,13 @@ function saveData(){
         color:s.color
       }))
     }));
+    if(!window.MONGO_LOCAL_DATA_UPDATED_AT) window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
     const data=secNormalizeData({txns,goals,debts,invests,budgets,lang,budgetMonth,budgetYear,budgetType,
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
-      bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[]});
+      bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[],
+      clientUpdatedAt:window.MONGO_LOCAL_DATA_UPDATED_AT});
     localStorage.setItem(getDBKey(),JSON.stringify(data));
     showSaveIndicator();
   }catch(e){console.warn('Save error:',e);}
@@ -8044,6 +8184,7 @@ function loadData(){
     if(data.lockedCats)lockedCats=new Set(data.lockedCats);
     if(data.paySettings)paySettings=Object.assign({enabled:true,rate:20,alloc:{}},data.paySettings);
     if(data.netWorthSnapshots)window.netWorthSnapshots=data.netWorthSnapshots;
+    window.MONGO_LOCAL_DATA_UPDATED_AT=data.clientUpdatedAt||'';
     if(data.incCatsCustom)incCats=[...incCats,...data.incCatsCustom];
     if(data.expCatsCustom)expCats=[...expCats,...data.expCatsCustom];
     // Merge bCats
@@ -8084,7 +8225,16 @@ function loadData(){
   }catch(e){console.warn('Load error:',e);return false;}
 }
 
-async function clearData(){if(!await showConfirm(L.confirmDel))return;localStorage.removeItem(getDBKey());location.reload();}
+async function clearData(){
+  if(!await showConfirm(L.confirmDel))return;
+  try{
+    localStorage.removeItem(getDBKey());
+    if(window.CloudDataService && typeof window.CloudDataService.clearFinancialData==='function'){
+      await window.CloudDataService.clearFinancialData();
+    }
+  }catch(e){console.warn('Clear data failed',e);}
+  location.reload();
+}
 
 function exportData(){
   const raw=localStorage.getItem(getDBKey());
@@ -8098,10 +8248,24 @@ function importData(e){
   const file=e.target.files[0];if(!file)return;
   if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
   const reader=new FileReader();
-  reader.onload=ev=>{try{
+  reader.onload=async ev=>{try{
     const clean=secParseBackup(ev.target.result);
+    clean.clientUpdatedAt=new Date().toISOString();
+    window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
     localStorage.setItem(getDBKey(),JSON.stringify(clean));
-    location.reload();
+    // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
+    // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
+    if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
+      try{
+        if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
+        await window.CloudDataService.saveFinancialData('force');
+        showToast('Restore + Cloud sync ✓');
+      }catch(syncErr){
+        console.warn('Restore cloud sync failed:',syncErr);
+        showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
+      }
+    }
+    setTimeout(()=>location.reload(),350);
   }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
   finally{e.target.value='';}};
   reader.readAsText(file);
@@ -8857,6 +9021,7 @@ function showLogin(){
   document.getElementById('auth-register').classList.remove('show');
   document.getElementById('auth-forgot').style.display='none';
   document.getElementById('login-err').classList.remove('show');
+  const loginOk=document.getElementById('login-ok'); if(loginOk){loginOk.textContent='';loginOk.classList.remove('show');}
   document.getElementById('login-email').value='';
   document.getElementById('login-pass').value='';
   const btn=document.getElementById('login-btn');
@@ -8895,7 +9060,11 @@ function doForgot(){
   okEl.textContent=''; okEl.classList.remove('show');
   if(!email){errEl.textContent=(LANGS[lang]?.forgotNoUser||'Имэйл оруулна уу.');errEl.classList.add('show');return;}
   btn.disabled=true;
-  auth.sendPasswordResetEmail(email)
+  // V43.5: Firebase email language follows the language chosen in Möngö.
+  // The continue URL preserves the language for the custom reset page.
+  try{ auth.languageCode=lang||'mn'; }catch(e){}
+  const resetContinueUrl=location.origin+location.pathname+'?resetDone=1&resetLang='+encodeURIComponent(lang||'mn');
+  auth.sendPasswordResetEmail(email,{url:resetContinueUrl,handleCodeInApp:false})
     .then(()=>{
       const t=pickAuthLangT();
       okEl.textContent=t.forgotOk;
@@ -9077,13 +9246,342 @@ async function doLogin(){
   try{
     const cred=await auth.signInWithEmailAndPassword(email,pass);
     await ensureUserProfile(cred.user);
+    await loadBillingLifecycleForUser(cred.user);
   }catch(e){
     setAuthError('login-err',authErrMsg(e.code));
     setAuthLoading('login-btn',false,t.login);
   }
 }
 
-// Бүртгүүлэх — V42.2 шинэ хэрэглэгчийн profile автоматаар үүсгэнэ
+// V43.5 — Philosophy Day 1 is the Firebase registration day.
+function mongoLocalDate(value){
+  const d=new Date(value||Date.now());
+  if(Number.isNaN(d.getTime())) return new Date().toISOString().slice(0,10);
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+async function initializePhilosophyStartForNewUser(user){
+  if(!user||!user.uid)return '';
+  const start=mongoLocalDate(user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+  const key='mongo_philosophy_start_'+user.uid;
+  try{
+    await db.collection('users').doc(user.uid).collection('settings').doc('main').set({
+      philosophyStartDate:start,
+      philosophyStartSource:'registration',
+      philosophyVersion:'v43.5',
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+  }catch(e){ console.warn('Möngö philosophy start cloud save failed',e); }
+  try{localStorage.setItem(key,start);}catch(e){}
+  window.MONGO_PHILOSOPHY_START_DATE=start;
+  return start;
+}
+
+
+// V43.10 — Billing Day 1 foundation.
+// IMPORTANT: payment/trial timing is intentionally independent from the 365-day philosophy timeline.
+// A successful Firebase registration creates the immutable account/trial start date for that UID.
+// Actual paid subscriptionStartDate remains null until a future payment-confirmation step sets it.
+function mongoDaysSinceInclusive(startDate){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate||'')))return 1;
+  const a=new Date(String(startDate)+'T00:00:00');
+  const today=mongoLocalDate(Date.now());
+  const b=new Date(today+'T00:00:00');
+  const diff=Math.floor((b-a)/86400000);
+  return Math.max(1,diff+1); // registration date = Day 1
+}
+function mongoBillingLocalKey(uid){ return 'mongo_billing_lifecycle_'+uid; }
+function mongoBillingStateFrom(data,user){
+  const fallback=mongoLocalDate(user&&user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+  const accountStart=String((data&&data.accountStartDate)||fallback).slice(0,10);
+  const trialStart=String((data&&data.trialStartDate)||accountStart).slice(0,10);
+  const paidStart=(data&&data.subscriptionStartDate)?String(data.subscriptionStartDate).slice(0,10):null;
+  return {
+    accountStartDate:accountStart,
+    trialStartDate:trialStart,
+    subscriptionStartDate:paidStart,
+    subscriptionStatus:String((data&&data.subscriptionStatus)||'trial'),
+    subscriptionPlan:(data&&data.subscriptionPlan)||null,
+    trialDay:mongoDaysSinceInclusive(trialStart),
+    uid:user&&user.uid||''
+  };
+}
+
+const MONGO_TRIAL_DAYS=7;
+
+// V43.15 TEST ONLY:
+// Add ?trialTestDay=5, ?trialTestDay=6, ?trialTestDay=7 or ?trialTestDay=8 to the URL.
+// This changes only the in-browser test calculation. Firestore trialStartDate is NEVER modified.
+function mongoTrialTestDay(){
+  try{
+    const raw=new URLSearchParams(location.search).get('trialTestDay');
+    if(raw===null)return null;
+    const n=Number(raw);
+    return Number.isInteger(n)&&n>=1&&n<=30?n:null;
+  }catch(e){return null;}
+}
+function mongoTrialInfo(state){
+  if(!state)return {day:null,remaining:null,isExpired:false,isPaid:false,status:'unknown'};
+  const isPaid=state.subscriptionStatus==='active'||!!state.subscriptionStartDate;
+  const override=mongoTrialTestDay();
+  const day=Math.max(1,override||Number(state.trialDay||1));
+  return {
+    day,
+    remaining:Math.max(0,MONGO_TRIAL_DAYS-day),
+    isExpired:!isPaid&&day>MONGO_TRIAL_DAYS,
+    isPaid,
+    status:isPaid?'active':(day>MONGO_TRIAL_DAYS?'expired':'trial')
+  };
+}
+function cacheBillingState(state){
+  if(!state||!state.uid)return;
+  window.MONGO_BILLING_STATE=state;
+  try{ localStorage.setItem(mongoBillingLocalKey(state.uid),JSON.stringify(state)); }catch(e){}
+  try{setTimeout(()=>{renderMongoTrialCard();refreshMongoTrialAccess();},0);}catch(e){}
+}
+async function initializeBillingDay1ForNewUser(user){
+  if(!user||!user.uid)return null;
+  const start=mongoLocalDate(user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+  const ref=db.collection('users').doc(user.uid).collection('billing').doc('lifecycle');
+  const payload={
+    uid:user.uid,
+    accountStartDate:start,
+    trialStartDate:start,
+    subscriptionStartDate:null,
+    subscriptionStatus:'trial',
+    subscriptionPlan:null,
+    billingVersion:'v43.10',
+    startSource:'registration',
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    // create-once behavior: never move Day 1 forward on later logins.
+    const snap=await ref.get();
+    if(!snap.exists){
+      await ref.set(payload,{merge:false});
+      const state=mongoBillingStateFrom(payload,user);
+      cacheBillingState(state);
+      return state;
+    }
+    const state=mongoBillingStateFrom(snap.data()||{},user);
+    cacheBillingState(state);
+    return state;
+  }catch(e){
+    console.warn('Möngö billing Day 1 cloud save failed',e);
+    const state=mongoBillingStateFrom(payload,user);
+    cacheBillingState(state);
+    return state;
+  }
+}
+async function loadBillingLifecycleForUser(user){
+  if(!user||!user.uid)return null;
+  const ref=db.collection('users').doc(user.uid).collection('billing').doc('lifecycle');
+  try{
+    const snap=await ref.get();
+    if(snap.exists){
+      const state=mongoBillingStateFrom(snap.data()||{},user);
+      cacheBillingState(state);
+      return state;
+    }
+
+    // V43.11 one-time migration for pre-V43.10 accounts:
+    // use Firebase Auth creationTime as the immutable Day 1 source.
+    // This does NOT start Day 1 from today's login date and never moves it forward.
+    const creationRaw=user.metadata&&user.metadata.creationTime?user.metadata.creationTime:null;
+    if(creationRaw){
+      const start=mongoLocalDate(creationRaw);
+      const payload={
+        uid:user.uid,
+        accountStartDate:start,
+        trialStartDate:start,
+        subscriptionStartDate:null,
+        subscriptionStatus:'trial',
+        subscriptionPlan:null,
+        billingVersion:'v43.11',
+        startSource:'firebaseAuthCreationTimeMigration',
+        migratedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await ref.set(payload,{merge:false});
+      const state=mongoBillingStateFrom(payload,user);
+      cacheBillingState(state);
+      return state;
+    }
+  }catch(e){ console.warn('Möngö billing lifecycle load/migration failed',e); }
+
+  // Offline fallback only: use this UID's own cached lifecycle if it exists.
+  try{
+    const cached=JSON.parse(localStorage.getItem(mongoBillingLocalKey(user.uid))||'null');
+    if(cached&&cached.uid===user.uid){
+      window.MONGO_BILLING_STATE=cached;
+      return cached;
+    }
+  }catch(e){}
+  window.MONGO_BILLING_STATE=null;
+  return null;
+}
+
+function mongoTrialLabels(){
+  const code=(typeof lang!=='undefined'&&lang)||localStorage.getItem('mongo_lang')||'mn';
+  const d={
+    mn:{title:'Үнэгүй туршилт',badge:'Туршилт',day:'Өдөр',remaining:'Үлдсэн',days:'өдөр',expired:'Туршилт дууссан',active:'Идэвхтэй эрх',activeText:'Таны Möngö эрх идэвхтэй байна.',expiredText:'Үнэгүй туршилтын хугацаа дууссан.'},
+    en:{title:'Free trial',badge:'Trial',day:'Day',remaining:'Remaining',days:'days',expired:'Trial ended',active:'Active plan',activeText:'Your Möngö access is active.',expiredText:'Your free trial has ended.'},
+    ru:{title:'Бесплатный период',badge:'Пробный',day:'День',remaining:'Осталось',days:'дн.',expired:'Пробный период завершён',active:'Активная подписка',activeText:'Ваш доступ Möngö активен.',expiredText:'Пробный период завершён.'},
+    ko:{title:'무료 체험',badge:'체험',day:'일차',remaining:'남은 기간',days:'일',expired:'체험 종료',active:'이용권 활성',activeText:'Möngö 이용권이 활성화되어 있습니다.',expiredText:'무료 체험이 종료되었습니다.'},
+    ja:{title:'無料トライアル',badge:'トライアル',day:'日目',remaining:'残り',days:'日',expired:'トライアル終了',active:'利用中',activeText:'Möngö の利用権は有効です。',expiredText:'無料トライアルは終了しました。'},
+    zh:{title:'免费试用',badge:'试用',day:'第',remaining:'剩余',days:'天',expired:'试用已结束',active:'已激活',activeText:'您的 Möngö 权益已激活。',expiredText:'免费试用已结束。'},
+    de:{title:'Kostenlose Testphase',badge:'Testphase',day:'Tag',remaining:'Verbleibend',days:'Tage',expired:'Testphase beendet',active:'Aktiv',activeText:'Dein Möngö-Zugang ist aktiv.',expiredText:'Deine kostenlose Testphase ist beendet.'}
+  };
+  return d[code]||d.mn;
+}
+function renderMongoTrialCard(){
+  const root=document.getElementById('mongo-trial-card-root');
+  if(!root)return;
+
+  const T=mongoTrialLabels();
+  const state=window.MONGO_BILLING_STATE;
+  const info=state?mongoTrialInfo(state):{day:1,remaining:6,isExpired:false,isPaid:false};
+
+  const title=root.querySelector('.mongo-trial-title');
+  const badge=document.getElementById('mongo-trial-badge');
+  const main=document.getElementById('mongo-trial-main');
+  const sub=document.getElementById('mongo-trial-sub');
+  const bar=document.getElementById('mongo-trial-progress');
+  if(!title||!badge||!main||!sub||!bar)return;
+
+  title.textContent='🎁 '+T.title;
+  badge.className='mongo-trial-badge';
+
+  let pct=0;
+  if(info.isPaid){
+    badge.classList.add('active');
+    badge.textContent=T.active;
+    main.textContent=T.active;
+    sub.textContent=T.activeText;
+    pct=100;
+  }else if(info.isExpired){
+    badge.classList.add('expired');
+    badge.textContent=T.expired;
+    main.textContent=T.expired;
+    sub.textContent=T.expiredText;
+    pct=100;
+  }else{
+    badge.textContent=T.badge;
+    main.textContent=`${T.day} ${info.day} / ${MONGO_TRIAL_DAYS}`;
+    sub.textContent=`${T.remaining}: ${info.remaining} ${T.days}`;
+    pct=Math.min(100,Math.max(0,(info.day/MONGO_TRIAL_DAYS)*100));
+  }
+  bar.style.width=pct+'%';
+}
+
+
+const MONGO_READONLY_KEY='mongo_trial_readonly_ack_';
+let MONGO_SELECTED_PLAN='yearly';
+function mongoAccessLabels(){
+  const code=(typeof lang!=='undefined'&&lang)||localStorage.getItem('mongo_lang')||'mn';
+  const x={
+    mn:{d5:'Үнэгүй туршилтад 2 өдөр үлдлээ',d6:'Маргааш туршилтын сүүлийн өдөр',d7:'Өнөөдөр туршилтын сүүлийн өдөр',rem:'Таны мэдээлэл аюулгүй хадгалагдана.',title:'Туршилтын хугацаа дууслаа',desc:'Таны өгөгдөл аюулгүй хадгалагдсан. Möngö-г үргэлжлүүлэн ашиглах эрхээ сонгоно уу.',monthly:'Сар бүр',monthlySub:'Уян хатан сонголт',yearly:'Жилээр',yearlySub:'Хамгийн үнэ цэнтэй',cont:'Үргэлжлүүлэх',later:'Дараа шийдэх',note:'“Дараа шийдэх” гэвэл мэдээллээ харах боломжтой хэвээр. Шинээр нэмэх, засах үйлдэл subscription шаарддаг.',locked:'Туршилтын хугацаа дууссан. Энэ үйлдлийг үргэлжлүүлэхийн тулд эрхээ идэвхжүүлнэ үү.'},
+    en:{d5:'2 days left in your free trial',d6:'Tomorrow is the last trial day',d7:'Today is the last day of your trial',rem:'Your data stays safely saved.',title:'Your free trial has ended',desc:'Your data is safely saved. Choose a plan to continue using Möngö.',monthly:'Monthly',monthlySub:'Flexible option',yearly:'Yearly',yearlySub:'Best value',cont:'Continue',later:'Decide later',note:'Choose “Decide later” to keep viewing your data. Adding or editing requires a subscription.',locked:'Your trial has ended. Activate a plan to continue this action.'},
+    ru:{d5:'До конца пробного периода 2 дня',d6:'Завтра последний день пробного периода',d7:'Сегодня последний день пробного периода',rem:'Ваши данные сохранены.',title:'Пробный период завершён',desc:'Ваши данные сохранены. Выберите план, чтобы продолжить пользоваться Möngö.',monthly:'Ежемесячно',monthlySub:'Гибкий вариант',yearly:'Ежегодно',yearlySub:'Выгоднее',cont:'Продолжить',later:'Решить позже',note:'Можно продолжать просмотр данных. Добавление и изменение требуют подписки.',locked:'Пробный период завершён. Для этого действия нужна подписка.'}
+  }; return x[code]||x.en;
+}
+function mongoBillingUid(){return window.MONGO_BILLING_STATE&&window.MONGO_BILLING_STATE.uid||'';}
+function mongoIsReadOnly(){
+  const st=window.MONGO_BILLING_STATE, info=st?mongoTrialInfo(st):null;
+  return !!(info&&info.isExpired&&!info.isPaid);
+}
+function applyMongoAccessMode(){
+  const ro=mongoIsReadOnly();
+  document.body.classList.toggle('mongo-readonly',ro);
+  if(!ro) return;
+  const uid=mongoBillingUid();
+  let ack=false; try{ack=localStorage.getItem(MONGO_READONLY_KEY+uid)==='1';}catch(e){}
+  if(!ack) showMongoPaywall();
+}
+function showMongoTrialReminder(){
+  const st=window.MONGO_BILLING_STATE;if(!st)return;
+  const info=mongoTrialInfo(st); if(info.isPaid||info.isExpired)return;
+  if(![5,6,7].includes(info.day))return;
+  const T=mongoAccessLabels(), box=document.getElementById('mongo-trial-reminder');
+  if(!box)return;
+  const dayKey='mongo_trial_reminder_'+st.uid+'_'+info.day;
+  try{if(sessionStorage.getItem(dayKey)==='1')return;}catch(e){}
+  const title=info.day===5?T.d5:(info.day===6?T.d6:T.d7);
+  document.getElementById('mongo-reminder-title').textContent=title;
+  document.getElementById('mongo-reminder-sub').textContent=T.rem;
+  box.style.display='block'; box.dataset.dayKey=dayKey;
+}
+function dismissMongoTrialReminder(){
+  const box=document.getElementById('mongo-trial-reminder'); if(!box)return;
+  try{if(box.dataset.dayKey)sessionStorage.setItem(box.dataset.dayKey,'1');}catch(e){}
+  box.style.display='none';
+}
+function showMongoPaywall(){
+  const T=mongoAccessLabels(), p=document.getElementById('mongo-paywall');if(!p)return;
+  document.getElementById('mongo-paywall-title').textContent=T.title;
+  document.getElementById('mongo-paywall-desc').textContent=T.desc;
+  document.getElementById('mongo-monthly').textContent=T.monthly; document.getElementById('mongo-monthly-sub').textContent=T.monthlySub;
+  document.getElementById('mongo-yearly').textContent=T.yearly; document.getElementById('mongo-yearly-sub').textContent=T.yearlySub;
+  document.getElementById('mongo-continue-sub').textContent=T.cont; document.getElementById('mongo-later').textContent=T.later;
+  document.getElementById('mongo-readonly-note').textContent=T.note; p.style.display='flex';
+}
+function hideMongoPaywall(){const p=document.getElementById('mongo-paywall');if(p)p.style.display='none';}
+function enterMongoReadOnly(){
+  const uid=mongoBillingUid();try{if(uid)localStorage.setItem(MONGO_READONLY_KEY+uid,'1');}catch(e){}
+  hideMongoPaywall(); document.body.classList.add('mongo-readonly');
+}
+function selectMongoPlan(plan){
+  MONGO_SELECTED_PLAN=plan;
+  document.querySelectorAll('.mongo-plan').forEach((x,i)=>x.classList.toggle('recommended',(plan==='monthly'&&i===0)||(plan==='yearly'&&i===1)));
+}
+function continueMongoSubscription(){
+  // V43.14 intentionally does not fake a payment.
+  // Store billing integration will be connected in the next payment phase.
+  try{showToast((typeof lang!=='undefined'&&lang)==='mn'?'Төлбөрийн холболтыг дараагийн алхамд идэвхжүүлнэ.':'Payment connection will be enabled in the next step.');}catch(e){}
+}
+function mongoLooksLikeWriteAction(el){
+  if(!el||!el.closest)return false;
+  const hit=el.closest('button,[role="button"],input[type="submit"],.fab,.add-btn,.edit-btn,.delete-btn');
+  if(!hit)return false;
+  if(hit.closest('#mongo-paywall')||hit.closest('#mongo-trial-reminder'))return false;
+  const text=((hit.textContent||'')+' '+(hit.getAttribute('aria-label')||'')+' '+(hit.getAttribute('title')||'')).toLowerCase();
+  const idcls=((hit.id||'')+' '+(hit.className||'')).toLowerCase();
+  const words=['нэмэх','засах','устгах','хадгалах','бүртгэх','add','edit','delete','save','create','шинэ','+'];
+  return words.some(w=>text.includes(w)||idcls.includes(w));
+}
+document.addEventListener('click',function(ev){
+  if(!mongoIsReadOnly())return;
+  if(!mongoLooksLikeWriteAction(ev.target))return;
+  ev.preventDefault();ev.stopImmediatePropagation();
+  try{showToast(mongoAccessLabels().locked);}catch(e){}
+  showMongoPaywall();
+},true);
+function refreshMongoTrialAccess(){
+  try{
+    renderMongoTrialCard();
+    showMongoTrialReminder();
+    applyMongoAccessMode();
+    const testDay=mongoTrialTestDay();
+    const el=document.getElementById('mongo-trial-test-indicator');
+    if(el){
+      el.style.display=testDay?'block':'none';
+      el.textContent=testDay?'TEST · DAY '+testDay:'TEST';
+    }
+  }catch(e){}
+}
+
+window.MONGO_BILLING={
+  getState:()=>window.MONGO_BILLING_STATE||null,
+  getTrialDay:()=>window.MONGO_BILLING_STATE?window.MONGO_BILLING_STATE.trialDay:null,
+  getStartDate:()=>window.MONGO_BILLING_STATE?window.MONGO_BILLING_STATE.trialStartDate:null,
+  render:()=>renderMongoTrialCard(),
+  access:()=>({readOnly:mongoIsReadOnly(),trial:mongoTrialInfo(window.MONGO_BILLING_STATE)}),
+  showPaywall:()=>showMongoPaywall(),
+  reload:()=>auth&&auth.currentUser?loadBillingLifecycleForUser(auth.currentUser):Promise.resolve(null)
+};
+
+// Бүртгүүлэх — V43.10 шинэ хэрэглэгчийн profile + Philosophy Day 1 + Billing Day 1 автоматаар үүсгэнэ
 async function doRegister(){
   const email=cleanEmail(document.getElementById('reg-email')?.value);
   const pass=document.getElementById('reg-pass')?.value||'';
@@ -9096,6 +9594,8 @@ async function doRegister(){
   setAuthLoading('reg-btn',true,t.register);
   try{
     const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await initializePhilosophyStartForNewUser(cred.user);
+    await initializeBillingDay1ForNewUser(cred.user);
     await ensureUserProfile(cred.user);
   }catch(e){
     setAuthError('reg-err',authErrMsg(e.code)||t.profileFail);
@@ -9110,6 +9610,7 @@ async function doLogout(){
   sessionStorage.removeItem('pendingLang');
   window._authUid=null;
   window._authEmail='';
+  window.MONGO_BILLING_STATE=null;
   try{await auth.signOut();}
   catch(e){showToast(authErrMsg(e.code));}
 }
@@ -9126,6 +9627,23 @@ auth.onAuthStateChanged(async user=>{
   const regPage=document.getElementById('auth-register');
 
   if(user){
+    // V43.8 ACCOUNT ISOLATION:
+    // Firebase currentUser can change before async profile loading finishes.
+    // Clear the previous user's in-memory financial state immediately so an old
+    // pending cloud timer can never write that data under the new UID.
+    window.MONGO_ACCOUNT_READY_UID=null;
+    if(window._authUid!==user.uid){
+      try{
+        txns=[]; goals=[]; debts=[]; invests=[]; budgets={};
+        lockedCats=new Set();
+        window.netWorthSnapshots=[];
+        window.MONGO_LOCAL_DATA_UPDATED_AT='';
+        incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
+        expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
+        bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+        bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+      }catch(e){ console.warn('Account isolation pre-reset failed',e); }
+    }
     let cloudPrefs={};
     try{await ensureUserProfile(user); cloudPrefs=await loadCloudProfileSettings(user);}catch(e){console.warn('Möngö profile bootstrap failed',e);}
     loginPage.classList.remove('show');
@@ -9171,12 +9689,21 @@ auth.onAuthStateChanged(async user=>{
       updateBudgetTotal();
       showToast(L.dataLoaded||'Өгөгдөл ачааллагдлаа ✓');
     }
+    // Only now may Cloud Sync read/write financial data for this UID.
+    window.MONGO_ACCOUNT_READY_UID=user.uid;
+    try{
+      if(window.CloudDataService && typeof window.CloudDataService.loadFinancialData==='function'){
+        setTimeout(()=>window.CloudDataService.loadFinancialData({silent:true}),80);
+      }
+    }catch(e){}
   } else {
     appRoot.style.display='none';
     loginPage.classList.add('show');
     regPage.classList.remove('show');
     document.getElementById('auth-forgot').style.display='none';
     window._authUid=null;
+    window.MONGO_ACCOUNT_READY_UID=null;
+    window.MONGO_LOCAL_DATA_UPDATED_AT='';
     // Logout хийсний дараа нэвтрэх хуудасны хэлийг mn болгож reset хийнэ
     pickAuthLang('mn','🇲🇳 Монгол');
   }
@@ -9342,10 +9869,11 @@ auth.onAuthStateChanged(async user=>{
   if(window.MONGO_CLOUD_DATA_V425_READY) return;
   window.MONGO_CLOUD_DATA_V425_READY=true;
 
-  const CLOUD_FINANCIAL_VERSION='v42.5-offline-sync-reliability';
+  const CLOUD_FINANCIAL_VERSION='v43.4-safe-cloud-sync';
   const QUEUE_KEY_PREFIX='mongo_sync_queue_';
   const SNAP_KEY_PREFIX='mongo_cloud_snapshot_';
   const META_KEY_PREFIX='mongo_sync_meta_';
+  const LOCAL_UPDATED_KEY_PREFIX='mongo_local_updated_';
   const MAX_QUEUE=40;
   const MAX_RETRY=5;
   const BASE_RETRY_MS=1200;
@@ -9360,8 +9888,12 @@ auth.onAuthStateChanged(async user=>{
     return !!(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth && window.MONGO_FIREBASE.auth.currentUser && window.MONGO_FIREBASE.db);
   }
   function currentUid(){ return hasFirebaseUser()?window.MONGO_FIREBASE.auth.currentUser.uid:null; }
-  function cloudDocRef(){
-    const uid=currentUid(); if(!uid) return null;
+  function accountReadyForCloud(){
+    const uid=currentUid();
+    return !!uid && window._authUid===uid && window.MONGO_ACCOUNT_READY_UID===uid;
+  }
+  function cloudDocRef(uidOverride){
+    const uid=uidOverride||currentUid(); if(!uid) return null;
     return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('financial').doc('main');
   }
   function safeArray(v){ return Array.isArray(v)?v:[]; }
@@ -9371,6 +9903,26 @@ auth.onAuthStateChanged(async user=>{
   function nowIso(){ return new Date().toISOString(); }
   function uidKey(prefix){ return prefix+(currentUid()||'guest'); }
   function opId(){ return 'op_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10); }
+  function hasMeaningfulFinancialData(d){
+    d=safeObj(d);
+    return safeArray(d.txns).length>0 || safeArray(d.goals).length>0 || safeArray(d.debts).length>0 || safeArray(d.invests).length>0 || Object.keys(safeObj(d.budgets)).length>0;
+  }
+  function getLocalUpdatedAt(){
+    if(window.MONGO_LOCAL_DATA_UPDATED_AT) return window.MONGO_LOCAL_DATA_UPDATED_AT;
+    try{
+      const v=localStorage.getItem(uidKey(LOCAL_UPDATED_KEY_PREFIX))||'';
+      if(v && !Number.isNaN(Date.parse(v))) return v;
+      const raw=localStorage.getItem(typeof getDBKey==='function'?getDBKey():'');
+      if(raw){ const parsed=JSON.parse(raw); if(parsed&&parsed.clientUpdatedAt&&!Number.isNaN(Date.parse(parsed.clientUpdatedAt))) return parsed.clientUpdatedAt; }
+    }catch(e){}
+    return '';
+  }
+  function markLocalUpdated(ts){
+    const v=(ts && !Number.isNaN(Date.parse(ts)))?ts:nowIso();
+    window.MONGO_LOCAL_DATA_UPDATED_AT=v;
+    try{localStorage.setItem(uidKey(LOCAL_UPDATED_KEY_PREFIX),v);}catch(e){}
+    return v;
+  }
 
   function getQueue(){
     try{ return JSON.parse(localStorage.getItem(uidKey(QUEUE_KEY_PREFIX))||'[]').filter(Boolean); }catch(e){ return []; }
@@ -9491,7 +10043,7 @@ auth.onAuthStateChanged(async user=>{
       bCatsIncSave:serializeBudgetCats(typeof bCatsInc!=='undefined'?bCatsInc:[]),
       paySettings:typeof paySettings!=='undefined'?safeObj(paySettings):{enabled:true,rate:20,alloc:{}},
       netWorthSnapshots:window.netWorthSnapshots||[],
-      clientUpdatedAt:nowIso()
+      clientUpdatedAt:getLocalUpdatedAt()
     });
   }
 
@@ -9520,6 +10072,7 @@ auth.onAuthStateChanged(async user=>{
       if(typeof lockedCats!=='undefined') lockedCats=new Set(safeArray(data.lockedCats)); if(typeof paySettings!=='undefined') paySettings=Object.assign({enabled:true,rate:20,alloc:{}},safeObj(data.paySettings)); window.netWorthSnapshots=safeArray(data.netWorthSnapshots);
       if(typeof incCats!=='undefined' && data.incCatsCustom) incCats=incCats.concat(safeArray(data.incCatsCustom)); if(typeof expCats!=='undefined' && data.expCatsCustom) expCats=expCats.concat(safeArray(data.expCatsCustom)); if(typeof bCatsExp!=='undefined') mergeBudgetCats(data.bCatsExpSave,bCatsExp); if(typeof bCatsInc!=='undefined') mergeBudgetCats(data.bCatsIncSave,bCatsInc);
       if(typeof normalizeDefaultCatColors==='function') normalizeDefaultCatColors();
+      if(data.clientUpdatedAt) markLocalUpdated(data.clientUpdatedAt);
       try{localStorage.setItem(getDBKey(),JSON.stringify(data));}catch(e){}
       rerenderFinance(); lastCloudFingerprint=fingerprint(data); saveSnapshot(data,{source:source||'unknown'}); return true;
     }catch(e){ updateSyncStatus('error'); return false; }
@@ -9547,13 +10100,19 @@ auth.onAuthStateChanged(async user=>{
     return payload.id;
   }
 
-  async function writeCloud(data,reason){
-    if(!hasFirebaseUser()) throw new Error('AUTH_REQUIRED');
-    const ref=cloudDocRef(); if(!ref) throw new Error('NO_REF');
+  async function writeCloud(data,reason,expectedUid){
+    const uid=expectedUid||currentUid();
+    if(!uid || !accountReadyForCloud() || currentUid()!==uid) throw new Error('ACCOUNT_NOT_READY');
+    const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
     const clean=sanitizeFinancialData(data);
+    if(!clean.clientUpdatedAt) clean.clientUpdatedAt=markLocalUpdated();
     const fp=fingerprint(clean);
     if(fp===lastCloudFingerprint && reason!=='force') return {skipped:true};
+    // Re-check immediately before the write. This prevents an auth switch from
+    // redirecting an old user's pending state into a new user's document.
+    if(!accountReadyForCloud() || currentUid()!==uid || window._authUid!==uid) throw new Error('AUTH_SWITCHED');
     await ref.set({
+      ownerUid:uid,
       version:CLOUD_FINANCIAL_VERSION,
       updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
       updatedAtClient:nowIso(),
@@ -9562,20 +10121,21 @@ auth.onAuthStateChanged(async user=>{
       data:clean,
       backup:{updatedAtClient:nowIso(),data:clean}
     },{merge:true});
-    lastCloudFingerprint=fp; window.MONGO_LAST_CLOUD_SAVE_AT=Date.now(); saveSnapshot(clean,{cloud:true,reason:reason||'auto'}); saveMeta({lastCloudSaveAt:nowIso(),version:CLOUD_FINANCIAL_VERSION}); return {ok:true};
-  }
-  function getClientId(){
-    try{let id=sessionStorage.getItem('mongo_client_id'); if(!id){id='client_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36); sessionStorage.setItem('mongo_client_id',id);} return id;}catch(e){return 'client_unknown';}
+    lastCloudFingerprint=fp; window.MONGO_LAST_CLOUD_SAVE_AT=Date.now();
+    saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid});
+    saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid});
+    return {ok:true};
   }
 
   async function processQueue(){
-    if(processingQueue || !navigator.onLine || !hasFirebaseUser()) { updateSyncStatus(navigator.onLine?'pending':'offline'); return false; }
+    if(processingQueue || !navigator.onLine || !hasFirebaseUser() || !accountReadyForCloud()) { updateSyncStatus(navigator.onLine?'waiting':'offline'); return false; }
+    const sessionUid=currentUid();
     let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
     processingQueue=true; updateSyncStatus('pending',String(q.length));
     try{
-      while(q.length && navigator.onLine && hasFirebaseUser()){
+      while(q.length && navigator.onLine && hasFirebaseUser() && accountReadyForCloud() && currentUid()===sessionUid){
         const item=q[0];
-        try{ await writeCloud(item.data,item.reason||'queue'); q.shift(); setQueue(q); }
+        try{ await writeCloud(item.data,item.reason||'queue',sessionUid); q.shift(); setQueue(q); }
         catch(e){ item.tryCount=(item.tryCount||0)+1; item.lastError=safeStr(e&&e.message,120); item.nextRetryAt=Date.now()+Math.min(60000,BASE_RETRY_MS*Math.pow(2,Math.min(item.tryCount,MAX_RETRY))); q[0]=item; setQueue(q); updateSyncStatus(item.tryCount>=MAX_RETRY?'error':'pending'); scheduleRetry(item.nextRetryAt-Date.now()); break; }
       }
       if(!q.length) updateSyncStatus('synced');
@@ -9586,10 +10146,12 @@ auth.onAuthStateChanged(async user=>{
   function scheduleQueueProcess(){ if(navigator.onLine) scheduleRetry(900); else updateSyncStatus('offline'); }
 
   async function saveCloudNow(reason){
-    if(applyingCloud || !hasFirebaseUser()){ enqueueSave(reason||'no-auth'); return false; }
+    if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
+    const sessionUid=currentUid();
     const data=collectFinancialState();
+    if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
-    try{ await writeCloud(data,reason||'auto'); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
+    try{ await writeCloud(data,reason||'auto',sessionUid); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
   function scheduleCloudSave(reason){
@@ -9601,37 +10163,74 @@ auth.onAuthStateChanged(async user=>{
 
   function chooseCloudOrLocal(cloudData, cloudUpdatedAt){
     const local=collectFinancialState();
-    const localTime=Date.parse(local.clientUpdatedAt||0)||0;
-    const cloudTime=Date.parse(cloudData&&cloudData.clientUpdatedAt||cloudUpdatedAt||0)||0;
+    const localHas=hasMeaningfulFinancialData(local);
+    const cloudHas=hasMeaningfulFinancialData(cloudData);
+    // Шинэ browser/incognito дээрх хоосон local state нь cloud өгөгдлийг ХЭЗЭЭ Ч дарж болохгүй.
+    if(cloudHas && !localHas) return {data:cloudData,source:'cloud'};
+    // Хуучин browser/restore дээр өгөгдөл байгаа, cloud хоосон бол local-ийг migration хийнэ.
+    if(localHas && !cloudHas) return {data:local,source:'local-migrate'};
+    if(!localHas && !cloudHas) return {data:cloudData||local,source:'cloud-empty'};
+    const localTime=Date.parse(local.clientUpdatedAt||getLocalUpdatedAt()||0)||0;
+    const cloudTime=Date.parse((cloudData&&cloudData.clientUpdatedAt)||cloudUpdatedAt||0)||0;
     if(localTime && cloudTime && localTime>cloudTime+5000) return {data:local,source:'local-newer'};
     return {data:cloudData,source:'cloud'};
   }
 
   async function loadCloudFinancialData(options){
     ensureSyncStatusUI();
-    if(!hasFirebaseUser()) return false;
-    const ref=cloudDocRef(); if(!ref) return false;
+    if(!hasFirebaseUser() || !accountReadyForCloud()) return false;
+    const sessionUid=currentUid();
+    const ref=cloudDocRef(sessionUid); if(!ref) return false;
     try{
       updateSyncStatus(navigator.onLine?'waiting':'offline');
       if(!navigator.onLine){ const snap=getSnapshot(); if(snap&&snap.data) applyFinancialState(snap.data,'local-snapshot'); return false; }
       const snap=await ref.get();
       if(snap.exists && snap.data() && snap.data().data){
-        const raw=snap.data(); const chosen=chooseCloudOrLocal(raw.data,raw.updatedAtClient);
+        const raw=snap.data();
+        if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
+        if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
+        const chosen=chooseCloudOrLocal(raw.data,raw.updatedAtClient);
         const ok=applyFinancialState(chosen.data,chosen.source);
-        if(chosen.source==='local-newer') enqueueSave('conflict-local-newer',chosen.data);
+        if(chosen.source==='local-newer' || chosen.source==='local-migrate') enqueueSave(chosen.source==='local-migrate'?'first-cloud-migration':'conflict-local-newer',chosen.data);
         await processQueue();
         if(ok && !(options&&options.silent) && typeof showToast==='function') showToast((L&&L.dataLoaded)||'Cloud өгөгдөл ачааллагдлаа ✓');
         updateSyncStatus(getQueue().length?'pending':'synced');
         return ok;
       }
-      await saveCloudNow('force'); updateSyncStatus('synced'); return false;
+      const local=collectFinancialState();
+      if(hasMeaningfulFinancialData(local)){
+        if(!local.clientUpdatedAt) local.clientUpdatedAt=markLocalUpdated();
+        await writeCloud(local,'force',sessionUid);
+        updateSyncStatus('synced');
+        if(!(options&&options.silent) && typeof showToast==='function') showToast('Өгөгдөл Cloud-д шилжлээ ✓');
+        return true;
+      }
+      updateSyncStatus('synced'); return false;
     }catch(e){ const ss=getSnapshot(); if(ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot'); updateSyncStatus('error'); scheduleRetry(BASE_RETRY_MS); return false; }
   }
 
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
-  if(originalSaveData){ window.saveData=function(){ const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
+  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
   const originalImportData=window.importData || (typeof importData==='function'?importData:null);
-  if(originalImportData){ window.importData=function(e){ const out=originalImportData.apply(this,arguments); setTimeout(()=>scheduleCloudSave('import'),1200); return out; }; try{importData=window.importData;}catch(e){} }
+  if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
+
+  async function clearCloudFinancialData(){
+    if(!hasFirebaseUser() || !accountReadyForCloud()) return false;
+    const uid=currentUid();
+    const ref=cloudDocRef(uid);
+    if(ref) await ref.delete();
+    try{
+      localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
+      localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
+      localStorage.removeItem(uidKey(META_KEY_PREFIX));
+      localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
+      localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
+    }catch(e){}
+    lastCloudFingerprint='';
+    window.MONGO_LOCAL_DATA_UPDATED_AT='';
+    resetDefaultFinanceShell();
+    return true;
+  }
 
   window.CloudDataService={
     version:CLOUD_FINANCIAL_VERSION,
@@ -9641,21 +10240,125 @@ auth.onAuthStateChanged(async user=>{
     queue:{get:getQueue,process:processQueue,enqueue:enqueueSave},
     snapshot:{get:getSnapshot,save:saveSnapshot},
     status:updateSyncStatus,
-    validate:sanitizeFinancialData
+    validate:sanitizeFinancialData,
+    clearFinancialData:clearCloudFinancialData
   };
 
   ensureSyncStatusUI();
   if(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth){
-    window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{ if(user){ ensureSyncStatusUI(); setTimeout(()=>loadCloudFinancialData({silent:false}),1300); } else { lastCloudFingerprint=''; setQueue([]); updateSyncStatus('waiting'); } });
+    window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{
+      clearTimeout(cloudSaveTimer); clearTimeout(retryTimer); lastCloudFingerprint='';
+      if(user){
+        ensureSyncStatusUI(); updateSyncStatus('waiting');
+        const uid=user.uid;
+        let tries=0;
+        const waitReady=()=>{
+          if(currentUid()!==uid) return;
+          if(accountReadyForCloud()){ loadCloudFinancialData({silent:false}); return; }
+          if(++tries<80) setTimeout(waitReady,100);
+        };
+        setTimeout(waitReady,60);
+      } else {
+        updateSyncStatus('waiting');
+      }
+    });
   }
   window.addEventListener('online',()=>{ updateSyncStatus('pending'); processQueue(); scheduleCloudSave('online'); });
   window.addEventListener('offline',()=>updateSyncStatus('offline'));
   window.addEventListener('visibilitychange',()=>{ if(!document.hidden) processQueue(); });
-  window.addEventListener('beforeunload',()=>{ try{ const data=collectFinancialState(); saveSnapshot(data,{beforeunload:true}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
+  window.addEventListener('beforeunload',()=>{ try{ if(!accountReadyForCloud()) return; const data=collectFinancialState(); saveSnapshot(data,{beforeunload:true,ownerUid:currentUid()}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
   setTimeout(()=>processQueue(),2500);
 })();
 </script>
 
+
+
+<script id="mongo-v436-reset-return-script">
+(function(){
+  'use strict';
+  const MSG={
+    mn:'Нууц үг амжилттай шинэчлэгдлээ. Одоо шинэ нууц үгээрээ нэвтэрнэ үү.',
+    en:'Password updated successfully. Sign in with your new password.',
+    zh:'密码已成功更新。请使用新密码登录。',
+    ja:'パスワードを更新しました。新しいパスワードでログインしてください。',
+    ko:'비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.',
+    ru:'Пароль успешно обновлён. Войдите с новым паролем.',
+    de:'Passwort erfolgreich geändert. Melde dich mit dem neuen Passwort an.'
+  };
+  const SUPPORTED=['mn','en','zh','ja','ko','ru','de'];
+  function run(){
+    const p=new URLSearchParams(location.search);
+    if(p.get('resetDone')!=='1') return;
+    let l=p.get('resetLang')||'mn'; if(!SUPPORTED.includes(l)) l='mn';
+    try{ if(typeof applyFullLang==='function') applyFullLang(l); }catch(e){}
+    try{ if(typeof showLogin==='function') showLogin(); }catch(e){}
+    const ok=document.getElementById('login-ok');
+    if(ok){ok.textContent=MSG[l]||MSG.mn;ok.classList.add('show');}
+    try{
+      const clean=location.origin+location.pathname;
+      history.replaceState({},'',clean);
+    }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+})();
+</script>
+
+<script id="mongo-v435-custom-reset-script">
+(function(){
+  'use strict';
+  const SUPPORTED=['mn','en','zh','ja','ko','ru','de'];
+  const TXT={
+    mn:{title:'Нууц үг шинэчлэх',note:'Шинэ нууц үгээ хоёр удаа ижил оруулна уу.',p1:'Шинэ нууц үг',p2:'Нууц үг давтах',hint:'Доод тал нь 6 тэмдэгт.',submit:'Нууц үг шинэчлэх',need:'Хоёр талбарт нууц үгээ оруулна уу.',weak:'Нууц үг доод тал нь 6 тэмдэгт байна.',mismatch:'Нууц үгүүд таарахгүй байна.',invalid:'Сэргээх холбоос хүчингүй эсвэл хугацаа нь дууссан байна. Шинэ сэргээх имэйл аваарай.',success:'Нууц үг амжилттай шинэчлэгдлээ',copy:'Одоо шинэ нууц үгээрээ нэвтэрч болно.',login:'Нэвтрэх'},
+    en:{title:'Reset password',note:'Enter the same new password twice.',p1:'New password',p2:'Confirm new password',hint:'At least 6 characters.',submit:'Update password',need:'Please fill in both password fields.',weak:'Password must be at least 6 characters.',mismatch:'Passwords do not match.',invalid:'This reset link is invalid or has expired. Please request a new reset email.',success:'Password updated successfully',copy:'You can now sign in with your new password.',login:'Sign in'},
+    zh:{title:'重置密码',note:'请两次输入相同的新密码。',p1:'新密码',p2:'确认新密码',hint:'至少 6 个字符。',submit:'更新密码',need:'请填写两个密码栏。',weak:'密码至少需要 6 个字符。',mismatch:'两次密码不一致。',invalid:'重置链接无效或已过期，请重新申请。',success:'密码已成功更新',copy:'现在可以使用新密码登录。',login:'登录'},
+    ja:{title:'パスワードを再設定',note:'新しいパスワードを同じ内容で2回入力してください。',p1:'新しいパスワード',p2:'新しいパスワードを確認',hint:'6文字以上。',submit:'パスワードを更新',need:'両方のパスワード欄を入力してください。',weak:'パスワードは6文字以上必要です。',mismatch:'パスワードが一致しません。',invalid:'リンクが無効か期限切れです。再度リセットメールを申請してください。',success:'パスワードを更新しました',copy:'新しいパスワードでログインできます。',login:'ログイン'},
+    ko:{title:'비밀번호 재설정',note:'새 비밀번호를 동일하게 두 번 입력하세요.',p1:'새 비밀번호',p2:'새 비밀번호 확인',hint:'6자 이상.',submit:'비밀번호 변경',need:'두 비밀번호 입력란을 모두 작성하세요.',weak:'비밀번호는 6자 이상이어야 합니다.',mismatch:'비밀번호가 일치하지 않습니다.',invalid:'재설정 링크가 유효하지 않거나 만료되었습니다. 새 이메일을 요청하세요.',success:'비밀번호가 변경되었습니다',copy:'이제 새 비밀번호로 로그인할 수 있습니다.',login:'로그인'},
+    ru:{title:'Сброс пароля',note:'Введите новый пароль дважды одинаково.',p1:'Новый пароль',p2:'Повторите новый пароль',hint:'Не менее 6 символов.',submit:'Изменить пароль',need:'Заполните оба поля пароля.',weak:'Пароль должен содержать не менее 6 символов.',mismatch:'Пароли не совпадают.',invalid:'Ссылка недействительна или устарела. Запросите новое письмо.',success:'Пароль успешно изменён',copy:'Теперь можно войти с новым паролем.',login:'Войти'},
+    de:{title:'Passwort zurücksetzen',note:'Gib das neue Passwort zweimal identisch ein.',p1:'Neues Passwort',p2:'Neues Passwort bestätigen',hint:'Mindestens 6 Zeichen.',submit:'Passwort ändern',need:'Bitte beide Passwortfelder ausfüllen.',weak:'Das Passwort muss mindestens 6 Zeichen lang sein.',mismatch:'Die Passwörter stimmen nicht überein.',invalid:'Der Link ist ungültig oder abgelaufen. Bitte fordere eine neue E-Mail an.',success:'Passwort erfolgreich geändert',copy:'Du kannst dich jetzt mit dem neuen Passwort anmelden.',login:'Anmelden'}
+  };
+  let resetCode=''; let resetLang='mn';
+  function getLang(params){
+    let l=params.get('resetLang')||'';
+    if(!l){
+      try{const cu=params.get('continueUrl'); if(cu){const u=new URL(cu);l=u.searchParams.get('resetLang')||'';}}catch(e){}
+    }
+    if(!l){try{l=sessionStorage.getItem('pendingLang')||'';}catch(e){}}
+    if(!l&&typeof window.lang==='string')l=window.lang;
+    return SUPPORTED.includes(l)?l:'mn';
+  }
+  function text(){return TXT[resetLang]||TXT.mn;}
+  function setResetText(){
+    const t=text(); const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v}; const ph=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v};
+    set('reset-title',t.title);set('reset-note',t.note);ph('reset-pass',t.p1);ph('reset-pass2',t.p2);set('reset-strength',t.hint);set('reset-submit',t.submit);set('reset-success-title',t.success);set('reset-success-copy',t.copy);set('reset-login-btn',t.login);
+  }
+  function showErr(msg){const e=document.getElementById('reset-err');if(e){e.textContent=msg||'';e.classList.toggle('show',!!msg);}}
+  function showReset(){
+    ['auth-login','auth-register','auth-forgot'].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('show');e.style.display='none';}});
+    const page=document.getElementById('auth-reset');if(page)page.style.display='flex';
+    const logo=document.getElementById('auth-reset-logo'),src=document.getElementById('auth-logo-img');if(logo&&src)logo.src=src.src;
+  }
+  window.doCustomPasswordReset=async function(){
+    const t=text(),p1=document.getElementById('reset-pass')?.value||'',p2=document.getElementById('reset-pass2')?.value||'',btn=document.getElementById('reset-submit');
+    showErr(''); if(!p1||!p2){showErr(t.need);return;} if(p1.length<6){showErr(t.weak);return;} if(p1!==p2){showErr(t.mismatch);return;} if(!resetCode){showErr(t.invalid);return;}
+    if(btn){btn.disabled=true;btn.textContent='…';}
+    try{
+      await auth.confirmPasswordReset(resetCode,p1);
+      const form=document.getElementById('reset-form-wrap'),ok=document.getElementById('reset-success');if(form)form.hidden=true;if(ok)ok.classList.add('show');
+      try{history.replaceState({},'',location.pathname);}catch(e){}
+    }catch(e){showErr(t.invalid);if(btn){btn.disabled=false;btn.textContent=t.submit;}}
+  };
+  window.finishResetToLogin=function(){ location.href=location.origin+location.pathname; };
+  async function init(){
+    const params=new URLSearchParams(location.search),mode=params.get('mode'),code=params.get('oobCode');
+    if(mode!=='resetPassword'||!code)return;
+    resetCode=code;resetLang=getLang(params);setResetText();showReset();
+    try{auth.languageCode=resetLang;}catch(e){}
+    try{await auth.verifyPasswordResetCode(resetCode);}catch(e){showErr(text().invalid);const b=document.getElementById('reset-submit');if(b)b.disabled=true;}
+    document.getElementById('reset-pass2')?.addEventListener('keydown',e=>{if(e.key==='Enter')window.doCustomPasswordReset();});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 
 <!-- ── Möngö V42.5 RC1 — Editor's Final Review Patch ── -->
 <style>
@@ -9816,7 +10519,7 @@ button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-v
 <script id="mongo-rc2-script">
 (function(){
   'use strict';
-  const RC2='v42.5-rc2';
+  const RC2='v43.5-registration-day1';
   function localDateFrom(value){
     const d=new Date(value||Date.now());
     if(Number.isNaN(d.getTime())) return new Date().toISOString().slice(0,10);
@@ -9837,7 +10540,7 @@ button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-v
       start=String(data.philosophyStartDate||start||'').slice(0,10);
       if(!/^\d{4}-\d{2}-\d{2}$/.test(start)){
         start=localDateFrom(user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
-        await ref.set({philosophyStartDate:start,philosophyVersion:RC2,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        await ref.set({philosophyStartDate:start,philosophyStartSource:'registration',philosophyVersion:RC2,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
       }
       localStorage.setItem(key,start);
       window.MONGO_PHILOSOPHY_START_DATE=start;
@@ -10032,6 +10735,151 @@ button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-v
 }
 </style>
 
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{try{renderMongoTrialCard();}catch(e){}},500);
+  document.addEventListener('click',()=>{
+    setTimeout(()=>{try{renderMongoTrialCard();}catch(e){}},80);
+  },true);
+});
+</script>
+
+
+<script id="mongo-trial-v4313-visibility">
+(function(){
+  function refreshTrial(){
+    try{
+      if(typeof renderMongoTrialCard==='function') renderMongoTrialCard();
+    }catch(e){}
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshTrial,0));
+  }else{
+    setTimeout(refreshTrial,0);
+  }
+  window.addEventListener('pageshow',refreshTrial);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) refreshTrial(); });
+  const obs=new MutationObserver(()=>refreshTrial());
+  document.addEventListener('DOMContentLoaded',()=>{
+    const root=document.getElementById('mongo-trial-card-root');
+    if(root && root.parentElement) obs.observe(root.parentElement,{attributes:true,childList:true,subtree:false});
+    refreshTrial();
+  });
+})();
+</script>
+
+
+<div id="mongo-trial-reminder">
+  <div class="mongo-reminder-card">
+    <div>🎁</div>
+    <div class="mongo-reminder-copy">
+      <div class="mongo-reminder-title" id="mongo-reminder-title"></div>
+      <div class="mongo-reminder-sub" id="mongo-reminder-sub"></div>
+    </div>
+    <button class="mongo-reminder-close" type="button" onclick="dismissMongoTrialReminder()">×</button>
+  </div>
+</div>
+<div id="mongo-paywall" role="dialog" aria-modal="true">
+  <div class="mongo-paywall-sheet">
+    <div class="mongo-paywall-icon">💎</div>
+    <h2 id="mongo-paywall-title">Туршилтын хугацаа дууслаа</h2>
+    <div class="mongo-paywall-desc" id="mongo-paywall-desc">Таны өгөгдөл аюулгүй хадгалагдсан. Möngö-г үргэлжлүүлэн ашиглах эрхээ сонгоно уу.</div>
+    <div class="mongo-plan-grid">
+      <button class="mongo-plan" type="button" onclick="selectMongoPlan('monthly')"><strong id="mongo-monthly">Сар бүр</strong><span id="mongo-monthly-sub">Уян хатан сонголт</span></button>
+      <button class="mongo-plan recommended" type="button" onclick="selectMongoPlan('yearly')"><strong id="mongo-yearly">Жилээр</strong><span id="mongo-yearly-sub">Хамгийн үнэ цэнтэй</span></button>
+    </div>
+    <button class="mongo-paywall-primary" type="button" onclick="continueMongoSubscription()" id="mongo-continue-sub">Үргэлжлүүлэх</button>
+    <button class="mongo-paywall-later" type="button" onclick="enterMongoReadOnly()" id="mongo-later">Дараа шийдэх</button>
+    <div class="mongo-readonly-note" id="mongo-readonly-note">“Дараа шийдэх” гэвэл мэдээллээ харах боломжтой хэвээр. Шинээр нэмэх, засах үйлдэл subscription шаарддаг.</div>
+  </div>
+</div>
+
+<div id="mongo-trial-test-indicator">TEST</div>
+
+<script id="mongo-trial-test-bootstrap">
+window.addEventListener('pageshow',()=>setTimeout(()=>{try{refreshMongoTrialAccess();}catch(e){}},150));
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{try{refreshMongoTrialAccess();}catch(e){}},500));
+</script>
+
+
+<style id="mongo-v4316-access-polish">
+.calc-tab-btn.mongo-premium-tab{position:relative;padding-right:30px}
+.calc-tab-btn.mongo-premium-tab::after{content:'🔒';position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;opacity:.78}
+body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';opacity:.48}
+.mongo-trial-card.expired-card{background:linear-gradient(135deg,rgba(255,241,242,.96),rgba(255,255,255,.96));border-color:rgba(190,18,60,.10)}
+.mongo-trial-card.expired-card .mongo-trial-main{color:#be123c}
+</style>
+<script id="mongo-v4316-access-polish-script">
+(function(){
+  // Day 8 test mode must never flash back to Day 1 while billing state is still loading.
+  const _render=window.renderMongoTrialCard;
+  window.renderMongoTrialCard=function(){
+    const root=document.getElementById('mongo-trial-card-root');
+    if(!root)return;
+    const testDay=(typeof mongoTrialTestDay==='function')?mongoTrialTestDay():null;
+    if(!window.MONGO_BILLING_STATE && testDay){
+      const T=mongoTrialLabels();
+      const expired=testDay>MONGO_TRIAL_DAYS;
+      const title=root.querySelector('.mongo-trial-title');
+      const badge=document.getElementById('mongo-trial-badge');
+      const main=document.getElementById('mongo-trial-main');
+      const sub=document.getElementById('mongo-trial-sub');
+      const bar=document.getElementById('mongo-trial-progress');
+      if(title&&badge&&main&&sub&&bar){
+        title.textContent='🎁 '+T.title;
+        badge.className='mongo-trial-badge'+(expired?' expired':'');
+        badge.textContent=expired?T.expired:T.badge;
+        main.textContent=expired?T.expired:`${T.day} ${testDay} / ${MONGO_TRIAL_DAYS}`;
+        sub.textContent=expired?T.expiredText:`${T.remaining}: ${Math.max(0,MONGO_TRIAL_DAYS-testDay)} ${T.days}`;
+        bar.style.width=Math.min(100,(testDay/MONGO_TRIAL_DAYS)*100)+'%';
+        const card=root.querySelector('.mongo-trial-card'); if(card)card.classList.toggle('expired-card',expired);
+        return;
+      }
+    }
+    if(typeof _render==='function')_render();
+    const card=root.querySelector('.mongo-trial-card');
+    if(card){const st=window.MONGO_BILLING_STATE, info=st?mongoTrialInfo(st):null;card.classList.toggle('expired-card',!!(info&&info.isExpired&&!info.isPaid));}
+  };
+
+  function premiumCalcLocked(section,panel){
+    return panel==='calc' && (section==='goals'||section==='invest') && typeof mongoIsReadOnly==='function' && mongoIsReadOnly();
+  }
+  const _show=window.showCalcPanel;
+  window.showCalcPanel=function(section,panel,btn){
+    // Loan calculator intentionally stays free after trial expiry.
+    if(premiumCalcLocked(section,panel)){
+      try{showToast((typeof lang!=='undefined'&&lang)==='mn'?'Энэ тооцоолуур Premium эрхтэй.':'This calculator requires Premium access.');}catch(e){}
+      if(typeof showMongoPaywall==='function')showMongoPaywall();
+      return;
+    }
+    return _show.apply(this,arguments);
+  };
+
+  function markPremiumTabs(){
+    ['goals-tab-calc','invest-tab-calc'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('mongo-premium-tab');});
+    const debt=document.getElementById('debt-tab-calc');if(debt)debt.classList.remove('mongo-premium-tab');
+  }
+
+  // Harden Day 8 read-only: catch icon-only/full-width-plus and known mutating onclick handlers too.
+  document.addEventListener('click',function(ev){
+    if(typeof mongoIsReadOnly!=='function'||!mongoIsReadOnly())return;
+    const hit=ev.target&&ev.target.closest?ev.target.closest('button,[role="button"],input[type="submit"],.fab,.add-btn,.edit-btn,.delete-btn'):null;
+    if(!hit||hit.closest('#mongo-paywall')||hit.closest('#mongo-trial-reminder'))return;
+    if(hit.id==='debt-tab-calc'||hit.closest('#debts-panel-calc'))return; // free calculator
+    const oc=(hit.getAttribute('onclick')||'').toLowerCase();
+    const text=((hit.textContent||'')+' '+(hit.id||'')+' '+(hit.className||'')).toLowerCase();
+    const mutation=/\b(add|save|delete|remove|edit|update|create|clear|restore|import|register|paysettings)\w*\s*\(/.test(oc) || /[＋+]|нэмэх|засах|устгах|хадгалах|бүртгэх/.test(text);
+    if(!mutation)return;
+    ev.preventDefault();ev.stopImmediatePropagation();
+    try{showToast(mongoAccessLabels().locked);}catch(e){}
+    if(typeof showMongoPaywall==='function')showMongoPaywall();
+  },true);
+
+  document.addEventListener('DOMContentLoaded',()=>{markPremiumTabs();setTimeout(()=>{markPremiumTabs();try{renderMongoTrialCard();refreshMongoTrialAccess();}catch(e){}},550);});
+  window.addEventListener('pageshow',()=>setTimeout(markPremiumTabs,100));
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
