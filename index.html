@@ -1,5 +1,26 @@
 <!DOCTYPE html>
-<!-- Möngö V43.16 TEST BUILD: Day 8 access polish — reliable test-day card, hardened read-only writes, free loan calculator, Premium savings/investment calculators. -->
+<!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
+<!-- Möngö V43.37: Guaranteed financial sync bootstrap — independently reads/writes users/{uid}/financial/main after auth, bypassing timing/account-ready races. -->
+<!-- Möngö V43.35: Root-document cloud fallback + immutable earliest trial start + forced consistent light UI across devices. -->
+<!-- Möngö V43.34: Cross-device Sync mirror — financial data is redundantly saved/read via appState + settings + profile; trial popup language refresh hardened. -->
+<!-- Möngö V43.33: Cross-device Sync hardening — multi-path cloud fallback (appState → financial → settings) + localized trial reminder refresh. -->
+<!-- Möngö V43.32: Cross-device Cloud Sync fix — appState/main is primary cloud document, with legacy financial/main fallback + automatic migration. -->
+<!-- Möngö V43.31: Savings donut now shows each goal's share of total current savings; goal cards keep their own completion %. -->
+<!-- Möngö V43.30: persisted investment Budget Type + Name metadata and chart colors synced to saved Budget category colors. -->
+<!-- Möngö V43.29: Budget investment actuals match strictly by Investment Type + Name; same-named Bond/Stock rows no longer cross-count. -->
+<!-- Möngö V43.28: UID-based 30-day tracking badge + persistent user-selected Budget category/subcategory colors. -->
+<!-- Möngö V43.27: investment identity uses Type + Name; bond icon changed to ticket for clearer distinction. -->
+<!-- Möngö V43.26: calendar month+day savings countdown; typed Investment → Type → Name flow across Budget/Transactions/Portfolio. -->
+<!-- Möngö V43.25: transaction UUID edit/delete fix + derived loan balance ledger. -->
+<!-- Möngö V43.24: typed debt-payment matching — Savings transactions no longer match same-named Loans. -->
+<!-- Möngö V43.23: complete dynamic localization for all Color labels in Savings/Loans/Assets forms. -->
+<!-- Möngö V43.22: localized Color labels + immutable Firebase Auth trial start self-heal. -->
+<!-- Möngö V43.21: fixed shared translation references + full 7-language Pay Yourself First + calculator language sync. -->
+<!-- Möngö V43.20: 7-language calculator + Premium/paywall audit; custom localized calculator pickers; launch pricing UI. -->
+<!-- Möngö V43.19: Day 8 loan menu free fix — Loan section opens; only Loan calculator remains interactive, data-changing loan actions stay premium. -->
+<!-- Möngö V43.19: Persistent Day 8 lock fix — refresh-safe read-only + precise loan-calculator exemption. -->
+<!-- Möngö V43.19: Day 8 access refinement — Loan menu + loan calculator free; Savings/Investment calculators premium. -->
+<!-- Möngö V43.19 TEST BUILD: Day 8 access polish — reliable test-day card, hardened read-only writes, free loan calculator, Premium savings/investment calculators. -->
 <!-- Möngö V43.15 TEST BUILD: trial day simulation via ?trialTestDay=5|6|7|8. Does not modify Firestore billing dates. -->
 <!-- Möngö V43.14: Trial soft paywall foundation — Day 5/6/7 reminders, Day 8 read-only soft paywall. -->
 <!-- Möngö V43.13: Trial card reliable Profile render fix. -->
@@ -41,6 +62,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+<style id="mongo-force-light-v4335">html{color-scheme:light!important;} body{color-scheme:light!important;}</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style id="mongo-critical-first-paint">
@@ -50,7 +72,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V42.5 RC2.8 Premium Chart Engine</title>
+<title>Möngö — V43.38 Opening Balance</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -68,7 +90,7 @@ body{visibility:visible;}
   --shadow:0 4px 10px rgba(0,0,0,0.08);
   --shadow-lg:0 8px 24px rgba(0,0,0,0.10);
 }
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   :root{--bg:#1e1a17;--bg2:#272320;--bg3:#2f2b27;--text:#ede8e2;--text2:#9a9088;--text3:#6a6058;--border:rgba(255,220,180,0.1);--border2:rgba(255,220,180,0.18);--brand-light:#0d3628;--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow:0 4px 20px rgba(0,0,0,0.35);--shadow-lg:0 8px 32px rgba(0,0,0,0.4);}
 }
 
@@ -257,7 +279,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   --shadow-lg:0 24px 60px rgba(27,82,87,.16);
 }
 
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   :root{
     --bg:#121b1d;
     --bg2:#172326;
@@ -303,7 +325,7 @@ body::before{
     radial-gradient(circle at bottom right, rgba(255,204,51,.18), transparent 34%),
     linear-gradient(145deg,#f3fcfc,#ffffff 48%,#eefafa);
 }
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   .auth-wrap{background:radial-gradient(circle at top left, rgba(73,176,182,.22), transparent 35%),linear-gradient(145deg,#0d1517,#121b1d 55%,#0b1112)}
 }
 .auth-card{
@@ -315,7 +337,7 @@ body::before{
   backdrop-filter:blur(18px);
   box-shadow:0 30px 70px rgba(37,111,116,.20);
 }
-@media(prefers-color-scheme:dark){.auth-card{border-color:rgba(116,215,220,.14);background:linear-gradient(180deg,rgba(18,27,29,.96),rgba(18,27,29,.82))}}
+@media(max-width:0px){.auth-card{border-color:rgba(116,215,220,.14);background:linear-gradient(180deg,rgba(18,27,29,.96),rgba(18,27,29,.82))}}
 .auth-card::before{
   content:"";
   position:absolute;
@@ -334,7 +356,7 @@ body::before{
   background:rgba(255,255,255,.74);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
 }
-@media(prefers-color-scheme:dark){.auth-fi,.fi{background:rgba(255,255,255,.04);box-shadow:none}}
+@media(max-width:0px){.auth-fi,.fi{background:rgba(255,255,255,.04);box-shadow:none}}
 .auth-fi:focus,.fi:focus{
   border-color:var(--brand);
   box-shadow:0 0 0 4px rgba(73,176,182,.14), inset 0 1px 0 rgba(255,255,255,.75);
@@ -357,7 +379,7 @@ body::before{
   backdrop-filter:blur(18px);
   box-shadow:0 10px 30px rgba(27,82,87,.08) !important;
 }
-@media(prefers-color-scheme:dark){.topbar{background:rgba(18,27,29,.78)!important;border-color:rgba(116,215,220,.12)!important}}
+@media(max-width:0px){.topbar{background:rgba(18,27,29,.78)!important;border-color:rgba(116,215,220,.12)!important}}
 .brand-name{font-size:17px;letter-spacing:-.04em;color:var(--brand-dark)}
 .logo{
   width:36px;height:36px;border-radius:14px;
@@ -371,7 +393,7 @@ body::before{
   padding:7px 10px;
   gap:6px;
 }
-@media(prefers-color-scheme:dark){.nav{background:rgba(18,27,29,.72)}}
+@media(max-width:0px){.nav{background:rgba(18,27,29,.72)}}
 .nav-btn{
   border-radius:999px;
   border-bottom:none !important;
@@ -392,7 +414,7 @@ body::before{
   backdrop-filter:blur(14px);
   box-shadow:var(--shadow-sm);
 }
-@media(prefers-color-scheme:dark){.card,.ccrd,.inv-card,.bblock,.cat-mgr,.modal-card{border-color:rgba(116,215,220,.12);background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76))}}
+@media(max-width:0px){.card,.ccrd,.inv-card,.bblock,.cat-mgr,.modal-card{border-color:rgba(116,215,220,.12);background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76))}}
 .card,.ccrd,.inv-card{padding:16px 17px}
 .card:hover,.ccrd:hover,.inv-card:hover,.bblock:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
 .card,.ccrd,.inv-card,.bblock{transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease}
@@ -482,7 +504,7 @@ body::before{
 /* Budget blocks */
 .bheader{padding:11px 13px}
 .bbody{background:rgba(255,255,255,.42)}
-@media(prefers-color-scheme:dark){.bbody{background:rgba(255,255,255,.03)}}
+@media(max-width:0px){.bbody{background:rgba(255,255,255,.03)}}
 .bicon{width:32px;height:32px;border-radius:12px}
 .budget-total-bar{
   padding:12px 15px;
@@ -616,7 +638,7 @@ button[onclick="addTransaction()"]{
   min-width:48px;
 }
 
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   :root{--text:#F3F4F6;--text2:#CBD5E1;--text3:#94A3B8;--brand-dark:#74D7DC;--brand-light:#123B3F;}
   .btn:not(.btn-p),.auth-btn.auth-btn-o,.lock-btn,.lbtn,.pb,.msb,.topbar button,.topbar label{
     color:#F3F4F6 !important;
@@ -1123,7 +1145,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   border-radius:999px;
   background:rgba(73,176,182,.08);
 }
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   .budget-progress-card .bheader{background:rgba(23,35,38,.92)!important;}
   .budget-progress-card{background:linear-gradient(180deg,rgba(23,35,38,.94),rgba(23,35,38,.82))!important;}
 }
@@ -1230,7 +1252,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .pdash-title{font-size:18px}
   .pdash-sub{display:none}
 }
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   .pdash-title{color:#F3F4F6}.pdash-card{border-color:rgba(116,215,220,.12);background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.74))}.pdash-score-ring:before{background:#172326}.pdash-v{color:#F3F4F6}
 }
 
@@ -1260,7 +1282,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .profile-actions .btn{width:100%;justify-content:center;display:flex;align-items:center;gap:6px;}
 .profile-danger{color:#A32D2D !important;border-color:rgba(163,45,45,.18) !important;background:#FFF4F4 !important;}
 @media(max-width:520px){.v27-topbar{padding:8px 12px !important;}.v27-topbar .brand span:last-child{font-size:9.2px !important;letter-spacing:1.25px !important;}.profile-actions{grid-template-columns:1fr;}.nav-btn .material-symbols-rounded{font-size:23px;}}
-@media(prefers-color-scheme:dark){.v27-lang-list{background:#172326 !important;border-color:rgba(116,215,220,.16);}.v27-lang-list .lang-drop-item{background:#172326 !important;color:#F3F4F6 !important;}.profile-value{color:#F3F4F6}.help-q{color:#F3F4F6}.help-item{background:rgba(255,255,255,.04);}}
+@media(max-width:0px){.v27-lang-list{background:#172326 !important;border-color:rgba(116,215,220,.16);}.v27-lang-list .lang-drop-item{background:#172326 !important;color:#F3F4F6 !important;}.profile-value{color:#F3F4F6}.help-q{color:#F3F4F6}.help-item{background:rgba(255,255,255,.04);}}
 
 
 
@@ -1304,7 +1326,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   overflow:auto;
 }
 #profile-email-main:empty::after,#profile-email-row:empty::after{content:'—';color:#9CA3AF;}
-@media(prefers-color-scheme:dark){
+@media(max-width:0px){
   .subcat-field-inline.has-selection .subcat-placeholder{color:#F3F4F6;}
   .subcat-field-inline .subcat-placeholder{color:#94A3B8;}
 }
@@ -1318,7 +1340,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .loan-extra-msg{margin-top:10px;padding:12px;border-radius:20px;background:linear-gradient(135deg,rgba(29,158,117,.12),rgba(73,176,182,.09));color:#08724F;font-size:12px;font-weight:850;line-height:1.5;display:none}
 .loan-table{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:11px}.loan-table th{color:#6B7280;text-align:right;padding:6px;font-weight:900}.loan-table th:first-child,.loan-table td:first-child{text-align:left}.loan-table td{padding:8px 6px;background:rgba(255,255,255,.72);text-align:right;color:#374151;font-weight:750}.loan-table td:first-child{border-radius:12px 0 0 12px}.loan-table td:last-child{border-radius:0 12px 12px 0}.loan-schedule-note{font-size:11px;color:#6B7280;margin-bottom:6px;font-weight:700}
 @media(max-width:520px){.loan-split-wrap{flex-direction:column;align-items:flex-start}.loan-highlight{font-size:20px}.loan-table{font-size:10px}.loan-table td,.loan-table th{padding:7px 4px}}
-@media(prefers-color-scheme:dark){.loan-table td{background:rgba(255,255,255,.06);color:#F3F4F6}.loan-highlight{color:#74D7DC}}
+@media(max-width:0px){.loan-table td{background:rgba(255,255,255,.06);color:#F3F4F6}.loan-highlight{color:#74D7DC}}
 
 
 
@@ -1471,7 +1493,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .inv-risk-note{margin-top:10px;padding:12px 14px;border-radius:22px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.10));color:#1F7F86;font-size:12px;font-weight:850;line-height:1.55}
 .inv-real-card .v{color:#0F766E!important}.inv-profit-card .v{color:#1F7F86!important}.inv-risk-card .v{color:#B7791F!important}
 @media(max-width:520px){.inv-allocation-wrap{grid-template-columns:1fr}.inv-allocation-wrap canvas{margin:0 auto}.inv-scenario-wrap canvas{height:170px}}
-@media(prefers-color-scheme:dark){.inv-scenario-wrap,.inv-allocation-wrap{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
+@media(max-width:0px){.inv-scenario-wrap,.inv-allocation-wrap{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
 
 
 
@@ -1573,7 +1595,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .sav-chart-wrap{display:none}.sav-chart-wrap.show{display:block !important}.sav-chart-wrap canvas{width:100%;height:190px;display:block}.sav-chart-wrap .leg{margin-top:8px;gap:8px}
 .saving-challenge-msg{padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(29,158,117,.13),rgba(247,210,74,.12));color:#08724F;font-size:13px;font-weight:900;line-height:1.55;border:1px solid rgba(29,158,117,.14)}
 @media(max-width:520px){#tab-goals .calc-tabs{margin-left:0 !important;margin-right:0 !important;}#tab-goals .calc-tab-btn{font-size:13px !important;min-height:40px !important;}#goals-panel-calc .calc-card{padding:16px !important;border-radius:28px !important;}#goals-panel-calc .form-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;}#goals-panel-calc .form-row > div{min-width:0 !important;}#goals-panel-calc .fi{min-height:54px !important;font-size:15px !important;padding:12px 14px !important;}#goals-panel-calc .calc-result-grid{grid-template-columns:1fr !important;}#goals-panel-calc .loan-highlight{font-size:23px !important;padding:18px 14px !important;}.sav-chart-wrap canvas{height:170px}.saving-challenge-card .form-row{grid-template-columns:1fr !important;}}
-@media(prefers-color-scheme:dark){#goals-panel-calc .calc-card{background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76)) !important;border-color:rgba(116,215,220,.12) !important;}#goals-panel-calc .calc-result{background:rgba(255,255,255,.06) !important}.saving-challenge-msg{color:#74D7DC}}
+@media(max-width:0px){#goals-panel-calc .calc-card{background:linear-gradient(180deg,rgba(23,35,38,.92),rgba(23,35,38,.76)) !important;border-color:rgba(116,215,220,.12) !important;}#goals-panel-calc .calc-result{background:rgba(255,255,255,.06) !important}.saving-challenge-msg{color:#74D7DC}}
 
 
 
@@ -1593,7 +1615,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .score-bar{height:9px;border-radius:999px;background:rgba(73,176,182,.12);overflow:hidden;}
 .score-bar-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#49B0B6,#1F7F86);transition:width .25s ease;}
 .score-row-note{font-size:11px;color:#6B7280;font-weight:650;line-height:1.35;margin-top:6px;}
-@media(prefers-color-scheme:dark){.score-detail-title,.score-row-name{color:#F3F4F6}.score-detail-total,.score-row-val{color:#74D7DC}}
+@media(max-width:0px){.score-detail-title,.score-row-name{color:#F3F4F6}.score-detail-total,.score-row-val{color:#74D7DC}}
 
 
 
@@ -1617,7 +1639,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .score-reco{margin-top:13px;padding:12px 13px;border-radius:22px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(255,204,51,.10));border:1px solid rgba(73,176,182,.14);font-size:12px;color:#1F7F86;font-weight:850;line-height:1.5;}
 .score-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:rgba(73,176,182,.10);color:#1F7F86;font-weight:950;font-size:11px;margin-left:6px;}
 @media(max-width:520px){.splash-logo{width:104px;height:104px}.splash-name{font-size:34px}.fire-detail-grid{grid-template-columns:1fr}.splash-quote{font-size:15px}}
-@media(prefers-color-scheme:dark){.mongo-splash{background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.14),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.18),transparent 32%),linear-gradient(145deg,#0d1517,#121b1d 55%,#0b1112)}.splash-card{background:rgba(18,27,29,.78);border-color:rgba(116,215,220,.12)}.splash-quote{color:#F3F4F6}.fire-mini{background:rgba(255,255,255,.05)}}
+@media(max-width:0px){.mongo-splash{background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.14),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.18),transparent 32%),linear-gradient(145deg,#0d1517,#121b1d 55%,#0b1112)}.splash-card{background:rgba(18,27,29,.78);border-color:rgba(116,215,220,.12)}.splash-quote{color:#F3F4F6}.fire-mini{background:rgba(255,255,255,.05)}}
 
 
 
@@ -1695,7 +1717,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .net-growth-note{font-size:11px;font-weight:950;margin-top:7px;position:relative;z-index:1;line-height:1.35;}
 .net-growth-note.good{color:#08724F}.net-growth-note.bad{color:#B91C1C}.net-growth-note.neutral{color:#6B7280}
 @media(max-width:520px){.pay-rate-row{grid-template-columns:repeat(2,1fr)}.pay-goal-row{grid-template-columns:1fr 78px 28px}.pay-modal-actions{grid-template-columns:1fr}.pay-modal-card{border-radius:28px}}
-@media(prefers-color-scheme:dark){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
+@media(max-width:0px){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
 
 
 
@@ -1712,7 +1734,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .pay-edit-check{display:flex;align-items:center;gap:8px;margin:9px 0 12px;font-size:12px;color:#6B7280;font-weight:850;line-height:1.35;}
 .pay-modal-actions.editing{grid-template-columns:1fr 1fr;}
 @media(max-width:520px){.pay-edit-row{grid-template-columns:1fr 76px 20px}.pay-modal-actions.editing{grid-template-columns:1fr;}}
-@media(prefers-color-scheme:dark){.pay-edit-name{color:#F3F4F6}.pay-edit-list{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
+@media(max-width:0px){.pay-edit-name{color:#F3F4F6}.pay-edit-list{background:rgba(255,255,255,.04);border-color:rgba(116,215,220,.12)}}
 
 /* ── Möngö V31: Welcome + Profile Wealth Center ── */
 .wealth-welcome-card{margin:0 0 12px;padding:17px 18px;border-radius:30px;background:linear-gradient(135deg,rgba(73,176,182,.18),rgba(247,210,74,.14),rgba(255,255,255,.82));border:1px solid rgba(255,255,255,.86);box-shadow:0 16px 38px rgba(31,127,134,.11);position:relative;overflow:hidden;}
@@ -1737,7 +1759,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .profile-philosophy{padding:14px;border-radius:24px;background:linear-gradient(135deg,rgba(73,176,182,.12),rgba(247,210,74,.12));border:1px solid rgba(73,176,182,.14);color:#1F7F86;font-size:13px;font-weight:900;line-height:1.65;}
 .profile-shortcut-btn{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:7px;}
 @media(max-width:520px){.profile-mini-grid,.profile-badges{grid-template-columns:1fr}.wealth-welcome-hi{font-size:18px}.profile-mini .v{font-size:15px}}
-@media(prefers-color-scheme:dark){.wealth-welcome-card{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08),rgba(23,35,38,.78));border-color:rgba(116,215,220,.12)}.wealth-welcome-quote,.profile-mini .k{color:#CBD5E1}.profile-goal-name,.profile-badge{color:#F3F4F6}.profile-mini,.profile-badge{background:rgba(255,255,255,.05);border-color:rgba(116,215,220,.12)}.profile-philosophy,.profile-pay-summary{color:#74D7DC}}
+@media(max-width:0px){.wealth-welcome-card{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08),rgba(23,35,38,.78));border-color:rgba(116,215,220,.12)}.wealth-welcome-quote,.profile-mini .k{color:#CBD5E1}.profile-goal-name,.profile-badge{color:#F3F4F6}.profile-mini,.profile-badge{background:rgba(255,255,255,.05);border-color:rgba(116,215,220,.12)}.profile-philosophy,.profile-pay-summary{color:#74D7DC}}
 
 
 
@@ -1788,7 +1810,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
   .profile-badge .badge-name{font-size:11px;}
   .wealth-level-name{font-size:20px;}
 }
-@media(prefers-color-scheme:dark){.wealth-level-card,.profile-mini{background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.78))!important;border-color:rgba(116,215,220,.12)!important}.wealth-level-note{color:#CBD5E1}.profile-goal-pill{background:rgba(23,35,38,.86);color:#74D7DC}}
+@media(max-width:0px){.wealth-level-card,.profile-mini{background:linear-gradient(145deg,rgba(23,35,38,.94),rgba(23,35,38,.78))!important;border-color:rgba(116,215,220,.12)!important}.wealth-level-note{color:#CBD5E1}.profile-goal-pill{background:rgba(23,35,38,.86);color:#74D7DC}}
 
 
 /* ── Möngö V33: Settings merge + localized philosophy polish ── */
@@ -1811,7 +1833,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .profile-philosophy-main{display:block;font-size:14px;font-weight:950;line-height:1.65;}
 .v34-confetti{position:fixed;top:-12px;width:9px;height:14px;border-radius:3px;z-index:20000;pointer-events:none;animation:v34ConfettiFall 1.8s ease-out forwards;}
 @keyframes v34ConfettiFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
-@media(prefers-color-scheme:dark){.profile-philosophy-day{background:rgba(255,255,255,.06);color:#74D7DC}.goal-status-card.warning{background:rgba(183,121,31,.12)}.goal-status-card.expired{background:rgba(185,28,28,.12)}}
+@media(max-width:0px){.profile-philosophy-day{background:rgba(255,255,255,.06);color:#74D7DC}.goal-status-card.warning{background:rgba(183,121,31,.12)}.goal-status-card.expired{background:rgba(185,28,28,.12)}}
 
 
 /* ── Möngö V36.2 safe transaction/investment sync polish ── */
@@ -1861,7 +1883,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .txn-edit-btn:hover{
   background:rgba(73,176,182,.16) !important;
 }
-#invest-extra{display:none !important;}
+#invest-extra{display:none;}
 .txn-editing-hint{
   margin:8px 0 0;
   padding:8px 10px;
@@ -1893,6 +1915,24 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 /* ── Möngö V41.1 Security polish: privacy notice + safer surfaces ── */
 .security-note{margin-top:10px;padding:10px 12px;border-radius:18px;background:rgba(73,176,182,.08);border:1px solid rgba(73,176,182,.14);color:#2C7F85;font-size:11px;font-weight:850;line-height:1.45;}
 .security-note .material-symbols-rounded{font-size:16px;vertical-align:-3px;margin-right:4px;}
+
+/* ── Möngö V43.38: Opening cash balance ── */
+.opening-balance-card{margin-top:2px;overflow:visible!important}
+.opening-balance-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.opening-balance-copy{min-width:0}
+.opening-balance-title{font-size:16px;font-weight:1000;color:#374151;display:flex;align-items:center;gap:8px}
+.opening-balance-sub{font-size:11.5px;color:#6B7280;font-weight:750;line-height:1.5;margin-top:4px}
+.opening-balance-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}
+.opening-balance-form .fi{min-height:48px!important;border-radius:18px!important;font-size:15px!important;font-weight:900!important}
+.opening-balance-save{min-height:48px!important;padding-left:18px!important;padding-right:18px!important}
+.opening-balance-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.opening-balance-stat{padding:10px 11px;border-radius:18px;background:rgba(73,176,182,.065);border:1px solid rgba(73,176,182,.11)}
+.opening-balance-stat .k{font-size:10px;color:#6B7280;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+.opening-balance-stat .v{font-size:14px;color:#374151;font-weight:1000;margin-top:4px;letter-spacing:-.03em}
+.opening-balance-stat.current{grid-column:1/-1;background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.10))}
+.opening-balance-stat.current .v{font-size:19px;color:#1F7F86}
+.opening-balance-note{margin-top:10px;padding:9px 11px;border-radius:16px;background:rgba(73,176,182,.07);color:#2C7F85;font-size:11px;font-weight:800;line-height:1.45}
+@media(max-width:520px){.opening-balance-form{grid-template-columns:1fr}.opening-balance-save{width:100%}.opening-balance-grid{grid-template-columns:1fr 1fr}}
 
 </style>
 
@@ -2241,7 +2281,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .reset-success-title{font-size:20px;font-weight:1000;color:#1F7F86;margin-bottom:7px}
 .reset-success-copy{font-size:12px;color:var(--text2);font-weight:750;line-height:1.55;margin-bottom:16px}
 #reset-form-wrap[hidden]{display:none!important}
-@media(prefers-color-scheme:dark){.reset-success-icon{background:rgba(73,176,182,.12);color:#74D7DC}.reset-success-title{color:#74D7DC}}
+@media(max-width:0px){.reset-success-icon{background:rgba(73,176,182,.12);color:#74D7DC}.reset-success-title{color:#74D7DC}}
 </style>
 
 
@@ -2278,6 +2318,24 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 
 <style id="mongo-trial-test-v4315">
 #mongo-trial-test-indicator{position:fixed;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:10070;display:none;padding:8px 11px;border-radius:999px;background:#111827;color:#fff;font-size:11px;font-weight:900;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+</style>
+
+
+<style id="mongo-v4320-pricing-localized-picker-style">
+.mongo-plan{position:relative;min-height:128px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.mongo-plan-price{display:block;font-size:19px;line-height:1.15;color:#178f95;font-weight:1000;letter-spacing:-.03em}
+.mongo-plan-best{position:absolute;right:10px;top:9px;font-style:normal;font-size:9.5px;font-weight:1000;padding:4px 7px;border-radius:999px;background:linear-gradient(135deg,#49B0B6,#318f96);color:#fff}
+.mongo-plan.recommended{background:linear-gradient(145deg,rgba(73,176,182,.12),rgba(255,204,51,.09),#fff)}
+.mongo-calc-picker{position:fixed;inset:0;z-index:16000;display:none;align-items:flex-end;justify-content:center;background:rgba(20,39,44,.35);backdrop-filter:blur(5px);padding:14px}
+.mongo-calc-picker.show{display:flex}
+.mongo-calc-picker-sheet{width:min(560px,100%);border-radius:28px;background:#fff;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -16px 50px rgba(20,39,44,.20)}
+.mongo-calc-picker-title{font-size:16px;font-weight:1000;color:#374151;margin:0 4px 10px}
+.mongo-calc-picker-option{width:100%;min-height:50px;border:1px solid rgba(73,176,182,.14);border-radius:17px;background:#fff;color:#374151;font-size:15px;font-weight:900;text-align:left;padding:11px 14px;margin:6px 0;display:flex;align-items:center;justify-content:space-between}
+.mongo-calc-picker-option.active{border-color:#49B0B6;background:#E8F8F8;color:#1F7F86}
+.mongo-calc-picker-option.active:after{content:"✓";font-size:18px}
+.mongo-calc-picker-close{width:100%;min-height:48px;margin-top:8px;border:0;border-radius:17px;background:rgba(73,176,182,.10);color:#1F7F86;font-size:14px;font-weight:1000}
+.calc-native-select-localized{cursor:pointer}
+@media(max-width:520px){.mongo-plan-grid{grid-template-columns:1fr!important}.mongo-plan{min-height:112px}.mongo-paywall-sheet{max-height:92vh}}
 </style>
 
 </head>
@@ -2538,6 +2596,28 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="metric" id="m-inv"><div class="metric-lbl" id="lbl-investlbl"></div><div class="metric-val" id="d-inv">0</div></div>
     <div class="metric" id="m-savings"><div class="metric-lbl" id="lbl-savingslbl"></div><div class="metric-val" id="d-savings">0</div></div>
   </div>
+  <div class="card opening-balance-card" id="opening-balance-card">
+    <div class="opening-balance-head">
+      <div class="opening-balance-copy">
+        <div class="opening-balance-title"><span>💵</span><span id="opening-balance-title">Эхний үлдэгдэл</span></div>
+        <div class="opening-balance-sub" id="opening-balance-sub">Апп ашиглаж эхлэх үеийн бэлэн мөнгөний үлдэгдлээ нэг удаа оруулна.</div>
+      </div>
+    </div>
+    <div class="opening-balance-form">
+      <div>
+        <div class="slbl" id="opening-balance-label">Эхний үлдэгдэл</div>
+        <input type="text" class="fi" id="opening-balance-input" inputmode="decimal" placeholder="0">
+      </div>
+      <button class="btn btn-p opening-balance-save" id="opening-balance-save" onclick="saveOpeningBalance()">Хадгалах</button>
+    </div>
+    <div class="opening-balance-grid">
+      <div class="opening-balance-stat current"><div class="k" id="opening-current-label">Мөнгөн үлдэгдэл</div><div class="v" id="opening-current-value">₮0</div></div>
+      <div class="opening-balance-stat"><div class="k" id="opening-start-label">Эхний үлдэгдэл</div><div class="v" id="opening-start-value">₮0</div></div>
+      <div class="opening-balance-stat"><div class="k" id="opening-income-label">Нийт орлого</div><div class="v" id="opening-income-value">₮0</div></div>
+      <div class="opening-balance-stat"><div class="k" id="opening-expense-label">Нийт зарлага</div><div class="v" id="opening-expense-value">₮0</div></div>
+    </div>
+    <div class="opening-balance-note" id="opening-balance-note">Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.</div>
+  </div>
   <div class="card"><div class="card-title" id="lbl-recent"></div><div id="recent-list"><div class="empty" id="lbl-notxn-d"></div></div></div>
   <div class="card"><div class="card-title" id="lbl-budgetprog"></div><div id="budget-overview"><div class="empty" id="lbl-nobudget-d"></div></div></div>
   <div class="cgrid">
@@ -2560,6 +2640,12 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div id="invest-auto-notice" style="display:none" class="notice">
       <span style="font-size:14px">📈</span><span id="lbl-autoinvest"></span>
     </div>
+    <div id="invest-extra" style="display:none;margin-bottom:9px">
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:9px;margin-top:4px">
+        <div class="slbl" id="lbl-t-invest-type">Хөрөнгийн төрөл</div>
+        <select class="fi" style="width:100%" id="t-inv-type" onchange="onTxnInvestTypeChange()"></select>
+      </div>
+    </div>
     <div class="form-row txn-entry-row">
       <input type="hidden" id="t-desc">
       <div id="t-subcat-wrap" class="fi subcat-field-inline" onclick="tglSubDrop()">
@@ -2574,12 +2660,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
       <input type="date" class="fi" id="t-date">
       <button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button>
     </div>
-    <div id="invest-extra" style="display:none;margin-bottom:7px">
-      <div style="background:var(--bg2);border-radius:var(--radius);padding:9px;margin-top:4px">
-        <div class="slbl" id="lbl-invdetail"></div>
-        <select class="fi" style="width:100%" id="t-inv-type"></select>
-      </div>
-    </div>
+
     <div id="txn-editing-hint" class="txn-editing-hint">✎ Засварлах горим</div>
   </div>
   <div class="card txn-search-card">
@@ -2659,7 +2740,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
           <input type="date" class="fi" id="g-dead">
         </div>
         <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="g-color" value="#6C4CF5" title="Зорилгын өнгө">
+          <span class="slbl" data-mongo-color-label><span data-mongo-color-label><span data-mongo-color-label>Өнгө</span></span></span><input type="color" class="mongo-color-input" id="g-color" value="#6C4CF5" data-mongo-color-input="goal" title="Зорилгын өнгө">
         </div>
       </div>
       <button class="btn btn-p" onclick="addGoal()" id="btn-addgoal" style="font-size:16px;padding:6px 16px;min-width:44px;width:100%;margin-top:2px">＋</button>
@@ -2792,7 +2873,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
         <input type="number" class="fi" id="d-rate" placeholder="0" step="0.1">
       </div>
       <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
-        <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="d-color" value="#FF6B1A" title="Зээлийн өнгө">
+        <span class="slbl" data-mongo-color-label><span data-mongo-color-label><span data-mongo-color-label>Өнгө</span></span></span><input data-mongo-color-input="asset" type="color" class="mongo-color-input" id="d-color" value="#FF6B1A" data-mongo-color-input="debt" title="Зээлийн өнгө">
       </div>
       <button class="btn btn-p" onclick="addDebt()" id="btn-adddebt" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
     </div>
@@ -2888,7 +2969,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
           <input type="text" class="fi" id="i-current" placeholder="0" inputmode="decimal">
         </div>
         <div class="mongo-color-field" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Өнгө</span><input type="color" class="mongo-color-input" id="i-color" value="#F2A91E" title="Хөрөнгийн өнгө">
+          <span class="slbl" data-mongo-color-label><span data-mongo-color-label><span data-mongo-color-label>Өнгө</span></span></span><input data-mongo-color-input="asset" type="color" class="mongo-color-input" id="i-color" value="#F2A91E" data-mongo-color-input="asset" title="Хөрөнгийн өнгө">
         </div>
         <button class="btn btn-p" onclick="addInvest()" id="btn-addinvest" style="align-self:flex-end;font-size:16px;padding:6px 16px;min-width:44px">＋</button>
       </div>
@@ -3080,7 +3161,7 @@ const PAL=['#22C55E','#49B0B6','#F97316','#EF4444','#8B5CF6','#06B6D4','#F59E0B'
 // New icon set — life areas, NO food-specific icons
 const ICONS=['🏠','🚗','📚','💊','🎉','👗','💰','💳','🏦','📱','✈️','⚽','🎵','🎬','💪','🌿','👶','🐾','🎓','🛍️','💡','🔧','📦','🎁','🌍','💼','🏋️','🎯','🧘','🏡','💍','🚀','🎪','🌟','🏖️','🎭','📸','🧴','🛒','🔑'];
 
-const INVEST_TYPES_ALL={mn:[{k:'stock',icon:'📈',label:'Хувьцаа'},{k:'crypto',icon:'🪙',label:'Крипто'},{k:'real',icon:'🏢',label:'Үл хөдлөх'},{k:'fund',icon:'💼',label:'Сан'},{k:'bond',icon:'📄',label:'Бонд'},{k:'gold',icon:'🥇',label:'Алт'},{k:'other',icon:'💡',label:'Бусад'}],en:[{k:'stock',icon:'📈',label:'Stocks'},{k:'crypto',icon:'🪙',label:'Crypto'},{k:'real',icon:'🏢',label:'Real estate'},{k:'fund',icon:'💼',label:'Fund'},{k:'bond',icon:'📄',label:'Bond'},{k:'gold',icon:'🥇',label:'Gold'},{k:'other',icon:'💡',label:'Other'}],zh:[{k:'stock',icon:'📈',label:'股票'},{k:'crypto',icon:'🪙',label:'加密货币'},{k:'real',icon:'🏢',label:'房地产'},{k:'fund',icon:'💼',label:'基金'},{k:'bond',icon:'📄',label:'债券'},{k:'gold',icon:'🥇',label:'黄金'},{k:'other',icon:'💡',label:'其他'}],ja:[{k:'stock',icon:'📈',label:'株式'},{k:'crypto',icon:'🪙',label:'暗号通貨'},{k:'real',icon:'🏢',label:'不動産'},{k:'fund',icon:'💼',label:'投資信託'},{k:'bond',icon:'📄',label:'債券'},{k:'gold',icon:'🥇',label:'金'},{k:'other',icon:'💡',label:'その他'}],ko:[{k:'stock',icon:'📈',label:'주식'},{k:'crypto',icon:'🪙',label:'암호화폐'},{k:'real',icon:'🏢',label:'부동산'},{k:'fund',icon:'💼',label:'펀드'},{k:'bond',icon:'📄',label:'채권'},{k:'gold',icon:'🥇',label:'금'},{k:'other',icon:'💡',label:'기타'}],ru:[{k:'stock',icon:'📈',label:'Акции'},{k:'crypto',icon:'🪙',label:'Крипто'},{k:'real',icon:'🏢',label:'Недвижимость'},{k:'fund',icon:'💼',label:'Фонд'},{k:'bond',icon:'📄',label:'Облигации'},{k:'gold',icon:'🥇',label:'Золото'},{k:'other',icon:'💡',label:'Прочее'}],de:[{k:'stock',icon:'📈',label:'Aktien'},{k:'crypto',icon:'🪙',label:'Krypto'},{k:'real',icon:'🏢',label:'Immobilien'},{k:'fund',icon:'💼',label:'Fonds'},{k:'bond',icon:'📄',label:'Anleihen'},{k:'gold',icon:'🥇',label:'Gold'},{k:'other',icon:'💡',label:'Sonstiges'}]};
+const INVEST_TYPES_ALL={mn:[{k:'stock',icon:'📈',label:'Хувьцаа'},{k:'crypto',icon:'🪙',label:'Крипто'},{k:'real',icon:'🏢',label:'Үл хөдлөх'},{k:'fund',icon:'💼',label:'Сан'},{k:'bond',icon:'🎫',label:'Бонд'},{k:'gold',icon:'🥇',label:'Алт'},{k:'other',icon:'💡',label:'Бусад'}],en:[{k:'stock',icon:'📈',label:'Stocks'},{k:'crypto',icon:'🪙',label:'Crypto'},{k:'real',icon:'🏢',label:'Real estate'},{k:'fund',icon:'💼',label:'Fund'},{k:'bond',icon:'🎫',label:'Bond'},{k:'gold',icon:'🥇',label:'Gold'},{k:'other',icon:'💡',label:'Other'}],zh:[{k:'stock',icon:'📈',label:'股票'},{k:'crypto',icon:'🪙',label:'加密货币'},{k:'real',icon:'🏢',label:'房地产'},{k:'fund',icon:'💼',label:'基金'},{k:'bond',icon:'🎫',label:'债券'},{k:'gold',icon:'🥇',label:'黄金'},{k:'other',icon:'💡',label:'其他'}],ja:[{k:'stock',icon:'📈',label:'株式'},{k:'crypto',icon:'🪙',label:'暗号通貨'},{k:'real',icon:'🏢',label:'不動産'},{k:'fund',icon:'💼',label:'投資信託'},{k:'bond',icon:'🎫',label:'債券'},{k:'gold',icon:'🥇',label:'金'},{k:'other',icon:'💡',label:'その他'}],ko:[{k:'stock',icon:'📈',label:'주식'},{k:'crypto',icon:'🪙',label:'암호화폐'},{k:'real',icon:'🏢',label:'부동산'},{k:'fund',icon:'💼',label:'펀드'},{k:'bond',icon:'🎫',label:'채권'},{k:'gold',icon:'🥇',label:'금'},{k:'other',icon:'💡',label:'기타'}],ru:[{k:'stock',icon:'📈',label:'Акции'},{k:'crypto',icon:'🪙',label:'Крипто'},{k:'real',icon:'🏢',label:'Недвижимость'},{k:'fund',icon:'💼',label:'Фонд'},{k:'bond',icon:'🎫',label:'Облигации'},{k:'gold',icon:'🥇',label:'Золото'},{k:'other',icon:'💡',label:'Прочее'}],de:[{k:'stock',icon:'📈',label:'Aktien'},{k:'crypto',icon:'🪙',label:'Krypto'},{k:'real',icon:'🏢',label:'Immobilien'},{k:'fund',icon:'💼',label:'Fonds'},{k:'bond',icon:'🎫',label:'Anleihen'},{k:'gold',icon:'🥇',label:'Gold'},{k:'other',icon:'💡',label:'Sonstiges'}]};
 
 // Currency symbols per language
 const CURR={mn:'₮',en:'$',zh:'¥',ja:'¥',ko:'₩',ru:'₽',de:'€'};
@@ -3240,6 +3321,7 @@ Object.assign(LANGS.de,{
 let curType='income';
 let editingTxnId=null;
 let txns=[],goals=[],debts=[],invests=[];
+let openingBalance=0;
 
 // ── Möngö V43 Unified Color Engine ────────────────────────────────────────
 const MONGO_OBJECT_COLORS=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8','#8B5CF6','#0EA5A8'];
@@ -3305,6 +3387,8 @@ function updateCategoryColor(type,keyOrName,color){
   primary.filter(match).forEach(c=>c.color=col);
   budget.filter(match).forEach(c=>c.color=col);
   saveData();rCatSel();rBList();rTxns();rDash();
+  // V43.30: category-color edits must repaint the matching dashboard donut immediately.
+  rDonut(type==='income'?'inc':'exp');
 }
 
 let budgets={};
@@ -3458,11 +3542,27 @@ const DEFAULT_CAT_COLORS={
 };
 const DEFAULT_SUB_COLORS={vegs:'#10B981',fruits:'#84CC16',meat:'#D84315',bread:'#F59E0B'};
 function normalizeDefaultCatColors(){
+  // V43.28: defaults are fallbacks only. Never overwrite a color the user has saved.
   [expCats,bCatsExp,incCats,bCatsInc].forEach(arr=>arr.forEach(c=>{
-    if(c.key&&DEFAULT_CAT_COLORS[c.key]) c.color=DEFAULT_CAT_COLORS[c.key];
-    (c.subs||[]).forEach(s=>{if(s.key&&DEFAULT_SUB_COLORS[s.key]) s.color=DEFAULT_SUB_COLORS[s.key];});
+    if(!/^#[0-9a-fA-F]{6}$/.test(c.color||'')) c.color=(c.key&&DEFAULT_CAT_COLORS[c.key])||'#49B0B6';
+    (c.subs||[]).forEach(s=>{
+      if(!/^#[0-9a-fA-F]{6}$/.test(s.color||'')) s.color=(s.key&&DEFAULT_SUB_COLORS[s.key])||c.color||'#49B0B6';
+    });
   }));
 }
+
+// V43.30: Budget is the source of truth for category colors. After cloud/local reload,
+// mirror persisted Budget colors back into the transaction category lists used by donuts.
+function syncPrimaryCategoryColorsFromBudget(){
+  const sync=(primary,budget)=>{
+    (budget||[]).forEach(bc=>{
+      const pc=(primary||[]).find(c=>(bc.key&&c.key===bc.key)||(!bc.key&&c.name&&bc.name===c.name));
+      if(pc&&/^#[0-9a-fA-F]{6}$/.test(bc.color||''))pc.color=bc.color;
+    });
+  };
+  sync(incCats,bCatsInc);sync(expCats,bCatsExp);
+}
+
 function isTxnBudgeted(t){
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
@@ -3521,9 +3621,12 @@ document.addEventListener('click',function(e){
 
 function setLang(l,btn){
   lang=l;L=LANGS[l];CS=CURR[l]||'$';
+  try{document.documentElement.lang=l;}catch(e){}
   document.querySelectorAll('.lbtn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   applyLang();
+  try{if(typeof refreshVisibleMongoTrialReminderLanguage==='function')refreshVisibleMongoTrialReminderLanguage();}catch(e){}
+  try{if(typeof renderMongoTrialCard==='function')renderMongoTrialCard();}catch(e){}
   if(typeof scheduleCloudProfileSettingsSave==='function')scheduleCloudProfileSettingsSave('language-change');
 }
 
@@ -3593,6 +3696,7 @@ function applyLang(){
   document.getElementById('d-name').placeholder=L.debtname;
   document.getElementById('i-name').placeholder=L.iname;
   rInvSel('t-inv-type');rInvSel('i-type');
+  const itxt=investmentFlowText();const itlbl=document.getElementById('lbl-t-invest-type');if(itlbl)itlbl.textContent=itxt.type;
   rCatSel();rTChips();rBList();rBMonthSel();rBProg();rBOv();
   rTxns();rRecent();rGoals();rDebts();rInvests();
   uDash(); // мөнгөн тэмдэгт шинэчлэгдэнэ
@@ -3603,6 +3707,42 @@ function applyLang(){
 function rInvSel(id){
   const t=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
   document.getElementById(id).innerHTML=t.map(x=>`<option value="${x.k}">${x.icon} ${x.label}</option>`).join('');
+}
+function investmentFlowText(){
+  const d={
+    mn:{type:'Хөрөнгийн төрөл',name:'Хөрөнгийн нэр',chooseName:'Нэр сонгох',noNames:'Энэ төрөлд нэр нэмээгүй байна'},
+    en:{type:'Investment type',name:'Investment name',chooseName:'Select name',noNames:'No names added for this type'},
+    zh:{type:'投资类型',name:'投资名称',chooseName:'选择名称',noNames:'此类型尚未添加名称'},
+    ja:{type:'投資タイプ',name:'投資名',chooseName:'名前を選択',noNames:'このタイプには名前がありません'},
+    ko:{type:'투자 유형',name:'투자 이름',chooseName:'이름 선택',noNames:'이 유형에 등록된 이름이 없습니다'},
+    ru:{type:'Тип инвестиции',name:'Название актива',chooseName:'Выберите название',noNames:'Для этого типа названий пока нет'},
+    de:{type:'Anlageart',name:'Anlagename',chooseName:'Name auswählen',noNames:'Für diese Anlageart gibt es noch keine Namen'}
+  };return d[lang]||d.mn;
+}
+function investTypeLabel(key){
+  const list=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn||[];
+  const x=list.find(v=>v.k===key);return x?`${x.icon} ${x.label}`:(key||'');
+}
+function investmentBudgetCat(cat){return !!(cat&&cat.key==='invest_cat');}
+function inferExistingInvestTypeForName(name){
+  const norm=normInvestName(name);if(!norm)return null;
+  const types=[...new Set((invests||[]).filter(i=>normInvestName(i.name)===norm).map(i=>i.typeKey).filter(Boolean))];
+  return types.length===1?types[0]:null;
+}
+function getInvestmentSubType(sb){return (sb&&sb.investTypeKey)||inferExistingInvestTypeForName(cN(sb))||'other';}
+function migrateInvestmentTypeLinks(){
+  const cat=(bCatsExp||[]).find(c=>c&&c.key==='invest_cat');
+  if(cat)(cat.subs||[]).forEach(sb=>{if(!sb.investTypeKey){const k=inferExistingInvestTypeForName(cN(sb));if(k)sb.investTypeKey=k;}});
+  (txns||[]).forEach(t=>{
+    if(t.type!=='expense'||t.catKey!=='invest_cat'||t.investTypeKey)return;
+    const linked=(invests||[]).find(i=>String(i.sourceTxnId)===String(t.id));
+    if(linked&&linked.typeKey)t.investTypeKey=linked.typeKey;
+    else if(cat&&t.subcatName){const sb=(cat.subs||[]).find(x=>x.key===t.subcatName);if(sb)t.investTypeKey=getInvestmentSubType(sb);}
+  });
+}
+function setBudgetInvestType(ci,si,val){
+  const cat=bCatsExp[ci];if(!cat||!investmentBudgetCat(cat)||!cat.subs||!cat.subs[si])return;
+  cat.subs[si].investTypeKey=val||'other';saveData();rBList();
 }
 
 function budgetUiText(){
@@ -6291,13 +6431,13 @@ function dayOfYear(){
 }
 function v34Text(){
   const d={
-    mn:{day:'Өдөр',completed:'Зорилго биеллээ',early:'Баяр хүргэе! {time}-ийн өмнө зорилгодоо хүрлээ.',ontime:'Зорилго амжилттай биеллээ.',expired:'Зорилтын хугацаа дууссан.',extend:'Хугацаа сунгах',left:'{months} сар · {days} хоног үлдлээ',month:'сар',dayUnit:'хоног'},
-    en:{day:'Day',completed:'Goal completed',early:'Congratulations! You reached your goal {time} early.',ontime:'Goal successfully completed.',expired:'The goal deadline has passed.',extend:'Extend deadline',left:'{months} mo · {days} days left',month:'mo',dayUnit:'days'},
-    zh:{day:'第',completed:'目标已完成',early:'恭喜！你提前 {time} 达成目标。',ontime:'目标已成功完成。',expired:'目标期限已结束。',extend:'延长期限',left:'还剩 {months} 个月 · {days} 天',month:'个月',dayUnit:'天'},
-    ja:{day:'Day',completed:'目標達成',early:'おめでとうございます！{time} 早く目標を達成しました。',ontime:'目標を達成しました。',expired:'目標期限が過ぎました。',extend:'期限を延長',left:'残り {months}ヶ月 · {days}日',month:'ヶ月',dayUnit:'日'},
-    ko:{day:'Day',completed:'목표 달성',early:'축하합니다! {time} 일찍 목표를 달성했습니다.',ontime:'목표를 성공적으로 달성했습니다.',expired:'목표 기한이 지났습니다.',extend:'기한 연장',left:'{months}개월 · {days}일 남음',month:'개월',dayUnit:'일'},
-    ru:{day:'День',completed:'Цель выполнена',early:'Поздравляем! Вы достигли цели на {time} раньше.',ontime:'Цель успешно выполнена.',expired:'Срок цели истек.',extend:'Продлить срок',left:'Осталось {months} мес. · {days} дн.',month:'мес.',dayUnit:'дн.'},
-    de:{day:'Tag',completed:'Ziel erreicht',early:'Glückwunsch! Du hast dein Ziel {time} früher erreicht.',ontime:'Ziel erfolgreich erreicht.',expired:'Die Zielfrist ist abgelaufen.',extend:'Frist verlängern',left:'Noch {months} Mon. · {days} Tage',month:'Mon.',dayUnit:'Tage'}
+    mn:{day:'Өдөр',completed:'Зорилго биеллээ',early:'Баяр хүргэе! {time}-ийн өмнө зорилгодоо хүрлээ.',ontime:'Зорилго амжилттай биеллээ.',expired:'Зорилтын хугацаа дууссан.',extend:'Хугацаа сунгах',left:'{months} сар · {days} хоног үлдлээ',leftBoth:'{months} сар {days} хоног үлдлээ',leftMonths:'{months} сар үлдлээ',leftDays:'{days} хоног үлдлээ',month:'сар',dayUnit:'хоног'},
+    en:{day:'Day',completed:'Goal completed',early:'Congratulations! You reached your goal {time} early.',ontime:'Goal successfully completed.',expired:'The goal deadline has passed.',extend:'Extend deadline',left:'{months} mo · {days} days left',leftBoth:'{months} mo {days} days left',leftMonths:'{months} mo left',leftDays:'{days} days left',month:'mo',dayUnit:'days'},
+    zh:{day:'第',completed:'目标已完成',early:'恭喜！你提前 {time} 达成目标。',ontime:'目标已成功完成。',expired:'目标期限已结束。',extend:'延长期限',left:'还剩 {months} 个月 · {days} 天',leftBoth:'还剩 {months} 个月 {days} 天',leftMonths:'还剩 {months} 个月',leftDays:'还剩 {days} 天',month:'个月',dayUnit:'天'},
+    ja:{day:'Day',completed:'目標達成',early:'おめでとうございます！{time} 早く目標を達成しました。',ontime:'目標を達成しました。',expired:'目標期限が過ぎました。',extend:'期限を延長',left:'残り {months}ヶ月 · {days}日',leftBoth:'残り {months}ヶ月 {days}日',leftMonths:'残り {months}ヶ月',leftDays:'残り {days}日',month:'ヶ月',dayUnit:'日'},
+    ko:{day:'Day',completed:'목표 달성',early:'축하합니다! {time} 일찍 목표를 달성했습니다.',ontime:'목표를 성공적으로 달성했습니다.',expired:'목표 기한이 지났습니다.',extend:'기한 연장',left:'{months}개월 · {days}일 남음',leftBoth:'{months}개월 {days}일 남음',leftMonths:'{months}개월 남음',leftDays:'{days}일 남음',month:'개월',dayUnit:'일'},
+    ru:{day:'День',completed:'Цель выполнена',early:'Поздравляем! Вы достигли цели на {time} раньше.',ontime:'Цель успешно выполнена.',expired:'Срок цели истек.',extend:'Продлить срок',left:'Осталось {months} мес. · {days} дн.',leftBoth:'Осталось {months} мес. {days} дн.',leftMonths:'Осталось {months} мес.',leftDays:'Осталось {days} дн.',month:'мес.',dayUnit:'дн.'},
+    de:{day:'Tag',completed:'Ziel erreicht',early:'Glückwunsch! Du hast dein Ziel {time} früher erreicht.',ontime:'Ziel erfolgreich erreicht.',expired:'Die Zielfrist ist abgelaufen.',extend:'Frist verlängern',left:'Noch {months} Mon. · {days} Tage',leftBoth:'Noch {months} Mon. {days} Tage',leftMonths:'Noch {months} Mon.',leftDays:'Noch {days} Tage',month:'Mon.',dayUnit:'Tage'}
   };return d[lang]||d.mn;
 }
 function fmtTimeShort(days){const T=v34Text();const m=Math.floor(days/30), d=days%30;const parts=[];if(m>0)parts.push(m+' '+T.month);if(d>0||!parts.length)parts.push(d+' '+T.dayUnit);return parts.join(' ');}
@@ -6321,7 +6461,7 @@ function updateWelcomeCard(){
   const idx=(dayOfYear()-1)%quotes.length;
   qt.textContent=quotes[idx];
 }
-function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+(Number(d.remaining)||0),0);}
+function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+getDebtRemaining(d),0);}
 function timeGreeting(){
   const h=new Date().getHours();
   const d={
@@ -6457,10 +6597,14 @@ function renderProfileBadges(){
   const names=PT.badgesList||['First saving','100 transactions','30-day tracking','100M net worth','Score 90+','Goal 100%','Möngö Master'];
   const netPct=Math.max(0,Math.min(100,Math.round(net/100000000*100)));
   const masterDay=Math.min(365,dayOfYear());
+  // V43.28: "30-day tracking" means account usage days, not number of transactions.
+  // Billing lifecycle is stored per Firebase UID, so another account can never inherit this progress.
+  const accountStart=(window.MONGO_BILLING_STATE&&window.MONGO_BILLING_STATE.accountStartDate)||window.MONGO_PHILOSOPHY_START_DATE||'';
+  const trackingDays=Math.min(30,accountStart?mongoDaysSinceInclusive(accountStart):1);
   const data=[
     ['🥇',names[0],savings>0,'gold',`${savings>0?1:0}/1`],
     ['🥈',names[1],txns.length>=100,'silver',`${Math.min(txns.length,100)}/100`],
-    ['🥉',names[2],txns.length>=30,'bronze',`${Math.min(txns.length,30)}/30`],
+    ['🥉',names[2],trackingDays>=30,'bronze',`${trackingDays}/30`],
     ['💎',names[3],net>=100000000,'',`${netPct}%`],
     ['🚀',names[4],score>=90,'',`${Math.min(score,90)}/90`],
     ['🏆',names[5],completedGoals>0,'gold',`${completedGoals}/${goals.length||0} ${P1.completed}`],
@@ -6577,9 +6721,21 @@ function onCatChange(){
   const c=expCats.find(x=>cN(x)===v);
   const iv=c&&isInv(c);
   if(notice)notice.style.display=iv?'flex':'none';
+  if(extra)extra.style.display=iv?'block':'none';
   const expCat=bCatsExp.find(c=>cN(c)===v);
-  const subs=expCat?expCat.subs||[]:[];
+  let subs=expCat?expCat.subs||[]:[];
+  if(iv){
+    const sel=document.getElementById('t-inv-type');
+    const typeKey=sel&&sel.value?sel.value:'stock';
+    subs=subs.filter(sb=>getInvestmentSubType(sb)===typeKey);
+  }
   rSubcatList(subs,expCat?(expCat.key||v):v,'expense');
+}
+function onTxnInvestTypeChange(){
+  selSubcat=null;subDropOpen=false;
+  const lab=document.getElementById('t-subcat-label');if(lab)lab.textContent=investmentFlowText().chooseName;
+  const wrap=document.getElementById('t-subcat-wrap');if(wrap)wrap.classList.remove('has-selection');
+  onCatChange();
 }
 function tglSubDrop(){
   const list=document.getElementById('t-subcat-list');
@@ -6591,7 +6747,9 @@ function tglSubDrop(){
 
 function rSubcatList(subs,catKey,catType){
   const el=document.getElementById('t-subcat-list');
-  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,null,null)">${L.subcatPh||'—'}</div>`+
+  const isInvCat=catType==='expense'&&catKey==='invest_cat';
+  const ph=isInvCat?investmentFlowText().chooseName:(L.subcatPh||'—');
+  el.innerHTML=`<div class="subcat-opt${selSubcat===null?' sel':''}" onclick="selectSubcat(null,null,null)">${ph}</div>`+
     subs.map(sb=>{
       const nm=cN(sb);
       const key=sb.key||nm;
@@ -6609,8 +6767,10 @@ function selectSubcat(key,catKey,catType){
     const cat=cats.find(c=>(c.key===catKey)||(!c.key&&cN(c)===catKey));
     const subs=cat?cat.subs||[]:[];
     const sb=subs.find(s=>s.key===key);
-    if(sb)label=cN(sb);
-    else label=key;
+    if(sb){
+      label=cN(sb);
+      if(catType==='expense'&&investmentBudgetCat(cat)&&sb.investTypeKey){const its=document.getElementById('t-inv-type');if(its)its.value=sb.investTypeKey;}
+    }else label=key;
   }
   const lab=document.getElementById('t-subcat-label');
   if(lab)lab.textContent=label;
@@ -6713,6 +6873,7 @@ function addBudgetCat(){
 }
 
 function rBList(){
+  migrateInvestmentTypeLinks();
   const el=document.getElementById('b-cats-list');
   const cats=getBCats();const defB=getDefB();
   if(!cats.length){el.innerHTML=`<div class="empty">${L.nobudget}</div>`;return;}
@@ -6747,14 +6908,16 @@ function rBList(){
             <span style="font-size:12px;color:${sb.color};flex:1">${snm}</span>
             <input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(sb.color,cat.color)}" title="Өнгө солих" onchange="updateBudgetSubColor('${budgetType}',${ci},${si},this.value)">
           </div>
-          <div style="display:flex;gap:5px;align-items:center">
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            ${investmentBudgetCat(cat)?`<select class="fi" style="flex:0 0 150px;max-width:45%;font-size:11px;padding:4px 7px" onchange="setBudgetInvestType(${ci},${si},this.value)">${(INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn).map(it=>`<option value="${it.k}"${getInvestmentSubType(sb)===it.k?' selected':''}>${it.icon} ${it.label}</option>`).join('')}</select>`:''}
             <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))">
             <button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats()[${ci}].subs.splice(${si},1);rBList();saveData();}})">✕</button>
           </div>
         </div>`}).join('')}
         <div class="asr">
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;align-items:center">${PAL.map(c=>`<div class="cp-sm${subSC[sk]===c?' sel':''}" style="background:${c}" onclick="subSC['${sk}']='${c}';rBList()"></div>`).join('')}<input type="color" class="mongo-color-input mongo-inline-color" value="${mongoColor(subSC[sk],cat.color)}" title="Өнгөний бүрэн сонголт" onchange="subSC['${sk}']=this.value;rBList()"></div>
-          <input type="text" class="fi" id="si-${budgetType}-${ci}" placeholder="${L.addSubPh||L.newcat}" style="font-size:12px;padding:4px 7px">
+          ${investmentBudgetCat(cat)?`<select class="fi" id="si-invest-type-${budgetType}-${ci}" style="font-size:12px;padding:4px 7px;min-width:135px">${(INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn).map(it=>`<option value="${it.k}">${it.icon} ${it.label}</option>`).join('')}</select>`:''}
+          <input type="text" class="fi" id="si-${budgetType}-${ci}" placeholder="${investmentBudgetCat(cat)?investmentFlowText().name:(L.addSubPh||L.newcat)}" style="font-size:12px;padding:4px 7px">
           <button class="btn btn-p" style="font-size:11px;padding:4px 8px" onclick="addSub('${budgetType}',${ci})">${L.add}</button>
         </div>
       </div>`:''}
@@ -6766,15 +6929,31 @@ function addSub(btype,ci){
   const inp=document.getElementById(`si-${btype}-${ci}`);const v=inp.value.trim();if(!v)return;
   const cats=btype==='income'?bCatsInc:bCatsExp;
   const cat=cats[ci];if(!cat)return;
-  if((cat.subs||[]).find(s=>cN(s)===v))return;
-  const sk=`s${btype}_${ci}`;
   if(!cat.subs)cat.subs=[];
+
+  // V43.27 — Investment identities are Type + Name, not Name alone.
+  // This allows e.g. “Түм / Бонд” and “Түм / Хувьцаа” to coexist,
+  // while still blocking a true duplicate inside the same investment type.
+  let selectedInvestType=null;
+  if(btype==='expense'&&investmentBudgetCat(cat)){
+    const typeSel=document.getElementById(`si-invest-type-${btype}-${ci}`);
+    selectedInvestType=(typeSel&&typeSel.value)||'stock';
+    const duplicate=cat.subs.find(s=>
+      normInvestName(cN(s))===normInvestName(v) && getInvestmentSubType(s)===selectedInvestType
+    );
+    if(duplicate)return;
+  }else{
+    if(cat.subs.find(s=>String(cN(s)||'').trim().toLocaleLowerCase()===v.toLocaleLowerCase()))return;
+  }
+
+  const sk=`s${btype}_${ci}`;
   // Нэмсэн хэлийг хамт хадгална — олон хэлд нэр нэмж болно
   const newSub={color:subSC[sk]||cat.color};
   newSub.names={};
   newSub.names[lang]=v;
   // Буцаад уншихад key болгон ашиглах
   newSub.key='custom_'+Date.now();
+  if(selectedInvestType)newSub.investTypeKey=selectedInvestType;
   cat.subs.push(newSub);
   inp.value='';rBList();saveData();
 }
@@ -6806,7 +6985,7 @@ function syncAutoInvestmentForTxn(txn){
   if(!txn || txn.type!=='expense')return;
   const cat=expCats.find(c=>cN(c)===txn.catName);
   if(!cat||!isInv(cat))return;
-  const typeKey=getInvestTypeKeyFromSubcat(txn.subcatName,txn.desc);
+  const typeKey=txn.investTypeKey||getInvestTypeKeyFromSubcat(txn.subcatName,txn.desc);
   let inv=invests.find(i=>i.sourceTxnId===txn.id);
   if(inv){
     inv.name=txn.desc;
@@ -6836,6 +7015,7 @@ function startEditTxn(id){
   rCatSel();
   document.getElementById('t-cat').value=t.catName;
   onCatChange();
+  if(t.investTypeKey){const its=document.getElementById('t-inv-type');if(its){its.value=t.investTypeKey;onCatChange();}}
   document.getElementById('t-desc').value=t.desc||'';
   document.getElementById('t-amount').value=(t.amount||0).toLocaleString('en-US');
   document.getElementById('t-date').value=t.date||new Date().toISOString().substring(0,10);
@@ -6855,6 +7035,44 @@ function startEditTxn(id){
   const hint=document.getElementById('txn-editing-hint'); if(hint)hint.classList.add('show');
   try{document.getElementById('tab-transactions').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
 }
+// V43.24 — Only transactions in the typed Loan/Debt category may affect a loan.
+// This prevents same-named Savings goals (for example “Байр”) from being counted as loan payments.
+function isDebtPaymentTxnFor(txn,debt){
+  if(!txn||!debt||txn.type!=='expense')return false;
+  const debtCat=(bCatsExp||[]).find(c=>c&&c.key==='loan_cat');
+  const inDebtCategory=txn.catKey==='loan_cat'||!!(debtCat&&txn.catName===cN(debtCat));
+  if(!inDebtCategory)return false;
+  const debtName=String(debt.name||'').trim();
+  if(!debtName)return false;
+  if(String(txn.desc||'').trim()===debtName)return true;
+  if(String(txn.subcatName||'').trim()===debtName)return true;
+  if(debtCat&&txn.subcatName){
+    const sb=(debtCat.subs||[]).find(s=>s&&(s.key===txn.subcatName||(s.names&&Object.values(s.names).includes(txn.subcatName))));
+    if(sb&&String(cN(sb)||'').trim()===debtName)return true;
+  }
+  return false;
+}
+function findDebtForTxn(txn){
+  return debts.find(d=>isDebtPaymentTxnFor(txn,d))||null;
+}
+// V43.25 — Debt balance is derived from the opening remaining balance minus matching Loan-category expenses.
+// This makes add/edit/delete of a payment reversible and keeps same-named Savings transactions isolated.
+function getDebtOpeningRemaining(d){
+  if(!d)return 0;
+  const open=Number(d.openingRemaining);
+  if(Number.isFinite(open)&&open>=0)return open;
+  const rem=Number(d.remaining);
+  if(Number.isFinite(rem)&&rem>=0)return rem;
+  return Math.max(0,Number(d.total)||0);
+}
+function getDebtPaidAmount(d){
+  if(!d)return 0;
+  return txns.filter(t=>isDebtPaymentTxnFor(t,d)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+}
+function getDebtRemaining(d){
+  return Math.max(0,getDebtOpeningRemaining(d)-getDebtPaidAmount(d));
+}
+
 function addTransaction(){
   const descRaw=document.getElementById('t-desc').value.trim();
   const amount=parseAmt(document.getElementById('t-amount').value);
@@ -6872,12 +7090,14 @@ function addTransaction(){
   if(!amount||amount<=0)return;
   const catObj=gCats().find(c=>cN(c)===catName);
   const catKey=catObj&&catObj.key?catObj.key:null;
+  const isInvestmentExpense=curType==='expense'&&catKey==='invest_cat';
+  const investTypeKey=isInvestmentExpense?((document.getElementById('t-inv-type')&&document.getElementById('t-inv-type').value)||'stock'):null;
 
   if(editingTxnId){
     const t=txns.find(x=>String(x.id)===String(editingTxnId));
     if(t){
       const oldType=t.type, oldCat=t.catName;
-      t.desc=desc;t.amount=amount;t.catName=catName;t.catKey=catKey;t.subcatName=subcatKey;t.date=date;t.type=curType;
+      t.desc=desc;t.amount=amount;t.catName=catName;t.catKey=catKey;t.subcatName=subcatKey;t.investTypeKey=investTypeKey;t.date=date;t.type=curType;
       if(!(curType==='expense'&&expCats.find(c=>cN(c)===catName&&isInv(c)))) removeLinkedInvestmentForTxn(t.id);
       else syncAutoInvestmentForTxn(t);
       if(oldType==='expense'){
@@ -6888,13 +7108,13 @@ function addTransaction(){
     editingTxnId=null;resetTxnEditUi();
   }else{
     const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('txn_'+Date.now()+'_'+Math.random().toString(36).slice(2,9));
-    const txn={id,desc,amount,catName,catKey,subcatName:subcatKey,date,type:curType,updatedAt:new Date().toISOString()};
+    const txn={id,desc,amount,catName,catKey,subcatName:subcatKey,investTypeKey,date,type:curType,updatedAt:new Date().toISOString()};
     txns.unshift(txn);
     if(curType==='income'){
       preparePayAssistant(amount,date);
     }
     if(curType==='expense'){
-      const d=debts.find(d=>d.name===catName||d.name===desc);if(d)d.remaining=Math.max(0,d.remaining-amount);
+      // Loan balances are derived from matching transactions; do not mutate the opening balance here.
       const cat=expCats.find(c=>cN(c)===catName);
       if(cat&&isInv(cat))syncAutoInvestmentForTxn(txn);
     }
@@ -6951,14 +7171,14 @@ function addDebt(){
   const rate=parseFloat(document.getElementById('d-rate').value)||0;
   if(!name||!total)return;
   const color=mongoColor(document.getElementById('d-color')?.value,mongoNextColor(debts.length,'debt'));
-  debts.push({id:Date.now(),name,total,remaining:rem,monthly:mon,rate,color});
+  debts.push({id:Date.now(),name,total,remaining:rem,openingRemaining:rem,monthly:mon,rate,color,createdAt:new Date().toISOString()});
   document.getElementById('d-name').value='';document.getElementById('d-total').value='';
   document.getElementById('d-rem').value='';document.getElementById('d-mon').value='';document.getElementById('d-rate').value='';if(document.getElementById('d-color'))document.getElementById('d-color').value=mongoNextColor(debts.length,'debt');
   saveData();rDebts();rDonut('dbt');uDash();
 }
 async function delDebt(id){
   if(!await showConfirm(L.confirmDel))return;
-  debts=debts.filter(d=>d.id!==id);saveData();rDebts();rDonut('dbt');uDash();
+  debts=debts.filter(d=>String(d.id)!==String(id));saveData();rDebts();rDonut('dbt');uDash();
 }
 
 // ── Investments ────────────────────────────────────────────────────────────
@@ -7240,17 +7460,51 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
 
 
 
+const OPENING_BALANCE_TEXT={
+  mn:{title:'Эхний үлдэгдэл',sub:'Апп ашиглаж эхлэх үеийн бэлэн мөнгөний үлдэгдлээ нэг удаа оруулна.',label:'Эхний үлдэгдэл',save:'Хадгалах',current:'Мөнгөн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.',saved:'Эхний үлдэгдэл хадгалагдлаа'},
+  en:{title:'Opening balance',sub:'Enter the cash balance you had when you started using the app.',label:'Opening balance',save:'Save',current:'Cash balance',income:'Total income',expense:'Total expense',note:'This balance carries forward regardless of the date filter. Income increases it and expenses decrease it.',saved:'Opening balance saved'},
+  zh:{title:'期初余额',sub:'输入开始使用本应用时已有的现金余额。',label:'期初余额',save:'保存',current:'现金余额',income:'总收入',expense:'总支出',note:'此余额不会因日期筛选而消失。收入会增加余额，支出会减少余额。',saved:'期初余额已保存'},
+  ja:{title:'開始残高',sub:'アプリを使い始めた時点の現金残高を入力します。',label:'開始残高',save:'保存',current:'現金残高',income:'総収入',expense:'総支出',note:'この残高は期間フィルターを変えても繰り越されます。収入で増え、支出で減ります。',saved:'開始残高を保存しました'},
+  ko:{title:'시작 잔액',sub:'앱 사용을 시작할 때 보유하고 있던 현금 잔액을 입력하세요.',label:'시작 잔액',save:'저장',current:'현금 잔액',income:'총수입',expense:'총지출',note:'이 잔액은 기간 필터가 바뀌어도 이월됩니다. 수입은 늘리고 지출은 줄입니다.',saved:'시작 잔액이 저장되었습니다'},
+  ru:{title:'Начальный остаток',sub:'Введите остаток денежных средств на момент начала использования приложения.',label:'Начальный остаток',save:'Сохранить',current:'Денежный остаток',income:'Общий доход',expense:'Общие расходы',note:'Остаток переносится независимо от фильтра периода: доходы увеличивают его, расходы уменьшают.',saved:'Начальный остаток сохранён'},
+  de:{title:'Anfangssaldo',sub:'Gib den Bargeldbestand ein, den du zu Beginn der App-Nutzung hattest.',label:'Anfangssaldo',save:'Speichern',current:'Geldbestand',income:'Gesamteinnahmen',expense:'Gesamtausgaben',note:'Dieser Saldo wird unabhängig vom Zeitraumfilter fortgeführt. Einnahmen erhöhen ihn, Ausgaben verringern ihn.',saved:'Anfangssaldo gespeichert'}
+};
+function openingBalanceText(){return OPENING_BALANCE_TEXT[lang]||OPENING_BALANCE_TEXT.mn;}
+function allTimeCashTotals(){
+  const income=txns.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const expense=txns.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  return {income,expense,balance:(Number(openingBalance)||0)+income-expense};
+}
+function renderOpeningBalance(){
+  const T=openingBalanceText(), totals=allTimeCashTotals();
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('opening-balance-title',T.title);set('opening-balance-sub',T.sub);set('opening-balance-label',T.label);set('opening-balance-save',T.save);
+  set('opening-current-label',T.current);set('opening-start-label',T.label);set('opening-income-label',T.income);set('opening-expense-label',T.expense);set('opening-balance-note',T.note);
+  set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(openingBalance||0));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
+  const inp=document.getElementById('opening-balance-input');if(inp && document.activeElement!==inp)inp.value=(Number(openingBalance)||0)>0?Number(openingBalance).toLocaleString('en-US'):'';
+}
+function saveOpeningBalance(){
+  const inp=document.getElementById('opening-balance-input');
+  const value=inp?parseAmt(inp.value):0;
+  openingBalance=Math.max(0,Number(value)||0);
+  saveData();
+  renderOpeningBalance();
+  uDash();
+  showToast(openingBalanceText().saved+' ✓');
+}
+
 function uDash(){
   const ft=fT();
   const inc=ft.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=ft.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const dbt=debts.reduce((s,d)=>s+d.remaining,0);
+  const dbt=debts.reduce((s,d)=>s+getDebtRemaining(d),0);
   const tIn=invests.reduce((s,i)=>s+i.invested,0);
   const tCur=invests.reduce((s,i)=>s+i.current,0);
   const totalSavings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0);
   document.getElementById('d-inc').textContent=fmt(inc);
   document.getElementById('d-exp').textContent=fmt(exp);
-  document.getElementById('d-bal').textContent=fmt(inc-exp);
+  const cashTotals=allTimeCashTotals();
+  document.getElementById('d-bal').textContent=fmt(cashTotals.balance);
   document.getElementById('d-dbt').textContent=fmt(dbt);
   document.getElementById('d-inv').textContent=fmt(tCur);
   document.getElementById('d-savings').textContent=fmt(totalSavings);
@@ -7263,10 +7517,11 @@ function uDash(){
     [document.getElementById('m-savings'),'#F1EEFF','#51459A']
   ];
   sets.forEach(([el,bg,tc])=>{if(!el)return;el.style.background=bg;el.querySelector('.metric-lbl').style.color=tc;el.querySelector('.metric-val').style.color=tc;});
-  const mb=document.getElementById('m-bal');const bv=inc-exp;
+  const mb=document.getElementById('m-bal');const bv=cashTotals.balance;
   mb.style.background=bv>=0?'#E1F5EE':'#FCEBEB';
   mb.querySelector('.metric-lbl').style.color=bv>=0?'#085041':'#791F1F';
   mb.querySelector('.metric-val').style.color=bv>=0?'#085041':'#791F1F';
+  renderOpeningBalance();
   updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings);
 }
 
@@ -7296,7 +7551,7 @@ function tRow(t,del){
         ${budgetChip}
       </div>
     </div>
-    ${del?`<div class="ir"><span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm txn-edit-btn" onclick="startEditTxn(${t.id})">✎</button><button class="btn btn-sm btn-d" onclick="delTxn(${t.id})">✕</button></div>`:`<span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
+    ${del?`<div class="ir"><span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span><button class="btn btn-sm txn-edit-btn" onclick='startEditTxn(${JSON.stringify(String(t.id))})'>✎</button><button class="btn btn-sm btn-d" onclick='delTxn(${JSON.stringify(String(t.id))})'>✕</button></div>`:`<span class="${amtClass}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>`}
   </div>`;
 }
 
@@ -7428,7 +7683,22 @@ function matchTxnCat(t,catNm,txnType){
   return t.catName===catNm;
 }
 
-function gSpent(catNm,subNm,month){
+function investmentTxnMatchesBudgetSub(t,catObj,subObj,subNm){
+  if(!investmentBudgetCat(catObj))return true;
+  const wantedType=getInvestmentSubType(subObj);
+  const txnType=t.investTypeKey||null;
+  // Investment budget identity is strictly Type + Name.
+  // New transactions always carry investTypeKey; legacy rows are accepted only
+  // when their type can be inferred unambiguously, so one transaction can never
+  // inflate two same-named investment budget rows.
+  if(txnType)return txnType===wantedType;
+  const linked=(invests||[]).find(i=>String(i.sourceTxnId||'')===String(t.id||''));
+  if(linked&&linked.typeKey)return linked.typeKey===wantedType;
+  const inferred=inferExistingInvestTypeForName(t.desc||subNm);
+  return !!inferred&&inferred===wantedType;
+}
+
+function gSpent(catNm,subNm,month,subObjOverride){
   const filterM=month?t=>{
     if(!t.date)return false;
     const parts=t.date.split('-');
@@ -7437,11 +7707,13 @@ function gSpent(catNm,subNm,month){
   if(subNm){
     // subNm нь дэлгэц дээр харагдах нэр байж болно, харин transaction дотор key хадгалагдсан байдаг.
     const catObj=bCatsExp.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm);
-    const subObj=catObj?(catObj.subs||[]).find(s=>cN(s)===subNm||s.key===subNm||s.name===subNm):null;
+    const subObj=subObjOverride||(catObj?(catObj.subs||[]).find(s=>cN(s)===subNm||s.key===subNm||s.name===subNm):null);
     const subKey=subObj?(subObj.key||subObj.name||subNm):subNm;
     return txns.filter(t=>{
       if(!matchTxnCat(t,catNm,'expense')||!filterM(t))return false;
-      return t.subcatName===subKey||t.subcatName===subNm||(!t.subcatName&&t.desc===subNm);
+      const sameName=t.subcatName===subKey||t.subcatName===subNm||(!t.subcatName&&t.desc===subNm);
+      if(!sameName)return false;
+      return investmentTxnMatchesBudgetSub(t,catObj,subObj,subNm);
     }).reduce((s,t)=>s+t.amount,0);
   }
   return txns.filter(t=>matchTxnCat(t,catNm,'expense')&&filterM(t)).reduce((s,t)=>s+t.amount,0);
@@ -7556,7 +7828,7 @@ function rBProg(){
       ${hasSubs&&isOpen?`<div class="bbody" style="padding:8px 12px">
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
           const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo);
+          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo,sb);
           const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
           const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
           return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
@@ -7653,15 +7925,26 @@ function parseGoalMonths(goal){
   if(!deadline)return 0;
   return Math.max(1,monthsBetweenCeil(new Date(),deadline));
 }
+function calendarMonthsDaysBetween(from,to){
+  const start=new Date(from.getFullYear(),from.getMonth(),from.getDate(),12,0,0,0);
+  const end=new Date(to.getFullYear(),to.getMonth(),to.getDate(),12,0,0,0);
+  if(end<=start)return {months:0,days:0};
+  let months=(end.getFullYear()-start.getFullYear())*12+(end.getMonth()-start.getMonth());
+  let anchor=addMonthsSafe(start,months);
+  if(anchor>end){months=Math.max(0,months-1);anchor=addMonthsSafe(start,months);}
+  const days=Math.max(0,Math.round((end-anchor)/86400000));
+  return {months,days};
+}
 function goalTimeLeftText(goal){
   const deadline=goalDeadlineDate(goal);
   if(!deadline)return '';
   const now=new Date();
-  const ms=deadline-new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
-  const days=Math.max(0,Math.ceil(ms/86400000));
-  const months=parseGoalMonths(goal);
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
+  const left=calendarMonthsDaysBetween(today,deadline);
   const T=v34Text();
-  return T.left.replace('{months}',months).replace('{days}',days);
+  if(left.months>0&&left.days>0)return T.leftBoth.replace('{months}',left.months).replace('{days}',left.days);
+  if(left.months>0)return T.leftMonths.replace('{months}',left.months);
+  return T.leftDays.replace('{days}',left.days);
 }
 function goalStatusInfo(goal){
   const T=v34Text();
@@ -7748,8 +8031,9 @@ function rDebts(){
   const el=document.getElementById('debts-list');
   if(!debts.length){el.innerHTML=`<div class="empty">${L.debts}</div>`;return;}
   el.innerHTML=debts.map(d=>{
-    const paid=txns.filter(t=>t.type==='expense'&&(t.catName===d.name||t.desc===d.name)).reduce((s,t)=>s+t.amount,0);
-    const pct=Math.min(100,d.total>0?Math.round((d.total-d.remaining)/d.total*100):0);
+    const paid=getDebtPaidAmount(d);
+    const effectiveRemaining=getDebtRemaining(d);
+    const pct=Math.min(100,d.total>0?Math.round((d.total-effectiveRemaining)/d.total*100):0);
     const col=mongoColor(d.color,mongoNextColor(debts.indexOf(d),'debt'));
     return`<div class="inv-card mongo-object-card" style="--object-color:${col}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
@@ -7757,13 +8041,13 @@ function rDebts(){
           <div class="mongo-object-title"><span class="mongo-object-dot"></span><div style="font-size:13px;font-weight:600;color:${col}">${d.name}</div></div>
           <div style="font-size:11px;color:var(--text2);display:flex;gap:9px;flex-wrap:wrap;margin-top:2px">
             <span>${L.total}: ${fmt(d.total)}</span>
-            <span style="color:var(--red);font-weight:500">${L.remaining}: ${fmt(d.remaining)}</span>
+            <span style="color:var(--red);font-weight:500">${L.remaining}: ${fmt(effectiveRemaining)}</span>
             ${d.monthly?`<span>${L.monthly}: ${fmt(d.monthly)}</span>`:''}
             ${d.rate?`<span>${L.interest}: ${d.rate}%</span>`:''}
           </div>
           ${paid>0?`<div style="font-size:10px;color:#1D9E75;margin-top:2px">${L.paid}: ${fmt(paid)}</div>`:''}
         </div>
-        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateDebtColor(${d.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delDebt(${d.id})">✕</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange='updateDebtColor(${JSON.stringify(String(d.id))},this.value)' title="Өнгө солих"><button class="btn btn-sm btn-d" onclick='delDebt(${JSON.stringify(String(d.id))})'>✕</button></div>
       </div>
       <div class="pbar"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
       <div style="font-size:10px;color:var(--text2);margin-top:2px">${L.paidpct}: ${pct}%</div>
@@ -7782,6 +8066,7 @@ function getInvestGroups(){
 function toggleInvestGroup(key){openInvestGroups.has(key)?openInvestGroups.delete(key):openInvestGroups.add(key);rInvests();}
 function updateInvestGroupColor(key,color){invests.filter(x=>investGroupKey(x)===key).forEach(x=>x.color=color);saveData();rInvests();rDonut('inv');}
 function rInvests(){
+  migrateInvestmentTypeLinks();
   const el=document.getElementById('invest-list');
   if(!invests.length){
     const tin=document.getElementById('i-total-in'),tcur=document.getElementById('i-total-cur'),pnlVal=document.getElementById('i-pnl-val'),pctVal=document.getElementById('i-pct-val');
@@ -7985,7 +8270,12 @@ function rDonut(type){
         if(t.catKey&&c.key) return t.catKey===c.key;
         return t.catName===nm;
       }).reduce((a,t)=>a+t.amount,0);
-      if(s>0){data.push(s);colors.push(c.color);labels.push({name:c.icon+' '+nm,val:s,color:c.color});}
+      if(s>0){
+        const budgetCats=txnType==='income'?bCatsInc:bCatsExp;
+        const bc=(budgetCats||[]).find(b=>(c.key&&b.key===c.key)||(!c.key&&b.name&&c.name&&b.name===c.name));
+        const liveColor=(bc&&bc.color)||c.color;
+        data.push(s);colors.push(liveColor);labels.push({name:c.icon+' '+nm,val:s,color:liveColor});
+      }
     });
   }
 
@@ -7999,19 +8289,22 @@ function rDonut(type){
   else if(type==='exp'){cid='c-exp';lid='l-exp';sumByKey(expCats,'expense');}
   else if(type==='gls'){
     cid='c-gls';lid='l-gls';
-    // RC2.13: Savings chart represents goal completion, not share of total savings.
-    // Example: 279,900 / 5,000,000 = 6%, so the legend must show 6% (not 0%).
+    // V43.31: Savings donut represents each goal's share of TOTAL CURRENT SAVINGS.
+    // Goal cards still show their own target-completion progress separately.
     const savingsPalette=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8'];
     goals.forEach((g,i)=>{
       const saved=Math.max(0,Number(getGoalEffectiveSaved(g))||0);
       const target=Math.max(0,Number(g.target)||0);
-      const pct=target>0?Math.max(0,Math.min(100,Math.round(saved/target*100))):0;
+      const goalPct=target>0?Math.max(0,Math.min(100,Math.round(saved/target*100))):0;
       const col=resolveCanvasColor(g.color||savingsPalette[i%savingsPalette.length],savingsPalette[i%savingsPalette.length]);
-      // Keep completed/active goals visible. A true 0% goal remains in the legend but gets no arc.
-      data.push(pct);colors.push(col);labels.push({name:g.name,val:pct,color:col,saved,target,goalPct:pct});
+      // Use the saved amount for donut geometry so slices add up to 100% of current savings.
+      // Zero-balance goals stay out of the donut until they have an actual saved amount.
+      if(saved>0){
+        data.push(saved);colors.push(col);labels.push({name:g.name,val:saved,color:col,saved,target,goalPct});
+      }
     });
   }
-  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{if(d.remaining>0){const col=mongoColor(d.color,mongoNextColor(i,'debt'));data.push(d.remaining);colors.push(col);labels.push({name:d.name,val:d.remaining,color:col});}});}
+  else if(type==='dbt'){cid='c-dbt';lid='l-dbt';debts.forEach((d,i)=>{const rem=getDebtRemaining(d);if(rem>0){const col=mongoColor(d.color,mongoNextColor(i,'debt'));data.push(rem);colors.push(col);labels.push({name:d.name,val:rem,color:col});}});}
   else if(type==='inv'){
     cid='c-inv';lid='l-inv';
     getInvestGroups().forEach((g,i)=>{const v=Math.max(0,Number(g.current)||0);if(!v)return;const col=mongoColor(g.color,ICOLS[g.typeKey]||mongoNextColor(i,'invest'));data.push(v);colors.push(col);labels.push({name:(IICONS[g.typeKey]||'💡')+' '+g.name,val:v,color:col});});
@@ -8038,7 +8331,9 @@ function rDonut(type){
   const leg=document.getElementById(lid);const total=combined.reduce((s,x)=>s+x.v,0);
   const exactColors=(canvas._mongoChartState&&canvas._mongoChartState.colors)||combined.map(x=>x.color);
   leg.innerHTML=combined.length?combined.map((x,i)=>{
-    const shownPct=type==='gls'?(x.label.goalPct??x.v):(total>0?Math.round(x.v/total*100):0);
+    // V43.31: for Savings, legend percentage is the goal's share of total current savings.
+    // Other donuts already use the same share-of-total logic.
+    const shownPct=total>0?Math.round(x.v/total*100):0;
     return `<div class="li2"><div class="ldot" style="background:${exactColors[i]}"></div><span>${x.label.name}: ${shownPct}%</span></div>`;
   }).join(''):`<span style="font-size:11px;color:var(--text3)">${L.nodata}</span>`;
 }
@@ -8100,6 +8395,7 @@ function secNormalizeData(data){
   clean.debts=Array.isArray(clean.debts)?clean.debts.slice(0,300):[];
   clean.invests=Array.isArray(clean.invests)?clean.invests.slice(0,500):[];
   clean.budgets=(clean.budgets && typeof clean.budgets==='object')?clean.budgets:{};
+  clean.openingBalance=Math.max(0,secNum(clean.openingBalance,0));
   clean.lang=SECURITY_ALLOWED_LANGS.has(clean.lang)?clean.lang:'mn';
   clean.budgetMonth=Math.min(12,Math.max(1,Math.round(secNum(clean.budgetMonth,new Date().getMonth()+1))));
   clean.budgetYear=Math.min(2100,Math.max(2020,Math.round(secNum(clean.budgetYear,new Date().getFullYear()))));
@@ -8151,7 +8447,7 @@ function saveData(){
       }))
     }));
     if(!window.MONGO_LOCAL_DATA_UPDATED_AT) window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
-    const data=secNormalizeData({txns,goals,debts,invests,budgets,lang,budgetMonth,budgetYear,budgetType,
+    const data=secNormalizeData({txns,goals,debts,invests,budgets,openingBalance,lang,budgetMonth,budgetYear,budgetType,
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
@@ -8171,6 +8467,7 @@ function loadData(){
     if(data.goals)goals=data.goals.map(g=>({...g,history:g.history||[]}));
     if(data.debts)debts=data.debts;
     if(data.invests)invests=data.invests;
+    openingBalance=Math.max(0,Number(data.openingBalance)||0);
     ensureUnifiedObjectColors();
     if(data.budgets)budgets=data.budgets;
     if(data.lang){lang=data.lang;L=LANGS[lang]||LANGS.mn;CS=CURR[lang]||'$';}
@@ -8203,14 +8500,17 @@ function loadData(){
       saved.forEach(sv=>{
         const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name));
         if(ex){
+          if(/^#[0-9a-fA-F]{6}$/.test(sv.color||'')) ex.color=sv.color;
+          if(sv.icon) ex.icon=sv.icon;
           (sv.subs||[]).forEach(ssub=>{
             const ms=migrateSub(ssub);
             const exSub=ex.subs.find(s=>(ms.key&&s.key===ms.key));
             if(!exSub)ex.subs.push(ms);
             else{
-              // Байгаа sub-д шинэ хэлний нэр нэмэх
+              // Байгаа sub-д шинэ хэлний нэр болон хадгалсан өнгийг сэргээнэ.
               if(!exSub.names)exSub.names={};
               if(ms.names)Object.assign(exSub.names,ms.names);
+              if(/^#[0-9a-fA-F]{6}$/.test(ms.color||'')) exSub.color=ms.color;
             }
           });
         } else if(sv.name){
@@ -8340,8 +8640,137 @@ const CALC_LANGS={
   mn:{myDebt:'Миний зээл',calc:'Тооцоолуур',loanCalcTitle:'Зээлийн тооцоолуур',loanCalcDesc:'Сарын төлөлт, нийт хүү, урьдчилж төлөхөд хэмнэх мөнгө, төлөлтийн хуваарийг тооцно.',loanAmount:'Зээлийн дүн',loanRate:'Жилийн хүү (%)',loanTerm:'Хугацаа',loanTermUnit:'Хугацааны төрөл',loanYears:'Жил',loanMonths:'Сар',loanType:'Төлөлтийн төрөл',loanAnnuity:'Тэнцүү төлөлт',loanDiff:'Үндсэн тэнцүү',loanExtra:'Сар бүр нэмэлт төлөлт',loanExtraMonths:'Нэмэлт төлөх хугацаа (сар)',loanMonthly:'Сар бүрийн төлөлт',loanInterest:'Нийт хүү',loanTotalPay:'Нийт төлөх дүн',loanSave:'Урьдчилж төлөөд хэмнэх',loanPrincipal:'Үндсэн зээл',loanInterestOnly:'Хүү',loanExtraMsg:'Та нэмэлт төлөлтийг {extraMonths} хийснээр {early} эрт дуусгаж, {save} хүү хэмнэнэ.',loanNoExtra:'Нэмэлт төлөлт оруулбал хэдэн сар/жилээр эрт дуусах, хэдэн төгрөгийн хүү хэмнэхийг харуулна.',loanSchedule:'Төлөлтийн хуваарь',loanScheduleNote:'Эхний 24 сар харуулав. Бүрэн хуваарь тооцоонд ашиглагдсан.',loanMonthCol:'Сар',loanPaymentCol:'Төлөлт',loanInterestCol:'Хүү',loanPrincipalCol:'Үндсэн',loanBalanceCol:'Үлдэгдэл',loanCalcRun:'Тооцоолох',loanEmpty:'Зээлийн дүн, хүү, хугацаагаа оруулаад “Тооцоолох” дарна уу.',loanRequired:'Зээлийн дүн, жилийн хүү, хугацаагаа зөв оруулна уу.'},
   en:{myDebt:'My loans',calc:'Calculator',loanCalcTitle:'Loan calculator',loanCalcDesc:'Calculate monthly payment, total interest, early payment savings, and amortization schedule.',loanAmount:'Loan amount',loanRate:'Annual interest (%)',loanTerm:'Term',loanTermUnit:'Term unit',loanYears:'Years',loanMonths:'Months',loanType:'Payment type',loanAnnuity:'Equal payment',loanDiff:'Equal principal',loanExtra:'Monthly extra payment',loanExtraMonths:'Extra payment duration (months)',loanMonthly:'Monthly payment',loanInterest:'Total interest',loanTotalPay:'Total repayment',loanSave:'Interest saved',loanPrincipal:'Principal',loanInterestOnly:'Interest',loanExtraMsg:'By making extra payments for {extraMonths}, you finish {early} earlier and save {save} in interest.',loanNoExtra:'Enter an extra monthly payment to see time saved and interest saved.',loanSchedule:'Payment schedule',loanScheduleNote:'Showing first 24 months. Full schedule is used for calculations.',loanMonthCol:'Month',loanPaymentCol:'Payment',loanInterestCol:'Interest',loanPrincipalCol:'Principal',loanBalanceCol:'Balance',loanCalcRun:'Calculate',loanEmpty:'Enter loan amount, interest rate, and term, then tap Calculate.',loanRequired:'Please enter a valid loan amount, annual rate, and term.'}
 };
-['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=CALC_LANGS.en;});
+['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en);});
+
+// ── Möngö V43.20 — complete 7-language loan calculator strings ──
+Object.assign(CALC_LANGS.zh,{
+  myDebt:'我的贷款',calc:'计算器',loanCalcTitle:'贷款计算器',
+  loanCalcDesc:'计算每月还款、总利息、提前还款节省金额和还款计划。',
+  loanAmount:'贷款金额',loanRate:'年利率 (%)',loanTerm:'期限',loanTermUnit:'期限单位',
+  loanYears:'年',loanMonths:'月',loanType:'还款方式',loanAnnuity:'等额还款',loanDiff:'等额本金',
+  loanExtra:'每月额外还款',loanExtraMonths:'额外还款期限（月）',
+  loanMonthly:'每月还款',loanInterest:'总利息',loanTotalPay:'总还款额',loanSave:'节省利息',
+  loanPrincipal:'本金',loanInterestOnly:'利息',
+  loanExtraMsg:'额外还款 {extraMonths} 后，可提前 {early} 还清，并节省 {save} 利息。',
+  loanNoExtra:'输入每月额外还款，可查看可提前多少时间还清以及可节省多少利息。',
+  loanSchedule:'还款计划',loanScheduleNote:'显示前 24 个月。完整还款计划已用于计算。',
+  loanMonthCol:'月',loanPaymentCol:'还款',loanInterestCol:'利息',loanPrincipalCol:'本金',loanBalanceCol:'余额',
+  loanCalcRun:'计算',loanEmpty:'请输入贷款金额、利率和期限，然后点击“计算”。',
+  loanRequired:'请输入有效的贷款金额、年利率和期限。'
+});
+Object.assign(CALC_LANGS.ja,{
+  myDebt:'ローン',calc:'計算機',loanCalcTitle:'ローン計算機',
+  loanCalcDesc:'毎月返済額、総利息、繰上返済による節約額、返済スケジュールを計算します。',
+  loanAmount:'借入額',loanRate:'年利率 (%)',loanTerm:'期間',loanTermUnit:'期間の単位',
+  loanYears:'年',loanMonths:'か月',loanType:'返済方式',loanAnnuity:'元利均等',loanDiff:'元金均等',
+  loanExtra:'毎月の追加返済',loanExtraMonths:'追加返済期間（月）',
+  loanMonthly:'毎月返済額',loanInterest:'総利息',loanTotalPay:'総返済額',loanSave:'節約できる利息',
+  loanPrincipal:'元金',loanInterestOnly:'利息',
+  loanExtraMsg:'{extraMonths} の間追加返済すると、{early} 早く完済でき、利息を {save} 節約できます。',
+  loanNoExtra:'毎月の追加返済額を入力すると、短縮できる期間と節約できる利息が表示されます。',
+  loanSchedule:'返済スケジュール',loanScheduleNote:'最初の24か月を表示しています。計算には全期間を使用しています。',
+  loanMonthCol:'月',loanPaymentCol:'返済額',loanInterestCol:'利息',loanPrincipalCol:'元金',loanBalanceCol:'残高',
+  loanCalcRun:'計算',loanEmpty:'借入額、利率、期間を入力して「計算」を押してください。',
+  loanRequired:'有効な借入額、年利率、期間を入力してください。'
+});
+Object.assign(CALC_LANGS.ko,{
+  myDebt:'내 대출',calc:'계산기',loanCalcTitle:'대출 계산기',
+  loanCalcDesc:'월 상환액, 총이자, 조기상환 절감액과 상환 일정을 계산합니다.',
+  loanAmount:'대출 금액',loanRate:'연 이자율 (%)',loanTerm:'기간',loanTermUnit:'기간 단위',
+  loanYears:'년',loanMonths:'개월',loanType:'상환 방식',loanAnnuity:'원리금 균등',loanDiff:'원금 균등',
+  loanExtra:'월 추가 상환액',loanExtraMonths:'추가 상환 기간(개월)',
+  loanMonthly:'월 상환액',loanInterest:'총이자',loanTotalPay:'총 상환액',loanSave:'절감 이자',
+  loanPrincipal:'원금',loanInterestOnly:'이자',
+  loanExtraMsg:'{extraMonths} 동안 추가 상환하면 {early} 일찍 상환을 마치고 이자 {save}를 절약할 수 있습니다.',
+  loanNoExtra:'월 추가 상환액을 입력하면 단축되는 기간과 절감되는 이자를 확인할 수 있습니다.',
+  loanSchedule:'상환 일정',loanScheduleNote:'처음 24개월을 표시합니다. 전체 일정은 계산에 반영됩니다.',
+  loanMonthCol:'개월',loanPaymentCol:'상환액',loanInterestCol:'이자',loanPrincipalCol:'원금',loanBalanceCol:'잔액',
+  loanCalcRun:'계산',loanEmpty:'대출 금액, 이자율, 기간을 입력한 뒤 “계산”을 누르세요.',
+  loanRequired:'유효한 대출 금액, 연 이자율, 기간을 입력하세요.'
+});
+Object.assign(CALC_LANGS.ru,{
+  myDebt:'Мои кредиты',calc:'Калькулятор',loanCalcTitle:'Кредитный калькулятор',
+  loanCalcDesc:'Рассчитайте ежемесячный платёж, общие проценты, экономию при досрочном погашении и график платежей.',
+  loanAmount:'Сумма кредита',loanRate:'Годовая ставка (%)',loanTerm:'Срок',loanTermUnit:'Единица срока',
+  loanYears:'Лет',loanMonths:'Месяцев',loanType:'Тип платежа',loanAnnuity:'Аннуитетный',loanDiff:'Равный основной долг',
+  loanExtra:'Доплата в месяц',loanExtraMonths:'Период доплаты (мес.)',
+  loanMonthly:'Ежемесячный платёж',loanInterest:'Всего процентов',loanTotalPay:'Всего к выплате',loanSave:'Экономия процентов',
+  loanPrincipal:'Основной долг',loanInterestOnly:'Проценты',
+  loanExtraMsg:'Если доплачивать в течение {extraMonths}, кредит закроется на {early} раньше, а экономия процентов составит {save}.',
+  loanNoExtra:'Введите дополнительный ежемесячный платёж, чтобы увидеть экономию времени и процентов.',
+  loanSchedule:'График платежей',loanScheduleNote:'Показаны первые 24 месяца. Полный график учтён в расчёте.',
+  loanMonthCol:'Месяц',loanPaymentCol:'Платёж',loanInterestCol:'Проценты',loanPrincipalCol:'Основной долг',loanBalanceCol:'Остаток',
+  loanCalcRun:'Рассчитать',loanEmpty:'Введите сумму кредита, ставку и срок, затем нажмите «Рассчитать».',
+  loanRequired:'Введите корректную сумму кредита, годовую ставку и срок.'
+});
+Object.assign(CALC_LANGS.de,{
+  myDebt:'Meine Kredite',calc:'Rechner',loanCalcTitle:'Kreditrechner',
+  loanCalcDesc:'Berechne Monatsrate, Gesamtzinsen, Ersparnis durch Sondertilgung und Tilgungsplan.',
+  loanAmount:'Kreditbetrag',loanRate:'Jahreszins (%)',loanTerm:'Laufzeit',loanTermUnit:'Einheit',
+  loanYears:'Jahre',loanMonths:'Monate',loanType:'Rückzahlungsart',loanAnnuity:'Gleichbleibende Rate',loanDiff:'Gleiche Tilgung',
+  loanExtra:'Monatliche Sondertilgung',loanExtraMonths:'Dauer der Sondertilgung (Monate)',
+  loanMonthly:'Monatsrate',loanInterest:'Gesamtzinsen',loanTotalPay:'Gesamtrückzahlung',loanSave:'Gesparte Zinsen',
+  loanPrincipal:'Tilgung',loanInterestOnly:'Zinsen',
+  loanExtraMsg:'Mit Sondertilgungen über {extraMonths} bist du {early} früher fertig und sparst {save} Zinsen.',
+  loanNoExtra:'Gib eine monatliche Sondertilgung ein, um Zeit- und Zinsersparnis zu sehen.',
+  loanSchedule:'Tilgungsplan',loanScheduleNote:'Die ersten 24 Monate werden angezeigt. Der vollständige Plan wird berechnet.',
+  loanMonthCol:'Monat',loanPaymentCol:'Rate',loanInterestCol:'Zinsen',loanPrincipalCol:'Tilgung',loanBalanceCol:'Restschuld',
+  loanCalcRun:'Berechnen',loanEmpty:'Kreditbetrag, Zinssatz und Laufzeit eingeben und „Berechnen“ tippen.',
+  loanRequired:'Bitte gültigen Kreditbetrag, Jahreszins und Laufzeit eingeben.'
+});
+
 function CT(){return Object.assign({},CALC_LANGS.en,CALC_LANGS[lang]||CALC_LANGS.mn);}
+
+function mongoColorText(){
+  const d={
+    mn:{label:'Өнгө',goal:'Зорилгын өнгө',debt:'Зээлийн өнгө',asset:'Хөрөнгийн өнгө'},
+    en:{label:'Color',goal:'Goal color',debt:'Loan color',asset:'Asset color'},
+    zh:{label:'颜色',goal:'目标颜色',debt:'贷款颜色',asset:'资产颜色'},
+    ja:{label:'色',goal:'目標の色',debt:'ローンの色',asset:'資産の色'},
+    ko:{label:'색상',goal:'목표 색상',debt:'대출 색상',asset:'자산 색상'},
+    ru:{label:'Цвет',goal:'Цвет цели',debt:'Цвет кредита',asset:'Цвет актива'},
+    de:{label:'Farbe',goal:'Zielfarbe',debt:'Kreditfarbe',asset:'Anlagefarbe'}
+  };
+  return d[lang]||d.en;
+}
+function applyMongoColorTexts(){
+  const t=mongoColorText();
+
+  // Explicitly tagged labels.
+  document.querySelectorAll('[data-mongo-color-label]').forEach(el=>el.textContent=t.label);
+
+  // Known color inputs: localize the nearest visible label even if markup is rebuilt dynamically.
+  const ids=['g-color','d-color','a-color','asset-color','debt-color','goal-color'];
+  ids.forEach(id=>{
+    const input=document.getElementById(id);
+    if(!input)return;
+    const scope=input.closest('.sform,.card,.form-card,.panel,section,div');
+    if(scope){
+      const labels=[...scope.querySelectorAll('.slbl,label,div,span')].filter(el=>{
+        const txt=(el.textContent||'').trim();
+        return txt==='Өнгө'||txt==='Color'||txt==='颜色'||txt==='色'||txt==='색상'||txt==='Цвет'||txt==='Farbe';
+      });
+      labels.forEach(el=>el.textContent=t.label);
+    }
+    const type=input.getAttribute('data-mongo-color-input')||(
+      id.startsWith('g-')?'goal':id.startsWith('d-')?'debt':'asset'
+    );
+    input.title=t[type]||t.asset;
+    input.setAttribute('aria-label',t[type]||t.asset);
+  });
+
+  // Also catch any dynamically-created color input.
+  document.querySelectorAll('input[type="color"]').forEach(input=>{
+    const parent=input.parentElement;
+    if(parent){
+      [...parent.querySelectorAll('.slbl,label,div,span')].forEach(el=>{
+        const txt=(el.textContent||'').trim();
+        if(['Өнгө','Color','颜色','色','색상','Цвет','Farbe'].includes(txt)) el.textContent=t.label;
+      });
+    }
+  });
+}
+
 function showCalcPanel(section,panel,btn){
   const root=document.getElementById('tab-'+section);
   if(!root)return;
@@ -8368,8 +8797,19 @@ function updateCalcTexts(){
 function monthsToText(m){
   m=Math.max(0,Math.round(m||0));
   const y=Math.floor(m/12), mo=m%12;
-  if(lang==='mn')return (y?y+' жил ':'')+(mo?mo+' сар':'')||'0 сар';
-  return (y?y+' yr ':'')+(mo?mo+' mo':'')||'0 mo';
+  const parts={
+    mn:{y:'жил',m:'сар'},en:{y:'yr',m:'mo'},zh:{y:'年',m:'个月'},
+    ja:{y:'年',m:'か月'},ko:{y:'년',m:'개월'},ru:{y:'г.',m:'мес.'},de:{y:'J.',m:'Mon.'}
+  };
+  const u=parts[lang]||parts.en;
+  if(lang==='zh'||lang==='ja'||lang==='ko'){
+    return (y?y+u.y:'')+(mo?mo+u.m:'') || ('0'+u.m);
+  }
+  return ((y?y+' '+u.y+' ':'')+(mo?mo+' '+u.m:'')).trim() || ('0 '+u.m);
+}
+function mongoEntireTermText(){
+  const d={mn:'бүх хугацаанд',en:'entire term',zh:'整个期限',ja:'全期間',ko:'전체 기간',ru:'весь срок',de:'gesamte Laufzeit'};
+  return d[lang]||d.en;
 }
 function buildLoanSchedule(P,annualRate,months,type,extra,extraMonths){
   const schedule=[]; let bal=P; const r=annualRate/12/100; let totalInterest=0; let fixedPrincipal=months>0?P/months:0;
@@ -8434,7 +8874,7 @@ function calcLoanAdvanced(run){
   document.getElementById('loan-res-save').textContent=extra>0?fmt(saved):'—';
   const early=Math.max(0,(base.schedule.length||months)-(withExtra.schedule.length||months));
   const msg=document.getElementById('loan-extra-msg');
-  if(extra>0 && saved>0){msg.style.display='block';msg.textContent=t.loanExtraMsg.replace('{extraMonths}',extraMonthsRaw>0?monthsToText(extraMonths):((lang==='mn')?'бүх хугацаанд':'entire term')).replace('{early}',monthsToText(early)).replace('{save}',fmt(saved));}
+  if(extra>0 && saved>0){msg.style.display='block';msg.textContent=t.loanExtraMsg.replace('{extraMonths}',extraMonthsRaw>0?monthsToText(extraMonths):mongoEntireTermText()).replace('{early}',monthsToText(early)).replace('{save}',fmt(saved));}
   else{msg.style.display='block';msg.textContent=t.loanNoExtra;}
   drawLoanDonut(P,base.totalInterest||0);
   renderLoanSchedule(withExtra.schedule.length?withExtra.schedule:base.schedule);
@@ -8476,6 +8916,69 @@ const INVEST_CALC_EXTRA={
   ru:{invAge:'Возраст',invStocks:'Акции',invBonds:'Облигации',invRealEstate:'Недвижимость',invFunds:'Фонды',invCash:'Наличные'},
   de:{invAge:'Alter',invStocks:'Aktien',invBonds:'Anleihen',invRealEstate:'Immobilien',invFunds:'Fonds',invCash:'Bargeld'}
 }
+
+// ── Möngö V43.20 — complete 7-language investment calculator strings ──
+Object.assign(INVEST_CALC_EXTRA.zh,{
+  myInvest:'我的资产',invCalcTitle:'投资计算器',invCalcDesc:'计算复利增长、扣除通胀后的实际价值以及三种未来情景。',
+  invInitial:'初始投资',invMonthly:'每月投入',invYears:'期限 / 年',invAge:'年龄',invRisk:'风险等级',
+  invConservative:'保守',invBalanced:'平衡',invAggressive:'积极',invCustom:'自定义',
+  invRate:'年化收益率 (%)',invInflation:'通胀率 (%)',invCalcRun:'计算',
+  invEmpty:'请输入初始投资、每月投入、期限和年龄，然后点击“计算”。',
+  invRequired:'请输入有效的投资金额、期限、年龄和收益率。',
+  invFuture:'未来价值',invReal:'扣除通胀后的实际价值',invTotalInvested:'总投入',invProfit:'净收益',invRealRate:'实际收益率',
+  invScenario:'三种增长情景',invBad:'较低情景',invExpected:'预期情景',invBest:'较好情景',
+  invAllocation:'建议配置',invRiskNote:'这不是保证收益。建议配置仅根据年龄、投资期限和风险偏好提供一般参考。',
+  invStocks:'股票',invBonds:'债券',invRealEstate:'房地产',invFunds:'基金',invCash:'现金'
+});
+Object.assign(INVEST_CALC_EXTRA.ja,{
+  myInvest:'私の資産',invCalcTitle:'投資計算機',invCalcDesc:'複利成長、インフレ調整後の実質価値、3つの将来シナリオを計算します。',
+  invInitial:'初期投資額',invMonthly:'毎月の積立額',invYears:'期間 / 年',invAge:'年齢',invRisk:'リスク水準',
+  invConservative:'保守的',invBalanced:'バランス',invAggressive:'積極的',invCustom:'カスタム',
+  invRate:'年利回り (%)',invInflation:'インフレ率 (%)',invCalcRun:'計算',
+  invEmpty:'初期投資額、毎月の積立額、期間、年齢を入力して「計算」を押してください。',
+  invRequired:'有効な投資額、期間、年齢、利回りを入力してください。',
+  invFuture:'将来価値',invReal:'インフレ調整後の実質価値',invTotalInvested:'総投資額',invProfit:'純利益',invRealRate:'実質利回り',
+  invScenario:'3つの成長シナリオ',invBad:'低位シナリオ',invExpected:'想定シナリオ',invBest:'高位シナリオ',
+  invAllocation:'推奨配分',invRiskNote:'将来の収益を保証するものではありません。年齢、期間、リスク水準に基づく一般的な目安です。',
+  invStocks:'株式',invBonds:'債券',invRealEstate:'不動産',invFunds:'ファンド',invCash:'現金'
+});
+Object.assign(INVEST_CALC_EXTRA.ko,{
+  myInvest:'내 자산',invCalcTitle:'투자 계산기',invCalcDesc:'복리 성장, 인플레이션을 반영한 실질 가치와 3가지 미래 시나리오를 계산합니다.',
+  invInitial:'초기 투자금',invMonthly:'월 투자금',invYears:'기간 / 년',invAge:'나이',invRisk:'위험 수준',
+  invConservative:'보수적',invBalanced:'균형',invAggressive:'공격적',invCustom:'직접 설정',
+  invRate:'연 기대수익률 (%)',invInflation:'인플레이션 (%)',invCalcRun:'계산',
+  invEmpty:'초기 투자금, 월 투자금, 기간, 나이를 입력한 뒤 “계산”을 누르세요.',
+  invRequired:'유효한 투자 금액, 기간, 나이, 수익률을 입력하세요.',
+  invFuture:'미래 가치',invReal:'인플레이션 반영 실질 가치',invTotalInvested:'총 투자금',invProfit:'순이익',invRealRate:'실질 수익률',
+  invScenario:'3가지 성장 시나리오',invBad:'낮은 시나리오',invExpected:'예상 시나리오',invBest:'높은 시나리오',
+  invAllocation:'추천 자산배분',invRiskNote:'보장 수익이 아닙니다. 추천 배분은 나이, 투자 기간, 위험 수준을 바탕으로 한 일반적인 가이드입니다.',
+  invStocks:'주식',invBonds:'채권',invRealEstate:'부동산',invFunds:'펀드',invCash:'현금'
+});
+Object.assign(INVEST_CALC_EXTRA.ru,{
+  myInvest:'Мои активы',invCalcTitle:'Инвестиционный калькулятор',invCalcDesc:'Рассчитайте сложный рост, реальную стоимость с учётом инфляции и три сценария будущего.',
+  invInitial:'Начальный капитал',invMonthly:'Ежемесячный взнос',invYears:'Срок / лет',invAge:'Возраст',invRisk:'Уровень риска',
+  invConservative:'Консервативный',invBalanced:'Средний',invAggressive:'Агрессивный',invCustom:'Вручную',
+  invRate:'Годовая доходность (%)',invInflation:'Инфляция (%)',invCalcRun:'Рассчитать',
+  invEmpty:'Введите начальный капитал, ежемесячный взнос, срок и возраст, затем нажмите «Рассчитать».',
+  invRequired:'Введите корректные суммы, срок, возраст и доходность.',
+  invFuture:'Будущая стоимость',invReal:'Реальная стоимость после инфляции',invTotalInvested:'Всего вложено',invProfit:'Чистая прибыль',invRealRate:'Реальная доходность',
+  invScenario:'3 сценария роста',invBad:'Низкий сценарий',invExpected:'Ожидаемый',invBest:'Высокий сценарий',
+  invAllocation:'Рекомендуемый портфель',invRiskNote:'Доходность не гарантируется. Рекомендация — общий ориентир с учётом возраста, срока и уровня риска.',
+  invStocks:'Акции',invBonds:'Облигации',invRealEstate:'Недвижимость',invFunds:'Фонды',invCash:'Наличные'
+});
+Object.assign(INVEST_CALC_EXTRA.de,{
+  myInvest:'Meine Vermögenswerte',invCalcTitle:'Anlagerechner',invCalcDesc:'Berechne Zinseszinseffekt, inflationsbereinigten Realwert und drei Zukunftsszenarien.',
+  invInitial:'Startkapital',invMonthly:'Monatlicher Beitrag',invYears:'Laufzeit / Jahre',invAge:'Alter',invRisk:'Risikostufe',
+  invConservative:'Konservativ',invBalanced:'Ausgewogen',invAggressive:'Offensiv',invCustom:'Benutzerdefiniert',
+  invRate:'Jährliche Rendite (%)',invInflation:'Inflation (%)',invCalcRun:'Berechnen',
+  invEmpty:'Startkapital, monatlichen Beitrag, Laufzeit und Alter eingeben und „Berechnen“ tippen.',
+  invRequired:'Bitte gültige Anlagebeträge, Laufzeit, Alter und Rendite eingeben.',
+  invFuture:'Zukünftiger Wert',invReal:'Realwert nach Inflation',invTotalInvested:'Gesamt eingezahlt',invProfit:'Nettogewinn',invRealRate:'Reale Rendite',
+  invScenario:'3 Wachstumsszenarien',invBad:'Niedriges Szenario',invExpected:'Erwartet',invBest:'Hohes Szenario',
+  invAllocation:'Vorgeschlagene Aufteilung',invRiskNote:'Dies ist keine garantierte Rendite. Die Aufteilung ist nur eine allgemeine Orientierung nach Alter, Laufzeit und Risikostufe.',
+  invStocks:'Aktien',invBonds:'Anleihen',invRealEstate:'Immobilien',invFunds:'Fonds',invCash:'Bargeld'
+});
+
 Object.keys(INVEST_CALC_EXTRA).forEach(k=>Object.assign(CALC_LANGS[k],INVEST_CALC_EXTRA[k]));
 ['zh','ja','ko','ru','de'].forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en,CALC_LANGS[k]||{});});
 const _origShowCalcPanel=showCalcPanel;
@@ -8602,9 +9105,85 @@ requestAnimationFrame(()=>{
 // ── Möngö V30.8 Pay Yourself First + Net Worth Growth ───────────────────
 function payText(){
   const d={
-    mn:{tab:'Өөртөө төл',title:'Өөртөө эхлээд төл',desc:'Орлого бүртгэх бүртээ орлогоосоо эхлээд хуримтлалын гүйлгээ үүсгэх хуваарилалтаа тохируулна.',rate:'Орлогоос хадгалах хувь',alloc:'Хуримтлалын зорилго руу хуваарилах хувь',total:'Нийт',save:'Тохиргоо хадгалах',help:'Орлого бүртгэсний дараа энэ хуваарилалтаар “Хуримтлал” ангиллын зарлагын гүйлгээ үүсгэх санал гарна. Зорилтот дүн өөрчлөгдөхгүй.',noGoals:'Эхлээд “Миний хуримтлал” хэсэгт зорилго үүсгээрэй.',saved:'Өөртөө төлөх тохиргоо хадгалагдлаа',modalTitle:'Өөртөө эхлээд төлөх үү?',modalDesc:'Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?',confirm:'Бүртгэх',edit:'Засах',skip:'Алгасах',created:'Хуримтлалын гүйлгээ үүслээ',badTotal:'Хуваарилалтын нийт 100% байх хэрэгтэй',growthData:'Өсөлтийн өгөгдөл цуглуулж байна',growthAll:'Нийт өсөлт',growthPeriod:'Сонгосон хугацаанд'},
-    en:{tab:'Pay yourself',title:'Pay yourself first',desc:'Set how each income should create savings expense transactions first.',rate:'Savings rate from income',alloc:'Allocation to savings goals',total:'Total',save:'Save settings',help:'After income is recorded, the app suggests creating Savings expense transactions. Target amounts do not change.',noGoals:'Create goals in “My savings” first.',saved:'Pay yourself settings saved',modalTitle:'Pay yourself first?',modalDesc:'Income was recorded. Create savings expense transactions using your allocation?',confirm:'Record',edit:'Edit',skip:'Skip',created:'Savings transactions created',badTotal:'Allocation total must be 100%',growthData:'Collecting growth data',growthAll:'Total growth',growthPeriod:'Selected period'},
-    zh:{tab:'先付给自己'},ja:{tab:'自分に払う'},ko:{tab:'나에게 먼저'},ru:{tab:'Сначала себе'},de:{tab:'Zahle dich'}
+    mn:{
+      tab:'Өөртөө төл',title:'Өөртөө эхлээд төл',
+      desc:'Орлого бүртгэх бүртээ орлогоосоо эхлээд хуримтлалын гүйлгээ үүсгэх хуваарилалтаа тохируулна.',
+      rate:'Орлогоос хадгалах хувь',alloc:'Хуримтлалын зорилго руу хуваарилах хувь',total:'Нийт',
+      save:'Тохиргоо хадгалах',
+      help:'Орлого бүртгэсний дараа энэ хуваарилалтаар “Хуримтлал” ангиллын зарлагын гүйлгээ үүсгэх санал гарна. Зорилтот дүн өөрчлөгдөхгүй.',
+      noGoals:'Эхлээд “Миний хуримтлал” хэсэгт зорилго үүсгээрэй.',
+      saved:'Өөртөө төлөх тохиргоо хадгалагдлаа',modalTitle:'Өөртөө эхлээд төлөх үү?',
+      modalDesc:'Орлого бүртгэгдлээ. Тохиргооны дагуу хуримтлалын зарлагын гүйлгээ үүсгэх үү?',
+      confirm:'Бүртгэх',edit:'Засах',skip:'Алгасах',created:'Хуримтлалын гүйлгээ үүслээ',
+      badTotal:'Хуваарилалтын нийт 100% байх хэрэгтэй',growthData:'Өсөлтийн өгөгдөл цуглуулж байна',
+      growthAll:'Нийт өсөлт',growthPeriod:'Сонгосон хугацаанд'
+    },
+    en:{
+      tab:'Pay yourself',title:'Pay yourself first',
+      desc:'Set how each income should create savings expense transactions first.',
+      rate:'Savings rate from income',alloc:'Allocation to savings goals',total:'Total',save:'Save settings',
+      help:'After income is recorded, the app suggests creating Savings expense transactions. Target amounts do not change.',
+      noGoals:'Create goals in “My savings” first.',saved:'Pay yourself settings saved',
+      modalTitle:'Pay yourself first?',modalDesc:'Income was recorded. Create savings expense transactions using your allocation?',
+      confirm:'Record',edit:'Edit',skip:'Skip',created:'Savings transactions created',
+      badTotal:'Allocation total must be 100%',growthData:'Collecting growth data',growthAll:'Total growth',
+      growthPeriod:'Selected period'
+    },
+    zh:{
+      tab:'先付给自己',title:'先付给自己',
+      desc:'设置每次记录收入时，优先从收入中自动创建储蓄支出交易的分配方式。',
+      rate:'收入储蓄比例',alloc:'分配到储蓄目标的比例',total:'合计',save:'保存设置',
+      help:'记录收入后，应用会按此分配建议创建“储蓄”支出交易。目标金额不会改变。',
+      noGoals:'请先在“我的储蓄”中创建储蓄目标。',saved:'“先付给自己”设置已保存',
+      modalTitle:'先付给自己？',modalDesc:'已记录收入。是否按照当前分配创建储蓄支出交易？',
+      confirm:'记录',edit:'编辑',skip:'跳过',created:'储蓄交易已创建',
+      badTotal:'分配比例合计必须为100%',growthData:'正在收集增长数据',growthAll:'总增长',
+      growthPeriod:'所选期间'
+    },
+    ja:{
+      tab:'自分に払う',title:'まず自分に払う',
+      desc:'収入を記録するたびに、最初に貯蓄用の支出取引を作成する配分を設定します。',
+      rate:'収入から貯蓄する割合',alloc:'貯蓄目標への配分割合',total:'合計',save:'設定を保存',
+      help:'収入を記録すると、この配分に基づいて「貯蓄」支出取引の作成を提案します。目標金額は変わりません。',
+      noGoals:'まず「私の貯蓄」で目標を作成してください。',saved:'「まず自分に払う」の設定を保存しました',
+      modalTitle:'まず自分に払いますか？',modalDesc:'収入が記録されました。設定に従って貯蓄支出取引を作成しますか？',
+      confirm:'記録',edit:'編集',skip:'スキップ',created:'貯蓄取引を作成しました',
+      badTotal:'配分の合計は100%にしてください',growthData:'成長データを収集中',growthAll:'総成長',
+      growthPeriod:'選択期間'
+    },
+    ko:{
+      tab:'나에게 먼저',title:'나에게 먼저 지불하기',
+      desc:'수입을 기록할 때마다 먼저 저축 지출 거래가 생성되도록 배분을 설정합니다.',
+      rate:'수입에서 저축할 비율',alloc:'저축 목표별 배분 비율',total:'합계',save:'설정 저장',
+      help:'수입을 기록하면 이 배분에 따라 “저축” 지출 거래 생성을 제안합니다. 목표 금액은 변경되지 않습니다.',
+      noGoals:'먼저 “내 저축”에서 목표를 만들어 주세요.',saved:'나에게 먼저 지불하기 설정을 저장했습니다',
+      modalTitle:'나에게 먼저 지불할까요?',modalDesc:'수입이 기록되었습니다. 설정에 따라 저축 지출 거래를 만들까요?',
+      confirm:'기록',edit:'수정',skip:'건너뛰기',created:'저축 거래가 생성되었습니다',
+      badTotal:'배분 합계는 100%여야 합니다',growthData:'성장 데이터를 수집 중입니다',
+      growthAll:'총 성장',growthPeriod:'선택 기간'
+    },
+    ru:{
+      tab:'Сначала себе',title:'Сначала заплати себе',
+      desc:'Настройте, какая часть каждого дохода сначала направляется в сбережения как отдельная расходная операция.',
+      rate:'Доля сбережений от дохода',alloc:'Распределение по целям сбережений',total:'Итого',save:'Сохранить настройки',
+      help:'После записи дохода приложение предложит создать расходные операции категории «Сбережения» по этому распределению. Суммы целей не меняются.',
+      noGoals:'Сначала создайте цели в разделе «Мои сбережения».',saved:'Настройки «Сначала себе» сохранены',
+      modalTitle:'Сначала заплатить себе?',modalDesc:'Доход записан. Создать операции сбережений по текущему распределению?',
+      confirm:'Записать',edit:'Изменить',skip:'Пропустить',created:'Операции сбережений созданы',
+      badTotal:'Общее распределение должно быть 100%',growthData:'Собираем данные о росте',
+      growthAll:'Общий рост',growthPeriod:'За выбранный период'
+    },
+    de:{
+      tab:'Zuerst an mich',title:'Zahle dich zuerst',
+      desc:'Lege fest, welcher Anteil jedes Einkommens zuerst als Spartransaktion angelegt wird.',
+      rate:'Sparquote vom Einkommen',alloc:'Verteilung auf Sparziele',total:'Gesamt',save:'Einstellungen speichern',
+      help:'Nach dem Erfassen eines Einkommens schlägt die App anhand dieser Verteilung Spar-Ausgabentransaktionen vor. Die Zielbeträge ändern sich nicht.',
+      noGoals:'Lege zuerst unter „Meine Ersparnisse“ Sparziele an.',saved:'„Zahle dich zuerst“-Einstellungen gespeichert',
+      modalTitle:'Zuerst an dich zahlen?',modalDesc:'Einkommen wurde erfasst. Spartransaktionen gemäß deiner Verteilung erstellen?',
+      confirm:'Erfassen',edit:'Bearbeiten',skip:'Überspringen',created:'Spartransaktionen erstellt',
+      badTotal:'Die Verteilung muss insgesamt 100% ergeben',growthData:'Wachstumsdaten werden gesammelt',
+      growthAll:'Gesamtwachstum',growthPeriod:'Ausgewählter Zeitraum'
+    }
   };
   return Object.assign({},d.en,d[lang]||d.mn);
 }
@@ -8648,7 +9227,12 @@ function renderPayModal(editMode=false){
   modal.classList.add('show');
   if(editMode)renderPayEditPanel();
 }
-function savingsCatDisplayName(){const c=expCats.find(x=>x.key==='savings_cat')||bCatsExp.find(x=>x.key==='savings_cat');return c?cN(c):(lang==='mn'?'Хуримтлал':'Savings');}
+function savingsCatDisplayName(){
+  const c=expCats.find(x=>x.key==='savings_cat')||bCatsExp.find(x=>x.key==='savings_cat');
+  if(c)return cN(c);
+  const x={mn:'Хуримтлал',en:'Savings',zh:'储蓄',ja:'貯蓄',ko:'저축',ru:'Сбережения',de:'Ersparnisse'};
+  return x[lang]||x.en;
+}
 function confirmPayAssistant(){
   if(!pendingPayPlan)return; const base=Date.now(); const catName=savingsCatDisplayName();
   pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',autoPaySelf:true});});
@@ -8713,6 +9297,64 @@ const SAVINGS_CALC_EXTRA={
   ru:{mySavings:'Мои сбережения',savCalcTitle:'Калькулятор сбережений',savStart:'Начальная сумма',savMonthly:'Ежемесячно',savYears:'Срок / лет',savRate:'Годовой процент (%)',savTarget:'Цель',savCalcRun:'Рассчитать',savTotal:'Всего накоплено',savOwn:'Ваши взносы',savInterest:'Доход от процентов',savNeed:'Нужно в месяц',savChart:'График роста',savChallengeTitle:'Кофейный челлендж',savDaily:'Экономия в день',savChRun:'Рассчитать'},
   de:{mySavings:'Meine Ersparnisse',savCalcTitle:'Sparrechner',savStart:'Startbetrag',savMonthly:'Monatlich sparen',savYears:'Laufzeit / Jahre',savRate:'Jahreszins (%)',savTarget:'Zielbetrag',savCalcRun:'Berechnen',savTotal:'Gesamtersparnis',savOwn:'Eigene Einzahlungen',savInterest:'Zinsertrag',savNeed:'Benötigt pro Monat',savChart:'Wachstumsdiagramm',savChallengeTitle:'Kaffeegeld-Challenge',savDaily:'Täglich sparen',savChRun:'Challenge berechnen'}
 };
+
+// ── Möngö V43.20 — complete 7-language savings calculator strings ──
+Object.assign(SAVINGS_CALC_EXTRA.zh,{
+  mySavings:'我的储蓄',savCalcTitle:'储蓄计算器',savCalcDesc:'计算按月储蓄后的未来金额，或达到目标每月需要储蓄多少。',
+  savStart:'起始金额',savMonthly:'每月储蓄',savYears:'期限 / 年',savRate:'年利率 (%)',savTarget:'目标金额',savCalcRun:'计算',
+  savEmpty:'请输入起始金额、每月储蓄、期限和利率，然后点击“计算”。',savRequired:'请输入有效的储蓄金额、期限和利率。',
+  savTotal:'总储蓄',savOwn:'您的投入',savInterest:'利息收益',savNeed:'达到目标每月需要',savChart:'增长图表',
+  savTotalLine:'总增长',savOwnLine:'您的投入',savInterestLine:'利息增长',
+  savChallengeTitle:'咖啡钱挑战',savChallengeDesc:'看看把每天的小额支出改为储蓄后可以增长到多少。',
+  savDaily:'每天节省金额',savChYears:'期限 / 年',savChRate:'年利率 (%)',savChRun:'计算挑战',
+  savChEmpty:'请输入每天的一笔小额支出并进行计算。',
+  savChMsg:'如果每天节省 {daily}、每月投入 {monthly}，{years} 年后可达到 {total}，其中约 {interest} 来自利息收益。'
+});
+Object.assign(SAVINGS_CALC_EXTRA.ja,{
+  mySavings:'私の貯蓄',savCalcTitle:'貯蓄計算機',savCalcDesc:'毎月積み立てた場合の将来額、または目標達成に必要な毎月額を計算します。',
+  savStart:'開始額',savMonthly:'毎月の貯蓄額',savYears:'期間 / 年',savRate:'年利 (%)',savTarget:'目標額',savCalcRun:'計算',
+  savEmpty:'開始額、毎月の貯蓄額、期間、利率を入力して「計算」を押してください。',savRequired:'有効な貯蓄額、期間、利率を入力してください。',
+  savTotal:'総貯蓄額',savOwn:'自分の積立額',savInterest:'利息収益',savNeed:'目標達成に毎月必要',savChart:'成長グラフ',
+  savTotalLine:'総成長',savOwnLine:'自分の積立',savInterestLine:'利息による成長',
+  savChallengeTitle:'コーヒー代チャレンジ',savChallengeDesc:'毎日の小さな支出を貯蓄に回したらどれくらい増えるか計算します。',
+  savDaily:'毎日節約する額',savChYears:'期間 / 年',savChRate:'年利 (%)',savChRun:'チャレンジ計算',
+  savChEmpty:'毎日の小さな支出額を入力して計算してください。',
+  savChMsg:'毎日 {daily} を節約し、毎月 {monthly} を積み立てると、{years} 年後に {total} になります。そのうち約 {interest} が利息収益です。'
+});
+Object.assign(SAVINGS_CALC_EXTRA.ko,{
+  mySavings:'내 저축',savCalcTitle:'저축 계산기',savCalcDesc:'매월 저축했을 때의 미래 금액 또는 목표 달성에 필요한 월 저축액을 계산합니다.',
+  savStart:'시작 금액',savMonthly:'월 저축액',savYears:'기간 / 년',savRate:'연 이자율 (%)',savTarget:'목표 금액',savCalcRun:'계산',
+  savEmpty:'시작 금액, 월 저축액, 기간, 이자율을 입력한 뒤 “계산”을 누르세요.',savRequired:'유효한 저축 금액, 기간, 이자율을 입력하세요.',
+  savTotal:'총 저축액',savOwn:'내가 넣은 금액',savInterest:'이자 수익',savNeed:'목표 달성에 필요한 월 금액',savChart:'성장 그래프',
+  savTotalLine:'총 성장',savOwnLine:'내 납입금',savInterestLine:'이자 성장',
+  savChallengeTitle:'커피값 챌린지',savChallengeDesc:'매일의 작은 지출을 저축으로 바꾸면 얼마나 커지는지 계산합니다.',
+  savDaily:'매일 절약 금액',savChYears:'기간 / 년',savChRate:'연 이자율 (%)',savChRun:'챌린지 계산',
+  savChEmpty:'매일의 작은 지출 금액을 입력하고 계산해 보세요.',
+  savChMsg:'매일 {daily}를 절약하고 매월 {monthly}를 저축하면 {years}년 후 {total}가 됩니다. 이 중 약 {interest}는 이자 수익입니다.'
+});
+Object.assign(SAVINGS_CALC_EXTRA.ru,{
+  mySavings:'Мои сбережения',savCalcTitle:'Калькулятор сбережений',savCalcDesc:'Рассчитайте будущую сумму при ежемесячных накоплениях или нужный ежемесячный взнос для достижения цели.',
+  savStart:'Начальная сумма',savMonthly:'Ежемесячный взнос',savYears:'Срок / лет',savRate:'Годовая ставка (%)',savTarget:'Целевая сумма',savCalcRun:'Рассчитать',
+  savEmpty:'Введите начальную сумму, ежемесячный взнос, срок и ставку, затем нажмите «Рассчитать».',savRequired:'Введите корректные суммы, срок и ставку.',
+  savTotal:'Итоговые сбережения',savOwn:'Ваши взносы',savInterest:'Доход от процентов',savNeed:'Нужно в месяц для цели',savChart:'График роста',
+  savTotalLine:'Общий рост',savOwnLine:'Ваши взносы',savInterestLine:'Рост за счёт процентов',
+  savChallengeTitle:'Кофейный челлендж',savChallengeDesc:'Посмотрите, во что может вырасти небольшая ежедневная трата, если её откладывать.',
+  savDaily:'Экономия в день',savChYears:'Срок / лет',savChRate:'Годовая ставка (%)',savChRun:'Рассчитать челлендж',
+  savChEmpty:'Введите небольшую ежедневную сумму и рассчитайте.',
+  savChMsg:'Если откладывать {daily} в день и {monthly} в месяц, через {years} лет получится {total}. Около {interest} составит доход от процентов.'
+});
+Object.assign(SAVINGS_CALC_EXTRA.de,{
+  mySavings:'Meine Ersparnisse',savCalcTitle:'Sparrechner',savCalcDesc:'Berechne den zukünftigen Sparbetrag oder den monatlich nötigen Betrag, um ein Ziel zu erreichen.',
+  savStart:'Startbetrag',savMonthly:'Monatlicher Sparbetrag',savYears:'Laufzeit / Jahre',savRate:'Jahreszins (%)',savTarget:'Zielbetrag',savCalcRun:'Berechnen',
+  savEmpty:'Startbetrag, monatlichen Sparbetrag, Laufzeit und Zins eingeben und „Berechnen“ tippen.',savRequired:'Bitte gültige Sparbeträge, Laufzeit und Zins eingeben.',
+  savTotal:'Gesamtersparnis',savOwn:'Eigene Einzahlungen',savInterest:'Zinsertrag',savNeed:'Monatlich fürs Ziel nötig',savChart:'Wachstumsdiagramm',
+  savTotalLine:'Gesamtwachstum',savOwnLine:'Eigene Einzahlungen',savInterestLine:'Zinswachstum',
+  savChallengeTitle:'Kaffeegeld-Challenge',savChallengeDesc:'Sieh, wie eine kleine tägliche Ausgabe wachsen kann, wenn du sie stattdessen sparst.',
+  savDaily:'Täglich sparen',savChYears:'Laufzeit / Jahre',savChRate:'Jahreszins (%)',savChRun:'Challenge berechnen',
+  savChEmpty:'Gib eine kleine tägliche Ausgabe ein und berechne sie.',
+  savChMsg:'Wenn du täglich {daily} und monatlich {monthly} sparst, kannst du nach {years} Jahren {total} erreichen. Rund {interest} davon sind Zinserträge.'
+});
+
 Object.keys(SAVINGS_CALC_EXTRA).forEach(k=>{CALC_LANGS[k]=Object.assign({},CALC_LANGS.en,CALC_LANGS[k]||{},SAVINGS_CALC_EXTRA[k]);});
 const _prevShowCalcPanelSavings=showCalcPanel;
 showCalcPanel=function(section,panel,btn){
@@ -8732,6 +9374,8 @@ updateCalcTexts=function(){
   };
   Object.entries(map).forEach(([id,txt])=>{const el=document.getElementById(id); if(el&&txt!=null)el.textContent=txt;});
   clearSavingsCalcResults();
+  try{rPaySettings();}catch(e){}
+  try{applyMongoColorTexts();}catch(e){}
 };
 function savingsFutureValue(start,monthly,annualRate,years){
   const r=annualRate/12/100, n=Math.max(0,Math.round(years*12));
@@ -9090,6 +9734,7 @@ function showRegister(){
 // Хэлийг бүрэн хэрэглэх — dropdown, далбаа, апп доторх бүх текст
 function applyFullLang(l){
   lang=l; L=LANGS[l]||LANGS.mn; CS=CURR[l]||'$';
+  try{document.documentElement.lang=l;}catch(e){}
   const flagMap={mn:'🇲🇳',en:'🇬🇧',zh:'🇨🇳',ja:'🇯🇵',ko:'🇰🇷',ru:'🇷🇺',de:'🇩🇪'};
   const labelMap={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨🇳 中文',ja:'🇯🇵 日本語',ko:'🇰🇷 한국어',ru:'🇷🇺 Русский',de:'🇩🇪 Deutsch'};
   // Дотор хуудасны далбаа
@@ -9112,6 +9757,8 @@ function applyFullLang(l){
   });
   // Апп доторх бүх текст шинэчлэх
   applyLang();
+  try{if(typeof refreshVisibleMongoTrialReminderLanguage==='function')refreshVisibleMongoTrialReminderLanguage();}catch(e){}
+  try{if(typeof renderMongoTrialCard==='function')renderMongoTrialCard();}catch(e){}
 }
 
 // ── V42.2 Authentication Refactor helpers ─────────────────────────────
@@ -9292,19 +9939,38 @@ function mongoDaysSinceInclusive(startDate){
 }
 function mongoBillingLocalKey(uid){ return 'mongo_billing_lifecycle_'+uid; }
 function mongoBillingStateFrom(data,user){
-  const fallback=mongoLocalDate(user&&user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
-  const accountStart=String((data&&data.accountStartDate)||fallback).slice(0,10);
-  const trialStart=String((data&&data.trialStartDate)||accountStart).slice(0,10);
-  const paidStart=(data&&data.subscriptionStartDate)?String(data.subscriptionStartDate).slice(0,10):null;
+  data=data||{};
+  const uid=user&&user.uid||data.uid||'';
+  const authStart=mongoLocalDate(user&&user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+  const cached=mongoCachedBilling(uid)||{};
+  const accountStart=mongoEarliestDate(data.accountStartDate,data.trialStartDate,cached.accountStartDate,cached.trialStartDate,authStart) || authStart;
+  const trialStart=mongoEarliestDate(data.trialStartDate,data.accountStartDate,cached.trialStartDate,cached.accountStartDate,authStart) || accountStart;
+  const paidStart=data.subscriptionStartDate?String(data.subscriptionStartDate).slice(0,10):(cached.subscriptionStartDate||null);
   return {
     accountStartDate:accountStart,
     trialStartDate:trialStart,
-    subscriptionStartDate:paidStart,
-    subscriptionStatus:String((data&&data.subscriptionStatus)||'trial'),
-    subscriptionPlan:(data&&data.subscriptionPlan)||null,
+    subscriptionStartDate:paidStart||null,
+    subscriptionStatus:String(data.subscriptionStatus||cached.subscriptionStatus||'trial'),
+    subscriptionPlan:data.subscriptionPlan||cached.subscriptionPlan||null,
     trialDay:mongoDaysSinceInclusive(trialStart),
-    uid:user&&user.uid||''
+    uid:uid
   };
+}
+
+
+function mongoValidDateOnly(v){
+  const s=String(v||'').slice(0,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+function mongoEarliestDate(){
+  const vals=Array.from(arguments).map(mongoValidDateOnly).filter(Boolean).sort();
+  return vals.length?vals[0]:'';
+}
+function mongoCachedBilling(uid){
+  try{
+    const c=JSON.parse(localStorage.getItem(mongoBillingLocalKey(uid))||'null');
+    return c&&c.uid===uid?c:null;
+  }catch(e){return null;}
 }
 
 const MONGO_TRIAL_DAYS=7;
@@ -9337,7 +10003,7 @@ function cacheBillingState(state){
   if(!state||!state.uid)return;
   window.MONGO_BILLING_STATE=state;
   try{ localStorage.setItem(mongoBillingLocalKey(state.uid),JSON.stringify(state)); }catch(e){}
-  try{setTimeout(()=>{renderMongoTrialCard();refreshMongoTrialAccess();},0);}catch(e){}
+  try{setTimeout(()=>{renderMongoTrialCard();refreshMongoTrialAccess();if(typeof rProfile==='function')rProfile();},0);}catch(e){}
 }
 async function initializeBillingDay1ForNewUser(user){
   if(!user||!user.uid)return null;
@@ -9360,12 +10026,18 @@ async function initializeBillingDay1ForNewUser(user){
     const snap=await ref.get();
     if(!snap.exists){
       await ref.set(payload,{merge:false});
+      try{await db.collection('users').doc(user.uid).set({uid:user.uid,billingLifecycle:payload,billingUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
       const state=mongoBillingStateFrom(payload,user);
       cacheBillingState(state);
       return state;
     }
     const state=mongoBillingStateFrom(snap.data()||{},user);
     cacheBillingState(state);
+    try{await db.collection('users').doc(user.uid).set({uid:user.uid,billingLifecycle:{
+      uid:user.uid,accountStartDate:state.accountStartDate,trialStartDate:state.trialStartDate,
+      subscriptionStartDate:state.subscriptionStartDate||null,subscriptionStatus:state.subscriptionStatus||'trial',
+      subscriptionPlan:state.subscriptionPlan||null,billingVersion:'v43.35'
+    },billingUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){}
     return state;
   }catch(e){
     console.warn('Möngö billing Day 1 cloud save failed',e);
@@ -9376,54 +10048,89 @@ async function initializeBillingDay1ForNewUser(user){
 }
 async function loadBillingLifecycleForUser(user){
   if(!user||!user.uid)return null;
-  const ref=db.collection('users').doc(user.uid).collection('billing').doc('lifecycle');
+  const uid=user.uid;
+  const ref=db.collection('users').doc(uid).collection('billing').doc('lifecycle');
+  const rootRef=db.collection('users').doc(uid);
+  const cached=mongoCachedBilling(uid)||{};
+  let subData=null, rootData=null;
+
   try{
-    const snap=await ref.get();
-    if(snap.exists){
-      const state=mongoBillingStateFrom(snap.data()||{},user);
-      cacheBillingState(state);
-      return state;
+    const results=await Promise.allSettled([ref.get(),rootRef.get()]);
+    const s1=results[0], s2=results[1];
+    if(s1.status==='fulfilled' && s1.value.exists) subData=s1.value.data()||{};
+    if(s2.status==='fulfilled' && s2.value.exists){
+      const rd=s2.value.data()||{};
+      if(rd.billingLifecycle) rootData=rd.billingLifecycle;
     }
 
-    // V43.11 one-time migration for pre-V43.10 accounts:
-    // use Firebase Auth creationTime as the immutable Day 1 source.
-    // This does NOT start Day 1 from today's login date and never moves it forward.
-    const creationRaw=user.metadata&&user.metadata.creationTime?user.metadata.creationTime:null;
-    if(creationRaw){
-      const start=mongoLocalDate(creationRaw);
-      const payload={
-        uid:user.uid,
-        accountStartDate:start,
-        trialStartDate:start,
-        subscriptionStartDate:null,
-        subscriptionStatus:'trial',
-        subscriptionPlan:null,
-        billingVersion:'v43.11',
-        startSource:'firebaseAuthCreationTimeMigration',
-        migratedAt:firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-      };
-      await ref.set(payload,{merge:false});
-      const state=mongoBillingStateFrom(payload,user);
-      cacheBillingState(state);
-      return state;
-    }
-  }catch(e){ console.warn('Möngö billing lifecycle load/migration failed',e); }
+    const creationStart=mongoLocalDate(user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+    const accountStart=mongoEarliestDate(
+      subData&&subData.accountStartDate, subData&&subData.trialStartDate,
+      rootData&&rootData.accountStartDate, rootData&&rootData.trialStartDate,
+      cached.accountStartDate, cached.trialStartDate, creationStart
+    ) || creationStart;
+    const trialStart=mongoEarliestDate(
+      subData&&subData.trialStartDate, subData&&subData.accountStartDate,
+      rootData&&rootData.trialStartDate, rootData&&rootData.accountStartDate,
+      cached.trialStartDate, cached.accountStartDate, creationStart
+    ) || accountStart;
 
-  // Offline fallback only: use this UID's own cached lifecycle if it exists.
-  try{
-    const cached=JSON.parse(localStorage.getItem(mongoBillingLocalKey(user.uid))||'null');
-    if(cached&&cached.uid===user.uid){
-      window.MONGO_BILLING_STATE=cached;
-      return cached;
-    }
-  }catch(e){}
-  window.MONGO_BILLING_STATE=null;
-  return null;
+    const preferred=subData||rootData||cached||{};
+    const merged={
+      uid,
+      accountStartDate:accountStart,
+      trialStartDate:trialStart,
+      subscriptionStartDate:(subData&&subData.subscriptionStartDate)||(rootData&&rootData.subscriptionStartDate)||cached.subscriptionStartDate||null,
+      subscriptionStatus:(subData&&subData.subscriptionStatus)||(rootData&&rootData.subscriptionStatus)||cached.subscriptionStatus||'trial',
+      subscriptionPlan:(subData&&subData.subscriptionPlan)||(rootData&&rootData.subscriptionPlan)||cached.subscriptionPlan||null,
+      billingVersion:'v43.35',
+      startSource:(subData?'billing-subcollection':(rootData?'user-root':(cached.uid?'local-cache':'firebase-auth')))
+    };
+    const state=mongoBillingStateFrom(merged,user);
+    cacheBillingState(state);
+
+    // Best-effort mirror to both locations. A deployment whose rules allow
+    // only one location still preserves the immutable start date.
+    const patch={
+      uid,
+      accountStartDate:state.accountStartDate,
+      trialStartDate:state.trialStartDate,
+      subscriptionStartDate:state.subscriptionStartDate||null,
+      subscriptionStatus:state.subscriptionStatus||'trial',
+      subscriptionPlan:state.subscriptionPlan||null,
+      billingVersion:'v43.35',
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await Promise.allSettled([
+      ref.set(patch,{merge:true}),
+      rootRef.set({uid,billingLifecycle:patch,billingUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+    ]);
+
+    return state;
+  }catch(e){
+    console.warn('Möngö billing lifecycle multi-path load failed',e);
+    const creationStart=mongoLocalDate(user.metadata&&user.metadata.creationTime?user.metadata.creationTime:Date.now());
+    const fallback={
+      uid,
+      accountStartDate:mongoEarliestDate(cached.accountStartDate,cached.trialStartDate,creationStart)||creationStart,
+      trialStartDate:mongoEarliestDate(cached.trialStartDate,cached.accountStartDate,creationStart)||creationStart,
+      subscriptionStartDate:cached.subscriptionStartDate||null,
+      subscriptionStatus:cached.subscriptionStatus||'trial',
+      subscriptionPlan:cached.subscriptionPlan||null
+    };
+    const state=mongoBillingStateFrom(fallback,user);
+    cacheBillingState(state);
+    return state;
+  }
 }
 
 function mongoTrialLabels(){
-  const code=(typeof lang!=='undefined'&&lang)||localStorage.getItem('mongo_lang')||'mn';
+  const uiLang=(document.documentElement&&document.documentElement.lang)||'';
+  const pending=(typeof sessionStorage!=='undefined'&&sessionStorage.getItem('pendingLang'))||'';
+  const code=(uiLang&&['mn','en','zh','ja','ko','ru','de'].includes(uiLang)?uiLang:null)
+    ||(typeof lang!=='undefined'&&['mn','en','zh','ja','ko','ru','de'].includes(lang)?lang:null)
+    ||(['mn','en','zh','ja','ko','ru','de'].includes(pending)?pending:null)
+    ||localStorage.getItem('mongo_lang')||'mn';
   const d={
     mn:{title:'Үнэгүй туршилт',badge:'Туршилт',day:'Өдөр',remaining:'Үлдсэн',days:'өдөр',expired:'Туршилт дууссан',active:'Идэвхтэй эрх',activeText:'Таны Möngö эрх идэвхтэй байна.',expiredText:'Үнэгүй туршилтын хугацаа дууссан.'},
     en:{title:'Free trial',badge:'Trial',day:'Day',remaining:'Remaining',days:'days',expired:'Trial ended',active:'Active plan',activeText:'Your Möngö access is active.',expiredText:'Your free trial has ended.'},
@@ -9479,16 +10186,40 @@ function renderMongoTrialCard(){
 const MONGO_READONLY_KEY='mongo_trial_readonly_ack_';
 let MONGO_SELECTED_PLAN='yearly';
 function mongoAccessLabels(){
-  const code=(typeof lang!=='undefined'&&lang)||localStorage.getItem('mongo_lang')||'mn';
+  const uiLang=(document.documentElement&&document.documentElement.lang)||'';
+  const pending=(typeof sessionStorage!=='undefined'&&sessionStorage.getItem('pendingLang'))||'';
+  const code=(uiLang&&['mn','en','zh','ja','ko','ru','de'].includes(uiLang)?uiLang:null)
+    ||(typeof lang!=='undefined'&&['mn','en','zh','ja','ko','ru','de'].includes(lang)?lang:null)
+    ||(['mn','en','zh','ja','ko','ru','de'].includes(pending)?pending:null)
+    ||localStorage.getItem('mongo_lang')||'mn';
   const x={
-    mn:{d5:'Үнэгүй туршилтад 2 өдөр үлдлээ',d6:'Маргааш туршилтын сүүлийн өдөр',d7:'Өнөөдөр туршилтын сүүлийн өдөр',rem:'Таны мэдээлэл аюулгүй хадгалагдана.',title:'Туршилтын хугацаа дууслаа',desc:'Таны өгөгдөл аюулгүй хадгалагдсан. Möngö-г үргэлжлүүлэн ашиглах эрхээ сонгоно уу.',monthly:'Сар бүр',monthlySub:'Уян хатан сонголт',yearly:'Жилээр',yearlySub:'Хамгийн үнэ цэнтэй',cont:'Үргэлжлүүлэх',later:'Дараа шийдэх',note:'“Дараа шийдэх” гэвэл мэдээллээ харах боломжтой хэвээр. Шинээр нэмэх, засах үйлдэл subscription шаарддаг.',locked:'Туршилтын хугацаа дууссан. Энэ үйлдлийг үргэлжлүүлэхийн тулд эрхээ идэвхжүүлнэ үү.'},
-    en:{d5:'2 days left in your free trial',d6:'Tomorrow is the last trial day',d7:'Today is the last day of your trial',rem:'Your data stays safely saved.',title:'Your free trial has ended',desc:'Your data is safely saved. Choose a plan to continue using Möngö.',monthly:'Monthly',monthlySub:'Flexible option',yearly:'Yearly',yearlySub:'Best value',cont:'Continue',later:'Decide later',note:'Choose “Decide later” to keep viewing your data. Adding or editing requires a subscription.',locked:'Your trial has ended. Activate a plan to continue this action.'},
-    ru:{d5:'До конца пробного периода 2 дня',d6:'Завтра последний день пробного периода',d7:'Сегодня последний день пробного периода',rem:'Ваши данные сохранены.',title:'Пробный период завершён',desc:'Ваши данные сохранены. Выберите план, чтобы продолжить пользоваться Möngö.',monthly:'Ежемесячно',monthlySub:'Гибкий вариант',yearly:'Ежегодно',yearlySub:'Выгоднее',cont:'Продолжить',later:'Решить позже',note:'Можно продолжать просмотр данных. Добавление и изменение требуют подписки.',locked:'Пробный период завершён. Для этого действия нужна подписка.'}
-  }; return x[code]||x.en;
+    mn:{d5:'Үнэгүй туршилтад 2 өдөр үлдлээ',d6:'Маргааш туршилтын сүүлийн өдөр',d7:'Өнөөдөр туршилтын сүүлийн өдөр',rem:'Таны мэдээлэл аюулгүй хадгалагдана.',title:'Туршилтын хугацаа дууслаа',desc:'Таны өгөгдөл аюулгүй хадгалагдсан. Möngö Premium эрхээ сонгоно уу.',monthly:'Сар бүр',monthlyPrice:'₮9,900 / сар',monthlySub:'Уян хатан сонголт',yearly:'Жилээр',yearlyPrice:'₮89,900 / жил',yearlySub:'Хамгийн ашигтай · ₮28,900 хэмнэнэ',best:'Хамгийн ашигтай',cont:'Үргэлжлүүлэх',later:'Дараа шийдэх',note:'“Дараа шийдэх” гэвэл мэдээллээ харах боломжтой хэвээр. Шинээр нэмэх, засах болон Premium тооцоолуур ашиглахад эрх шаардлагатай. Зээлийн тооцоолуур үнэгүй хэвээр.',locked:'Туршилтын хугацаа дууссан. Энэ үйлдлийг үргэлжлүүлэхийн тулд Premium эрхээ идэвхжүүлнэ үү.',paymentSoon:'Төлбөрийн холболтыг дараагийн алхамд идэвхжүүлнэ.'},
+    en:{d5:'2 days left in your free trial',d6:'Tomorrow is the last trial day',d7:'Today is the last day of your trial',rem:'Your data stays safely saved.',title:'Your free trial has ended',desc:'Your data is safely saved. Choose your Möngö Premium plan.',monthly:'Monthly',monthlyPrice:'₮9,900 / month',monthlySub:'Flexible option',yearly:'Yearly',yearlyPrice:'₮89,900 / year',yearlySub:'Best value · Save ₮28,900',best:'Best value',cont:'Continue',later:'Decide later',note:'Choose “Decide later” to keep viewing your data. Adding, editing, and Premium calculators require a plan. The loan calculator stays free.',locked:'Your trial has ended. Activate Premium to continue this action.',paymentSoon:'Payment connection will be enabled in the next step.'},
+    zh:{d5:'免费试用还剩2天',d6:'明天是试用的最后一天',d7:'今天是试用的最后一天',rem:'您的数据会安全保存。',title:'免费试用已结束',desc:'您的数据已安全保存。请选择 Möngö Premium 方案。',monthly:'按月',monthlyPrice:'₮9,900 / 月',monthlySub:'灵活选择',yearly:'按年',yearlyPrice:'₮89,900 / 年',yearlySub:'最划算 · 节省 ₮28,900',best:'最划算',cont:'继续',later:'稍后决定',note:'选择“稍后决定”仍可查看数据。新增、编辑和 Premium 计算器需要订阅；贷款计算器继续免费。',locked:'试用已结束。请开通 Premium 后继续此操作。',paymentSoon:'支付连接将在下一步启用。'},
+    ja:{d5:'無料トライアルはあと2日です',d6:'明日はトライアル最終日です',d7:'今日はトライアル最終日です',rem:'データは安全に保存されます。',title:'無料トライアルが終了しました',desc:'データは安全に保存されています。Möngö Premium プランを選択してください。',monthly:'月払い',monthlyPrice:'₮9,900 / 月',monthlySub:'柔軟なプラン',yearly:'年払い',yearlyPrice:'₮89,900 / 年',yearlySub:'最もお得 · ₮28,900 節約',best:'最もお得',cont:'続ける',later:'あとで決める',note:'「あとで決める」でもデータ閲覧は可能です。追加・編集・Premium計算機には契約が必要です。ローン計算機は無料のままです。',locked:'トライアルが終了しました。この操作には Premium が必要です。',paymentSoon:'支払い連携は次のステップで有効になります。'},
+    ko:{d5:'무료 체험이 2일 남았습니다',d6:'내일은 체험 마지막 날입니다',d7:'오늘은 체험 마지막 날입니다',rem:'데이터는 안전하게 저장됩니다.',title:'무료 체험이 종료되었습니다',desc:'데이터는 안전하게 저장되어 있습니다. Möngö Premium 요금제를 선택하세요.',monthly:'월간',monthlyPrice:'₮9,900 / 월',monthlySub:'유연한 선택',yearly:'연간',yearlyPrice:'₮89,900 / 년',yearlySub:'가장 경제적 · ₮28,900 절약',best:'가장 경제적',cont:'계속',later:'나중에 결정',note:'“나중에 결정”을 선택해도 데이터는 계속 볼 수 있습니다. 추가·수정 및 Premium 계산기는 구독이 필요하며 대출 계산기는 계속 무료입니다.',locked:'체험이 종료되었습니다. 이 작업을 계속하려면 Premium을 활성화하세요.',paymentSoon:'결제 연결은 다음 단계에서 활성화됩니다.'},
+    ru:{d5:'До конца пробного периода 2 дня',d6:'Завтра последний день пробного периода',d7:'Сегодня последний день пробного периода',rem:'Ваши данные надёжно сохранены.',title:'Пробный период завершён',desc:'Ваши данные сохранены. Выберите тариф Möngö Premium.',monthly:'Ежемесячно',monthlyPrice:'₮9 900 / месяц',monthlySub:'Гибкий вариант',yearly:'Ежегодно',yearlyPrice:'₮89 900 / год',yearlySub:'Самый выгодный · экономия ₮28 900',best:'Самый выгодный',cont:'Продолжить',later:'Решить позже',note:'При выборе «Решить позже» данные останутся доступными для просмотра. Добавление, редактирование и Premium-калькуляторы требуют подписки. Кредитный калькулятор остаётся бесплатным.',locked:'Пробный период завершён. Активируйте Premium для этого действия.',paymentSoon:'Подключение оплаты будет включено на следующем этапе.'},
+    de:{d5:'Noch 2 Tage kostenlose Testphase',d6:'Morgen ist der letzte Testtag',d7:'Heute ist der letzte Testtag',rem:'Deine Daten bleiben sicher gespeichert.',title:'Deine Testphase ist beendet',desc:'Deine Daten sind sicher gespeichert. Wähle deinen Möngö-Premium-Tarif.',monthly:'Monatlich',monthlyPrice:'₮9.900 / Monat',monthlySub:'Flexible Option',yearly:'Jährlich',yearlyPrice:'₮89.900 / Jahr',yearlySub:'Bestes Preis-Leistungs-Verhältnis · ₮28.900 sparen',best:'Bestes Angebot',cont:'Weiter',later:'Später entscheiden',note:'Mit „Später entscheiden“ kannst du deine Daten weiter ansehen. Hinzufügen, Bearbeiten und Premium-Rechner benötigen ein Abo. Der Kreditrechner bleibt kostenlos.',locked:'Die Testphase ist beendet. Aktiviere Premium, um diese Aktion fortzusetzen.',paymentSoon:'Die Zahlungsanbindung wird im nächsten Schritt aktiviert.'}
+  };
+  return x[code]||x.en;
 }
 function mongoBillingUid(){return window.MONGO_BILLING_STATE&&window.MONGO_BILLING_STATE.uid||'';}
 function mongoIsReadOnly(){
-  const st=window.MONGO_BILLING_STATE, info=st?mongoTrialInfo(st):null;
+  let st=window.MONGO_BILLING_STATE||null;
+
+  // On refresh, auth/billing can load a little later. Reuse the UID-scoped cached state only
+  // until the live state arrives. The trialTestDay override still controls TEST builds.
+  if(!st){
+    try{
+      const u=(typeof auth!=='undefined'&&auth&&auth.currentUser)?auth.currentUser:null;
+      if(u&&u.uid){
+        const raw=localStorage.getItem(mongoBillingLocalKey(u.uid));
+        if(raw) st=JSON.parse(raw);
+      }
+    }catch(e){}
+  }
+
+  const info=st?mongoTrialInfo(st):null;
   return !!(info&&info.isExpired&&!info.isPaid);
 }
 function applyMongoAccessMode(){
@@ -9503,14 +10234,24 @@ function showMongoTrialReminder(){
   const st=window.MONGO_BILLING_STATE;if(!st)return;
   const info=mongoTrialInfo(st); if(info.isPaid||info.isExpired)return;
   if(![5,6,7].includes(info.day))return;
-  const T=mongoAccessLabels(), box=document.getElementById('mongo-trial-reminder');
+  const box=document.getElementById('mongo-trial-reminder');
   if(!box)return;
   const dayKey='mongo_trial_reminder_'+st.uid+'_'+info.day;
   try{if(sessionStorage.getItem(dayKey)==='1')return;}catch(e){}
-  const title=info.day===5?T.d5:(info.day===6?T.d6:T.d7);
-  document.getElementById('mongo-reminder-title').textContent=title;
-  document.getElementById('mongo-reminder-sub').textContent=T.rem;
+  // Read labels at display time, after the login/cloud language has been applied.
+  const paint=()=>{
+    const T=mongoAccessLabels();
+    const title=info.day===5?T.d5:(info.day===6?T.d6:T.d7);
+    const a=document.getElementById('mongo-reminder-title');
+    const b=document.getElementById('mongo-reminder-sub');
+    if(a)a.textContent=title;
+    if(b)b.textContent=T.rem;
+  };
+  paint();
   box.style.display='block'; box.dataset.dayKey=dayKey;
+  // applyFullLang can finish a moment after billing on a fresh device.
+  setTimeout(()=>{if(box.style.display!=='none')paint();},180);
+  setTimeout(()=>{if(box.style.display!=='none')paint();},650);
 }
 function dismissMongoTrialReminder(){
   const box=document.getElementById('mongo-trial-reminder'); if(!box)return;
@@ -9521,8 +10262,9 @@ function showMongoPaywall(){
   const T=mongoAccessLabels(), p=document.getElementById('mongo-paywall');if(!p)return;
   document.getElementById('mongo-paywall-title').textContent=T.title;
   document.getElementById('mongo-paywall-desc').textContent=T.desc;
-  document.getElementById('mongo-monthly').textContent=T.monthly; document.getElementById('mongo-monthly-sub').textContent=T.monthlySub;
-  document.getElementById('mongo-yearly').textContent=T.yearly; document.getElementById('mongo-yearly-sub').textContent=T.yearlySub;
+  document.getElementById('mongo-monthly').textContent=T.monthly; document.getElementById('mongo-monthly-price').textContent=T.monthlyPrice; document.getElementById('mongo-monthly-sub').textContent=T.monthlySub;
+  document.getElementById('mongo-yearly').textContent=T.yearly; document.getElementById('mongo-yearly-price').textContent=T.yearlyPrice; document.getElementById('mongo-yearly-sub').textContent=T.yearlySub;
+  document.getElementById('mongo-yearly-best').textContent=T.best;
   document.getElementById('mongo-continue-sub').textContent=T.cont; document.getElementById('mongo-later').textContent=T.later;
   document.getElementById('mongo-readonly-note').textContent=T.note; p.style.display='flex';
 }
@@ -9536,10 +10278,80 @@ function selectMongoPlan(plan){
   document.querySelectorAll('.mongo-plan').forEach((x,i)=>x.classList.toggle('recommended',(plan==='monthly'&&i===0)||(plan==='yearly'&&i===1)));
 }
 function continueMongoSubscription(){
-  // V43.14 intentionally does not fake a payment.
-  // Store billing integration will be connected in the next payment phase.
-  try{showToast((typeof lang!=='undefined'&&lang)==='mn'?'Төлбөрийн холболтыг дараагийн алхамд идэвхжүүлнэ.':'Payment connection will be enabled in the next step.');}catch(e){}
+  // V43.20 intentionally does not fake a payment.
+  // Store / QPay / card integration will be connected in the payment phase.
+  try{showToast(mongoAccessLabels().paymentSoon);}catch(e){}
 }
+
+function mongoIsLoanFreeArea(el){
+  if(!el||!el.closest)return false;
+  const node=el.closest('button,[role="button"],a,.tab,.nav-item,.menu-item,input,select')||el;
+  const text=((node.textContent||'')+' '+(node.getAttribute&&node.getAttribute('aria-label')||'')+' '+(node.getAttribute&&node.getAttribute('title')||'')).trim().toLowerCase();
+  const idcls=((node.id||'')+' '+(typeof node.className==='string'?node.className:'')).toLowerCase();
+
+  // A) Main top navigation: "Зээл" itself must always be open in read-only mode.
+  // Avoid treating "Зээл нэмэх", "Засах" etc. as free.
+  const exactLoanLabels=['зээл','loan','loans','debt'];
+  if(node.getAttribute&&node.getAttribute('data-mongo-free-after-trial')==='loan-nav') return true;
+  if(exactLoanLabels.includes(text)) return true;
+
+  // Common IDs/classes used by the app's loan nav button.
+  if(
+    idcls.includes('nav-loan') || idcls.includes('loan-nav') ||
+    idcls.includes('nav-debt') || idcls.includes('debt-nav') ||
+    idcls.includes('tab-loan-main') || idcls.includes('loan-menu')
+  ) return true;
+
+  // B) The Loan calculator tab is free.
+  const isCalc =
+    text==='тооцоолуур' || text==='calculator' ||
+    text.includes('зээлийн тооцоолуур') || text.includes('loan calculator') ||
+    idcls.includes('loan-calculator-tab') || idcls.includes('loan_calc_tab');
+
+  if(isCalc){
+    // If the element itself names loan calculator, it is free.
+    if(text.includes('зээл') || text.includes('loan') ||
+       idcls.includes('loan') || idcls.includes('debt')) return true;
+
+    // Or it sits in a nearby loan-only tab wrapper.
+    let p=node.parentElement;
+    for(let i=0;i<4&&p;i++,p=p.parentElement){
+      const pt=((p.id||'')+' '+(typeof p.className==='string'?p.className:'')).toLowerCase();
+      if(pt.includes('loan')||pt.includes('debt')) return true;
+    }
+  }
+
+  // C) Controls inside the actual Loan Calculator panel are free.
+  const loanCalc=node.closest(
+    '#loan-calculator,#loanCalculator,.loan-calculator,.loanCalculator,'+
+    '[id*="loan-calculator" i],[class*="loan-calculator" i],'+
+    '[id*="debt-calculator" i],[class*="debt-calculator" i]'
+  );
+  if(loanCalc) return true;
+
+  return false;
+}
+
+function mongoIsPremiumCalculatorTrigger(el){
+  if(!el||!el.closest)return false;
+  const node=el.closest('button,[role="button"],a,.tab,.nav-item,.menu-item')||el;
+  const text=((node.textContent||'')+' '+(node.getAttribute&&node.getAttribute('aria-label')||'')+' '+(node.getAttribute&&node.getAttribute('title')||'')).toLowerCase();
+  const idcls=((node.id||'')+' '+(node.className||'')).toLowerCase();
+  const calc=text.includes('тооцоолуур')||text.includes('calculator')||idcls.includes('calculator')||idcls.includes('calc');
+  if(!calc)return false;
+
+  let p=node;
+  for(let i=0;i<7&&p;i++,p=p.parentElement){
+    const pt=((p.textContent||'')+' '+(p.id||'')+' '+(p.className||'')).toLowerCase();
+    const loan=pt.includes('зээл')||pt.includes('loan')||pt.includes('debt');
+    const savings=pt.includes('хуримтлал')||pt.includes('saving');
+    const invest=pt.includes('хөрөнгө')||pt.includes('investment')||pt.includes('asset');
+    if(loan)return false;
+    if(savings||invest)return true;
+  }
+  return false;
+}
+
 function mongoLooksLikeWriteAction(el){
   if(!el||!el.closest)return false;
   const hit=el.closest('button,[role="button"],input[type="submit"],.fab,.add-btn,.edit-btn,.delete-btn');
@@ -9552,11 +10364,49 @@ function mongoLooksLikeWriteAction(el){
 }
 document.addEventListener('click',function(ev){
   if(!mongoIsReadOnly())return;
+
+  // 1. Always allow entering the Loan section and using its calculator.
+  if(mongoIsLoanFreeArea(ev.target)) return;
+
+  // 2. Savings + Investment calculators remain Premium.
+  if(mongoIsPremiumCalculatorTrigger(ev.target)){
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    try{showToast(mongoAccessLabels().locked);}catch(e){}
+    showMongoPaywall();
+    return;
+  }
+
+  // 3. Data-changing actions remain Premium in all sections, including Loan.
   if(!mongoLooksLikeWriteAction(ev.target))return;
-  ev.preventDefault();ev.stopImmediatePropagation();
+  ev.preventDefault(); ev.stopImmediatePropagation();
   try{showToast(mongoAccessLabels().locked);}catch(e){}
   showMongoPaywall();
 },true);
+
+document.addEventListener('submit',function(ev){
+  if(!mongoIsReadOnly())return;
+  const form=ev.target;
+  if(!form)return;
+
+  // Loan calculator is the only calculator/form allowed after trial.
+  if(mongoIsLoanFreeArea(form)) return;
+
+  ev.preventDefault();
+  ev.stopImmediatePropagation();
+  try{showToast(mongoAccessLabels().locked);}catch(e){}
+  showMongoPaywall();
+},true);
+
+function refreshVisibleMongoTrialReminderLanguage(){
+  const box=document.getElementById('mongo-trial-reminder');
+  if(!box || box.style.display==='none') return;
+  const st=window.MONGO_BILLING_STATE; if(!st) return;
+  const info=mongoTrialInfo(st); const T=mongoAccessLabels();
+  const a=document.getElementById('mongo-reminder-title'), b=document.getElementById('mongo-reminder-sub');
+  if(a)a.textContent=info.day===5?T.d5:(info.day===6?T.d6:T.d7);
+  if(b)b.textContent=T.rem;
+}
+
 function refreshMongoTrialAccess(){
   try{
     renderMongoTrialCard();
@@ -9686,14 +10536,29 @@ auth.onAuthStateChanged(async user=>{
       rCatSel();rTChips();rBList();rBMonthSel();
       rGoals();rDebts();rInvests();rDash();
       applyFullLang(effectiveLang);
+      try{refreshVisibleMongoTrialReminderLanguage();}catch(e){}
       updateBudgetTotal();
       showToast(L.dataLoaded||'Өгөгдөл ачааллагдлаа ✓');
     }
     // Only now may Cloud Sync read/write financial data for this UID.
     window.MONGO_ACCOUNT_READY_UID=user.uid;
     try{
+      await loadBillingLifecycleForUser(user);
+      renderMongoTrialCard();
+      refreshMongoTrialAccess();
+    }catch(e){console.warn('Billing refresh after auth bootstrap failed',e);}
+    try{
       if(window.CloudDataService && typeof window.CloudDataService.loadFinancialData==='function'){
-        setTimeout(()=>window.CloudDataService.loadFinancialData({silent:true}),80);
+        setTimeout(async ()=>{
+          try{
+            await window.CloudDataService.loadFinancialData({silent:true});
+            // Seed/mirror the resolved state so a different device can read it
+            // even when its Firestore rules expose a different compatible path.
+            if(typeof window.CloudDataService.saveFinancialData==='function'){
+              await window.CloudDataService.saveFinancialData('bootstrap-mirror');
+            }
+          }catch(e){console.warn('Login cloud mirror failed',e);}
+        },120);
       }
     }catch(e){}
   } else {
@@ -9765,7 +10630,7 @@ auth.onAuthStateChanged(async user=>{
 .net-growth-note{font-size:11px;font-weight:950;margin-top:7px;position:relative;z-index:1;line-height:1.35;}
 .net-growth-note.good{color:#08724F}.net-growth-note.bad{color:#B91C1C}.net-growth-note.neutral{color:#6B7280}
 @media(max-width:520px){.pay-rate-row{grid-template-columns:repeat(2,1fr)}.pay-goal-row{grid-template-columns:1fr 78px 28px}.pay-modal-actions{grid-template-columns:1fr}.pay-modal-card{border-radius:28px}}
-@media(prefers-color-scheme:dark){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
+@media(max-width:0px){#goals-panel-pay .pay-card,.pay-modal-card{background:linear-gradient(180deg,rgba(23,35,38,.96),rgba(23,35,38,.86))!important;border-color:rgba(116,215,220,.12)!important}.pay-goal-name,.pay-plan-item{color:#F3F4F6}.pay-rate-btn{background:rgba(255,255,255,.06);color:#74D7DC}.pay-hero{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.08))}}
 
 </style>
 <script>
@@ -9894,10 +10759,47 @@ auth.onAuthStateChanged(async user=>{
   }
   function cloudDocRef(uidOverride){
     const uid=uidOverride||currentUid(); if(!uid) return null;
+    // V43.32: use the app's established user-scoped appState/main path as the
+    // canonical cross-device financial document. This path is shared by every
+    // device that signs in with the same Firebase UID.
+    if(typeof userAppStateRef==='function') return userAppStateRef(uid);
+    return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('appState').doc('main');
+  }
+  function legacyCloudDocRef(uidOverride){
+    const uid=uidOverride||currentUid(); if(!uid) return null;
     return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('financial').doc('main');
+  }
+  function settingsCloudDocRef(uidOverride){
+    const uid=uidOverride||currentUid(); if(!uid) return null;
+    return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('settings').doc('main');
+  }
+  function profileCloudDocRef(uidOverride){
+    const uid=uidOverride||currentUid(); if(!uid) return null;
+    return window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('profile').doc('main');
+  }
+  function rootCloudDocRef(uidOverride){
+    const uid=uidOverride||currentUid(); if(!uid) return null;
+    return window.MONGO_FIREBASE.db.collection('users').doc(uid);
   }
   function safeArray(v){ return Array.isArray(v)?v:[]; }
   function safeObj(v){ return (v && typeof v==='object' && !Array.isArray(v))?v:{}; }
+  // V43.36: Firestore rejects a whole document when any nested field is `undefined`.
+  // Some older/local records legitimately contain optional undefined properties,
+  // so remove them recursively before every cloud write instead of letting one
+  // optional field prevent the user's entire financial state from syncing.
+  function pruneUndefinedDeep(value){
+    if(value===undefined || typeof value==='function') return undefined;
+    if(value===null || typeof value!=='object') return value;
+    if(Array.isArray(value)){
+      return value.map(pruneUndefinedDeep).filter(v=>v!==undefined);
+    }
+    const out={};
+    Object.keys(value).forEach(k=>{
+      const v=pruneUndefinedDeep(value[k]);
+      if(v!==undefined) out[k]=v;
+    });
+    return out;
+  }
   function safeStr(v,max){ return String(v==null?'':v).replace(/[<>]/g,'').slice(0,max||500); }
   function safeNum(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
   function nowIso(){ return new Date().toISOString(); }
@@ -9905,7 +10807,7 @@ auth.onAuthStateChanged(async user=>{
   function opId(){ return 'op_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10); }
   function hasMeaningfulFinancialData(d){
     d=safeObj(d);
-    return safeArray(d.txns).length>0 || safeArray(d.goals).length>0 || safeArray(d.debts).length>0 || safeArray(d.invests).length>0 || Object.keys(safeObj(d.budgets)).length>0;
+    return safeArray(d.txns).length>0 || safeArray(d.goals).length>0 || safeArray(d.debts).length>0 || safeArray(d.invests).length>0 || Object.keys(safeObj(d.budgets)).length>0 || safeNum(d.openingBalance)>0;
   }
   function getLocalUpdatedAt(){
     if(window.MONGO_LOCAL_DATA_UPDATED_AT) return window.MONGO_LOCAL_DATA_UPDATED_AT;
@@ -9965,7 +10867,7 @@ auth.onAuthStateChanged(async user=>{
       .mongo-sync-status{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:7px 10px;border-radius:999px;border:1px solid rgba(73,176,182,.18);background:rgba(255,255,255,.72);color:#6B7280;font-size:10.5px;font-weight:900;box-shadow:0 6px 16px rgba(31,127,134,.07);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
       .mongo-sync-status #mongo-sync-dot{font-size:12px;line-height:1}.mongo-sync-status.synced{color:#08724F;background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.18)}.mongo-sync-status.synced #mongo-sync-dot{color:#16A34A}.mongo-sync-status.pending{color:#B7791F;background:rgba(247,210,74,.13);border-color:rgba(183,121,31,.18)}.mongo-sync-status.pending #mongo-sync-dot{color:#F59E0B}.mongo-sync-status.offline,.mongo-sync-status.error{color:#B91C1C;background:rgba(252,235,235,.78);border-color:rgba(185,28,28,.18)}.mongo-sync-status.offline #mongo-sync-dot,.mongo-sync-status.error #mongo-sync-dot{color:#EF4444}.mongo-sync-status.waiting #mongo-sync-dot{color:#49B0B6}
       @media(max-width:520px){.mongo-sync-status{max-width:118px;padding:7px 8px;font-size:9.5px}.mongo-sync-status #mongo-sync-text{overflow:hidden;text-overflow:ellipsis}}
-      @media(prefers-color-scheme:dark){.mongo-sync-status{background:rgba(255,255,255,.06);border-color:rgba(116,215,220,.14)}}`;
+      @media(max-width:0px){.mongo-sync-status{background:rgba(255,255,255,.06);border-color:rgba(116,215,220,.14)}}`;
     document.head.appendChild(style);
     const bar=document.querySelector('.topbar .lang-bar') || document.querySelector('.topbar');
     if(bar){
@@ -9985,7 +10887,7 @@ auth.onAuthStateChanged(async user=>{
       names:safeObj(c.names),
       icon:safeStr(c.icon,12)||'📌',
       color:/^#[0-9a-fA-F]{6}$/.test(c.color||'')?c.color:'#49B0B6',
-      subs:safeArray(c.subs).map(s=>({key:safeStr(s.key,80)||null,name:safeStr(s.name,120)||null,names:safeObj(s.names),color:/^#[0-9a-fA-F]{6}$/.test(s.color||'')?s.color:(c.color||'#49B0B6')}))
+      subs:safeArray(c.subs).map(s=>({key:safeStr(s.key,80)||null,name:safeStr(s.name,120)||null,names:safeObj(s.names),color:/^#[0-9a-fA-F]{6}$/.test(s.color||'')?s.color:(c.color||'#49B0B6'),investTypeKey:safeStr(s.investTypeKey,24)||null}))
     }));
   }
 
@@ -10009,6 +10911,7 @@ auth.onAuthStateChanged(async user=>{
       debts:safeArray(p.debts).map(sanitizeMoneyItem).slice(-500),
       invests:safeArray(p.invests).map(sanitizeMoneyItem).slice(-500),
       budgets:safeObj(p.budgets),
+      openingBalance:Math.max(0,safeNum(p.openingBalance)),
       lang:safeStr(p.lang||'mn',5),
       budgetMonth:Math.min(12,Math.max(1,parseInt(p.budgetMonth||new Date().getMonth()+1,10)||1)),
       budgetYear:Math.min(2100,Math.max(2020,parseInt(p.budgetYear||new Date().getFullYear(),10)||new Date().getFullYear())),
@@ -10032,6 +10935,7 @@ auth.onAuthStateChanged(async user=>{
       debts:safeArray(typeof debts!=='undefined'?debts:[]),
       invests:safeArray(typeof invests!=='undefined'?invests:[]),
       budgets:safeObj(typeof budgets!=='undefined'?budgets:{}),
+      openingBalance:typeof openingBalance!=='undefined'?Math.max(0,safeNum(openingBalance)):0,
       lang:typeof lang!=='undefined'?lang:'mn',
       budgetMonth:typeof budgetMonth!=='undefined'?budgetMonth:(new Date().getMonth()+1),
       budgetYear:typeof budgetYear!=='undefined'?budgetYear:new Date().getFullYear(),
@@ -10050,14 +10954,14 @@ auth.onAuthStateChanged(async user=>{
   function fingerprint(data){ try{return JSON.stringify(data).slice(0,1200000);}catch(e){return String(Date.now());} }
 
   function resetDefaultFinanceShell(){
-    if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof lockedCats!=='undefined') lockedCats=new Set();
+    if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0; if(typeof lockedCats!=='undefined') lockedCats=new Set();
     if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
     if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
     if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
     if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
   }
   function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
-  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); } }); } else if(sv.name){ current.push({name:sv.name,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
+  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ if(/^#[0-9a-fA-F]{6}$/.test(sv.color||''))ex.color=sv.color; if(sv.icon)ex.icon=sv.icon; safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); if(/^#[0-9a-fA-F]{6}$/.test(ms.color||''))exSub.color=ms.color; if(ms.investTypeKey)exSub.investTypeKey=ms.investTypeKey; } }); } else if(sv.name){ current.push({name:sv.name,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
 
   function applyFinancialState(raw, source){
     if(!raw || typeof raw!=='object') return false;
@@ -10066,11 +10970,12 @@ auth.onAuthStateChanged(async user=>{
       resetDefaultFinanceShell();
       if(typeof txns!=='undefined') txns=safeArray(data.txns);
       if(typeof goals!=='undefined') goals=safeArray(data.goals).map(g=>Object.assign({},g,{history:g.history||[]}));
-      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets); if(typeof ensureUnifiedObjectColors==='function') ensureUnifiedObjectColors();
+      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets); if(typeof openingBalance!=='undefined') openingBalance=Math.max(0,safeNum(data.openingBalance)); if(typeof ensureUnifiedObjectColors==='function') ensureUnifiedObjectColors();
       if(typeof lang!=='undefined' && data.lang){lang=data.lang; L=LANGS[lang]||LANGS.mn; CS=CURR[lang]||'₮';}
       if(typeof budgetMonth!=='undefined' && data.budgetMonth) budgetMonth=data.budgetMonth; if(typeof budgetYear!=='undefined' && data.budgetYear) budgetYear=data.budgetYear; if(typeof budgetType!=='undefined' && data.budgetType) budgetType=data.budgetType;
       if(typeof lockedCats!=='undefined') lockedCats=new Set(safeArray(data.lockedCats)); if(typeof paySettings!=='undefined') paySettings=Object.assign({enabled:true,rate:20,alloc:{}},safeObj(data.paySettings)); window.netWorthSnapshots=safeArray(data.netWorthSnapshots);
       if(typeof incCats!=='undefined' && data.incCatsCustom) incCats=incCats.concat(safeArray(data.incCatsCustom)); if(typeof expCats!=='undefined' && data.expCatsCustom) expCats=expCats.concat(safeArray(data.expCatsCustom)); if(typeof bCatsExp!=='undefined') mergeBudgetCats(data.bCatsExpSave,bCatsExp); if(typeof bCatsInc!=='undefined') mergeBudgetCats(data.bCatsIncSave,bCatsInc);
+      if(typeof syncPrimaryCategoryColorsFromBudget==='function') syncPrimaryCategoryColorsFromBudget();
       if(typeof normalizeDefaultCatColors==='function') normalizeDefaultCatColors();
       if(data.clientUpdatedAt) markLocalUpdated(data.clientUpdatedAt);
       try{localStorage.setItem(getDBKey(),JSON.stringify(data));}catch(e){}
@@ -10084,7 +10989,7 @@ auth.onAuthStateChanged(async user=>{
       document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active')); const activeBtn=document.getElementById('btype-'+(typeof budgetType!=='undefined'?budgetType:'expense')); if(activeBtn)activeBtn.classList.add('active');
       if(typeof rTIrow==='function')rTIrow(); if(typeof rTCrow==='function')rTCrow(); if(typeof rInvSel==='function'){rInvSel('t-inv-type');rInvSel('i-type');} if(typeof rCatSel==='function')rCatSel(); if(typeof rTChips==='function')rTChips();
       if(typeof rBList==='function')rBList(); if(typeof rBMonthSel==='function')rBMonthSel(); if(typeof rGoals==='function')rGoals(); if(typeof rDebts==='function')rDebts(); if(typeof rInvests==='function')rInvests(); if(typeof rDash==='function')rDash();
-      if(typeof applyFullLang==='function')applyFullLang(lang); else if(typeof applyLang==='function')applyLang(); if(typeof updateBudgetTotal==='function')updateBudgetTotal(); if(typeof rProfile==='function')rProfile(); ensureSyncStatusUI(); updateSyncStatus(syncStatus);
+      if(typeof applyFullLang==='function')applyFullLang(lang); else if(typeof applyLang==='function')applyLang(); if(typeof renderOpeningBalance==='function')renderOpeningBalance(); if(typeof updateBudgetTotal==='function')updateBudgetTotal(); if(typeof rProfile==='function')rProfile(); ensureSyncStatusUI(); updateSyncStatus(syncStatus);
     }catch(e){ updateSyncStatus('error'); }
   }
 
@@ -10104,14 +11009,18 @@ auth.onAuthStateChanged(async user=>{
     const uid=expectedUid||currentUid();
     if(!uid || !accountReadyForCloud() || currentUid()!==uid) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
-    const clean=sanitizeFinancialData(data);
+    const clean=pruneUndefinedDeep(sanitizeFinancialData(data));
     if(!clean.clientUpdatedAt) clean.clientUpdatedAt=markLocalUpdated();
     const fp=fingerprint(clean);
-    if(fp===lastCloudFingerprint && reason!=='force') return {skipped:true};
-    // Re-check immediately before the write. This prevents an auth switch from
-    // redirecting an old user's pending state into a new user's document.
+    // V43.36: a matching fingerprint only means the DATA is unchanged; it does
+    // not prove every Firestore mirror path exists. Login/bootstrap/migration
+    // writes must still run so users such as older accounts get financial/main
+    // and the other compatible mirrors created automatically.
+    const mirrorReasons=new Set(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror']);
+    if(fp===lastCloudFingerprint && !mirrorReasons.has(reason||'')) return {skipped:true};
     if(!accountReadyForCloud() || currentUid()!==uid || window._authUid!==uid) throw new Error('AUTH_SWITCHED');
-    await ref.set({
+
+    const payload={
       ownerUid:uid,
       version:CLOUD_FINANCIAL_VERSION,
       updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
@@ -10120,11 +11029,73 @@ auth.onAuthStateChanged(async user=>{
       lastOperationId:opId(),
       data:clean,
       backup:{updatedAtClient:nowIso(),data:clean}
-    },{merge:true});
-    lastCloudFingerprint=fp; window.MONGO_LAST_CLOUD_SAVE_AT=Date.now();
-    saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid});
-    saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid});
-    return {ok:true};
+    };
+
+    // V43.34: save the same user-scoped state to every already-established
+    // Firestore surface that this deployment is allowed to write. Some older
+    // Firebase rulesets permit profile/settings but not a newly-added appState
+    // subcollection. Mirroring prevents a second device from appearing empty.
+    const attempts=[];
+    const savedPaths=[];
+
+    const primaryRef=cloudDocRef(uid);
+    if(primaryRef) attempts.push(
+      primaryRef.set(payload,{merge:true})
+        .then(()=>savedPaths.push('appState'))
+        .catch(e=>console.warn('appState mirror write skipped:',e))
+    );
+
+    const legacyRef=legacyCloudDocRef(uid);
+    if(legacyRef) attempts.push(
+      legacyRef.set(payload,{merge:true})
+        .then(()=>savedPaths.push('financial'))
+        .catch(e=>{ window.MONGO_LAST_FINANCIAL_WRITE_ERROR=(e&&e.message)||String(e); console.warn('financial mirror write skipped:',e); })
+    );
+
+    const settingsRef=settingsCloudDocRef(uid);
+    if(settingsRef) attempts.push(
+      settingsRef.set({
+        financialState:payload,
+        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        financialStateUpdatedAtClient:payload.updatedAtClient
+      },{merge:true})
+        .then(()=>savedPaths.push('settings'))
+        .catch(e=>console.warn('settings mirror write skipped:',e))
+    );
+
+    const profileRef=profileCloudDocRef(uid);
+    if(profileRef) attempts.push(
+      profileRef.set({
+        financialState:payload,
+        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        financialStateUpdatedAtClient:payload.updatedAtClient
+      },{merge:true})
+        .then(()=>savedPaths.push('profile'))
+        .catch(e=>console.warn('profile mirror write skipped:',e))
+    );
+
+    const rootRef=rootCloudDocRef(uid);
+    if(rootRef) attempts.push(
+      rootRef.set({
+        uid:uid,
+        financialState:payload,
+        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        financialStateUpdatedAtClient:payload.updatedAtClient
+      },{merge:true})
+        .then(()=>savedPaths.push('user-root'))
+        .catch(e=>console.warn('user-root mirror write skipped:',e))
+    );
+
+    await Promise.all(attempts);
+    if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
+
+    lastCloudFingerprint=fp;
+    window.MONGO_LAST_CLOUD_SAVE_AT=Date.now();
+    window.MONGO_LAST_CLOUD_PATH=savedPaths.join('+');
+    if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
+    saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    return {ok:true,paths:savedPaths};
   }
 
   async function processQueue(){
@@ -10184,19 +11155,80 @@ auth.onAuthStateChanged(async user=>{
     try{
       updateSyncStatus(navigator.onLine?'waiting':'offline');
       if(!navigator.onLine){ const snap=getSnapshot(); if(snap&&snap.data) applyFinancialState(snap.data,'local-snapshot'); return false; }
-      const snap=await ref.get();
-      if(snap.exists && snap.data() && snap.data().data){
-        const raw=snap.data();
+
+      // V43.32: canonical appState/main first. If an older build stored the
+      // user's data in financial/main, load it once and migrate it automatically.
+      let raw=null;
+      let sourceRef='none';
+      // Read every compatible location. Pick the newest meaningful copy so a
+      // device never stays empty merely because one Firestore path is blocked
+      // by an older ruleset.
+      const candidates=[];
+      try{
+        const snap=await ref.get();
+        if(snap.exists && snap.data() && snap.data().data) candidates.push({raw:snap.data(),source:'appState'});
+      }catch(primaryReadErr){ console.warn('Primary appState read skipped:',primaryReadErr); }
+      const legacyRef=legacyCloudDocRef(sessionUid);
+      if(legacyRef){
+        try{
+          const legacySnap=await legacyRef.get();
+          if(legacySnap.exists && legacySnap.data() && legacySnap.data().data) candidates.push({raw:legacySnap.data(),source:'legacy-financial'});
+        }catch(legacyErr){ console.warn('Legacy cloud read skipped:',legacyErr); }
+      }
+      const settingsRef=settingsCloudDocRef(sessionUid);
+      if(settingsRef){
+        try{
+          const settingsSnap=await settingsRef.get();
+          const sd=settingsSnap.exists?settingsSnap.data():null;
+          if(sd && sd.financialState && sd.financialState.data) candidates.push({raw:sd.financialState,source:'settings-fallback'});
+        }catch(settingsErr){ console.warn('Settings cloud read skipped:',settingsErr); }
+      }
+      const profileRef=profileCloudDocRef(sessionUid);
+      if(profileRef){
+        try{
+          const profileSnap=await profileRef.get();
+          const pd=profileSnap.exists?profileSnap.data():null;
+          if(pd && pd.financialState && pd.financialState.data) candidates.push({raw:pd.financialState,source:'profile-fallback'});
+        }catch(profileErr){ console.warn('Profile cloud read skipped:',profileErr); }
+      }
+      const rootRef=rootCloudDocRef(sessionUid);
+      if(rootRef){
+        try{
+          const rootSnap=await rootRef.get();
+          const rd=rootSnap.exists?rootSnap.data():null;
+          if(rd && rd.financialState && rd.financialState.data) candidates.push({raw:rd.financialState,source:'user-root-fallback'});
+        }catch(rootErr){ console.warn('User-root cloud read skipped:',rootErr); }
+      }
+      const meaningful=candidates.filter(c=>hasMeaningfulFinancialData(c.raw&&c.raw.data));
+      const pool=meaningful.length?meaningful:candidates;
+      pool.sort((a,b)=>{
+        const ta=Date.parse((a.raw&&a.raw.updatedAtClient)||(a.raw&&a.raw.data&&a.raw.data.clientUpdatedAt)||0)||0;
+        const tb=Date.parse((b.raw&&b.raw.updatedAtClient)||(b.raw&&b.raw.data&&b.raw.data.clientUpdatedAt)||0)||0;
+        return tb-ta;
+      });
+      if(pool.length){ raw=pool[0].raw; sourceRef=pool[0].source; }
+
+      if(raw && raw.data){
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
         const chosen=chooseCloudOrLocal(raw.data,raw.updatedAtClient);
         const ok=applyFinancialState(chosen.data,chosen.source);
-        if(chosen.source==='local-newer' || chosen.source==='local-migrate') enqueueSave(chosen.source==='local-migrate'?'first-cloud-migration':'conflict-local-newer',chosen.data);
+
+        // Migrate legacy storage to appState/main so all future devices read the
+        // same canonical document. Also preserve the existing local-newer logic.
+        if(sourceRef==='legacy-financial' || sourceRef==='settings-fallback' || sourceRef==='profile-fallback' || sourceRef==='user-root-fallback'){
+          // Best-effort migration to the preferred path. writeCloud itself will
+          // safely fall back again if that path is not permitted.
+          try{ await writeCloud(chosen.data,'legacy-path-migration',sessionUid); }catch(e){}
+        }else if(chosen.source==='local-newer' || chosen.source==='local-migrate'){
+          enqueueSave(chosen.source==='local-migrate'?'first-cloud-migration':'conflict-local-newer',chosen.data);
+        }
         await processQueue();
         if(ok && !(options&&options.silent) && typeof showToast==='function') showToast((L&&L.dataLoaded)||'Cloud өгөгдөл ачааллагдлаа ✓');
         updateSyncStatus(getQueue().length?'pending':'synced');
         return ok;
       }
+
       const local=collectFinancialState();
       if(hasMeaningfulFinancialData(local)){
         if(!local.clientUpdatedAt) local.clientUpdatedAt=markLocalUpdated();
@@ -10206,7 +11238,11 @@ auth.onAuthStateChanged(async user=>{
         return true;
       }
       updateSyncStatus('synced'); return false;
-    }catch(e){ const ss=getSnapshot(); if(ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot'); updateSyncStatus('error'); scheduleRetry(BASE_RETRY_MS); return false; }
+    }catch(e){
+      console.warn('Cross-device cloud load failed:',e);
+      const ss=getSnapshot(); if(ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot');
+      updateSyncStatus('error'); scheduleRetry(BASE_RETRY_MS); return false;
+    }
   }
 
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
@@ -10219,6 +11255,16 @@ auth.onAuthStateChanged(async user=>{
     const uid=currentUid();
     const ref=cloudDocRef(uid);
     if(ref) await ref.delete();
+    // Also remove the legacy V43 financial/main document so a later login can
+    // never resurrect data that the user explicitly cleared.
+    const legacyRef=legacyCloudDocRef(uid);
+    if(legacyRef){ try{ await legacyRef.delete(); }catch(e){ console.warn('Legacy cloud clear skipped',e); } }
+    const settingsRef=settingsCloudDocRef(uid);
+    if(settingsRef){ try{ await settingsRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('Settings cloud clear skipped',e); } }
+    const profileRef=profileCloudDocRef(uid);
+    if(profileRef){ try{ await profileRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('Profile cloud clear skipped',e); } }
+    const rootRef=rootCloudDocRef(uid);
+    if(rootRef){ try{ await rootRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('User-root cloud clear skipped',e); } }
     try{
       localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
@@ -10241,7 +11287,16 @@ auth.onAuthStateChanged(async user=>{
     snapshot:{get:getSnapshot,save:saveSnapshot},
     status:updateSyncStatus,
     validate:sanitizeFinancialData,
-    clearFinancialData:clearCloudFinancialData
+    clearFinancialData:clearCloudFinancialData,
+    debug:()=>({
+      uid:currentUid(),
+      accountReady:accountReadyForCloud(),
+      status:syncStatus,
+      lastCloudPath:window.MONGO_LAST_CLOUD_PATH||'',
+      lastCloudSaveAt:window.MONGO_LAST_CLOUD_SAVE_AT||null,
+      financialWriteError:window.MONGO_LAST_FINANCIAL_WRITE_ERROR||'',
+      queue:getQueue().length
+    })
   };
 
   ensureSyncStatusUI();
@@ -10783,15 +11838,33 @@ document.addEventListener('DOMContentLoaded',()=>{
 <div id="mongo-paywall" role="dialog" aria-modal="true">
   <div class="mongo-paywall-sheet">
     <div class="mongo-paywall-icon">💎</div>
-    <h2 id="mongo-paywall-title">Туршилтын хугацаа дууслаа</h2>
-    <div class="mongo-paywall-desc" id="mongo-paywall-desc">Таны өгөгдөл аюулгүй хадгалагдсан. Möngö-г үргэлжлүүлэн ашиглах эрхээ сонгоно уу.</div>
+    <h2 id="mongo-paywall-title"></h2>
+    <div class="mongo-paywall-desc" id="mongo-paywall-desc"></div>
     <div class="mongo-plan-grid">
-      <button class="mongo-plan" type="button" onclick="selectMongoPlan('monthly')"><strong id="mongo-monthly">Сар бүр</strong><span id="mongo-monthly-sub">Уян хатан сонголт</span></button>
-      <button class="mongo-plan recommended" type="button" onclick="selectMongoPlan('yearly')"><strong id="mongo-yearly">Жилээр</strong><span id="mongo-yearly-sub">Хамгийн үнэ цэнтэй</span></button>
+      <button class="mongo-plan" type="button" onclick="selectMongoPlan('monthly')">
+        <strong id="mongo-monthly">Сар бүр</strong>
+        <b class="mongo-plan-price" id="mongo-monthly-price">₮9,900 / сар</b>
+        <span id="mongo-monthly-sub">Уян хатан сонголт</span>
+      </button>
+      <button class="mongo-plan recommended" type="button" onclick="selectMongoPlan('yearly')">
+        <em class="mongo-plan-best" id="mongo-yearly-best">Хамгийн ашигтай</em>
+        <strong id="mongo-yearly">Жилээр</strong>
+        <b class="mongo-plan-price" id="mongo-yearly-price">₮89,900 / жил</b>
+        <span id="mongo-yearly-sub">₮28,900 хэмнэнэ</span>
+      </button>
     </div>
-    <button class="mongo-paywall-primary" type="button" onclick="continueMongoSubscription()" id="mongo-continue-sub">Үргэлжлүүлэх</button>
-    <button class="mongo-paywall-later" type="button" onclick="enterMongoReadOnly()" id="mongo-later">Дараа шийдэх</button>
-    <div class="mongo-readonly-note" id="mongo-readonly-note">“Дараа шийдэх” гэвэл мэдээллээ харах боломжтой хэвээр. Шинээр нэмэх, засах үйлдэл subscription шаарддаг.</div>
+    <button class="mongo-paywall-primary" type="button" onclick="continueMongoSubscription()" id="mongo-continue-sub"></button>
+    <button class="mongo-paywall-later" type="button" onclick="enterMongoReadOnly()" id="mongo-later"></button>
+    <div class="mongo-readonly-note" id="mongo-readonly-note"></div>
+  </div>
+</div>
+
+
+<div id="mongo-calc-picker" class="mongo-calc-picker" role="dialog" aria-modal="true">
+  <div class="mongo-calc-picker-sheet">
+    <div class="mongo-calc-picker-title" id="mongo-calc-picker-title"></div>
+    <div id="mongo-calc-picker-options"></div>
+    <button type="button" class="mongo-calc-picker-close" id="mongo-calc-picker-close" onclick="closeMongoCalcPicker()"></button>
   </div>
 </div>
 
@@ -10878,6 +11951,279 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
 
   document.addEventListener('DOMContentLoaded',()=>{markPremiumTabs();setTimeout(()=>{markPremiumTabs();try{renderMongoTrialCard();refreshMongoTrialAccess();}catch(e){}},550);});
   window.addEventListener('pageshow',()=>setTimeout(markPremiumTabs,100));
+})();
+</script>
+
+<script id="mongo-v4318-lock-bootstrap">
+(function(){
+  function enforce(){
+    try{
+      if(typeof refreshMongoTrialAccess==='function') refreshMongoTrialAccess();
+      if(typeof applyMongoAccessMode==='function') applyMongoAccessMode();
+    }catch(e){}
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(enforce,250));
+  }else{
+    setTimeout(enforce,250);
+  }
+
+  window.addEventListener('pageshow',()=>setTimeout(enforce,150));
+  window.addEventListener('focus',()=>setTimeout(enforce,100));
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(enforce,100); });
+
+  // Billing/auth can finish after page render; keep re-checking briefly after refresh.
+  let n=0;
+  const timer=setInterval(()=>{
+    enforce();
+    n++;
+    if(n>=20) clearInterval(timer);   // ~10 seconds only
+  },500);
+})();
+</script>
+
+
+<script id="mongo-v4319-loan-nav-tag">
+(function(){
+  function tagLoanNav(){
+    try{
+      const candidates=[...document.querySelectorAll('button,[role="button"],a,.nav-item,.menu-item')];
+      candidates.forEach(el=>{
+        const t=(el.textContent||'').trim().toLowerCase();
+        if(t==='зээл'||t==='loan'||t==='loans'||t==='debt'){
+          el.setAttribute('data-mongo-free-after-trial','loan-nav');
+        }
+      });
+    }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',tagLoanNav);
+  else tagLoanNav();
+  window.addEventListener('pageshow',tagLoanNav);
+  setTimeout(tagLoanNav,600);
+})();
+</script>
+
+
+<script id="mongo-v4320-localized-calculator-picker">
+(function(){
+  let activeSelect=null;
+  const pickerText={
+    mn:{choose:'Сонгох',close:'Хаах'},en:{choose:'Choose',close:'Close'},zh:{choose:'选择',close:'关闭'},
+    ja:{choose:'選択',close:'閉じる'},ko:{choose:'선택',close:'닫기'},ru:{choose:'Выбрать',close:'Закрыть'},de:{choose:'Auswählen',close:'Schließen'}
+  };
+  function PT(){const c=(typeof lang!=='undefined'&&lang)||'mn';return pickerText[c]||pickerText.en;}
+  window.closeMongoCalcPicker=function(){
+    document.getElementById('mongo-calc-picker')?.classList.remove('show');
+    activeSelect=null;
+  };
+  window.openMongoCalcPicker=function(sel){
+    if(!sel)return;
+    activeSelect=sel;
+    const box=document.getElementById('mongo-calc-picker');
+    const title=document.getElementById('mongo-calc-picker-title');
+    const opts=document.getElementById('mongo-calc-picker-options');
+    const close=document.getElementById('mongo-calc-picker-close');
+    if(!box||!opts)return;
+    const label=sel.closest('div')?.querySelector('.slbl');
+    title.textContent=(label&&label.textContent.trim())||PT().choose;
+    close.textContent=PT().close;
+    opts.innerHTML='';
+    [...sel.options].forEach(opt=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='mongo-calc-picker-option'+(opt.value===sel.value?' active':'');
+      b.textContent=opt.textContent;
+      b.onclick=()=>{
+        sel.value=opt.value;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        closeMongoCalcPicker();
+      };
+      opts.appendChild(b);
+    });
+    box.classList.add('show');
+  };
+  function wire(){
+    document.querySelectorAll(
+      '#debts-panel-calc select,#invest-panel-calc select,#goals-panel-calc select'
+    ).forEach(sel=>{
+      if(sel.dataset.mongoLocalizedPicker==='1')return;
+      sel.dataset.mongoLocalizedPicker='1';
+      sel.classList.add('calc-native-select-localized');
+      sel.addEventListener('pointerdown',ev=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        openMongoCalcPicker(sel);
+      },true);
+      sel.addEventListener('keydown',ev=>{
+        if(ev.key==='Enter'||ev.key===' '||ev.key==='ArrowDown'){
+          ev.preventDefault(); openMongoCalcPicker(sel);
+        }
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded',wire);
+  window.addEventListener('pageshow',()=>setTimeout(wire,100));
+  const mo=new MutationObserver(()=>wire());
+  document.addEventListener('DOMContentLoaded',()=>mo.observe(document.body,{childList:true,subtree:true}));
+  document.getElementById('mongo-calc-picker')?.addEventListener('click',e=>{if(e.target.id==='mongo-calc-picker')closeMongoCalcPicker();});
+})();
+</script>
+
+
+<script id="mongo-v4320-lang-sync">
+(function(){
+  function sync(){try{document.documentElement.lang=(typeof lang!=='undefined'&&lang)||'mn';}catch(e){}}
+  document.addEventListener('DOMContentLoaded',sync);
+  window.addEventListener('pageshow',sync);
+  setTimeout(sync,300);
+})();
+</script>
+
+
+<script id="mongo-v4322-color-lang-init">
+(function(){
+  function run(){try{applyMongoColorTexts();}catch(e){}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);
+  else run();
+  window.addEventListener('pageshow',run);
+})();
+</script>
+
+
+<script id="mongo-v4323-color-observer">
+(function(){
+  let timer=null;
+  function refreshColorLabels(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{try{applyMongoColorTexts();}catch(e){}},30);
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',refreshColorLabels);
+  }else refreshColorLabels();
+
+  const mo=new MutationObserver(refreshColorLabels);
+  window.addEventListener('DOMContentLoaded',()=>{
+    try{mo.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+  });
+
+  document.addEventListener('click',e=>{
+    if(e.target.closest('[data-lang],.lang-option,.language-option,#langBtn,#langMenu')) refreshColorLabels();
+  },true);
+  window.addEventListener('pageshow',refreshColorLabels);
+})();
+</script>
+
+
+
+<script id="mongo-v437-guaranteed-financial-sync">
+/* Möngö V43.37 — Guaranteed cross-device financial bootstrap.
+   This runs independently of the older account-ready/queue timing so an
+   authenticated user's users/{uid}/financial/main document is always seeded
+   from meaningful local data, or meaningful cloud data is restored locally. */
+(function(){
+  if(window.MONGO_V437_GUARANTEED_SYNC) return;
+  window.MONGO_V437_GUARANTEED_SYNC=true;
+
+  function meaningful(d){
+    d=d&&typeof d==='object'?d:{};
+    const a=k=>Array.isArray(d[k])?d[k].length:0;
+    return a('txns')||a('goals')||a('debts')||a('invests')||(d.budgets&&typeof d.budgets==='object'&&Object.keys(d.budgets).length);
+  }
+  function clean(v){
+    try{return JSON.parse(JSON.stringify(v));}catch(e){return v;}
+  }
+  function ts(v){
+    const n=Date.parse(v||''); return Number.isFinite(n)?n:0;
+  }
+  function localState(){
+    try{
+      if(window.CloudDataService&&typeof window.CloudDataService.collectFinancialState==='function')
+        return clean(window.CloudDataService.collectFinancialState());
+    }catch(e){}
+    return null;
+  }
+  function applyCloud(d){
+    try{
+      if(window.CloudDataService&&typeof window.CloudDataService.applyFinancialState==='function')
+        return window.CloudDataService.applyFinancialState(clean(d),'v43.37-financial-direct');
+    }catch(e){console.warn('V43.37 direct cloud apply failed',e);}
+    return false;
+  }
+  async function syncOnce(user){
+    if(!user || !window.MONGO_FIREBASE || !window.MONGO_FIREBASE.db) return false;
+    const uid=user.uid;
+    if(!uid || !window.MONGO_FIREBASE.auth || !window.MONGO_FIREBASE.auth.currentUser || window.MONGO_FIREBASE.auth.currentUser.uid!==uid) return false;
+    const ref=window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('financial').doc('main');
+    let snap=null, raw=null, cloudData=null;
+    try{ snap=await ref.get(); raw=snap.exists?snap.data():null; cloudData=raw&&raw.data?raw.data:null; }
+    catch(e){ window.MONGO_V437_LAST_ERROR='read: '+((e&&e.message)||e); console.warn('V43.37 financial read failed',e); return false; }
+
+    const local=localState();
+    const cloudHas=meaningful(cloudData), localHas=meaningful(local);
+    if(cloudHas){
+      const cloudTime=ts((raw&&raw.updatedAtClient)||(cloudData&&cloudData.clientUpdatedAt));
+      const localTime=ts(local&&local.clientUpdatedAt);
+      if(!localHas || cloudTime>=localTime){
+        applyCloud(cloudData);
+        window.MONGO_V437_LAST_ACTION='loaded-financial';
+        return true;
+      }
+    }
+    if(localHas){
+      const state=clean(local);
+      if(!state.clientUpdatedAt) state.clientUpdatedAt=new Date().toISOString();
+      const payload={
+        ownerUid:uid,
+        version:'v43.37-guaranteed-financial',
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAtClient:new Date().toISOString(),
+        clientId:'v437-'+Math.random().toString(36).slice(2,10),
+        data:state,
+        backup:{updatedAtClient:new Date().toISOString(),data:state}
+      };
+      try{
+        await ref.set(payload,{merge:true});
+        // Keep root fallback too, so even a future path migration has a copy.
+        try{await window.MONGO_FIREBASE.db.collection('users').doc(uid).set({uid:uid,financialState:payload,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:payload.updatedAtClient},{merge:true});}catch(_e){}
+        window.MONGO_V437_LAST_ACTION='saved-financial';
+        window.MONGO_V437_LAST_ERROR='';
+        return true;
+      }catch(e){
+        window.MONGO_V437_LAST_ERROR='write: '+((e&&e.message)||e);
+        console.warn('V43.37 financial write failed',e);
+        return false;
+      }
+    }
+    window.MONGO_V437_LAST_ACTION='no-meaningful-data-yet';
+    return false;
+  }
+
+  function start(user){
+    if(!user) return;
+    let tries=0;
+    const tick=async()=>{
+      if(!window.MONGO_FIREBASE||!window.MONGO_FIREBASE.auth||!window.MONGO_FIREBASE.auth.currentUser||window.MONGO_FIREBASE.auth.currentUser.uid!==user.uid) return;
+      tries++;
+      const ok=await syncOnce(user);
+      if(!ok && tries<30) setTimeout(tick,700);
+    };
+    setTimeout(tick,350);
+  }
+
+  const boot=()=>{
+    if(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth){
+      window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{ if(user) start(user); });
+      if(window.MONGO_FIREBASE.auth.currentUser) start(window.MONGO_FIREBASE.auth.currentUser);
+      return true;
+    }
+    return false;
+  };
+  if(!boot()){
+    let n=0; const iv=setInterval(()=>{ if(boot()||++n>80) clearInterval(iv); },100);
+  }
+  window.addEventListener('online',()=>{ try{ const u=window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser; if(u) start(u); }catch(e){} });
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ try{ const u=window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser; if(u) start(u); }catch(e){} } });
 })();
 </script>
 </body>
