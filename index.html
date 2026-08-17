@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
 <!-- Möngö V43.37: Guaranteed financial sync bootstrap — independently reads/writes users/{uid}/financial/main after auth, bypassing timing/account-ready races. -->
 <!-- Möngö V43.35: Root-document cloud fallback + immutable earliest trial start + forced consistent light UI across devices. -->
@@ -1929,7 +1930,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 .opening-balance-stat{padding:10px 11px;border-radius:18px;background:rgba(73,176,182,.065);border:1px solid rgba(73,176,182,.11)}
 .opening-balance-stat .k{font-size:10px;color:#6B7280;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
 .opening-balance-stat .v{font-size:14px;color:#374151;font-weight:1000;margin-top:4px;letter-spacing:-.03em}
-.opening-balance-stat.current{grid-column:1/-1;background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.10))}
+.opening-balance-stat.current{background:linear-gradient(135deg,rgba(73,176,182,.13),rgba(247,210,74,.10))}
 .opening-balance-stat.current .v{font-size:19px;color:#1F7F86}
 .opening-balance-note{margin-top:10px;padding:9px 11px;border-radius:16px;background:rgba(73,176,182,.07);color:#2C7F85;font-size:11px;font-weight:800;line-height:1.45}
 @media(max-width:520px){.opening-balance-form{grid-template-columns:1fr}.opening-balance-save{width:100%}.opening-balance-grid{grid-template-columns:1fr 1fr}}
