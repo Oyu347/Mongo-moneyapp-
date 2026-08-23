@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.45: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
+<!-- Möngö V43.46: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
@@ -66,7 +66,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 <html lang="mn">
 <head>
 <style id="mongo-force-light-v4335">html{color-scheme:light!important;} body{color-scheme:light!important;}
-/* V43.45 */
+/* V43.46 */
 .account-group-title{font-size:11px;font-weight:900;letter-spacing:.04em;color:var(--text2);margin:12px 2px 6px}
 .account-row{cursor:pointer}
 .account-row:hover{background:var(--bg2)}
@@ -81,7 +81,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 @media(max-width:600px){.transfer-purpose-row{grid-template-columns:1fr}.account-add-grid{grid-template-columns:1fr!important}}
 
 
-/* V43.45 account filters */
+/* V43.46 account filters */
 .txn-account-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px}
 .txn-account-filter>select{min-width:180px;flex:1}
 .txn-period-filter{display:flex;gap:5px;flex-wrap:wrap}
@@ -96,7 +96,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 @media(max-width:520px){.txn-account-summary{grid-template-columns:1fr 1fr}.txn-account-filter>select{width:100%;flex-basis:100%}}
 
 
-/* V43.45 Loan Flow */
+/* V43.46 Loan Flow */
 .loan-pay-btn{border:0;border-radius:10px;padding:7px 12px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:#fff;font-size:11px;font-weight:850;cursor:pointer}
 .loan-history{margin-top:9px;border-top:1px solid var(--border);padding-top:7px}
 .loan-history-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px}
@@ -117,7 +117,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.45 Accounts + Transfer Flow</title>
+<title>Möngö — V43.46 Accounts + Transfer Flow</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -139,7 +139,7 @@ body{visibility:visible;}
   :root{--bg:#1e1a17;--bg2:#272320;--bg3:#2f2b27;--text:#ede8e2;--text2:#9a9088;--text3:#6a6058;--border:rgba(255,220,180,0.1);--border2:rgba(255,220,180,0.18);--brand-light:#0d3628;--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow:0 4px 20px rgba(0,0,0,0.35);--shadow-lg:0 8px 32px rgba(0,0,0,0.4);}
 }
 
-/* V43.45 Accounts + Transfer Flow */
+/* V43.46 Accounts + Transfer Flow */
 .account-list{display:flex;flex-direction:column;gap:7px;margin:10px 0}.account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)}.account-main{display:flex;align-items:center;gap:9px;min-width:0}.account-icon{font-size:20px}.account-name{font-weight:750}.account-meta{font-size:10px;color:var(--text2);margin-top:2px}.account-bal{font-weight:800;white-space:nowrap}.account-actions{display:flex;gap:5px}.account-add-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.transfer-fields{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.transfer-fields.show{display:grid}.txn-account-row{margin-bottom:9px}
 .tt-t{background:#E8F2FF!important;color:#2F6FB5!important;font-weight:800!important;box-shadow:0 8px 18px rgba(47,111,181,.14)!important}
 #transaction-entry-card.txn-mode-transfer{background:linear-gradient(180deg,rgba(246,250,255,.97),rgba(232,242,255,.72))!important;border-color:rgba(74,144,226,.28)!important;box-shadow:0 14px 34px rgba(47,111,181,.10)!important}
@@ -2963,23 +2963,23 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="loan-create-extra">
       <div class="form-row">
         <div style="flex:1;min-width:135px;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Төлөлтийн төрөл</span>
-          <select class="fi" id="d-pay-type"><option value="annuity">Тэнцүү төлөлт</option><option value="diff">Үндсэн төлбөр тэнцүү</option></select>
+          <span class="slbl" id="lf-pay-type-label">Төлөлтийн төрөл</span>
+          <select class="fi" id="d-pay-type"><option value="annuity" id="lf-pay-annuity">Тэнцүү төлөлт</option><option value="diff" id="lf-pay-diff">Үндсэн төлбөр тэнцүү</option></select>
         </div>
         <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Хугацаа / сар</span><input type="number" class="fi" id="d-term-months" min="1" placeholder="240">
+          <span class="slbl" id="lf-term-label">Хугацаа / сар</span><input type="number" class="fi" id="d-term-months" min="1" placeholder="240">
         </div>
         <div style="flex:1;min-width:125px;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Эхлэх огноо</span><input type="date" class="fi" id="d-start-date">
+          <span class="slbl" id="lf-start-label">Эхлэх огноо</span><input type="date" class="fi" id="d-start-date">
         </div>
       </div>
       <div class="form-row">
         <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl">Зээлийн мөнгө</span>
-          <select class="fi" id="d-funding-mode" onchange="renderDebtFundingAccounts()"><option value="existing">Миний дансанд орсон</option><option value="direct">Худалдан авалтад шууд зарцуулсан</option><option value="existing_loan">Өмнө авсан зээл бүртгэж байна</option></select>
+          <span class="slbl" id="lf-funding-label">Зээлийн мөнгө</span>
+          <select class="fi" id="d-funding-mode" onchange="renderDebtFundingAccounts()"><option value="existing" id="lf-funding-existing">Миний дансанд орсон</option><option value="direct" id="lf-funding-direct">Худалдан авалтад шууд зарцуулсан</option><option value="existing_loan" id="lf-funding-old">Өмнө авсан зээл бүртгэж байна</option></select>
         </div>
         <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px" id="d-funding-account-wrap">
-          <span class="slbl">Мөнгө орсон данс</span><select class="fi" id="d-funding-account"></select>
+          <span class="slbl" id="lf-account-label">Мөнгө орсон данс</span><select class="fi" id="d-funding-account"></select>
         </div>
       </div>
     </div>
@@ -7307,6 +7307,22 @@ async function delGoal(id){
 }
 
 
+
+const LOAN_FLOW_I18N={
+mn:{payType:'Төлөлтийн төрөл',annuity:'Тэнцүү төлөлт',diff:'Үндсэн төлбөр тэнцүү',term:'Хугацаа / сар',start:'Эхлэх огноо',funding:'Зээлийн мөнгө',fundExisting:'Миний дансанд орсон',fundDirect:'Худалдан авалтад шууд зарцуулсан',fundOld:'Өмнө авсан зээл бүртгэж байна',fundAccount:'Мөнгө орсон данс',pay:'Төлөх',remaining:'Үлдэгдэл',principalPaid:'Үндсэн төлсөн',interest:'Хүү',lastPayment:'Сүүлийн төлөлт',history:'Төлөлтийн түүх',payAccount:'Төлөх данс',totalPayment:'Нийт төлөлт',date:'Огноо',principal:'Үндсэн төлбөр',interestPayment:'Хүүгийн төлбөр',extraPrincipal:'Нэмэлт үндсэн төлөлт',cancel:'Болих',savePayment:'Төлөлт хадгалах',note:'Möngö тооцоолсон дүнг урьдчилан бөглөв. Банкны апп/хуулгын бодит үндсэн ба хүүгийн дүн өөр байвал энд засаж хадгална.',checkAmount:'Төлөлтийн дүнгээ шалгана уу'},
+en:{payType:'Payment type',annuity:'Equal payment',diff:'Equal principal',term:'Term / months',start:'Start date',funding:'Loan funds',fundExisting:'Deposited to my account',fundDirect:'Paid directly for a purchase',fundOld:'Recording an existing loan',fundAccount:'Account receiving funds',pay:'Pay',remaining:'Remaining',principalPaid:'Principal paid',interest:'Interest',lastPayment:'Last payment',history:'Payment history',payAccount:'Payment account',totalPayment:'Total payment',date:'Date',principal:'Principal',interestPayment:'Interest payment',extraPrincipal:'Extra principal payment',cancel:'Cancel',savePayment:'Save payment',note:'Möngö prefilled an estimated split. If your bank statement shows different principal or interest amounts, edit them here before saving.',checkAmount:'Please check the payment amount.'},
+zh:{payType:'还款方式',annuity:'等额还款',diff:'等额本金',term:'期限 / 月',start:'开始日期',funding:'贷款资金',fundExisting:'已存入我的账户',fundDirect:'直接用于购买',fundOld:'登记已有贷款',fundAccount:'资金到账账户',pay:'还款',remaining:'剩余',principalPaid:'已还本金',interest:'利息',lastPayment:'最近还款',history:'还款记录',payAccount:'还款账户',totalPayment:'还款总额',date:'日期',principal:'本金',interestPayment:'利息',extraPrincipal:'额外本金还款',cancel:'取消',savePayment:'保存还款',note:'Möngö 已预填估算明细。如银行记录中的本金或利息不同，请在保存前修改。',checkAmount:'请检查还款金额。'},
+ja:{payType:'返済方式',annuity:'元利均等',diff:'元金均等',term:'期間 / 月',start:'開始日',funding:'ローン資金',fundExisting:'自分の口座に入金',fundDirect:'購入代金として直接支払い',fundOld:'既存ローンを登録',fundAccount:'入金先口座',pay:'返済',remaining:'残高',principalPaid:'返済済み元金',interest:'利息',lastPayment:'最新の返済',history:'返済履歴',payAccount:'支払口座',totalPayment:'返済総額',date:'日付',principal:'元金',interestPayment:'利息支払',extraPrincipal:'追加元金返済',cancel:'キャンセル',savePayment:'返済を保存',note:'Möngö が推定内訳を入力しています。銀行明細の元金・利息が異なる場合は、保存前に修正してください。',checkAmount:'返済額を確認してください。'},
+ko:{payType:'상환 방식',annuity:'원리금 균등',diff:'원금 균등',term:'기간 / 개월',start:'시작일',funding:'대출 자금',fundExisting:'내 계좌로 입금됨',fundDirect:'구매 대금으로 직접 지급',fundOld:'기존 대출 등록',fundAccount:'입금 계좌',pay:'상환',remaining:'잔액',principalPaid:'상환한 원금',interest:'이자',lastPayment:'최근 상환',history:'상환 내역',payAccount:'상환 계좌',totalPayment:'총 상환액',date:'날짜',principal:'원금',interestPayment:'이자 납부',extraPrincipal:'추가 원금 상환',cancel:'취소',savePayment:'상환 저장',note:'Möngö가 예상 원금·이자 내역을 미리 입력했습니다. 은행 내역과 다르면 저장 전에 수정하세요.',checkAmount:'상환 금액을 확인하세요.'},
+ru:{payType:'Тип платежа',annuity:'Аннуитетный',diff:'Равный основной долг',term:'Срок / мес.',start:'Дата начала',funding:'Средства кредита',fundExisting:'Поступили на мой счёт',fundDirect:'Оплачены напрямую за покупку',fundOld:'Регистрация существующего кредита',fundAccount:'Счёт зачисления',pay:'Платить',remaining:'Остаток',principalPaid:'Погашено основного долга',interest:'Проценты',lastPayment:'Последний платёж',history:'История платежей',payAccount:'Счёт оплаты',totalPayment:'Общий платёж',date:'Дата',principal:'Основной долг',interestPayment:'Проценты',extraPrincipal:'Доплата в основной долг',cancel:'Отмена',savePayment:'Сохранить платёж',note:'Möngö предварительно заполнил расчёт. Если в банковской выписке суммы основного долга и процентов отличаются, исправьте их перед сохранением.',checkAmount:'Проверьте сумму платежа.'},
+de:{payType:'Zahlungsart',annuity:'Gleichbleibende Rate',diff:'Gleiche Tilgung',term:'Laufzeit / Monate',start:'Startdatum',funding:'Darlehensmittel',fundExisting:'Auf mein Konto eingezahlt',fundDirect:'Direkt für einen Kauf bezahlt',fundOld:'Bestehendes Darlehen erfassen',fundAccount:'Empfangskonto',pay:'Zahlen',remaining:'Restbetrag',principalPaid:'Getilgter Betrag',interest:'Zinsen',lastPayment:'Letzte Zahlung',history:'Zahlungsverlauf',payAccount:'Zahlungskonto',totalPayment:'Gesamtzahlung',date:'Datum',principal:'Tilgung',interestPayment:'Zinszahlung',extraPrincipal:'Sondertilgung',cancel:'Abbrechen',savePayment:'Zahlung speichern',note:'Möngö hat eine geschätzte Aufteilung vorausgefüllt. Falls der Kontoauszug andere Tilgungs- oder Zinsbeträge zeigt, bitte vor dem Speichern anpassen.',checkAmount:'Bitte Zahlungsbetrag prüfen.'}
+};
+function LFT(){return LOAN_FLOW_I18N[lang]||LOAN_FLOW_I18N.en;}
+function updateLoanFlowTexts(){
+ const t=LFT(),m={'lf-pay-type-label':t.payType,'lf-pay-annuity':t.annuity,'lf-pay-diff':t.diff,'lf-term-label':t.term,'lf-start-label':t.start,'lf-funding-label':t.funding,'lf-funding-existing':t.fundExisting,'lf-funding-direct':t.fundDirect,'lf-funding-old':t.fundOld,'lf-account-label':t.fundAccount};
+ Object.entries(m).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=v;});
+}
+
 function debtPayments(d){if(!Array.isArray(d.payments))d.payments=[];return d.payments;}
 function debtPrincipalPaid(d){return debtPayments(d).reduce((x,p)=>x+(Number(p.principal)||0)+(Number(p.extraPrincipal)||0),0);}
 function debtTotalPaid(d){return debtPayments(d).reduce((x,p)=>x+(Number(p.total)||0),0);}
@@ -7330,21 +7346,21 @@ function renderDebtFundingAccounts(){
 }
 function openDebtPayModal(id){
   const d=debts.find(x=>String(x.id)===String(id));if(!d)return;
-  const est=debtCalcNextSplit(d), active=moneyAccounts.filter(a=>a.active!==false);
+  const t=LFT(),est=debtCalcNextSplit(d),active=moneyAccounts.filter(a=>a.active!==false);
   let m=document.getElementById('loan-pay-modal');if(m)m.remove();
   m=document.createElement('div');m.id='loan-pay-modal';m.className='loan-modal-backdrop';
-  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:4px">Зээл төлөх · ${d.name}</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Үлдэгдэл ${fmt(getDebtRemaining(d))}</div>
-    <label>Төлөх данс</label><select class="fi" id="lp-account">${active.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('')}</select>
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:4px">${t.pay} · ${d.name}</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">${t.remaining} ${fmt(getDebtRemaining(d))}</div>
+    <label>${t.payAccount}</label><select class="fi" id="lp-account">${active.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('')}</select>
     <div class="loan-modal-grid">
-      <div><label>Нийт төлөлт</label><input class="fi" id="lp-total" inputmode="decimal" value="${Math.round(est.total).toLocaleString('en-US')}"></div>
-      <div><label>Огноо</label><input type="date" class="fi" id="lp-date" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div><label>Үндсэн төлбөр</label><input class="fi" id="lp-principal" inputmode="decimal" value="${Math.round(est.principal).toLocaleString('en-US')}"></div>
-      <div><label>Хүүгийн төлбөр</label><input class="fi" id="lp-interest" inputmode="decimal" value="${Math.round(est.interest).toLocaleString('en-US')}"></div>
-      <div><label>Нэмэлт үндсэн төлөлт</label><input class="fi" id="lp-extra" inputmode="decimal" value="0"></div>
+      <div><label>${t.totalPayment}</label><input class="fi" id="lp-total" inputmode="decimal" value="${Math.round(est.total).toLocaleString('en-US')}"></div>
+      <div><label>${t.date}</label><input type="date" class="fi" id="lp-date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>${t.principal}</label><input class="fi" id="lp-principal" inputmode="decimal" value="${Math.round(est.principal).toLocaleString('en-US')}"></div>
+      <div><label>${t.interestPayment}</label><input class="fi" id="lp-interest" inputmode="decimal" value="${Math.round(est.interest).toLocaleString('en-US')}"></div>
+      <div><label>${t.extraPrincipal}</label><input class="fi" id="lp-extra" inputmode="decimal" value="0"></div>
     </div>
-    <div class="loan-split-note">Möngö тооцоолсон дүнг урьдчилан бөглөв. Банкны апп/хуулгын бодит үндсэн ба хүүгийн дүн өөр байвал энд засаж хадгална.</div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('loan-pay-modal').remove()">Болих</button><button class="btn btn-p" onclick="saveDebtPayment('${id}')">Төлөлт хадгалах</button></div></div>`;
+    <div class="loan-split-note">${t.note}</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('loan-pay-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveDebtPayment('${id}')">${t.savePayment}</button></div></div>`;
   document.body.appendChild(m);['lp-total','lp-principal','lp-interest','lp-extra'].forEach(setupAmtInput);
 }
 function saveDebtPayment(id){
@@ -7353,7 +7369,7 @@ function saveDebtPayment(id){
   const principal=parseAmt(document.getElementById('lp-principal').value),interest=parseAmt(document.getElementById('lp-interest').value),extraPrincipal=parseAmt(document.getElementById('lp-extra').value);
   let total=parseAmt(document.getElementById('lp-total').value);
   const split=principal+interest+extraPrincipal;if(Math.abs(total-split)>1)total=split;
-  if(!accountId||!date||total<=0||principal+extraPrincipal>getDebtRemaining(d)+1){showToast('Төлөлтийн дүнгээ шалгана уу');return;}
+  if(!accountId||!date||total<=0||principal+extraPrincipal>getDebtRemaining(d)+1){showToast(LFT().checkAmount);return;}
   const pid=(crypto.randomUUID?crypto.randomUUID():'lp_'+Date.now());
   debtPayments(d).push({id:pid,date,accountId,total,principal,interest,extraPrincipal,createdAt:new Date().toISOString()});
   if(interest>0){
@@ -7812,7 +7828,7 @@ function renderOpeningBalance(){
   set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(openingBalance||0));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
   const op=document.getElementById('account-opening');if(op)op.placeholder=CS+' 0';
 }
-// Kept as a compatibility shim for old builds/bookmarks; V43.45 derives opening balance from account opening balances.
+// Kept as a compatibility shim for old builds/bookmarks; V43.46 derives opening balance from account opening balances.
 function saveOpeningBalance(){renderOpeningBalance();}
 
 function uDash(){
@@ -8421,16 +8437,16 @@ function rDebts(){
   const el=document.getElementById('debts-list');if(!debts.length){el.innerHTML=`<div class="empty">${L.debts}</div>`;return;}
   el.innerHTML=debts.map(d=>{
     const paid=getDebtPaidAmount(d),effectiveRemaining=getDebtRemaining(d),pct=Math.min(100,d.total>0?Math.round((d.total-effectiveRemaining)/d.total*100):0),col=mongoColor(d.color,mongoNextColor(debts.indexOf(d),'debt'));
-    const ps=debtPayments(d),last=ps.length?ps[ps.length-1]:null,ptype=(d.paymentType==='diff'?'Үндсэн төлбөр тэнцүү':'Тэнцүү төлөлт');
+    const t=LFT(),ps=debtPayments(d),last=ps.length?ps[ps.length-1]:null,ptype=(d.paymentType==='diff'?t.diff:t.annuity);
     return `<div class="inv-card mongo-object-card" style="--object-color:${col}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px"><div>
         <div class="mongo-object-title"><span class="mongo-object-dot"></span><div style="font-size:13px;font-weight:600;color:${col}">${d.name}</div></div>
         <div style="font-size:11px;color:var(--text2);display:flex;gap:9px;flex-wrap:wrap;margin-top:2px"><span>${L.total}: ${fmt(d.total)}</span><span style="color:var(--red);font-weight:500">${L.remaining}: ${fmt(effectiveRemaining)}</span>${d.monthly?`<span>${L.monthly}: ${fmt(d.monthly)}</span>`:''}${d.rate?`<span>${L.interest}: ${d.rate}%</span>`:''}<span>${ptype}</span></div>
-        ${paid>0?`<div style="font-size:10px;color:#1D9E75;margin-top:2px">Үндсэн төлсөн: ${fmt(paid)} · Хүү: ${fmt(debtInterestPaid(d))}</div>`:''}
-      </div><div style="display:flex;gap:6px;align-items:center"><button class="loan-pay-btn" onclick='openDebtPayModal(${JSON.stringify(String(d.id))})'>Төлөх</button><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange='updateDebtColor(${JSON.stringify(String(d.id))},this.value)'><button class="btn btn-sm btn-d" onclick='delDebt(${JSON.stringify(String(d.id))})'>✕</button></div></div>
+        ${paid>0?`<div style="font-size:10px;color:#1D9E75;margin-top:2px">${t.principalPaid}: ${fmt(paid)} · ${t.interest}: ${fmt(debtInterestPaid(d))}</div>`:''}
+      </div><div style="display:flex;gap:6px;align-items:center"><button class="loan-pay-btn" onclick='openDebtPayModal(${JSON.stringify(String(d.id))})'>${t.pay}</button><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange='updateDebtColor(${JSON.stringify(String(d.id))},this.value)'><button class="btn btn-sm btn-d" onclick='delDebt(${JSON.stringify(String(d.id))})'>✕</button></div></div>
       <div class="pbar"><div class="pf" style="width:${pct}%;background:${col}"></div></div><div style="font-size:10px;color:var(--text2);margin-top:2px">${L.paidpct}: ${pct}%</div>
-      ${last?`<div style="font-size:10px;color:var(--text2);margin-top:7px">Сүүлийн төлөлт: ${last.date} · ${fmt(last.total)} (үндсэн ${fmt((last.principal||0)+(last.extraPrincipal||0))} · хүү ${fmt(last.interest||0)})</div>`:''}
-      ${ps.length?`<details class="loan-history"><summary style="cursor:pointer;font-size:10px;font-weight:800">Төлөлтийн түүх (${ps.length})</summary>${[...ps].reverse().map(p=>`<div class="loan-history-row"><span>${p.date}</span><span>${fmt(p.total)} · Үндсэн ${fmt((p.principal||0)+(p.extraPrincipal||0))} · Хүү ${fmt(p.interest||0)}</span></div>`).join('')}</details>`:''}
+      ${last?`<div style="font-size:10px;color:var(--text2);margin-top:7px">${t.lastPayment}: ${last.date} · ${fmt(last.total)} (${t.principal} ${fmt((last.principal||0)+(last.extraPrincipal||0))} · ${t.interest} ${fmt(last.interest||0)})</div>`:''}
+      ${ps.length?`<details class="loan-history"><summary style="cursor:pointer;font-size:10px;font-weight:800">${t.history} (${ps.length})</summary>${[...ps].reverse().map(p=>`<div class="loan-history-row"><span>${p.date}</span><span>${fmt(p.total)} · ${t.principal} ${fmt((p.principal||0)+(p.extraPrincipal||0))} · ${t.interest} ${fmt(p.interest||0)}</span></div>`).join('')}</details>`:''}
     </div>`;
   }).join('');
 }
@@ -9282,10 +9298,10 @@ function toggleLoanSchedule(){
 }
 
 const _origApplyLangCalc=applyLang;
-applyLang=function(){_origApplyLangCalc();updateCalcTexts();};
+applyLang=function(){_origApplyLangCalc();updateCalcTexts();updateLoanFlowTexts();renderDebtFundingAccounts();if(document.getElementById('debts-list'))rDebts();};
 requestAnimationFrame(()=>{
   ['loan-calc-amount','loan-calc-extra'].forEach(setupAmtInput);
-  updateCalcTexts();
+  updateCalcTexts();updateLoanFlowTexts();
 });
 
 // ── Möngö V29.2 Investment calculator ─────────────────────────────────────
