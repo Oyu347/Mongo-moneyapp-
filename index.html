@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
 <!-- Möngö V43.37: Guaranteed financial sync bootstrap — independently reads/writes users/{uid}/financial/main after auth, bypassing timing/account-ready races. -->
@@ -73,7 +74,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.38 Opening Balance</title>
+<title>Möngö — V43.40 Money Accounts</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -94,6 +95,9 @@ body{visibility:visible;}
 @media(max-width:0px){
   :root{--bg:#1e1a17;--bg2:#272320;--bg3:#2f2b27;--text:#ede8e2;--text2:#9a9088;--text3:#6a6058;--border:rgba(255,220,180,0.1);--border2:rgba(255,220,180,0.18);--brand-light:#0d3628;--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow:0 4px 20px rgba(0,0,0,0.35);--shadow-lg:0 8px 32px rgba(0,0,0,0.4);}
 }
+
+/* V43.40 Money Accounts */
+.account-list{display:flex;flex-direction:column;gap:7px;margin:10px 0}.account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)}.account-main{display:flex;align-items:center;gap:9px;min-width:0}.account-icon{font-size:20px}.account-name{font-weight:750}.account-meta{font-size:10px;color:var(--text2);margin-top:2px}.account-bal{font-weight:800;white-space:nowrap}.account-actions{display:flex;gap:5px}.account-add-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.transfer-fields{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.transfer-fields.show{display:grid}.txn-account-row{margin-bottom:9px}.tt-t{background:var(--brand-light);color:var(--brand-dark);font-weight:700}@media(max-width:520px){.account-add-grid{grid-template-columns:1fr 1fr}.account-add-grid .account-name-input{grid-column:1/-1}.transfer-fields{grid-template-columns:1fr}}
 
 /* ── Auth хуудасны стиль ── */
 .auth-wrap{display:none;position:fixed;inset:0;background:var(--bg3);z-index:9999;align-items:center;justify-content:center;padding:20px}
@@ -2618,6 +2622,15 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
       <div class="opening-balance-stat"><div class="k" id="opening-expense-label">Нийт зарлага</div><div class="v" id="opening-expense-value">₮0</div></div>
     </div>
     <div class="opening-balance-note" id="opening-balance-note">Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.</div>
+    <div style="margin-top:13px;border-top:1px solid var(--border);padding-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="slbl" id="accounts-title">МИНИЙ МӨНГӨ</div><button class="btn btn-sm" type="button" onclick="toggleAccountAdd()" id="account-add-toggle">＋ Данс</button></div>
+      <div id="account-list" class="account-list"></div>
+      <div id="account-add-form" style="display:none">
+        <div class="account-add-grid"><input class="fi account-name-input" id="account-name" placeholder="Хаан банк"><select class="fi" id="account-type"><option value="bank">🏦 Банк</option><option value="cash">💵 Бэлэн мөнгө</option></select><input type="date" class="fi" id="account-start-date"></div>
+        <div class="form-row" style="margin-top:7px"><input class="fi" id="account-opening" inputmode="decimal" placeholder="Эхний үлдэгдэл"><button class="btn btn-p" type="button" onclick="addMoneyAccount()" id="account-save-btn">Нэмэх</button></div>
+        <div class="opening-balance-note" id="account-help-note">Шинэ дансны эхний үлдэгдэл нь орлого биш. Өөр данснаас мөнгө хийсэн бол “Шилжүүлэг” ашиглана.</div>
+      </div>
+    </div>
   </div>
   <div class="card"><div class="card-title" id="lbl-recent"></div><div id="recent-list"><div class="empty" id="lbl-notxn-d"></div></div></div>
   <div class="card"><div class="card-title" id="lbl-budgetprog"></div><div id="budget-overview"><div class="empty" id="lbl-nobudget-d"></div></div></div>
@@ -2637,7 +2650,10 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="type-toggle">
       <button class="tt-btn tt-i" id="btn-income" onclick="setType('income')"></button>
       <button class="tt-btn" id="btn-expense" onclick="setType('expense')"></button>
+      <button class="tt-btn" id="btn-transfer" onclick="setType('transfer')">Шилжүүлэг</button>
     </div>
+    <div class="txn-account-row" id="txn-account-row"><select class="fi" id="t-account"></select></div>
+    <div class="transfer-fields" id="transfer-fields"><select class="fi" id="t-from-account"></select><select class="fi" id="t-to-account"></select></div>
     <div id="invest-auto-notice" style="display:none" class="notice">
       <span style="font-size:14px">📈</span><span id="lbl-autoinvest"></span>
     </div>
@@ -3323,6 +3339,7 @@ let curType='income';
 let editingTxnId=null;
 let txns=[],goals=[],debts=[],invests=[];
 let openingBalance=0;
+let moneyAccounts=[],accountTransfers=[];
 
 // ── Möngö V43 Unified Color Engine ────────────────────────────────────────
 const MONGO_OBJECT_COLORS=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8','#8B5CF6','#0EA5A8'];
@@ -6671,11 +6688,17 @@ function setType(t){
   if(t==='income') chipsOpenI=false; else chipsOpenT=false;
   document.getElementById('btn-income').className='tt-btn'+(t==='income'?' tt-i':'');
   document.getElementById('btn-expense').className='tt-btn'+(t==='expense'?' tt-e':'');
+  const bt=document.getElementById('btn-transfer');if(bt)bt.className='tt-btn'+(t==='transfer'?' tt-t':'');
+  const tf=document.getElementById('transfer-fields');if(tf)tf.classList.toggle('show',t==='transfer');
+  const ar=document.getElementById('txn-account-row');if(ar)ar.style.display=t==='transfer'?'none':'block';
+  const sw0=document.getElementById('t-subcat-wrap');if(sw0)sw0.style.display=t==='transfer'?'none':'flex';
+  const cat0=document.getElementById('t-cat');if(cat0)cat0.style.display=t==='transfer'?'none':'';
+  renderAccountSelectors();
   selSubcat=null;subDropOpen=false;
   rCatSel();rTChips();rTIrow();rTCrow();
   const n=document.getElementById('invest-auto-notice'); if(n)n.style.display='none';
   const ex=document.getElementById('invest-extra'); if(ex)ex.style.display='none';
-  const sw=document.getElementById('t-subcat-wrap'); if(sw)sw.style.display='flex';
+  const sw=document.getElementById('t-subcat-wrap'); if(sw)sw.style.display=t==='transfer'?'none':'flex';
   rTxns();
 }
 function gCats(){
@@ -7020,6 +7043,7 @@ function startEditTxn(id){
   document.getElementById('t-desc').value=t.desc||'';
   document.getElementById('t-amount').value=(t.amount||0).toLocaleString('en-US');
   document.getElementById('t-date').value=t.date||new Date().toISOString().substring(0,10);
+  renderAccountSelectors();const tas=document.getElementById('t-account');if(tas&&t.accountId)tas.value=t.accountId;
   if(t.subcatName){
     const cats=curType==='income'?bCatsInc:bCatsExp;
     let cat=cats.find(c=>cN(c)===t.catName);
@@ -7075,6 +7099,15 @@ function getDebtRemaining(d){
 }
 
 function addTransaction(){
+  if(curType==='transfer'){
+    const amount=parseAmt(document.getElementById('t-amount').value);
+    const fromId=(document.getElementById('t-from-account')||{}).value;
+    const toId=(document.getElementById('t-to-account')||{}).value;
+    const date=document.getElementById('t-date').value;
+    if(!amount||amount<=0||!fromId||!toId||fromId===toId){showToast('Шилжүүлгийн дансаа зөв сонгоно уу');return;}
+    accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId,amount,date,updatedAt:new Date().toISOString()});
+    document.getElementById('t-amount').value='';saveData();rAll();renderMoneyAccounts();return;
+  }
   const descRaw=document.getElementById('t-desc').value.trim();
   const amount=parseAmt(document.getElementById('t-amount').value);
   const catName=document.getElementById('t-cat').value;
@@ -7093,12 +7126,13 @@ function addTransaction(){
   const catKey=catObj&&catObj.key?catObj.key:null;
   const isInvestmentExpense=curType==='expense'&&catKey==='invest_cat';
   const investTypeKey=isInvestmentExpense?((document.getElementById('t-inv-type')&&document.getElementById('t-inv-type').value)||'stock'):null;
+  const accountId=(document.getElementById('t-account')||{}).value||getDefaultAccountId();
 
   if(editingTxnId){
     const t=txns.find(x=>String(x.id)===String(editingTxnId));
     if(t){
       const oldType=t.type, oldCat=t.catName;
-      t.desc=desc;t.amount=amount;t.catName=catName;t.catKey=catKey;t.subcatName=subcatKey;t.investTypeKey=investTypeKey;t.date=date;t.type=curType;
+      t.desc=desc;t.amount=amount;t.catName=catName;t.catKey=catKey;t.subcatName=subcatKey;t.investTypeKey=investTypeKey;t.date=date;t.type=curType;t.accountId=accountId;
       if(!(curType==='expense'&&expCats.find(c=>cN(c)===catName&&isInv(c)))) removeLinkedInvestmentForTxn(t.id);
       else syncAutoInvestmentForTxn(t);
       if(oldType==='expense'){
@@ -7109,10 +7143,10 @@ function addTransaction(){
     editingTxnId=null;resetTxnEditUi();
   }else{
     const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('txn_'+Date.now()+'_'+Math.random().toString(36).slice(2,9));
-    const txn={id,desc,amount,catName,catKey,subcatName:subcatKey,investTypeKey,date,type:curType,updatedAt:new Date().toISOString()};
+    const txn={id,desc,amount,catName,catKey,subcatName:subcatKey,investTypeKey,date,type:curType,accountId,updatedAt:new Date().toISOString()};
     txns.unshift(txn);
     if(curType==='income'){
-      preparePayAssistant(amount,date);
+      preparePayAssistant(amount,date,accountId);
     }
     if(curType==='expense'){
       // Loan balances are derived from matching transactions; do not mutate the opening balance here.
@@ -7461,6 +7495,29 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
 
 
 
+function accountText(){const X={
+mn:{title:'МИНИЙ МӨНГӨ',add:'＋ Данс',bank:'Банк',cash:'Бэлэн мөнгө',inactive:'Идэвхгүй',transfer:'Шилжүүлэг'},
+en:{title:'MY MONEY',add:'＋ Account',bank:'Bank',cash:'Cash',inactive:'Inactive',transfer:'Transfer'},
+zh:{title:'我的资金',add:'＋ 账户',bank:'银行',cash:'现金',inactive:'已停用',transfer:'转账'},
+ja:{title:'私のお金',add:'＋ 口座',bank:'銀行',cash:'現金',inactive:'無効',transfer:'振替'},
+ko:{title:'내 돈',add:'＋ 계좌',bank:'은행',cash:'현금',inactive:'비활성',transfer:'이체'},
+ru:{title:'МОИ ДЕНЬГИ',add:'＋ Счёт',bank:'Банк',cash:'Наличные',inactive:'Неактивен',transfer:'Перевод'},
+de:{title:'MEIN GELD',add:'＋ Konto',bank:'Bank',cash:'Bargeld',inactive:'Inaktiv',transfer:'Übertrag'}
+};return X[lang]||X.en;}
+function getDefaultAccountId(){const a=moneyAccounts.find(x=>x.active!==false)||moneyAccounts[0];return a?a.id:null;}
+function ensureMoneyAccounts(){
+  if(!Array.isArray(moneyAccounts))moneyAccounts=[];if(!Array.isArray(accountTransfers))accountTransfers=[];
+  if(!moneyAccounts.length){moneyAccounts=[{id:'legacy_main',name:lang==='mn'?'Эхний мөнгө':'Opening money',type:'cash',startDate:(txns.map(t=>t.date).filter(Boolean).sort()[0]||new Date().toISOString().slice(0,10)),openingBalance:Math.max(0,Number(openingBalance)||0),active:true,legacy:true}];}
+  const def=getDefaultAccountId();txns.forEach(t=>{if(!t.accountId)t.accountId=def;});
+  openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);
+}
+function accountBalance(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.openingBalance)||0;txns.forEach(t=>{if(t.accountId===id)v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0);});accountTransfers.forEach(t=>{if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;});return v;}
+function renderAccountSelectors(){ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;const ty=document.getElementById('account-type');if(ty){ty.options[0].text='🏦 '+T.bank;ty.options[1].text='💵 '+T.cash;}const active=moneyAccounts.filter(a=>a.active!==false);const opts=active.map(a=>`<option value="${a.id}">${a.type==='cash'?'💵':'🏦'} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');['t-account','t-from-account','t-to-account'].forEach(id=>{const e=document.getElementById(id);if(!e)return;const old=e.value;e.innerHTML=opts;if(active.some(a=>a.id===old))e.value=old;});const to=document.getElementById('t-to-account');if(to&&active.length>1&&to.value===(document.getElementById('t-from-account')||{}).value)to.value=active[1].id;}
+function renderMoneyAccounts(){ensureMoneyAccounts();const T=accountText();const title=document.getElementById('accounts-title');if(title)title.textContent=T.title;const add=document.getElementById('account-add-toggle');if(add)add.textContent=T.add;const el=document.getElementById('account-list');if(!el)return;el.innerHTML=moneyAccounts.map(a=>`<div class="account-row" style="${a.active===false?'opacity:.55':''}"><div class="account-main"><span class="account-icon">${a.type==='cash'?'💵':'🏦'}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${a.startDate||''}${a.active===false?' · '+T.inactive:''}</div></div></div><div style="display:flex;align-items:center;gap:8px"><div class="account-bal">${fmt(accountBalance(a.id))}</div>${a.active!==false?`<button class="btn btn-sm" onclick="archiveMoneyAccount('${a.id}')">⋯</button>`:''}</div></div>`).join('');renderAccountSelectors();}
+function toggleAccountAdd(){const e=document.getElementById('account-add-form');if(!e)return;e.style.display=e.style.display==='none'?'block':'none';const d=document.getElementById('account-start-date');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);}
+function addMoneyAccount(){const n=document.getElementById('account-name'),ty=document.getElementById('account-type'),dt=document.getElementById('account-start-date'),op=document.getElementById('account-opening');const name=(n.value||'').trim();if(!name)return;moneyAccounts.push({id:(crypto.randomUUID?crypto.randomUUID():'acc_'+Date.now()),name,type:ty.value==='cash'?'cash':'bank',startDate:dt.value||new Date().toISOString().slice(0,10),openingBalance:Math.max(0,parseAmt(op.value)||0),active:true});openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);n.value='';op.value='';saveData();renderMoneyAccounts();renderOpeningBalance();uDash();}
+async function archiveMoneyAccount(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return;if(Math.abs(accountBalance(id))>.001){showToast(lang==='mn'?'Үлдэгдэлтэй дансыг эхлээд өөр данс руу шилжүүлнэ үү':'Transfer the remaining balance first');return;}a.active=false;saveData();renderMoneyAccounts();}
+function moneyAccountsTotal(){ensureMoneyAccounts();return moneyAccounts.reduce((s,a)=>s+accountBalance(a.id),0);}
 const OPENING_BALANCE_TEXT={
   mn:{title:'Эхний үлдэгдэл',sub:'Апп ашиглаж эхлэх үеийн бэлэн мөнгөний үлдэгдлээ нэг удаа оруулна.',label:'Эхний үлдэгдэл',save:'Хадгалах',current:'Мөнгөн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.',saved:'Эхний үлдэгдэл хадгалагдлаа'},
   en:{title:'Opening balance',sub:'Enter the cash balance you had when you started using the app.',label:'Opening balance',save:'Save',current:'Cash balance',income:'Total income',expense:'Total expense',note:'This balance carries forward regardless of the date filter. Income increases it and expenses decrease it.',saved:'Opening balance saved'},
@@ -7474,7 +7531,7 @@ function openingBalanceText(){return OPENING_BALANCE_TEXT[lang]||OPENING_BALANCE
 function allTimeCashTotals(){
   const income=txns.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
   const expense=txns.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
-  return {income,expense,balance:(Number(openingBalance)||0)+income-expense};
+  ensureMoneyAccounts();return {income,expense,balance:moneyAccountsTotal()};
 }
 function renderOpeningBalance(){
   const T=openingBalanceText(), totals=allTimeCashTotals();
@@ -7482,12 +7539,12 @@ function renderOpeningBalance(){
   set('opening-balance-title',T.title);set('opening-balance-sub',T.sub);set('opening-balance-label',T.label);set('opening-balance-save',T.save);
   set('opening-current-label',T.current);set('opening-start-label',T.label);set('opening-income-label',T.income);set('opening-expense-label',T.expense);set('opening-balance-note',T.note);
   set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(openingBalance||0));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
-  const inp=document.getElementById('opening-balance-input');if(inp && document.activeElement!==inp)inp.value=(Number(openingBalance)||0)>0?Number(openingBalance).toLocaleString('en-US'):'';
+  const inp=document.getElementById('opening-balance-input');const baseAcc=moneyAccounts.find(x=>x.legacy)||moneyAccounts[0];const baseOpen=baseAcc?Number(baseAcc.openingBalance)||0:Number(openingBalance)||0;if(inp && document.activeElement!==inp)inp.value=baseOpen>0?baseOpen.toLocaleString('en-US'):'';
 }
 function saveOpeningBalance(){
   const inp=document.getElementById('opening-balance-input');
   const value=inp?parseAmt(inp.value):0;
-  openingBalance=Math.max(0,Number(value)||0);
+  ensureMoneyAccounts();const a=moneyAccounts.find(x=>x.legacy)||moneyAccounts[0];if(a)a.openingBalance=Math.max(0,Number(value)||0);openingBalance=moneyAccounts.reduce((s,x)=>s+(Number(x.openingBalance)||0),0);
   saveData();
   renderOpeningBalance();
   uDash();
@@ -7522,7 +7579,7 @@ function uDash(){
   mb.style.background=bv>=0?'#E1F5EE':'#FCEBEB';
   mb.querySelector('.metric-lbl').style.color=bv>=0?'#085041':'#791F1F';
   mb.querySelector('.metric-val').style.color=bv>=0?'#085041':'#791F1F';
-  renderOpeningBalance();
+  renderOpeningBalance();renderMoneyAccounts();
   updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings);
 }
 
@@ -7540,6 +7597,7 @@ function tRow(t,del){
   }
   const showSub=subcatDisplay&&subcatDisplay!==t.desc;
   const subLabel=showSub?`<span style="font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:5px;margin-left:3px">${subcatDisplay}</span>`:'';
+  const acc=moneyAccounts.find(a=>a.id===t.accountId);const accountChip=acc?`<span style="font-size:10px;color:var(--text2);margin-left:4px">${acc.type==='cash'?'💵':'🏦'} ${acc.name}</span>`:'';
   const budgeted=isTxnBudgeted(t);
   const budgetChip=budgeted?'':`<span class="txn-budget-chip">${L.descPh||'Unbudgeted'}</span>`;
   const amtClass=`amt amt-${t.type[0]} ${budgeted?'amt-budgeted':'amt-unbudgeted'}`;
@@ -7548,7 +7606,7 @@ function tRow(t,del){
     <div class="il">
       <div class="txn-main-line"><span class="lbl1">${t.desc}</span>${autoBadge}</div>
       <div class="txn-meta-line">
-        <span class="lbl2"><span>${ci.icon}</span> <span style="color:${ci.color}">${t.catName}</span>${subLabel} · ${t.date}</span>
+        <span class="lbl2"><span>${ci.icon}</span> <span style="color:${ci.color}">${t.catName}</span>${subLabel}${accountChip} · ${t.date}</span>
         ${budgetChip}
       </div>
     </div>
@@ -8397,6 +8455,8 @@ function secNormalizeData(data){
   clean.invests=Array.isArray(clean.invests)?clean.invests.slice(0,500):[];
   clean.budgets=(clean.budgets && typeof clean.budgets==='object')?clean.budgets:{};
   clean.openingBalance=Math.max(0,secNum(clean.openingBalance,0));
+  clean.moneyAccounts=(Array.isArray(clean.moneyAccounts)?clean.moneyAccounts:[]).slice(0,100).map(a=>({...a,id:secPlain(a.id,80),name:secPlain(a.name,120),type:a.type==='cash'?'cash':'bank',startDate:secDate(a.startDate),openingBalance:Math.max(0,secNum(a.openingBalance,0)),active:a.active!==false}));
+  clean.accountTransfers=(Array.isArray(clean.accountTransfers)?clean.accountTransfers:[]).slice(0,5000).map(t=>({...t,id:secPlain(t.id,80),fromId:secPlain(t.fromId,80),toId:secPlain(t.toId,80),amount:Math.max(0,secNum(t.amount,0)),date:secDate(t.date)}));
   clean.lang=SECURITY_ALLOWED_LANGS.has(clean.lang)?clean.lang:'mn';
   clean.budgetMonth=Math.min(12,Math.max(1,Math.round(secNum(clean.budgetMonth,new Date().getMonth()+1))));
   clean.budgetYear=Math.min(2100,Math.max(2020,Math.round(secNum(clean.budgetYear,new Date().getFullYear()))));
@@ -8448,7 +8508,7 @@ function saveData(){
       }))
     }));
     if(!window.MONGO_LOCAL_DATA_UPDATED_AT) window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
-    const data=secNormalizeData({txns,goals,debts,invests,budgets,openingBalance,lang,budgetMonth,budgetYear,budgetType,
+    const data=secNormalizeData({txns,goals,debts,invests,budgets,openingBalance,moneyAccounts,accountTransfers,lang,budgetMonth,budgetYear,budgetType,
       lockedCats:Array.from(lockedCats),
       incCatsCustom:incCats.filter(c=>!c.key),
       expCatsCustom:expCats.filter(c=>!c.key),
@@ -8468,7 +8528,7 @@ function loadData(){
     if(data.goals)goals=data.goals.map(g=>({...g,history:g.history||[]}));
     if(data.debts)debts=data.debts;
     if(data.invests)invests=data.invests;
-    openingBalance=Math.max(0,Number(data.openingBalance)||0);
+    openingBalance=Math.max(0,Number(data.openingBalance)||0);moneyAccounts=Array.isArray(data.moneyAccounts)?data.moneyAccounts:[];accountTransfers=Array.isArray(data.accountTransfers)?data.accountTransfers:[];ensureMoneyAccounts();
     ensureUnifiedObjectColors();
     if(data.budgets)budgets=data.budgets;
     if(data.lang){lang=data.lang;L=LANGS[lang]||LANGS.mn;CS=CURR[lang]||'$';}
@@ -9208,12 +9268,12 @@ function setPayAlloc(id,v){if(!paySettings.alloc)paySettings.alloc={};paySetting
 function payAllocTotal(){return goals.reduce((s,g)=>s+Number(paySettings.alloc&&paySettings.alloc[g.id]||0),0);}
 function updatePayTotal(){const row=document.getElementById('pay-total-row'),val=document.getElementById('pay-total-val');const total=payAllocTotal();if(val)val.textContent=total+'%';if(row)row.classList.toggle('bad',goals.length&&total!==100);}
 function savePaySettings(){const t=payText();if(goals.length&&payAllocTotal()!==100){showToast(t.badTotal);return;}saveData();showToast(t.saved+' ✓');}
-function preparePayAssistant(incomeAmount,date){
+function preparePayAssistant(incomeAmount,date,accountId){
   if(!goals.length||!paySettings||Number(paySettings.rate)<=0)return;
   const total=payAllocTotal(); if(total!==100)return;
   const saveAmount=Math.round(incomeAmount*(Number(paySettings.rate)||0)/100); if(saveAmount<=0)return;
   const rows=goals.map(g=>{const pct=Number(paySettings.alloc&&paySettings.alloc[g.id]||0);const amount=Math.round(saveAmount*pct/100);return {goalId:g.id,goalName:g.name,pct,amount};}).filter(r=>r.amount>0);
-  if(!rows.length)return; pendingPayPlan={date,incomeAmount,rate:Number(paySettings.rate)||0,rows,total:saveAmount}; renderPayModal(false);
+  if(!rows.length)return; pendingPayPlan={date,incomeAmount,rate:Number(paySettings.rate)||0,rows,total:saveAmount,accountId:accountId||getDefaultAccountId()}; renderPayModal(false);
 }
 function renderPayModal(editMode=false){
   const modal=document.getElementById('pay-assist-modal'),list=document.getElementById('pay-plan-list'),edit=document.getElementById('pay-edit-panel'),actions=document.getElementById('pay-modal-actions');
@@ -9236,7 +9296,7 @@ function savingsCatDisplayName(){
 }
 function confirmPayAssistant(){
   if(!pendingPayPlan)return; const base=Date.now(); const catName=savingsCatDisplayName();
-  pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',autoPaySelf:true});});
+  pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',accountId:pendingPayPlan.accountId||getDefaultAccountId(),autoPaySelf:true});});
   pendingPayPlan=null; const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); saveData(); rAll(); showToast(payText().created+' ✓');
 }
 function editPayAssistant(){
@@ -10913,6 +10973,7 @@ auth.onAuthStateChanged(async user=>{
       invests:safeArray(p.invests).map(sanitizeMoneyItem).slice(-500),
       budgets:safeObj(p.budgets),
       openingBalance:Math.max(0,safeNum(p.openingBalance)),
+      moneyAccounts:safeArray(p.moneyAccounts).slice(0,100),accountTransfers:safeArray(p.accountTransfers).slice(-5000),
       lang:safeStr(p.lang||'mn',5),
       budgetMonth:Math.min(12,Math.max(1,parseInt(p.budgetMonth||new Date().getMonth()+1,10)||1)),
       budgetYear:Math.min(2100,Math.max(2020,parseInt(p.budgetYear||new Date().getFullYear(),10)||new Date().getFullYear())),
@@ -10937,6 +10998,7 @@ auth.onAuthStateChanged(async user=>{
       invests:safeArray(typeof invests!=='undefined'?invests:[]),
       budgets:safeObj(typeof budgets!=='undefined'?budgets:{}),
       openingBalance:typeof openingBalance!=='undefined'?Math.max(0,safeNum(openingBalance)):0,
+      moneyAccounts:typeof moneyAccounts!=='undefined'?safeArray(moneyAccounts):[],accountTransfers:typeof accountTransfers!=='undefined'?safeArray(accountTransfers):[],
       lang:typeof lang!=='undefined'?lang:'mn',
       budgetMonth:typeof budgetMonth!=='undefined'?budgetMonth:(new Date().getMonth()+1),
       budgetYear:typeof budgetYear!=='undefined'?budgetYear:new Date().getFullYear(),
@@ -10955,7 +11017,7 @@ auth.onAuthStateChanged(async user=>{
   function fingerprint(data){ try{return JSON.stringify(data).slice(0,1200000);}catch(e){return String(Date.now());} }
 
   function resetDefaultFinanceShell(){
-    if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0; if(typeof lockedCats!=='undefined') lockedCats=new Set();
+    if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0;if(typeof moneyAccounts!=='undefined')moneyAccounts=[];if(typeof accountTransfers!=='undefined')accountTransfers=[]; if(typeof lockedCats!=='undefined') lockedCats=new Set();
     if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
     if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
     if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
@@ -10971,7 +11033,7 @@ auth.onAuthStateChanged(async user=>{
       resetDefaultFinanceShell();
       if(typeof txns!=='undefined') txns=safeArray(data.txns);
       if(typeof goals!=='undefined') goals=safeArray(data.goals).map(g=>Object.assign({},g,{history:g.history||[]}));
-      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets); if(typeof openingBalance!=='undefined') openingBalance=Math.max(0,safeNum(data.openingBalance)); if(typeof ensureUnifiedObjectColors==='function') ensureUnifiedObjectColors();
+      if(typeof debts!=='undefined') debts=safeArray(data.debts); if(typeof invests!=='undefined') invests=safeArray(data.invests); if(typeof budgets!=='undefined') budgets=safeObj(data.budgets); if(typeof openingBalance!=='undefined') openingBalance=Math.max(0,safeNum(data.openingBalance));if(typeof moneyAccounts!=='undefined')moneyAccounts=safeArray(data.moneyAccounts);if(typeof accountTransfers!=='undefined')accountTransfers=safeArray(data.accountTransfers);if(typeof ensureMoneyAccounts==='function')ensureMoneyAccounts(); if(typeof ensureUnifiedObjectColors==='function') ensureUnifiedObjectColors();
       if(typeof lang!=='undefined' && data.lang){lang=data.lang; L=LANGS[lang]||LANGS.mn; CS=CURR[lang]||'₮';}
       if(typeof budgetMonth!=='undefined' && data.budgetMonth) budgetMonth=data.budgetMonth; if(typeof budgetYear!=='undefined' && data.budgetYear) budgetYear=data.budgetYear; if(typeof budgetType!=='undefined' && data.budgetType) budgetType=data.budgetType;
       if(typeof lockedCats!=='undefined') lockedCats=new Set(safeArray(data.lockedCats)); if(typeof paySettings!=='undefined') paySettings=Object.assign({enabled:true,rate:20,alloc:{}},safeObj(data.paySettings)); window.netWorthSnapshots=safeArray(data.netWorthSnapshots);
