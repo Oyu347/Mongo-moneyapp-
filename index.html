@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.51: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
+<!-- Möngö V43.52: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
@@ -130,7 +130,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.51 Asset / Expense Clean Render</title>
+<title>Möngö — V43.52 Pay Yourself = Transfer</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -3355,13 +3355,13 @@ const CAT_LABELS={
 };
 
 const LANGS={
-  mn:{dashboard:'Санхүү',transactions:'Гүйлгээ',budget:'Төсөв',goals:'Хуримтлал',debts:'Зээл',invest:'Хөрөнгө',income:'Орлого',expense:'Зарлага',balance:'Үлдэгдэл',totaldebt:'Нийт өр',investlbl:'Хөрөнгө оруулалт',savingslbl:'Хуримтлал',recent:'Сүүлийн гүйлгээ',notxn:'Гүйлгээ байхгүй',budgetprog:'Төсвийн явц',nobudget:'Төсөв тохируулаагүй',inccat:'Орлогын ангилал',expcat:'Зарлагын ангилал',savingscat:'Хуримтлал',debtcat:'Зээл',investcat:'Хөрөнгө оруулалт',addtxn:'Шинэ гүйлгээ',inctoggle:'Орлого',exptoggle:'Зарлага',autoinvest:'Хөрөнгө оруулалтын ангилал — автоматаар бүртгэгдэнэ.',desc:'Тайлбар',descPh:'Төсөвлөөгүй',add:'Нэмэх',catconfig:'Ангилал удирдах',icon:'Дүрс',color:'Өнгө',newcat:'Шинэ ангилал...',alltxns:'Бүх гүйлгээ',addbudgetcat:'Ангилал нэмэх',save:'Хадгалах',addsaving:'Шинэ хуримтлал',savingname:'Нэр',deadline:'Хугацаа',targetAmt:'Зорилтот дүн',currentSaved:'Одоогийн хуримтлал',savinginfo:'Хуримтлалын нэртэй ижил зарлага нэмэхэд автоматаар тооцогдоно.',adddebt:'Шинэ зээл',debtname:'Зээлийн нэр',debtTotal:'Нийт дүн',remaining:'Үлдэгдэл',monthly:'Сарын төлбөр',interest:'Хүү (%)',debtinfo:'Зээлийн нэртэй ижил зарлага нэмэхэд үлдэгдэлээс хасагдана.',addinvest:'Хөрөнгө оруулалт нэмэх',investinfo:'Хөрөнгө худалдаж авахдаа Гүйлгээ → Шилжүүлэг → Хөрөнгө худалдаж авах урсгалыг ашиглана.',totalin:'Нийт оруулсан',curval:'Одоогийн үнэ',pnl2:'Нийт ашиг/алдагдал',returnlbl:'Өгөөж',update:'Шинэчлэх',invdetail:'Хөрөнгийн дэлгэрэнгүй',from:'Эхлэх:',to:'Дуусах:',apply:'Хэрэглэх',w7:'7 хоног',m1:'1 сар',m3:'3 сар',y1:'1 жил',all:'Бүгд',custom:'Өөрчлөх',paid:'Гүйлгээнээс хасагдсан',automark:'автомат',autosave:'Зарлагаар нэмэгдсэн',paidpct:'Төлсөн',total:'Нийт',nodata:'Мэдээлэл байхгүй',invested:'Оруулсан',iname:'Нэр',investedAmt:'Оруулсан дүн',currentVal:'Одоогийн үнэ цэнэ',investDate:'Огноо',budgetmonth:'Сарын төсөв',cumul:'Нийлэмж хуримтлал',months:['1-р сар','2-р сар','3-р сар','4-р сар','5-р сар','6-р сар','7-р сар','8-р сар','9-р сар','10-р сар','11-р сар','12-р сар'],budgetTypeTitle:'',btypeInc:'Орлогын төлөвлөгөө',btypeExp:'Зардлын төсөв',budgetTotalLbl:'Нийт төлөвлөсөн дүн',monthlyNeed:'Зорилгод хүрэхийн тулд сард',subcatPh:'Дэд ангилал сонгох',lock:'Түгжих',unlock:'Тайлах',confirmDel:'Устгах уу?',logoutConfirm:'Гарах уу?',cancel:'Болих',ok:'Тийм',selectSubcat:'Дэд ангилал',addSubPh:'Дэд ангилал нэмэх (монгол нэр)',noBackup:'Хадгалсан өгөгдөл байхгүй',backupOk:'Backup ✓',fileErr:'Файл буруу байна',dataLoaded:'Өгөгдөл ачааллагдлаа ✓'},
-  en:{dashboard:'Finance',transactions:'Transactions',budget:'Budget',goals:'Savings',debts:'Loans',invest:'Assets',income:'Income',expense:'Expense',balance:'Balance',totaldebt:'Total debt',investlbl:'Investments',savingslbl:'Savings',recent:'Recent transactions',notxn:'No transactions',budgetprog:'Budget progress',nobudget:'No budget set',inccat:'Income categories',expcat:'Expense categories',savingscat:'Savings',debtcat:'Debts',investcat:'Investments',addtxn:'Add transaction',inctoggle:'Income',exptoggle:'Expense',autoinvest:'Investment category — will be auto-recorded.',desc:'Description',descPh:'Unbudgeted',add:'Add',catconfig:'Manage categories',icon:'Icon',color:'Color',newcat:'New category...',alltxns:'All transactions',addbudgetcat:'Add category',save:'Save',addsaving:'Add saving goal',savingname:'Name',deadline:'Deadline',targetAmt:'Target amount',currentSaved:'Current saved',savinginfo:'Expenses matching this saving name will auto-update progress.',adddebt:'Add debt',debtname:'Debt name',debtTotal:'Total amount',remaining:'Remaining',monthly:'Monthly',interest:'Interest (%)',debtinfo:'Expenses matching debt name will auto-deduct from remaining.',addinvest:'Add investment',investinfo:'Use Transactions → Transfer → Buy asset when purchasing an asset.',totalin:'Total invested',curval:'Current value',pnl2:'Total profit/loss',returnlbl:'Return',update:'Update',invdetail:'Investment details',from:'From:',to:'To:',apply:'Apply',w7:'7 days',m1:'1 month',m3:'3 months',y1:'1 year',all:'All',custom:'Custom',paid:'Deducted',automark:'auto',autosave:'Added via expense',paidpct:'Paid',total:'Total',nodata:'No data',invested:'Invested',iname:'Name',investedAmt:'Investierter Betrag',currentVal:'Aktueller Wert',investDate:'Datum',investedAmt:'Amount invested',currentVal:'Current value',investDate:'Date',budgetmonth:'Monthly budget',cumul:'Cumulative savings',months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],budgetTypeTitle:'',btypeInc:'Income plan',btypeExp:'Expense budget',budgetTotalLbl:'Total planned',monthlyNeed:'Needed per month',subcatPh:'Select subcategory',lock:'Lock',unlock:'Unlock',confirmDel:'Delete?',logoutConfirm:'Sign out?',cancel:'Cancel',ok:'OK',selectSubcat:'Subcategory',addSubPh:'Add subcategory (in English)',noBackup:'No saved data',backupOk:'Backup ✓',fileErr:'Invalid file',dataLoaded:'Data loaded ✓'},
-  zh:{dashboard:'财务',transactions:'交易',budget:'预算',goals:'储蓄',debts:'贷款',invest:'资产',income:'收入',expense:'支出',balance:'余额',totaldebt:'总债务',investlbl:'投资',savingslbl:'储蓄',recent:'最近交易',notxn:'暂无交易',budgetprog:'预算进度',nobudget:'未设预算',inccat:'收入类别',expcat:'支出类别',savingscat:'储蓄',debtcat:'债务',investcat:'投资',addtxn:'添加交易',inctoggle:'收入',exptoggle:'支出',autoinvest:'已选投资类别。',desc:'描述',descPh:'未计划',add:'添加',catconfig:'类别设置',icon:'图标',color:'颜色',newcat:'新类别...',alltxns:'所有交易',addbudgetcat:'添加类别',save:'保存',addsaving:'添加储蓄目标',savingname:'名称',deadline:'截止',targetAmt:'目标金额',currentSaved:'当前储蓄',savinginfo:'同名支出将自动更新进度。',adddebt:'添加债务',debtname:'债务名称',debtTotal:'总金额',remaining:'剩余',monthly:'月供',interest:'利率(%)',debtinfo:'同名支出将从余额自动扣除。',addinvest:'添加投资',investinfo:'在交易中选择投资类别将自动记录。',totalin:'总投资',curval:'当前价值',pnl2:'总盈亏',returnlbl:'回报',update:'更新',invdetail:'投资详情',from:'开始:',to:'结束:',apply:'应用',w7:'7天',m1:'1个月',m3:'3个月',y1:'1年',all:'全部',custom:'自定义',paid:'已扣除',automark:'自动',autosave:'通过支出添加',paidpct:'已付',total:'合计',nodata:'无数据',invested:'投资额',iname:'名称',investedAmt:'投资金额',currentVal:'当前价值',investDate:'日期',budgetmonth:'月度预算',cumul:'累计储蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'收入计划',btypeExp:'支出预算',budgetTotalLbl:'总计划金额',monthlyNeed:'每月需要',subcatPh:'选择子类别',lock:'锁定',unlock:'解锁',confirmDel:'删除?',logoutConfirm:'退出?',cancel:'取消',ok:'确定',selectSubcat:'子类别',addSubPh:'添加子类别（中文名）',noBackup:'无保存数据',backupOk:'备份成功 ✓',fileErr:'文件无效',dataLoaded:'数据已加载 ✓'},
-  ja:{dashboard:'財務',transactions:'取引',budget:'予算',goals:'貯蓄',debts:'ローン',invest:'資産',income:'収入',expense:'支出',balance:'残高',totaldebt:'総負債',investlbl:'投資',savingslbl:'貯蓄',recent:'最近の取引',notxn:'取引なし',budgetprog:'予算進捗',nobudget:'予算未設定',inccat:'収入カテゴリ',expcat:'支出カテゴリ',savingscat:'貯蓄',debtcat:'借金',investcat:'投資',addtxn:'取引を追加',inctoggle:'収入',exptoggle:'支出',autoinvest:'投資カテゴリ選択。',desc:'説明',descPh:'未予算',add:'追加',catconfig:'カテゴリ設定',icon:'アイコン',color:'色',newcat:'新しいカテゴリ...',alltxns:'すべての取引',addbudgetcat:'カテゴリ追加',save:'保存',addsaving:'貯蓄目標追加',savingname:'名前',deadline:'期限',targetAmt:'目標額',currentSaved:'現在の貯蓄',savinginfo:'同名支出は自動反映。',adddebt:'借金追加',debtname:'借金名',debtTotal:'総額',remaining:'残高',monthly:'月払い',interest:'金利(%)',debtinfo:'同名支出は残高から控除。',addinvest:'投資追加',investinfo:'投資カテゴリで支出追加すると自動記録。',totalin:'総投資',curval:'現在価値',pnl2:'総損益',returnlbl:'リターン',update:'更新',invdetail:'投資詳細',from:'開始:',to:'終了:',apply:'適用',w7:'7日',m1:'1ヶ月',m3:'3ヶ月',y1:'1年',all:'全て',custom:'カスタム',paid:'控除済',automark:'自動',autosave:'支出から追加',paidpct:'支払済',total:'合計',nodata:'データなし',invested:'投資額',iname:'名前',investedAmt:'投資額',currentVal:'現在価値',investDate:'日付',budgetmonth:'月別予算',cumul:'累計貯蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'収入計画',btypeExp:'支出予算',budgetTotalLbl:'合計計画額',monthlyNeed:'毎月必要',subcatPh:'サブカテゴリ選択',lock:'ロック',unlock:'解除',confirmDel:'削除?',logoutConfirm:'サインアウト?',cancel:'キャンセル',ok:'OK',selectSubcat:'サブカテゴリ',addSubPh:'サブカテゴリ追加（日本語名）',noBackup:'保存データなし',backupOk:'バックアップ完了 ✓',fileErr:'ファイルが無効です',dataLoaded:'データ読込完了 ✓'},
-  ko:{dashboard:'재무',transactions:'거래',budget:'예산',goals:'저축',debts:'대출',invest:'자산',income:'수입',expense:'지출',balance:'잔액',totaldebt:'총 부채',investlbl:'투자',savingslbl:'저축',recent:'최근 거래',notxn:'거래 없음',budgetprog:'예산 진행',nobudget:'예산 미설정',inccat:'수입 카테고리',expcat:'지출 카테고리',savingscat:'저축',debtcat:'부채',investcat:'투자',addtxn:'거래 추가',inctoggle:'수입',exptoggle:'지출',autoinvest:'투자 카테고리 선택.',desc:'설명',descPh:'미계획',add:'추가',catconfig:'카테고리 설정',icon:'아이콘',color:'색상',newcat:'새 카테고리...',alltxns:'모든 거래',addbudgetcat:'카테고리 추가',save:'저장',addsaving:'저축 목표 추가',savingname:'이름',deadline:'기한',targetAmt:'목표금액',currentSaved:'현재저축',savinginfo:'저축 이름과 같은 지출은 자동 반영.',adddebt:'부채 추가',debtname:'부채 이름',debtTotal:'총금액',remaining:'잔액',monthly:'월납부',interest:'이자(%)',debtinfo:'부채 이름과 같은 지출은 자동 차감.',addinvest:'투자 추가',investinfo:'투자 카테고리로 지출 추가 시 자동 기록.',totalin:'총 투자',curval:'현재 가치',pnl2:'총 손익',returnlbl:'수익률',update:'업데이트',invdetail:'투자 세부정보',from:'시작:',to:'종료:',apply:'적용',w7:'7일',m1:'1개월',m3:'3개월',y1:'1년',all:'전체',custom:'사용자 정의',paid:'차감됨',automark:'자동',autosave:'지출로 추가',paidpct:'납부',total:'합계',nodata:'데이터 없음',invested:'투자액',iname:'이름',investedAmt:'투자금액',currentVal:'현재가치',investDate:'날짜',budgetmonth:'월별 예산',cumul:'누적 저축',months:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],budgetTypeTitle:'',btypeInc:'수입 계획',btypeExp:'지출 예산',budgetTotalLbl:'총 계획 금액',monthlyNeed:'월 필요 금액',subcatPh:'서브카테고리 선택',lock:'잠금',unlock:'해제',confirmDel:'삭제?',logoutConfirm:'로그아웃?',cancel:'취소',ok:'확인',selectSubcat:'서브카테고리',addSubPh:'서브카테고리 추가（한국어 이름）',noBackup:'저장된 데이터 없음',backupOk:'백업 완료 ✓',fileErr:'잘못된 파일',dataLoaded:'데이터 로드 완료 ✓'},
+  mn:{dashboard:'Санхүү',transactions:'Гүйлгээ',budget:'Төсөв',goals:'Хуримтлал',debts:'Зээл',invest:'Хөрөнгө',income:'Орлого',expense:'Зарлага',balance:'Мөнгөн үлдэгдэл',totaldebt:'Нийт өр',investlbl:'Хөрөнгө оруулалт',savingslbl:'Хуримтлал',recent:'Сүүлийн гүйлгээ',notxn:'Гүйлгээ байхгүй',budgetprog:'Төсвийн явц',nobudget:'Төсөв тохируулаагүй',inccat:'Орлогын ангилал',expcat:'Зарлагын ангилал',savingscat:'Хуримтлал',debtcat:'Зээл',investcat:'Хөрөнгө оруулалт',addtxn:'Шинэ гүйлгээ',inctoggle:'Орлого',exptoggle:'Зарлага',autoinvest:'Хөрөнгө оруулалтын ангилал — автоматаар бүртгэгдэнэ.',desc:'Тайлбар',descPh:'Төсөвлөөгүй',add:'Нэмэх',catconfig:'Ангилал удирдах',icon:'Дүрс',color:'Өнгө',newcat:'Шинэ ангилал...',alltxns:'Бүх гүйлгээ',addbudgetcat:'Ангилал нэмэх',save:'Хадгалах',addsaving:'Шинэ хуримтлал',savingname:'Нэр',deadline:'Хугацаа',targetAmt:'Зорилтот дүн',currentSaved:'Одоогийн хуримтлал',savinginfo:'Хуримтлалын нэртэй ижил зарлага нэмэхэд автоматаар тооцогдоно.',adddebt:'Шинэ зээл',debtname:'Зээлийн нэр',debtTotal:'Нийт дүн',remaining:'Үлдэгдэл',monthly:'Сарын төлбөр',interest:'Хүү (%)',debtinfo:'Зээлийн нэртэй ижил зарлага нэмэхэд үлдэгдэлээс хасагдана.',addinvest:'Хөрөнгө оруулалт нэмэх',investinfo:'Хөрөнгө худалдаж авахдаа Гүйлгээ → Шилжүүлэг → Хөрөнгө худалдаж авах урсгалыг ашиглана.',totalin:'Нийт оруулсан',curval:'Одоогийн үнэ',pnl2:'Нийт ашиг/алдагдал',returnlbl:'Өгөөж',update:'Шинэчлэх',invdetail:'Хөрөнгийн дэлгэрэнгүй',from:'Эхлэх:',to:'Дуусах:',apply:'Хэрэглэх',w7:'7 хоног',m1:'1 сар',m3:'3 сар',y1:'1 жил',all:'Бүгд',custom:'Өөрчлөх',paid:'Гүйлгээнээс хасагдсан',automark:'автомат',autosave:'Зарлагаар нэмэгдсэн',paidpct:'Төлсөн',total:'Нийт',nodata:'Мэдээлэл байхгүй',invested:'Оруулсан',iname:'Нэр',investedAmt:'Оруулсан дүн',currentVal:'Одоогийн үнэ цэнэ',investDate:'Огноо',budgetmonth:'Сарын төсөв',cumul:'Нийлэмж хуримтлал',months:['1-р сар','2-р сар','3-р сар','4-р сар','5-р сар','6-р сар','7-р сар','8-р сар','9-р сар','10-р сар','11-р сар','12-р сар'],budgetTypeTitle:'',btypeInc:'Орлогын төлөвлөгөө',btypeExp:'Зардлын төсөв',budgetTotalLbl:'Нийт төлөвлөсөн дүн',monthlyNeed:'Зорилгод хүрэхийн тулд сард',subcatPh:'Дэд ангилал сонгох',lock:'Түгжих',unlock:'Тайлах',confirmDel:'Устгах уу?',logoutConfirm:'Гарах уу?',cancel:'Болих',ok:'Тийм',selectSubcat:'Дэд ангилал',addSubPh:'Дэд ангилал нэмэх (монгол нэр)',noBackup:'Хадгалсан өгөгдөл байхгүй',backupOk:'Backup ✓',fileErr:'Файл буруу байна',dataLoaded:'Өгөгдөл ачааллагдлаа ✓'},
+  en:{dashboard:'Finance',transactions:'Transactions',budget:'Budget',goals:'Savings',debts:'Loans',invest:'Assets',income:'Income',expense:'Expense',balance:'Cash balance',totaldebt:'Total debt',investlbl:'Investments',savingslbl:'Savings',recent:'Recent transactions',notxn:'No transactions',budgetprog:'Budget progress',nobudget:'No budget set',inccat:'Income categories',expcat:'Expense categories',savingscat:'Savings',debtcat:'Debts',investcat:'Investments',addtxn:'Add transaction',inctoggle:'Income',exptoggle:'Expense',autoinvest:'Investment category — will be auto-recorded.',desc:'Description',descPh:'Unbudgeted',add:'Add',catconfig:'Manage categories',icon:'Icon',color:'Color',newcat:'New category...',alltxns:'All transactions',addbudgetcat:'Add category',save:'Save',addsaving:'Add saving goal',savingname:'Name',deadline:'Deadline',targetAmt:'Target amount',currentSaved:'Current saved',savinginfo:'Expenses matching this saving name will auto-update progress.',adddebt:'Add debt',debtname:'Debt name',debtTotal:'Total amount',remaining:'Remaining',monthly:'Monthly',interest:'Interest (%)',debtinfo:'Expenses matching debt name will auto-deduct from remaining.',addinvest:'Add investment',investinfo:'Use Transactions → Transfer → Buy asset when purchasing an asset.',totalin:'Total invested',curval:'Current value',pnl2:'Total profit/loss',returnlbl:'Return',update:'Update',invdetail:'Investment details',from:'From:',to:'To:',apply:'Apply',w7:'7 days',m1:'1 month',m3:'3 months',y1:'1 year',all:'All',custom:'Custom',paid:'Deducted',automark:'auto',autosave:'Added via expense',paidpct:'Paid',total:'Total',nodata:'No data',invested:'Invested',iname:'Name',investedAmt:'Investierter Betrag',currentVal:'Aktueller Wert',investDate:'Datum',investedAmt:'Amount invested',currentVal:'Current value',investDate:'Date',budgetmonth:'Monthly budget',cumul:'Cumulative savings',months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],budgetTypeTitle:'',btypeInc:'Income plan',btypeExp:'Expense budget',budgetTotalLbl:'Total planned',monthlyNeed:'Needed per month',subcatPh:'Select subcategory',lock:'Lock',unlock:'Unlock',confirmDel:'Delete?',logoutConfirm:'Sign out?',cancel:'Cancel',ok:'OK',selectSubcat:'Subcategory',addSubPh:'Add subcategory (in English)',noBackup:'No saved data',backupOk:'Backup ✓',fileErr:'Invalid file',dataLoaded:'Data loaded ✓'},
+  zh:{dashboard:'财务',transactions:'交易',budget:'预算',goals:'储蓄',debts:'贷款',invest:'资产',income:'收入',expense:'支出',balance:'现金余额',totaldebt:'总债务',investlbl:'投资',savingslbl:'储蓄',recent:'最近交易',notxn:'暂无交易',budgetprog:'预算进度',nobudget:'未设预算',inccat:'收入类别',expcat:'支出类别',savingscat:'储蓄',debtcat:'债务',investcat:'投资',addtxn:'添加交易',inctoggle:'收入',exptoggle:'支出',autoinvest:'已选投资类别。',desc:'描述',descPh:'未计划',add:'添加',catconfig:'类别设置',icon:'图标',color:'颜色',newcat:'新类别...',alltxns:'所有交易',addbudgetcat:'添加类别',save:'保存',addsaving:'添加储蓄目标',savingname:'名称',deadline:'截止',targetAmt:'目标金额',currentSaved:'当前储蓄',savinginfo:'同名支出将自动更新进度。',adddebt:'添加债务',debtname:'债务名称',debtTotal:'总金额',remaining:'剩余',monthly:'月供',interest:'利率(%)',debtinfo:'同名支出将从余额自动扣除。',addinvest:'添加投资',investinfo:'在交易中选择投资类别将自动记录。',totalin:'总投资',curval:'当前价值',pnl2:'总盈亏',returnlbl:'回报',update:'更新',invdetail:'投资详情',from:'开始:',to:'结束:',apply:'应用',w7:'7天',m1:'1个月',m3:'3个月',y1:'1年',all:'全部',custom:'自定义',paid:'已扣除',automark:'自动',autosave:'通过支出添加',paidpct:'已付',total:'合计',nodata:'无数据',invested:'投资额',iname:'名称',investedAmt:'投资金额',currentVal:'当前价值',investDate:'日期',budgetmonth:'月度预算',cumul:'累计储蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'收入计划',btypeExp:'支出预算',budgetTotalLbl:'总计划金额',monthlyNeed:'每月需要',subcatPh:'选择子类别',lock:'锁定',unlock:'解锁',confirmDel:'删除?',logoutConfirm:'退出?',cancel:'取消',ok:'确定',selectSubcat:'子类别',addSubPh:'添加子类别（中文名）',noBackup:'无保存数据',backupOk:'备份成功 ✓',fileErr:'文件无效',dataLoaded:'数据已加载 ✓'},
+  ja:{dashboard:'財務',transactions:'取引',budget:'予算',goals:'貯蓄',debts:'ローン',invest:'資産',income:'収入',expense:'支出',balance:'現金残高',totaldebt:'総負債',investlbl:'投資',savingslbl:'貯蓄',recent:'最近の取引',notxn:'取引なし',budgetprog:'予算進捗',nobudget:'予算未設定',inccat:'収入カテゴリ',expcat:'支出カテゴリ',savingscat:'貯蓄',debtcat:'借金',investcat:'投資',addtxn:'取引を追加',inctoggle:'収入',exptoggle:'支出',autoinvest:'投資カテゴリ選択。',desc:'説明',descPh:'未予算',add:'追加',catconfig:'カテゴリ設定',icon:'アイコン',color:'色',newcat:'新しいカテゴリ...',alltxns:'すべての取引',addbudgetcat:'カテゴリ追加',save:'保存',addsaving:'貯蓄目標追加',savingname:'名前',deadline:'期限',targetAmt:'目標額',currentSaved:'現在の貯蓄',savinginfo:'同名支出は自動反映。',adddebt:'借金追加',debtname:'借金名',debtTotal:'総額',remaining:'残高',monthly:'月払い',interest:'金利(%)',debtinfo:'同名支出は残高から控除。',addinvest:'投資追加',investinfo:'投資カテゴリで支出追加すると自動記録。',totalin:'総投資',curval:'現在価値',pnl2:'総損益',returnlbl:'リターン',update:'更新',invdetail:'投資詳細',from:'開始:',to:'終了:',apply:'適用',w7:'7日',m1:'1ヶ月',m3:'3ヶ月',y1:'1年',all:'全て',custom:'カスタム',paid:'控除済',automark:'自動',autosave:'支出から追加',paidpct:'支払済',total:'合計',nodata:'データなし',invested:'投資額',iname:'名前',investedAmt:'投資額',currentVal:'現在価値',investDate:'日付',budgetmonth:'月別予算',cumul:'累計貯蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'収入計画',btypeExp:'支出予算',budgetTotalLbl:'合計計画額',monthlyNeed:'毎月必要',subcatPh:'サブカテゴリ選択',lock:'ロック',unlock:'解除',confirmDel:'削除?',logoutConfirm:'サインアウト?',cancel:'キャンセル',ok:'OK',selectSubcat:'サブカテゴリ',addSubPh:'サブカテゴリ追加（日本語名）',noBackup:'保存データなし',backupOk:'バックアップ完了 ✓',fileErr:'ファイルが無効です',dataLoaded:'データ読込完了 ✓'},
+  ko:{dashboard:'재무',transactions:'거래',budget:'예산',goals:'저축',debts:'대출',invest:'자산',income:'수입',expense:'지출',balance:'현금 잔액',totaldebt:'총 부채',investlbl:'투자',savingslbl:'저축',recent:'최근 거래',notxn:'거래 없음',budgetprog:'예산 진행',nobudget:'예산 미설정',inccat:'수입 카테고리',expcat:'지출 카테고리',savingscat:'저축',debtcat:'부채',investcat:'투자',addtxn:'거래 추가',inctoggle:'수입',exptoggle:'지출',autoinvest:'투자 카테고리 선택.',desc:'설명',descPh:'미계획',add:'추가',catconfig:'카테고리 설정',icon:'아이콘',color:'색상',newcat:'새 카테고리...',alltxns:'모든 거래',addbudgetcat:'카테고리 추가',save:'저장',addsaving:'저축 목표 추가',savingname:'이름',deadline:'기한',targetAmt:'목표금액',currentSaved:'현재저축',savinginfo:'저축 이름과 같은 지출은 자동 반영.',adddebt:'부채 추가',debtname:'부채 이름',debtTotal:'총금액',remaining:'잔액',monthly:'월납부',interest:'이자(%)',debtinfo:'부채 이름과 같은 지출은 자동 차감.',addinvest:'투자 추가',investinfo:'투자 카테고리로 지출 추가 시 자동 기록.',totalin:'총 투자',curval:'현재 가치',pnl2:'총 손익',returnlbl:'수익률',update:'업데이트',invdetail:'투자 세부정보',from:'시작:',to:'종료:',apply:'적용',w7:'7일',m1:'1개월',m3:'3개월',y1:'1년',all:'전체',custom:'사용자 정의',paid:'차감됨',automark:'자동',autosave:'지출로 추가',paidpct:'납부',total:'합계',nodata:'데이터 없음',invested:'투자액',iname:'이름',investedAmt:'투자금액',currentVal:'현재가치',investDate:'날짜',budgetmonth:'월별 예산',cumul:'누적 저축',months:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],budgetTypeTitle:'',btypeInc:'수입 계획',btypeExp:'지출 예산',budgetTotalLbl:'총 계획 금액',monthlyNeed:'월 필요 금액',subcatPh:'서브카테고리 선택',lock:'잠금',unlock:'해제',confirmDel:'삭제?',logoutConfirm:'로그아웃?',cancel:'취소',ok:'확인',selectSubcat:'서브카테고리',addSubPh:'서브카테고리 추가（한국어 이름）',noBackup:'저장된 데이터 없음',backupOk:'백업 완료 ✓',fileErr:'잘못된 파일',dataLoaded:'데이터 로드 완료 ✓'},
   ru:{dashboard:'Финансы',transactions:'Операции',budget:'Бюджет',goals:'Сбережения',debts:'Кредиты',invest:'Активы',income:'Доходы',expense:'Расходы',balance:'Баланс',totaldebt:'Общий долг',investlbl:'Инвестиции',savingslbl:'Сбережения',recent:'Последние транзакции',notxn:'Нет транзакций',budgetprog:'Прогресс бюджета',nobudget:'Бюджет не задан',inccat:'Категории доходов',expcat:'Категории расходов',savingscat:'Сбережения',debtcat:'Долги',investcat:'Инвестиции',addtxn:'Добавить транзакцию',inctoggle:'Доход',exptoggle:'Расход',autoinvest:'Категория инвестиций выбрана.',desc:'Описание',descPh:'Не запланировано',add:'Добавить',catconfig:'Категории',icon:'Иконка',color:'Цвет',newcat:'Новая категория...',alltxns:'Все транзакции',addbudgetcat:'Добавить категорию',save:'Сохранить',addsaving:'Добавить цель',savingname:'Название',deadline:'Срок',targetAmt:'Целевая сумма',currentSaved:'Текущие сбережения',savinginfo:'Расходы с таким именем автоматически обновляют прогресс.',adddebt:'Добавить долг',debtname:'Название',debtTotal:'Общая сумма',remaining:'Остаток',monthly:'Ежемесячно',interest:'Процент (%)',debtinfo:'Расходы с именем долга автоматически вычитаются.',addinvest:'Добавить инвестицию',investinfo:'Добавьте расход с категорией Инвестиции.',totalin:'Всего вложено',curval:'Текущая стоимость',pnl2:'Общая прибыль',returnlbl:'Доходность',update:'Обновить',invdetail:'Детали',from:'С:',to:'По:',apply:'Применить',w7:'7 дней',m1:'1 месяц',m3:'3 месяца',y1:'1 год',all:'Все',custom:'Выбрать',paid:'Вычтено',automark:'авто',autosave:'Через расход',paidpct:'Оплачено',total:'Итого',nodata:'Нет данных',invested:'Вложено',iname:'Название',investedAmt:'Сумма вложений',currentVal:'Текущая стоимость',investDate:'Дата',budgetmonth:'Месячный бюджет',cumul:'Накопленные сбережения',months:['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],budgetTypeTitle:'',btypeInc:'План доходов',btypeExp:'Бюджет расходов',budgetTotalLbl:'Общая сумма',monthlyNeed:'Нужно в месяц',subcatPh:'Выбрать подкатегорию',lock:'Заблокировать',unlock:'Разблокировать',confirmDel:'Удалить?',logoutConfirm:'Выйти?',cancel:'Отмена',ok:'OK',selectSubcat:'Подкатегория',addSubPh:'Добавить подкатегорию (на русском)'},
-  de:{dashboard:'Finanzen',transactions:'Transaktionen',budget:'Budget',goals:'Ersparnisse',debts:'Kredite',invest:'Vermögen',income:'Einnahmen',expense:'Ausgaben',balance:'Saldo',totaldebt:'Gesamtschulden',investlbl:'Investitionen',savingslbl:'Ersparnisse',recent:'Letzte Transaktionen',notxn:'Keine Transaktionen',budgetprog:'Budgetfortschritt',nobudget:'Kein Budget',inccat:'Einnahmenkategorien',expcat:'Ausgabenkategorien',savingscat:'Ersparnisse',debtcat:'Schulden',investcat:'Investitionen',addtxn:'Transaktion hinzufügen',inctoggle:'Einnahme',exptoggle:'Ausgabe',autoinvest:'Investitionskategorie ausgewählt.',desc:'Beschreibung',descPh:'Nicht geplant',add:'Hinzufügen',catconfig:'Kategorien',icon:'Symbol',color:'Farbe',newcat:'Neue Kategorie...',alltxns:'Alle Transaktionen',addbudgetcat:'Kategorie hinzufügen',save:'Speichern',addsaving:'Sparziel',savingname:'Name',deadline:'Frist',targetAmt:'Zielbetrag',currentSaved:'Aktuell gespart',savinginfo:'Ausgaben mit gleichem Namen werden automatisch erfasst.',adddebt:'Schuld hinzufügen',debtname:'Name',debtTotal:'Gesamtbetrag',remaining:'Restbetrag',monthly:'Monatlich',interest:'Zinsen (%)',debtinfo:'Ausgaben werden automatisch abgezogen.',addinvest:'Investition',investinfo:'Ausgabe mit Investitionskategorie → automatisch erfasst.',totalin:'Gesamt investiert',curval:'Aktueller Wert',pnl2:'Gewinn/Verlust',returnlbl:'Rendite',update:'Aktualisieren',invdetail:'Details',from:'Von:',to:'Bis:',apply:'Anwenden',w7:'7 Tage',m1:'1 Monat',m3:'3 Monate',y1:'1 Jahr',all:'Alle',custom:'Anpassen',paid:'Abgezogen',automark:'auto',autosave:'Durch Ausgabe',paidpct:'Bezahlt',total:'Gesamt',nodata:'Keine Daten',invested:'Investiert',iname:'Name',budgetmonth:'Monatsbudget',cumul:'Kumulierte Ersparnisse',months:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],budgetTypeTitle:'',btypeInc:'Einnahmenplan',btypeExp:'Ausgabenbudget',budgetTotalLbl:'Gesamtbetrag',monthlyNeed:'Benötigt pro Monat',subcatPh:'Unterkategorie wählen',lock:'Sperren',unlock:'Entsperren',confirmDel:'Löschen?',logoutConfirm:'Abmelden?',cancel:'Abbrechen',ok:'OK',selectSubcat:'Unterkategorie',addSubPh:'Unterkategorie hinzufügen (auf Deutsch)'}
+  de:{dashboard:'Finanzen',transactions:'Transaktionen',budget:'Budget',goals:'Ersparnisse',debts:'Kredite',invest:'Vermögen',income:'Einnahmen',expense:'Ausgaben',balance:'Geldbestand',totaldebt:'Gesamtschulden',investlbl:'Investitionen',savingslbl:'Ersparnisse',recent:'Letzte Transaktionen',notxn:'Keine Transaktionen',budgetprog:'Budgetfortschritt',nobudget:'Kein Budget',inccat:'Einnahmenkategorien',expcat:'Ausgabenkategorien',savingscat:'Ersparnisse',debtcat:'Schulden',investcat:'Investitionen',addtxn:'Transaktion hinzufügen',inctoggle:'Einnahme',exptoggle:'Ausgabe',autoinvest:'Investitionskategorie ausgewählt.',desc:'Beschreibung',descPh:'Nicht geplant',add:'Hinzufügen',catconfig:'Kategorien',icon:'Symbol',color:'Farbe',newcat:'Neue Kategorie...',alltxns:'Alle Transaktionen',addbudgetcat:'Kategorie hinzufügen',save:'Speichern',addsaving:'Sparziel',savingname:'Name',deadline:'Frist',targetAmt:'Zielbetrag',currentSaved:'Aktuell gespart',savinginfo:'Ausgaben mit gleichem Namen werden automatisch erfasst.',adddebt:'Schuld hinzufügen',debtname:'Name',debtTotal:'Gesamtbetrag',remaining:'Restbetrag',monthly:'Monatlich',interest:'Zinsen (%)',debtinfo:'Ausgaben werden automatisch abgezogen.',addinvest:'Investition',investinfo:'Ausgabe mit Investitionskategorie → automatisch erfasst.',totalin:'Gesamt investiert',curval:'Aktueller Wert',pnl2:'Gewinn/Verlust',returnlbl:'Rendite',update:'Aktualisieren',invdetail:'Details',from:'Von:',to:'Bis:',apply:'Anwenden',w7:'7 Tage',m1:'1 Monat',m3:'3 Monate',y1:'1 Jahr',all:'Alle',custom:'Anpassen',paid:'Abgezogen',automark:'auto',autosave:'Durch Ausgabe',paidpct:'Bezahlt',total:'Gesamt',nodata:'Keine Daten',invested:'Investiert',iname:'Name',budgetmonth:'Monatsbudget',cumul:'Kumulierte Ersparnisse',months:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],budgetTypeTitle:'',btypeInc:'Einnahmenplan',btypeExp:'Ausgabenbudget',budgetTotalLbl:'Gesamtbetrag',monthlyNeed:'Benötigt pro Monat',subcatPh:'Unterkategorie wählen',lock:'Sperren',unlock:'Entsperren',confirmDel:'Löschen?',logoutConfirm:'Abmelden?',cancel:'Abbrechen',ok:'OK',selectSubcat:'Unterkategorie',addSubPh:'Unterkategorie hinzufügen (auf Deutsch)'}
 };
 
 const V27_PROFILE_LANGS={
@@ -7711,6 +7711,68 @@ function avgMonthlyExpenseAll(){
   const total=expenseTxns.reduce((s,t)=>s+(Number(t.amount)||0),0);
   return total/months;
 }
+
+function savingsTransferInPeriod(t,from,to){
+  if(!t||t.purpose!=='savings'||!t.date)return false;
+  const d=parseTxnDateLocal(t.date);
+  return d>=from&&d<=to;
+}
+function savingsTransfersForPeriod(){
+  const {from,to}=getPD();
+  return accountTransfers.filter(t=>savingsTransferInPeriod(t,from,to));
+}
+function savingsTransfersTotalForPeriod(){
+  return savingsTransfersForPeriod().reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+}
+function allSavingsTransferTotal(){
+  return accountTransfers.filter(t=>t.purpose==='savings').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+}
+function findGoalForLegacySavingsTxn(t){
+  if(!t)return null;
+  const candidates=[t.goalId,t.targetId].filter(v=>v!==undefined&&v!==null);
+  for(const id of candidates){
+    const g=goals.find(x=>String(x.id)===String(id));if(g)return g;
+  }
+  const names=[t.subcatName,t.desc,t.catName].filter(Boolean).map(x=>String(x).trim().toLowerCase());
+  return goals.find(g=>names.includes(String(g.name||'').trim().toLowerCase()))||null;
+}
+function ensureSavingsAccountForGoal(goal,date){
+  if(!goal)return null;
+  const nm=String(goal.name||'').trim().toLowerCase();
+  let a=moneyAccounts.find(x=>normalizeAccountType(x.type)==='savings'&&String(x.name||'').trim().toLowerCase()===nm);
+  if(a)return a;
+  a={id:'sav_'+String(goal.id||Date.now())+'_'+Math.random().toString(36).slice(2,7),name:goal.name||savingsCatDisplayName(),type:'savings',startDate:date||new Date().toISOString().slice(0,10),openingBalance:0,active:true,goalId:goal.id,autoCreatedForGoal:true};
+  moneyAccounts.push(a);return a;
+}
+function migrateLegacySavingsTransfers(){
+  if(!Array.isArray(txns)||!txns.length)return false;
+  let changed=false;const keep=[];
+  txns.forEach(t=>{
+    // Old Möngö builds stored "Pay Yourself First"/goal funding as Expense.
+    // Convert only savings expenses that can be tied to a concrete savings goal.
+    if(isSavingsTxn(t)){
+      const goal=findGoalForLegacySavingsTxn(t);
+      if(goal){
+        const fromId=t.accountId||getDefaultAccountId();
+        const dest=ensureSavingsAccountForGoal(goal,t.date);
+        const already=accountTransfers.some(x=>x.legacyTxnId&&String(x.legacyTxnId)===String(t.id));
+        if(!already&&dest){
+          accountTransfers.push({
+            id:'savmig_'+String(t.id||Date.now())+'_'+Math.random().toString(36).slice(2,6),
+            fromId,toId:dest.id,amount:Number(t.amount)||0,date:t.date,
+            purpose:'savings',targetId:goal.id,legacyTxnId:t.id,
+            autoPaySelf:!!t.autoPaySelf,migratedFromExpense:true,updatedAt:new Date().toISOString()
+          });
+        }
+        changed=true;return; // remove the old expense record
+      }
+    }
+    keep.push(t);
+  });
+  if(changed){txns=keep;openingBalance=moneyAccounts.reduce((sum,a)=>sum+(Number(a.openingBalance)||0),0);}
+  return changed;
+}
+
 function isSavingsTxn(t){
   if(!t||t.type!=='expense')return false;
   if(t.catKey==='savings_cat')return true;
@@ -7718,20 +7780,22 @@ function isSavingsTxn(t){
   return names.includes(t.catName);
 }
 function avgMonthlySavingsAll(){
-  // FIRE forecast uses Pay-Yourself-First savings, not period cashflow.
-  // Use the latest rolling 12 months; if data is newer than 12 months, use available months.
-  const savingsTxns=txns.filter(isSavingsTxn);
-  if(!savingsTxns.length)return 0;
-  const ds=savingsTxns.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
+  // FIRE forecast uses savings transfers ("Pay Yourself First"), not expenses.
+  const movements=[
+    ...accountTransfers.filter(t=>t.purpose==='savings').map(t=>({date:t.date,amount:Number(t.amount)||0})),
+    ...txns.filter(isSavingsTxn).map(t=>({date:t.date,amount:Number(t.amount)||0}))
+  ].filter(x=>x.date&&x.amount>0);
+  if(!movements.length)return 0;
+  const ds=movements.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
   if(!ds.length)return 0;
   const latest=new Date(Math.max(...ds));
   const windowStart=new Date(latest.getFullYear(),latest.getMonth()-11,1,0,0,0,0);
-  const inWindow=savingsTxns.filter(t=>parseTxnDateLocal(t.date||'')>=windowStart);
+  const inWindow=movements.filter(t=>parseTxnDateLocal(t.date||'')>=windowStart);
   const usedDates=inWindow.map(t=>parseTxnDateLocal(t.date||'')).filter(d=>!isNaN(d));
   if(!usedDates.length)return 0;
   const earliest=new Date(Math.min(...usedDates));
   const months=Math.max(1,Math.min(12,(latest.getFullYear()-earliest.getFullYear())*12+(latest.getMonth()-earliest.getMonth())+1));
-  const total=inWindow.reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const total=inWindow.reduce((sum,t)=>sum+(Number(t.amount)||0),0);
   return total/months;
 }
 function fireForecastText(netWorth,fireTarget){
@@ -7813,8 +7877,9 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
   const ft=fT();
   // Savings rate follows the “Pay Yourself First” principle:
   // only money explicitly recorded under the Savings category counts here.
-  const explicitSavings=ft.filter(isSavingsTxn).reduce((s,t)=>s+t.amount,0);
-  const periodSavings=explicitSavings;
+  const explicitSavings=ft.filter(isSavingsTxn).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const transferSavings=savingsTransfersTotalForPeriod();
+  const periodSavings=explicitSavings+transferSavings;
   const saveRate=inc>0?Math.max(0,Math.min(100,Math.round((periodSavings/inc)*100))):0;
   const netWorth=(tCur||0)+(totalSavings||0)-(dbt||0);
 
@@ -7940,7 +8005,7 @@ function ensureMoneyAccounts(){
   openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);
 }
 function accountBalanceRaw(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.openingBalance)||0;
-  txns.forEach(t=>{if(t.accountId===id&&!t.skipAccountBalance)v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0);});
+  txns.forEach(t=>{if(t.accountId===id&&!t.skipAccountBalance&&!t.autoPaySelf)v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0);});
   accountTransfers.forEach(t=>{if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;});
   debts.forEach(d=>{if(d.fundingMode==='existing'&&d.fundingAccountId===id)v+=Number(d.fundingAmount)||0;debtPayments(d).forEach(p=>{if(p.accountId===id)v-=Number(p.total)||0;});});
   return v;}
@@ -8045,7 +8110,7 @@ const OPENING_BALANCE_TEXT={
 function openingBalanceText(){return OPENING_BALANCE_TEXT[lang]||OPENING_BALANCE_TEXT.mn;}
 function allTimeCashTotals(){
   const income=txns.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
-  const expense=txns.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const expense=txns.filter(t=>t.type==='expense'&&!t.autoPaySelf).reduce((s,t)=>s+(Number(t.amount)||0),0);
   ensureMoneyAccounts();return {income,expense,balance:moneyAccountsTotal()};
 }
 function renderOpeningBalance(){
@@ -8064,7 +8129,7 @@ function saveOpeningBalance(){renderOpeningBalance();}
 function uDash(){
   const ft=fT();
   const inc=ft.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=ft.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const exp=ft.filter(t=>t.type==='expense'&&!t.autoPaySelf).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const dbt=debts.reduce((s,d)=>s+getDebtRemaining(d),0);
   const tIn=invests.reduce((s,i)=>s+i.invested,0);
   const tCur=invests.reduce((s,i)=>s+i.current,0);
@@ -8351,14 +8416,14 @@ function gSpent(catNm,subNm,month,subObjOverride){
     const subObj=subObjOverride||(catObj?(catObj.subs||[]).find(s=>cN(s)===subNm||s.key===subNm||s.name===subNm):null);
     const subKey=subObj?(subObj.key||subObj.name||subNm):subNm;
     const legacy=txns.filter(t=>{
-      if(!matchTxnCat(t,catNm,'expense')||!filterM(t))return false;
+      if(!matchTxnCat(t,catNm,'expense')||!filterM(t)||t.autoPaySelf)return false;
       const sameName=t.subcatName===subKey||t.subcatName===subNm||(!t.subcatName&&t.desc===subNm);
       if(!sameName)return false;
       return investmentTxnMatchesBudgetSub(t,catObj,subObj,subNm);
     }).reduce((sum,t)=>sum+t.amount,0);
     return legacy+transferSaved(subNm)+loanPaid(subNm);
   }
-  const legacy=txns.filter(t=>matchTxnCat(t,catNm,'expense')&&filterM(t)).reduce((sum,t)=>sum+t.amount,0);
+  const legacy=txns.filter(t=>matchTxnCat(t,catNm,'expense')&&filterM(t)&&!t.autoPaySelf).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
   return legacy+transferSaved(null)+loanPaid(null);
 }
 
@@ -8521,7 +8586,7 @@ function dashChangeMo(dir){
 }
 
 function getGoalAutoSaved(goal){
-  const legacy=txns.filter(t=>t.type==='expense'&&(t.catName===goal.name||t.desc===goal.name||t.subcatName===goal.name)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const legacy=txns.filter(t=>t.type==='expense'&&!t.autoPaySelf&&(t.catName===goal.name||t.desc===goal.name||t.subcatName===goal.name)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const transfers=accountTransfers.filter(t=>t.purpose==='savings'&&String(t.targetId)===String(goal.id)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const interest=txns.filter(t=>t.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===String(goal.id)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   return legacy+transfers+interest;
@@ -9214,6 +9279,8 @@ function loadData(){
     mergeBCats(data.bCatsExpSave,bCatsExp);
     mergeBCats(data.bCatsIncSave,bCatsInc);
     normalizeDefaultCatColors();
+    const savingsMigrated=migrateLegacySavingsTransfers();
+    if(savingsMigrated)setTimeout(()=>{try{saveData();}catch(e){console.warn('Savings migration save failed',e);}},0);
     return true;
   }catch(e){console.warn('Load error:',e);return false;}
 }
@@ -9933,9 +10000,19 @@ function savingsCatDisplayName(){
   return x[lang]||x.en;
 }
 function confirmPayAssistant(){
-  if(!pendingPayPlan)return; const base=Date.now(); const catName=savingsCatDisplayName();
-  pendingPayPlan.rows.forEach((r,i)=>{txns.unshift({id:base+i+1,desc:r.goalName,amount:r.amount,catName,catKey:'savings_cat',subcatName:r.goalName,date:pendingPayPlan.date,type:'expense',accountId:pendingPayPlan.accountId||getDefaultAccountId(),autoPaySelf:true});});
-  pendingPayPlan=null; const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show'); saveData(); rAll(); showToast(payText().created+' ✓');
+  if(!pendingPayPlan)return;
+  const base=Date.now(),fromId=pendingPayPlan.accountId||getDefaultAccountId();
+  pendingPayPlan.rows.forEach((r,i)=>{
+    const goal=goals.find(g=>String(g.id)===String(r.goalId));
+    if(!goal)return;
+    const dest=ensureSavingsAccountForGoal(goal,pendingPayPlan.date);
+    accountTransfers.unshift({
+      id:'pay_'+base+'_'+i,fromId,toId:dest?dest.id:null,amount:r.amount,date:pendingPayPlan.date,
+      purpose:'savings',targetId:goal.id,autoPaySelf:true,payYourselfFirst:true,updatedAt:new Date().toISOString()
+    });
+  });
+  pendingPayPlan=null; const m=document.getElementById('pay-assist-modal'); if(m)m.classList.remove('show');
+  saveData(); rAll(); renderMoneyAccounts(); showToast(payText().created+' ✓');
 }
 function editPayAssistant(){
   if(!pendingPayPlan)return;
@@ -9976,7 +10053,7 @@ function backPayEditModal(){renderPayModal(false);}
 
 function skipPayAssistant(){pendingPayPlan=null;const m=document.getElementById('pay-assist-modal');if(m)m.classList.remove('show');}
 function periodLabelForGrowth(){const t=payText();return period==='all'?t.growthAll:t.growthPeriod;}
-function periodWealthDelta(){const ft=fT();const savings=ft.filter(isSavingsTxn).reduce((s,t)=>s+(Number(t.amount)||0),0);const invGain=invests.filter(i=>{const d=parseTxnDateLocal(i.date||'');const pd=getPD();return d>=pd.from&&d<=pd.to;}).reduce((s,i)=>s+((Number(i.current)||0)-(Number(i.invested)||0)),0);return savings+invGain;}
+function periodWealthDelta(){const ft=fT();const savings=ft.filter(isSavingsTxn).reduce((s,t)=>s+(Number(t.amount)||0),0)+savingsTransfersTotalForPeriod();const invGain=invests.filter(i=>{const d=parseTxnDateLocal(i.date||'');const pd=getPD();return d>=pd.from&&d<=pd.to;}).reduce((s,i)=>s+((Number(i.current)||0)-(Number(i.invested)||0)),0);return savings+invGain;}
 function updateNetWorthGrowth(netWorth){
   const el=document.getElementById('pdash-net-growth'); if(!el)return;
   const delta=periodWealthDelta(); const base=Math.max(1,Math.abs(netWorth-delta)); const pct=delta?((delta/base)*100):0;
