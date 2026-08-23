@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Möngö V43.41: Money Accounts polish — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
@@ -74,7 +75,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.40 Money Accounts</title>
+<title>Möngö — V43.41 Money Accounts</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -96,8 +97,15 @@ body{visibility:visible;}
   :root{--bg:#1e1a17;--bg2:#272320;--bg3:#2f2b27;--text:#ede8e2;--text2:#9a9088;--text3:#6a6058;--border:rgba(255,220,180,0.1);--border2:rgba(255,220,180,0.18);--brand-light:#0d3628;--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow:0 4px 20px rgba(0,0,0,0.35);--shadow-lg:0 8px 32px rgba(0,0,0,0.4);}
 }
 
-/* V43.40 Money Accounts */
-.account-list{display:flex;flex-direction:column;gap:7px;margin:10px 0}.account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)}.account-main{display:flex;align-items:center;gap:9px;min-width:0}.account-icon{font-size:20px}.account-name{font-weight:750}.account-meta{font-size:10px;color:var(--text2);margin-top:2px}.account-bal{font-weight:800;white-space:nowrap}.account-actions{display:flex;gap:5px}.account-add-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.transfer-fields{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.transfer-fields.show{display:grid}.txn-account-row{margin-bottom:9px}.tt-t{background:var(--brand-light);color:var(--brand-dark);font-weight:700}@media(max-width:520px){.account-add-grid{grid-template-columns:1fr 1fr}.account-add-grid .account-name-input{grid-column:1/-1}.transfer-fields{grid-template-columns:1fr}}
+/* V43.41 Money Accounts */
+.account-list{display:flex;flex-direction:column;gap:7px;margin:10px 0}.account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:var(--bg2)}.account-main{display:flex;align-items:center;gap:9px;min-width:0}.account-icon{font-size:20px}.account-name{font-weight:750}.account-meta{font-size:10px;color:var(--text2);margin-top:2px}.account-bal{font-weight:800;white-space:nowrap}.account-actions{display:flex;gap:5px}.account-add-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.transfer-fields{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.transfer-fields.show{display:grid}.txn-account-row{margin-bottom:9px}
+.tt-t{background:#E8F2FF!important;color:#2F6FB5!important;font-weight:800!important;box-shadow:0 8px 18px rgba(47,111,181,.14)!important}
+#transaction-entry-card.txn-mode-transfer{background:linear-gradient(180deg,rgba(246,250,255,.97),rgba(232,242,255,.72))!important;border-color:rgba(74,144,226,.28)!important;box-shadow:0 14px 34px rgba(47,111,181,.10)!important}
+#transaction-entry-card.txn-mode-transfer .transfer-fields .fi{border-color:rgba(74,144,226,.30)!important;background:rgba(255,255,255,.92)!important}
+.transfer-mode-note{display:none;align-items:flex-start;gap:7px;margin:-1px 0 10px;padding:9px 11px;border-radius:14px;background:#E8F2FF;color:#2F6FB5;font-size:11px;font-weight:650;line-height:1.45;border:1px solid rgba(74,144,226,.18)}
+.transfer-mode-note.show{display:flex}
+.opening-summary-hero{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 11px}.opening-summary-box{padding:13px 14px;border-radius:17px;border:1px solid rgba(73,176,182,.14);background:linear-gradient(135deg,rgba(73,176,182,.10),rgba(255,255,255,.86))}.opening-summary-box.current{background:linear-gradient(135deg,rgba(232,242,255,.92),rgba(255,255,255,.90));border-color:rgba(74,144,226,.16)}.opening-summary-box .k{font-size:10px;font-weight:750;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}.opening-summary-box .v{font-size:20px;font-weight:850;margin-top:5px;letter-spacing:-.04em}.opening-summary-box.current .v{color:#2F6FB5}.opening-summary-box.start .v{color:#1F7F86}.opening-secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.opening-secondary-grid .opening-balance-stat{margin:0}.account-section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px}.account-derived-note{margin:0 0 11px;padding:9px 11px;border-radius:14px;background:rgba(73,176,182,.08);color:var(--brand-dark);font-size:11px;line-height:1.5;border:1px solid rgba(73,176,182,.13)}
+@media(max-width:520px){.account-add-grid{grid-template-columns:1fr 1fr}.account-add-grid .account-name-input{grid-column:1/-1}.transfer-fields{grid-template-columns:1fr}.opening-summary-hero{grid-template-columns:1fr 1fr}.opening-summary-box{padding:12px}.opening-summary-box .v{font-size:18px}}
 
 /* ── Auth хуудасны стиль ── */
 .auth-wrap{display:none;position:fixed;inset:0;background:var(--bg3);z-index:9999;align-items:center;justify-content:center;padding:20px}
@@ -2605,29 +2613,24 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="opening-balance-head">
       <div class="opening-balance-copy">
         <div class="opening-balance-title"><span>💵</span><span id="opening-balance-title">Эхний үлдэгдэл</span></div>
-        <div class="opening-balance-sub" id="opening-balance-sub">Апп ашиглаж эхлэх үеийн бэлэн мөнгөний үлдэгдлээ нэг удаа оруулна.</div>
+        <div class="opening-balance-sub" id="opening-balance-sub">Данс бүрийн эхний үлдэгдлийг оруулна. Нийт дүн автоматаар тооцогдоно.</div>
       </div>
     </div>
-    <div class="opening-balance-form">
-      <div>
-        <div class="slbl" id="opening-balance-label">Эхний үлдэгдэл</div>
-        <input type="text" class="fi" id="opening-balance-input" inputmode="decimal" placeholder="0">
-      </div>
-      <button class="btn btn-p opening-balance-save" id="opening-balance-save" onclick="saveOpeningBalance()">Хадгалах</button>
+    <div class="account-derived-note" id="opening-balance-note">Нийт эхний үлдэгдэл нь банк болон бэлэн мөнгөний дансуудын эхний үлдэгдлийн нийлбэр. Тусдаа нийт дүн дахин оруулах шаардлагагүй.</div>
+    <div class="opening-summary-hero">
+      <div class="opening-summary-box start"><div class="k" id="opening-start-label">Эхний нийт үлдэгдэл</div><div class="v" id="opening-start-value">₮0</div></div>
+      <div class="opening-summary-box current"><div class="k" id="opening-current-label">Одоогийн мөнгөн үлдэгдэл</div><div class="v" id="opening-current-value">₮0</div></div>
     </div>
-    <div class="opening-balance-grid">
-      <div class="opening-balance-stat current"><div class="k" id="opening-current-label">Мөнгөн үлдэгдэл</div><div class="v" id="opening-current-value">₮0</div></div>
-      <div class="opening-balance-stat"><div class="k" id="opening-start-label">Эхний үлдэгдэл</div><div class="v" id="opening-start-value">₮0</div></div>
+    <div class="opening-secondary-grid">
       <div class="opening-balance-stat"><div class="k" id="opening-income-label">Нийт орлого</div><div class="v" id="opening-income-value">₮0</div></div>
       <div class="opening-balance-stat"><div class="k" id="opening-expense-label">Нийт зарлага</div><div class="v" id="opening-expense-value">₮0</div></div>
     </div>
-    <div class="opening-balance-note" id="opening-balance-note">Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.</div>
-    <div style="margin-top:13px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center"><div class="slbl" id="accounts-title">МИНИЙ МӨНГӨ</div><button class="btn btn-sm" type="button" onclick="toggleAccountAdd()" id="account-add-toggle">＋ Данс</button></div>
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div class="account-section-head"><div class="slbl" id="accounts-title">МИНИЙ МӨНГӨ</div><button class="btn btn-sm" type="button" onclick="toggleAccountAdd()" id="account-add-toggle">＋ Данс</button></div>
       <div id="account-list" class="account-list"></div>
       <div id="account-add-form" style="display:none">
         <div class="account-add-grid"><input class="fi account-name-input" id="account-name" placeholder="Хаан банк"><select class="fi" id="account-type"><option value="bank">🏦 Банк</option><option value="cash">💵 Бэлэн мөнгө</option></select><input type="date" class="fi" id="account-start-date"></div>
-        <div class="form-row" style="margin-top:7px"><input class="fi" id="account-opening" inputmode="decimal" placeholder="Эхний үлдэгдэл"><button class="btn btn-p" type="button" onclick="addMoneyAccount()" id="account-save-btn">Нэмэх</button></div>
+        <div class="form-row" style="margin-top:7px"><input class="fi" id="account-opening" inputmode="decimal" placeholder="₮ 0"><button class="btn btn-p" type="button" onclick="addMoneyAccount()" id="account-save-btn">Нэмэх</button></div>
         <div class="opening-balance-note" id="account-help-note">Шинэ дансны эхний үлдэгдэл нь орлого биш. Өөр данснаас мөнгө хийсэн бол “Шилжүүлэг” ашиглана.</div>
       </div>
     </div>
@@ -2645,7 +2648,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 
 <!-- TRANSACTIONS -->
 <div id="tab-transactions" class="section">
-  <div class="card">
+  <div class="card" id="transaction-entry-card">
     <div class="card-title" id="lbl-addtxn"></div>
     <div class="type-toggle">
       <button class="tt-btn tt-i" id="btn-income" onclick="setType('income')"></button>
@@ -2654,6 +2657,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     </div>
     <div class="txn-account-row" id="txn-account-row"><select class="fi" id="t-account"></select></div>
     <div class="transfer-fields" id="transfer-fields"><select class="fi" id="t-from-account"></select><select class="fi" id="t-to-account"></select></div>
+    <div class="transfer-mode-note" id="transfer-mode-note"><span>↔</span><span id="transfer-mode-note-text">Шилжүүлэг нь орлого, зарлага биш. Зөвхөн мөнгөний байршил өөрчлөгдөнө.</span></div>
     <div id="invest-auto-notice" style="display:none" class="notice">
       <span style="font-size:14px">📈</span><span id="lbl-autoinvest"></span>
     </div>
@@ -6689,7 +6693,9 @@ function setType(t){
   document.getElementById('btn-income').className='tt-btn'+(t==='income'?' tt-i':'');
   document.getElementById('btn-expense').className='tt-btn'+(t==='expense'?' tt-e':'');
   const bt=document.getElementById('btn-transfer');if(bt)bt.className='tt-btn'+(t==='transfer'?' tt-t':'');
+  const entryCard=document.getElementById('transaction-entry-card');if(entryCard){entryCard.classList.remove('txn-mode-income','txn-mode-expense','txn-mode-transfer');entryCard.classList.add('txn-mode-'+t);}
   const tf=document.getElementById('transfer-fields');if(tf)tf.classList.toggle('show',t==='transfer');
+  const tn=document.getElementById('transfer-mode-note');if(tn)tn.classList.toggle('show',t==='transfer');
   const ar=document.getElementById('txn-account-row');if(ar)ar.style.display=t==='transfer'?'none':'block';
   const sw0=document.getElementById('t-subcat-wrap');if(sw0)sw0.style.display=t==='transfer'?'none':'flex';
   const cat0=document.getElementById('t-cat');if(cat0)cat0.style.display=t==='transfer'?'none':'';
@@ -7496,13 +7502,13 @@ function updatePremiumDashboard(inc,exp,dbt,tCur,totalSavings){
 
 
 function accountText(){const X={
-mn:{title:'МИНИЙ МӨНГӨ',add:'＋ Данс',bank:'Банк',cash:'Бэлэн мөнгө',inactive:'Идэвхгүй',transfer:'Шилжүүлэг'},
-en:{title:'MY MONEY',add:'＋ Account',bank:'Bank',cash:'Cash',inactive:'Inactive',transfer:'Transfer'},
-zh:{title:'我的资金',add:'＋ 账户',bank:'银行',cash:'现金',inactive:'已停用',transfer:'转账'},
-ja:{title:'私のお金',add:'＋ 口座',bank:'銀行',cash:'現金',inactive:'無効',transfer:'振替'},
-ko:{title:'내 돈',add:'＋ 계좌',bank:'은행',cash:'현금',inactive:'비활성',transfer:'이체'},
-ru:{title:'МОИ ДЕНЬГИ',add:'＋ Счёт',bank:'Банк',cash:'Наличные',inactive:'Неактивен',transfer:'Перевод'},
-de:{title:'MEIN GELD',add:'＋ Konto',bank:'Bank',cash:'Bargeld',inactive:'Inaktiv',transfer:'Übertrag'}
+mn:{title:'МИНИЙ МӨНГӨ',add:'＋ Данс',bank:'Банк',cash:'Бэлэн мөнгө',inactive:'Идэвхгүй',transfer:'Шилжүүлэг',transferNote:'Шилжүүлэг нь орлого, зарлага биш. Зөвхөн мөнгөний байршил өөрчлөгдөнө.'},
+en:{title:'MY MONEY',add:'＋ Account',bank:'Bank',cash:'Cash',inactive:'Inactive',transfer:'Transfer',transferNote:'A transfer is not income or expense. It only moves money between your accounts.'},
+zh:{title:'我的资金',add:'＋ 账户',bank:'银行',cash:'现金',inactive:'已停用',transfer:'转账',transferNote:'转账不是收入或支出，只会改变资金所在账户。'},
+ja:{title:'私のお金',add:'＋ 口座',bank:'銀行',cash:'現金',inactive:'無効',transfer:'振替',transferNote:'振替は収入・支出ではなく、口座間でお金の場所を移すだけです。'},
+ko:{title:'내 돈',add:'＋ 계좌',bank:'은행',cash:'현금',inactive:'비활성',transfer:'이체',transferNote:'이체는 수입이나 지출이 아니며 계좌 간 돈의 위치만 바뀝니다.'},
+ru:{title:'МОИ ДЕНЬГИ',add:'＋ Счёт',bank:'Банк',cash:'Наличные',inactive:'Неактивен',transfer:'Перевод',transferNote:'Перевод не является доходом или расходом — деньги лишь перемещаются между счетами.'},
+de:{title:'MEIN GELD',add:'＋ Konto',bank:'Bank',cash:'Bargeld',inactive:'Inaktiv',transfer:'Übertrag',transferNote:'Eine Übertragung ist weder Einnahme noch Ausgabe; das Geld wechselt nur das Konto.'}
 };return X[lang]||X.en;}
 function getDefaultAccountId(){const a=moneyAccounts.find(x=>x.active!==false)||moneyAccounts[0];return a?a.id:null;}
 function ensureMoneyAccounts(){
@@ -7512,20 +7518,20 @@ function ensureMoneyAccounts(){
   openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);
 }
 function accountBalance(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.openingBalance)||0;txns.forEach(t=>{if(t.accountId===id)v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0);});accountTransfers.forEach(t=>{if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;});return v;}
-function renderAccountSelectors(){ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;const ty=document.getElementById('account-type');if(ty){ty.options[0].text='🏦 '+T.bank;ty.options[1].text='💵 '+T.cash;}const active=moneyAccounts.filter(a=>a.active!==false);const opts=active.map(a=>`<option value="${a.id}">${a.type==='cash'?'💵':'🏦'} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');['t-account','t-from-account','t-to-account'].forEach(id=>{const e=document.getElementById(id);if(!e)return;const old=e.value;e.innerHTML=opts;if(active.some(a=>a.id===old))e.value=old;});const to=document.getElementById('t-to-account');if(to&&active.length>1&&to.value===(document.getElementById('t-from-account')||{}).value)to.value=active[1].id;}
+function renderAccountSelectors(){ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;const note=document.getElementById('transfer-mode-note-text');if(note)note.textContent=T.transferNote;const ty=document.getElementById('account-type');if(ty){ty.options[0].text='🏦 '+T.bank;ty.options[1].text='💵 '+T.cash;}const active=moneyAccounts.filter(a=>a.active!==false);const opts=active.map(a=>`<option value="${a.id}">${a.type==='cash'?'💵':'🏦'} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');['t-account','t-from-account','t-to-account'].forEach(id=>{const e=document.getElementById(id);if(!e)return;const old=e.value;e.innerHTML=opts;if(active.some(a=>a.id===old))e.value=old;});const to=document.getElementById('t-to-account');if(to&&active.length>1&&to.value===(document.getElementById('t-from-account')||{}).value)to.value=active[1].id;const op=document.getElementById('account-opening');if(op)op.placeholder=CS+' 0';const amt=document.getElementById('t-amount');if(amt)amt.placeholder=CS+' 0';}
 function renderMoneyAccounts(){ensureMoneyAccounts();const T=accountText();const title=document.getElementById('accounts-title');if(title)title.textContent=T.title;const add=document.getElementById('account-add-toggle');if(add)add.textContent=T.add;const el=document.getElementById('account-list');if(!el)return;el.innerHTML=moneyAccounts.map(a=>`<div class="account-row" style="${a.active===false?'opacity:.55':''}"><div class="account-main"><span class="account-icon">${a.type==='cash'?'💵':'🏦'}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${a.startDate||''}${a.active===false?' · '+T.inactive:''}</div></div></div><div style="display:flex;align-items:center;gap:8px"><div class="account-bal">${fmt(accountBalance(a.id))}</div>${a.active!==false?`<button class="btn btn-sm" onclick="archiveMoneyAccount('${a.id}')">⋯</button>`:''}</div></div>`).join('');renderAccountSelectors();}
 function toggleAccountAdd(){const e=document.getElementById('account-add-form');if(!e)return;e.style.display=e.style.display==='none'?'block':'none';const d=document.getElementById('account-start-date');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);}
 function addMoneyAccount(){const n=document.getElementById('account-name'),ty=document.getElementById('account-type'),dt=document.getElementById('account-start-date'),op=document.getElementById('account-opening');const name=(n.value||'').trim();if(!name)return;moneyAccounts.push({id:(crypto.randomUUID?crypto.randomUUID():'acc_'+Date.now()),name,type:ty.value==='cash'?'cash':'bank',startDate:dt.value||new Date().toISOString().slice(0,10),openingBalance:Math.max(0,parseAmt(op.value)||0),active:true});openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);n.value='';op.value='';saveData();renderMoneyAccounts();renderOpeningBalance();uDash();}
 async function archiveMoneyAccount(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return;if(Math.abs(accountBalance(id))>.001){showToast(lang==='mn'?'Үлдэгдэлтэй дансыг эхлээд өөр данс руу шилжүүлнэ үү':'Transfer the remaining balance first');return;}a.active=false;saveData();renderMoneyAccounts();}
 function moneyAccountsTotal(){ensureMoneyAccounts();return moneyAccounts.reduce((s,a)=>s+accountBalance(a.id),0);}
 const OPENING_BALANCE_TEXT={
-  mn:{title:'Эхний үлдэгдэл',sub:'Апп ашиглаж эхлэх үеийн бэлэн мөнгөний үлдэгдлээ нэг удаа оруулна.',label:'Эхний үлдэгдэл',save:'Хадгалах',current:'Мөнгөн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'Энэ үлдэгдэл хугацааны шүүлтүүр солигдсон ч алга болохгүй. Орлого нэмэгдэхэд өсөж, зарлага гарахад буурна.',saved:'Эхний үлдэгдэл хадгалагдлаа'},
-  en:{title:'Opening balance',sub:'Enter the cash balance you had when you started using the app.',label:'Opening balance',save:'Save',current:'Cash balance',income:'Total income',expense:'Total expense',note:'This balance carries forward regardless of the date filter. Income increases it and expenses decrease it.',saved:'Opening balance saved'},
-  zh:{title:'期初余额',sub:'输入开始使用本应用时已有的现金余额。',label:'期初余额',save:'保存',current:'现金余额',income:'总收入',expense:'总支出',note:'此余额不会因日期筛选而消失。收入会增加余额，支出会减少余额。',saved:'期初余额已保存'},
-  ja:{title:'開始残高',sub:'アプリを使い始めた時点の現金残高を入力します。',label:'開始残高',save:'保存',current:'現金残高',income:'総収入',expense:'総支出',note:'この残高は期間フィルターを変えても繰り越されます。収入で増え、支出で減ります。',saved:'開始残高を保存しました'},
-  ko:{title:'시작 잔액',sub:'앱 사용을 시작할 때 보유하고 있던 현금 잔액을 입력하세요.',label:'시작 잔액',save:'저장',current:'현금 잔액',income:'총수입',expense:'총지출',note:'이 잔액은 기간 필터가 바뀌어도 이월됩니다. 수입은 늘리고 지출은 줄입니다.',saved:'시작 잔액이 저장되었습니다'},
-  ru:{title:'Начальный остаток',sub:'Введите остаток денежных средств на момент начала использования приложения.',label:'Начальный остаток',save:'Сохранить',current:'Денежный остаток',income:'Общий доход',expense:'Общие расходы',note:'Остаток переносится независимо от фильтра периода: доходы увеличивают его, расходы уменьшают.',saved:'Начальный остаток сохранён'},
-  de:{title:'Anfangssaldo',sub:'Gib den Bargeldbestand ein, den du zu Beginn der App-Nutzung hattest.',label:'Anfangssaldo',save:'Speichern',current:'Geldbestand',income:'Gesamteinnahmen',expense:'Gesamtausgaben',note:'Dieser Saldo wird unabhängig vom Zeitraumfilter fortgeführt. Einnahmen erhöhen ihn, Ausgaben verringern ihn.',saved:'Anfangssaldo gespeichert'}
+  mn:{title:'Эхний үлдэгдэл',sub:'Данс бүрийн эхний үлдэгдлийг оруулна. Нийт дүн автоматаар тооцогдоно.',label:'Эхний нийт үлдэгдэл',current:'Одоогийн мөнгөн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'Нийт эхний үлдэгдэл нь банк болон бэлэн мөнгөний дансуудын эхний үлдэгдлийн нийлбэр. Тусдаа нийт дүн дахин оруулах шаардлагагүй.'},
+  en:{title:'Opening balance',sub:'Enter an opening balance for each account. The total is calculated automatically.',label:'Total opening balance',current:'Current money balance',income:'Total income',expense:'Total expense',note:'Your total opening balance is the sum of the opening balances of your bank and cash accounts. You do not need to enter the same total separately.'},
+  zh:{title:'期初余额',sub:'为每个账户输入期初余额，总额将自动计算。',label:'期初余额合计',current:'当前资金余额',income:'总收入',expense:'总支出',note:'期初余额合计等于所有银行账户和现金账户期初余额之和，无需再次单独输入总额。'},
+  ja:{title:'開始残高',sub:'口座ごとに開始残高を入力すると、合計は自動計算されます。',label:'開始残高合計',current:'現在の資金残高',income:'総収入',expense:'総支出',note:'開始残高合計は銀行口座と現金口座の開始残高の合計です。同じ総額を別に入力する必要はありません。'},
+  ko:{title:'시작 잔액',sub:'계좌별 시작 잔액을 입력하면 합계가 자동으로 계산됩니다.',label:'총 시작 잔액',current:'현재 자금 잔액',income:'총수입',expense:'총지출',note:'총 시작 잔액은 은행 및 현금 계좌의 시작 잔액 합계입니다. 같은 총액을 별도로 다시 입력할 필요가 없습니다.'},
+  ru:{title:'Начальный остаток',sub:'Укажите начальный остаток для каждого счёта — общий итог рассчитается автоматически.',label:'Общий начальный остаток',current:'Текущий денежный остаток',income:'Общий доход',expense:'Общие расходы',note:'Общий начальный остаток — это сумма начальных остатков банковских счетов и наличных. Отдельно вводить общий итог не нужно.'},
+  de:{title:'Anfangssaldo',sub:'Gib für jedes Konto einen Anfangssaldo ein; die Summe wird automatisch berechnet.',label:'Gesamter Anfangssaldo',current:'Aktueller Geldbestand',income:'Gesamteinnahmen',expense:'Gesamtausgaben',note:'Der gesamte Anfangssaldo ist die Summe der Anfangssalden deiner Bank- und Bargeldkonten. Die Gesamtsumme muss nicht noch einmal separat eingegeben werden.'}
 };
 function openingBalanceText(){return OPENING_BALANCE_TEXT[lang]||OPENING_BALANCE_TEXT.mn;}
 function allTimeCashTotals(){
@@ -7534,22 +7540,17 @@ function allTimeCashTotals(){
   ensureMoneyAccounts();return {income,expense,balance:moneyAccountsTotal()};
 }
 function renderOpeningBalance(){
+  ensureMoneyAccounts();
+  openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);
   const T=openingBalanceText(), totals=allTimeCashTotals();
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('opening-balance-title',T.title);set('opening-balance-sub',T.sub);set('opening-balance-label',T.label);set('opening-balance-save',T.save);
+  set('opening-balance-title',T.title);set('opening-balance-sub',T.sub);
   set('opening-current-label',T.current);set('opening-start-label',T.label);set('opening-income-label',T.income);set('opening-expense-label',T.expense);set('opening-balance-note',T.note);
   set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(openingBalance||0));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
-  const inp=document.getElementById('opening-balance-input');const baseAcc=moneyAccounts.find(x=>x.legacy)||moneyAccounts[0];const baseOpen=baseAcc?Number(baseAcc.openingBalance)||0:Number(openingBalance)||0;if(inp && document.activeElement!==inp)inp.value=baseOpen>0?baseOpen.toLocaleString('en-US'):'';
+  const op=document.getElementById('account-opening');if(op)op.placeholder=CS+' 0';
 }
-function saveOpeningBalance(){
-  const inp=document.getElementById('opening-balance-input');
-  const value=inp?parseAmt(inp.value):0;
-  ensureMoneyAccounts();const a=moneyAccounts.find(x=>x.legacy)||moneyAccounts[0];if(a)a.openingBalance=Math.max(0,Number(value)||0);openingBalance=moneyAccounts.reduce((s,x)=>s+(Number(x.openingBalance)||0),0);
-  saveData();
-  renderOpeningBalance();
-  uDash();
-  showToast(openingBalanceText().saved+' ✓');
-}
+// Kept as a compatibility shim for old builds/bookmarks; V43.41 derives opening balance from account opening balances.
+function saveOpeningBalance(){renderOpeningBalance();}
 
 function uDash(){
   const ft=fT();
