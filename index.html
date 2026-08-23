@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.48: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
+<!-- Möngö V43.49: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
 <!-- Möngö V43.38: Opening cash balance — persistent per-user opening balance, cross-device cloud sync, all-time cash balance carry-forward. -->
@@ -117,7 +117,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.48 Accounts + Transfer Flow</title>
+<title>Möngö — V43.49 Asset / Expense Decision Flow</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -2709,9 +2709,22 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
       <select class="fi" id="t-transfer-target" style="display:none" onchange="renderTransferAssetFields()"></select>
     </div>
     <div id="t-asset-fields" style="display:none;margin:-2px 0 9px">
-      <div class="form-row">
-        <input class="fi" id="t-asset-name" placeholder="Хөрөнгийн нэр">
-        <select class="fi" id="t-asset-type"></select>
+      <div class="slbl" id="t-register-label">Бүртгэх төрөл</div>
+      <div class="type-toggle" style="margin-bottom:9px">
+        <button type="button" class="tt-btn tt-i" id="t-reg-asset" onclick="setAssetPurchaseRegistration('asset')">🏠 Хөрөнгө</button>
+        <button type="button" class="tt-btn" id="t-reg-expense" onclick="setAssetPurchaseRegistration('expense')">💸 Зардал</button>
+      </div>
+      <div id="t-asset-detail">
+        <div class="form-row">
+          <input class="fi" id="t-asset-name" placeholder="Хөрөнгийн нэр">
+          <select class="fi" id="t-asset-type"></select>
+        </div>
+      </div>
+      <div id="t-expense-detail" style="display:none">
+        <div class="form-row">
+          <select class="fi" id="t-asset-exp-cat" onchange="renderAssetExpenseSubcats('transfer')"></select>
+          <select class="fi" id="t-asset-exp-sub"></select>
+        </div>
       </div>
     </div>
     <div class="transfer-mode-note" id="transfer-mode-note"><span>↔</span><span id="transfer-mode-note-text">Шилжүүлэг нь орлого, зарлага биш. Зөвхөн мөнгөний байршил өөрчлөгдөнө.</span></div>
@@ -2731,7 +2744,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
         <span id="t-subcat-arrow" class="subcat-arrow">▼</span>
         <div id="t-subcat-list" style="display:none" class="subcat-dropdown"></div>
       </div>
-      <input type="text" class="fi" id="t-amount" placeholder="0" inputmode="decimal">
+      <input type="text" class="fi" id="t-amount" data-amt="1" placeholder="0" inputmode="decimal">
     </div>
     <div class="form-row">
       <select class="fi" id="t-cat" onchange="onCatChange()"></select>
@@ -2991,7 +3004,13 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
       </div>
     </div>
     <div id="d-asset-link-wrap" style="display:none;margin-top:8px">
-      <div class="notice" style="margin-bottom:8px"><span>🏠</span><span id="lf-asset-note">Зээлийн мөнгөөр хөрөнгө худалдаж авсан бол Хөрөнгө хэсэгтэй холбоно.</span></div>
+      <div class="notice" style="margin-bottom:8px"><span>🏠</span><span id="lf-asset-note">Зээлийн мөнгөөр шууд худалдан авалт хийсэн бол бүртгэх төрлөө сонгоно.</span></div>
+      <div class="slbl" id="lf-register-label">Бүртгэх төрөл</div>
+      <select class="fi" id="d-purchase-registration" onchange="renderDirectPurchaseRegistration()" style="width:100%;margin-bottom:8px">
+        <option value="asset">🏠 Хөрөнгө</option>
+        <option value="expense">💸 Зардал</option>
+      </select>
+      <div id="d-direct-asset-fields">
       <div class="form-row">
         <div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:3px">
           <span class="slbl" id="lf-asset-name-label">Хөрөнгийн нэр</span><input class="fi" id="d-asset-name" placeholder="Жишээ: Байр">
@@ -2999,7 +3018,14 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
           <span class="slbl" id="lf-asset-type-label">Хөрөнгийн төрөл</span><select class="fi" id="d-asset-type"></select>
         </div>
         <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px">
-          <span class="slbl" id="lf-asset-value-label">Хөрөнгийн үнэ</span><input class="fi" id="d-asset-value" inputmode="decimal" placeholder="0">
+          <span class="slbl" id="lf-asset-value-label">Хөрөнгийн үнэ</span><input class="fi" id="d-asset-value" inputmode="decimal" data-amt="1" placeholder="0">
+        </div>
+      </div>
+      </div>
+      <div id="d-direct-expense-fields" style="display:none">
+        <div class="form-row">
+          <select class="fi" id="d-expense-cat" onchange="renderAssetExpenseSubcats('direct')"></select>
+          <select class="fi" id="d-expense-sub"></select>
         </div>
       </div>
     </div>
@@ -3317,7 +3343,7 @@ const CAT_LABELS={
 
 const LANGS={
   mn:{dashboard:'Санхүү',transactions:'Гүйлгээ',budget:'Төсөв',goals:'Хуримтлал',debts:'Зээл',invest:'Хөрөнгө',income:'Орлого',expense:'Зарлага',balance:'Үлдэгдэл',totaldebt:'Нийт өр',investlbl:'Хөрөнгө оруулалт',savingslbl:'Хуримтлал',recent:'Сүүлийн гүйлгээ',notxn:'Гүйлгээ байхгүй',budgetprog:'Төсвийн явц',nobudget:'Төсөв тохируулаагүй',inccat:'Орлогын ангилал',expcat:'Зарлагын ангилал',savingscat:'Хуримтлал',debtcat:'Зээл',investcat:'Хөрөнгө оруулалт',addtxn:'Шинэ гүйлгээ',inctoggle:'Орлого',exptoggle:'Зарлага',autoinvest:'Хөрөнгө оруулалтын ангилал — автоматаар бүртгэгдэнэ.',desc:'Тайлбар',descPh:'Төсөвлөөгүй',add:'Нэмэх',catconfig:'Ангилал удирдах',icon:'Дүрс',color:'Өнгө',newcat:'Шинэ ангилал...',alltxns:'Бүх гүйлгээ',addbudgetcat:'Ангилал нэмэх',save:'Хадгалах',addsaving:'Шинэ хуримтлал',savingname:'Нэр',deadline:'Хугацаа',targetAmt:'Зорилтот дүн',currentSaved:'Одоогийн хуримтлал',savinginfo:'Хуримтлалын нэртэй ижил зарлага нэмэхэд автоматаар тооцогдоно.',adddebt:'Шинэ зээл',debtname:'Зээлийн нэр',debtTotal:'Нийт дүн',remaining:'Үлдэгдэл',monthly:'Сарын төлбөр',interest:'Хүү (%)',debtinfo:'Зээлийн нэртэй ижил зарлага нэмэхэд үлдэгдэлээс хасагдана.',addinvest:'Хөрөнгө оруулалт нэмэх',investinfo:'Хөрөнгө худалдаж авахдаа Гүйлгээ → Шилжүүлэг → Хөрөнгө худалдаж авах урсгалыг ашиглана.',totalin:'Нийт оруулсан',curval:'Одоогийн үнэ',pnl2:'Нийт ашиг/алдагдал',returnlbl:'Өгөөж',update:'Шинэчлэх',invdetail:'Хөрөнгийн дэлгэрэнгүй',from:'Эхлэх:',to:'Дуусах:',apply:'Хэрэглэх',w7:'7 хоног',m1:'1 сар',m3:'3 сар',y1:'1 жил',all:'Бүгд',custom:'Өөрчлөх',paid:'Гүйлгээнээс хасагдсан',automark:'автомат',autosave:'Зарлагаар нэмэгдсэн',paidpct:'Төлсөн',total:'Нийт',nodata:'Мэдээлэл байхгүй',invested:'Оруулсан',iname:'Нэр',investedAmt:'Оруулсан дүн',currentVal:'Одоогийн үнэ цэнэ',investDate:'Огноо',budgetmonth:'Сарын төсөв',cumul:'Нийлэмж хуримтлал',months:['1-р сар','2-р сар','3-р сар','4-р сар','5-р сар','6-р сар','7-р сар','8-р сар','9-р сар','10-р сар','11-р сар','12-р сар'],budgetTypeTitle:'',btypeInc:'Орлогын төлөвлөгөө',btypeExp:'Зардлын төсөв',budgetTotalLbl:'Нийт төлөвлөсөн дүн',monthlyNeed:'Зорилгод хүрэхийн тулд сард',subcatPh:'Дэд ангилал сонгох',lock:'Түгжих',unlock:'Тайлах',confirmDel:'Устгах уу?',logoutConfirm:'Гарах уу?',cancel:'Болих',ok:'Тийм',selectSubcat:'Дэд ангилал',addSubPh:'Дэд ангилал нэмэх (монгол нэр)',noBackup:'Хадгалсан өгөгдөл байхгүй',backupOk:'Backup ✓',fileErr:'Файл буруу байна',dataLoaded:'Өгөгдөл ачааллагдлаа ✓'},
-  en:{dashboard:'Finance',transactions:'Transactions',budget:'Budget',goals:'Savings',debts:'Loans',invest:'Assets',income:'Income',expense:'Expense',balance:'Balance',totaldebt:'Total debt',investlbl:'Investments',savingslbl:'Savings',recent:'Recent transactions',notxn:'No transactions',budgetprog:'Budget progress',nobudget:'No budget set',inccat:'Income categories',expcat:'Expense categories',savingscat:'Savings',debtcat:'Debts',investcat:'Investments',addtxn:'Add transaction',inctoggle:'Income',exptoggle:'Expense',autoinvest:'Investment category — will be auto-recorded.',desc:'Description',descPh:'Unbudgeted',add:'Add',catconfig:'Manage categories',icon:'Icon',color:'Color',newcat:'New category...',alltxns:'All transactions',addbudgetcat:'Add category',save:'Save',addsaving:'Add saving goal',savingname:'Name',deadline:'Deadline',targetAmt:'Target amount',currentSaved:'Current saved',savinginfo:'Expenses matching this saving name will auto-update progress.',adddebt:'Add debt',debtname:'Debt name',debtTotal:'Total amount',remaining:'Remaining',monthly:'Monthly',interest:'Interest (%)',debtinfo:'Expenses matching debt name will auto-deduct from remaining.',addinvest:'Add investment',investinfo:'Add an expense with Investment category to auto-record here.',totalin:'Total invested',curval:'Current value',pnl2:'Total profit/loss',returnlbl:'Return',update:'Update',invdetail:'Investment details',from:'From:',to:'To:',apply:'Apply',w7:'7 days',m1:'1 month',m3:'3 months',y1:'1 year',all:'All',custom:'Custom',paid:'Deducted',automark:'auto',autosave:'Added via expense',paidpct:'Paid',total:'Total',nodata:'No data',invested:'Invested',iname:'Name',investedAmt:'Investierter Betrag',currentVal:'Aktueller Wert',investDate:'Datum',investedAmt:'Amount invested',currentVal:'Current value',investDate:'Date',budgetmonth:'Monthly budget',cumul:'Cumulative savings',months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],budgetTypeTitle:'',btypeInc:'Income plan',btypeExp:'Expense budget',budgetTotalLbl:'Total planned',monthlyNeed:'Needed per month',subcatPh:'Select subcategory',lock:'Lock',unlock:'Unlock',confirmDel:'Delete?',logoutConfirm:'Sign out?',cancel:'Cancel',ok:'OK',selectSubcat:'Subcategory',addSubPh:'Add subcategory (in English)',noBackup:'No saved data',backupOk:'Backup ✓',fileErr:'Invalid file',dataLoaded:'Data loaded ✓'},
+  en:{dashboard:'Finance',transactions:'Transactions',budget:'Budget',goals:'Savings',debts:'Loans',invest:'Assets',income:'Income',expense:'Expense',balance:'Balance',totaldebt:'Total debt',investlbl:'Investments',savingslbl:'Savings',recent:'Recent transactions',notxn:'No transactions',budgetprog:'Budget progress',nobudget:'No budget set',inccat:'Income categories',expcat:'Expense categories',savingscat:'Savings',debtcat:'Debts',investcat:'Investments',addtxn:'Add transaction',inctoggle:'Income',exptoggle:'Expense',autoinvest:'Investment category — will be auto-recorded.',desc:'Description',descPh:'Unbudgeted',add:'Add',catconfig:'Manage categories',icon:'Icon',color:'Color',newcat:'New category...',alltxns:'All transactions',addbudgetcat:'Add category',save:'Save',addsaving:'Add saving goal',savingname:'Name',deadline:'Deadline',targetAmt:'Target amount',currentSaved:'Current saved',savinginfo:'Expenses matching this saving name will auto-update progress.',adddebt:'Add debt',debtname:'Debt name',debtTotal:'Total amount',remaining:'Remaining',monthly:'Monthly',interest:'Interest (%)',debtinfo:'Expenses matching debt name will auto-deduct from remaining.',addinvest:'Add investment',investinfo:'Use Transactions → Transfer → Buy asset when purchasing an asset.',totalin:'Total invested',curval:'Current value',pnl2:'Total profit/loss',returnlbl:'Return',update:'Update',invdetail:'Investment details',from:'From:',to:'To:',apply:'Apply',w7:'7 days',m1:'1 month',m3:'3 months',y1:'1 year',all:'All',custom:'Custom',paid:'Deducted',automark:'auto',autosave:'Added via expense',paidpct:'Paid',total:'Total',nodata:'No data',invested:'Invested',iname:'Name',investedAmt:'Investierter Betrag',currentVal:'Aktueller Wert',investDate:'Datum',investedAmt:'Amount invested',currentVal:'Current value',investDate:'Date',budgetmonth:'Monthly budget',cumul:'Cumulative savings',months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],budgetTypeTitle:'',btypeInc:'Income plan',btypeExp:'Expense budget',budgetTotalLbl:'Total planned',monthlyNeed:'Needed per month',subcatPh:'Select subcategory',lock:'Lock',unlock:'Unlock',confirmDel:'Delete?',logoutConfirm:'Sign out?',cancel:'Cancel',ok:'OK',selectSubcat:'Subcategory',addSubPh:'Add subcategory (in English)',noBackup:'No saved data',backupOk:'Backup ✓',fileErr:'Invalid file',dataLoaded:'Data loaded ✓'},
   zh:{dashboard:'财务',transactions:'交易',budget:'预算',goals:'储蓄',debts:'贷款',invest:'资产',income:'收入',expense:'支出',balance:'余额',totaldebt:'总债务',investlbl:'投资',savingslbl:'储蓄',recent:'最近交易',notxn:'暂无交易',budgetprog:'预算进度',nobudget:'未设预算',inccat:'收入类别',expcat:'支出类别',savingscat:'储蓄',debtcat:'债务',investcat:'投资',addtxn:'添加交易',inctoggle:'收入',exptoggle:'支出',autoinvest:'已选投资类别。',desc:'描述',descPh:'未计划',add:'添加',catconfig:'类别设置',icon:'图标',color:'颜色',newcat:'新类别...',alltxns:'所有交易',addbudgetcat:'添加类别',save:'保存',addsaving:'添加储蓄目标',savingname:'名称',deadline:'截止',targetAmt:'目标金额',currentSaved:'当前储蓄',savinginfo:'同名支出将自动更新进度。',adddebt:'添加债务',debtname:'债务名称',debtTotal:'总金额',remaining:'剩余',monthly:'月供',interest:'利率(%)',debtinfo:'同名支出将从余额自动扣除。',addinvest:'添加投资',investinfo:'在交易中选择投资类别将自动记录。',totalin:'总投资',curval:'当前价值',pnl2:'总盈亏',returnlbl:'回报',update:'更新',invdetail:'投资详情',from:'开始:',to:'结束:',apply:'应用',w7:'7天',m1:'1个月',m3:'3个月',y1:'1年',all:'全部',custom:'自定义',paid:'已扣除',automark:'自动',autosave:'通过支出添加',paidpct:'已付',total:'合计',nodata:'无数据',invested:'投资额',iname:'名称',investedAmt:'投资金额',currentVal:'当前价值',investDate:'日期',budgetmonth:'月度预算',cumul:'累计储蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'收入计划',btypeExp:'支出预算',budgetTotalLbl:'总计划金额',monthlyNeed:'每月需要',subcatPh:'选择子类别',lock:'锁定',unlock:'解锁',confirmDel:'删除?',logoutConfirm:'退出?',cancel:'取消',ok:'确定',selectSubcat:'子类别',addSubPh:'添加子类别（中文名）',noBackup:'无保存数据',backupOk:'备份成功 ✓',fileErr:'文件无效',dataLoaded:'数据已加载 ✓'},
   ja:{dashboard:'財務',transactions:'取引',budget:'予算',goals:'貯蓄',debts:'ローン',invest:'資産',income:'収入',expense:'支出',balance:'残高',totaldebt:'総負債',investlbl:'投資',savingslbl:'貯蓄',recent:'最近の取引',notxn:'取引なし',budgetprog:'予算進捗',nobudget:'予算未設定',inccat:'収入カテゴリ',expcat:'支出カテゴリ',savingscat:'貯蓄',debtcat:'借金',investcat:'投資',addtxn:'取引を追加',inctoggle:'収入',exptoggle:'支出',autoinvest:'投資カテゴリ選択。',desc:'説明',descPh:'未予算',add:'追加',catconfig:'カテゴリ設定',icon:'アイコン',color:'色',newcat:'新しいカテゴリ...',alltxns:'すべての取引',addbudgetcat:'カテゴリ追加',save:'保存',addsaving:'貯蓄目標追加',savingname:'名前',deadline:'期限',targetAmt:'目標額',currentSaved:'現在の貯蓄',savinginfo:'同名支出は自動反映。',adddebt:'借金追加',debtname:'借金名',debtTotal:'総額',remaining:'残高',monthly:'月払い',interest:'金利(%)',debtinfo:'同名支出は残高から控除。',addinvest:'投資追加',investinfo:'投資カテゴリで支出追加すると自動記録。',totalin:'総投資',curval:'現在価値',pnl2:'総損益',returnlbl:'リターン',update:'更新',invdetail:'投資詳細',from:'開始:',to:'終了:',apply:'適用',w7:'7日',m1:'1ヶ月',m3:'3ヶ月',y1:'1年',all:'全て',custom:'カスタム',paid:'控除済',automark:'自動',autosave:'支出から追加',paidpct:'支払済',total:'合計',nodata:'データなし',invested:'投資額',iname:'名前',investedAmt:'投資額',currentVal:'現在価値',investDate:'日付',budgetmonth:'月別予算',cumul:'累計貯蓄',months:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],budgetTypeTitle:'',btypeInc:'収入計画',btypeExp:'支出予算',budgetTotalLbl:'合計計画額',monthlyNeed:'毎月必要',subcatPh:'サブカテゴリ選択',lock:'ロック',unlock:'解除',confirmDel:'削除?',logoutConfirm:'サインアウト?',cancel:'キャンセル',ok:'OK',selectSubcat:'サブカテゴリ',addSubPh:'サブカテゴリ追加（日本語名）',noBackup:'保存データなし',backupOk:'バックアップ完了 ✓',fileErr:'ファイルが無効です',dataLoaded:'データ読込完了 ✓'},
   ko:{dashboard:'재무',transactions:'거래',budget:'예산',goals:'저축',debts:'대출',invest:'자산',income:'수입',expense:'지출',balance:'잔액',totaldebt:'총 부채',investlbl:'투자',savingslbl:'저축',recent:'최근 거래',notxn:'거래 없음',budgetprog:'예산 진행',nobudget:'예산 미설정',inccat:'수입 카테고리',expcat:'지출 카테고리',savingscat:'저축',debtcat:'부채',investcat:'투자',addtxn:'거래 추가',inctoggle:'수입',exptoggle:'지출',autoinvest:'투자 카테고리 선택.',desc:'설명',descPh:'미계획',add:'추가',catconfig:'카테고리 설정',icon:'아이콘',color:'색상',newcat:'새 카테고리...',alltxns:'모든 거래',addbudgetcat:'카테고리 추가',save:'저장',addsaving:'저축 목표 추가',savingname:'이름',deadline:'기한',targetAmt:'목표금액',currentSaved:'현재저축',savinginfo:'저축 이름과 같은 지출은 자동 반영.',adddebt:'부채 추가',debtname:'부채 이름',debtTotal:'총금액',remaining:'잔액',monthly:'월납부',interest:'이자(%)',debtinfo:'부채 이름과 같은 지출은 자동 차감.',addinvest:'투자 추가',investinfo:'투자 카테고리로 지출 추가 시 자동 기록.',totalin:'총 투자',curval:'현재 가치',pnl2:'총 손익',returnlbl:'수익률',update:'업데이트',invdetail:'투자 세부정보',from:'시작:',to:'종료:',apply:'적용',w7:'7일',m1:'1개월',m3:'3개월',y1:'1년',all:'전체',custom:'사용자 정의',paid:'차감됨',automark:'자동',autosave:'지출로 추가',paidpct:'납부',total:'합계',nodata:'데이터 없음',invested:'투자액',iname:'이름',investedAmt:'투자금액',currentVal:'현재가치',investDate:'날짜',budgetmonth:'월별 예산',cumul:'누적 저축',months:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],budgetTypeTitle:'',btypeInc:'수입 계획',btypeExp:'지출 예산',budgetTotalLbl:'총 계획 금액',monthlyNeed:'월 필요 금액',subcatPh:'서브카테고리 선택',lock:'잠금',unlock:'해제',confirmDel:'삭제?',logoutConfirm:'로그아웃?',cancel:'취소',ok:'확인',selectSubcat:'서브카테고리',addSubPh:'서브카테고리 추가（한국어 이름）',noBackup:'저장된 데이터 없음',backupOk:'백업 완료 ✓',fileErr:'잘못된 파일',dataLoaded:'데이터 로드 완료 ✓'},
@@ -7215,6 +7241,69 @@ function getDebtRemaining(d){
 
 
 
+
+const ASSET_FLOW_I18N={
+mn:{purposeAsset:'🏠 Хөрөнгө худалдаж авах',newAsset:'＋ Шинэ хөрөнгө үүсгэх',assetName:'Хөрөнгийн нэр',register:'Бүртгэх төрөл',asset:'🏠 Хөрөнгө',expense:'💸 Зардал',expenseCat:'Зардлын ангилал',expenseSub:'Дэд ангилал',assetNote:'Энэ нь орлого, зарлага биш. Мөнгө хөрөнгө болж хувирна.',expenseNote:'Энэ худалдан авалт зарлага болон төсөвт бүртгэгдэнэ.',sourceErr:'Мөнгө гарах данс болон дүнгээ шалгана уу',nameErr:'Хөрөнгийн нэр оруулна уу',assetType:'Хөрөнгийн төрөл',purchasePrice:'Худалдан авсан үнэ',editAsset:'Хөрөнгө засах',save:'Хадгалах',cancel:'Болих',directNote:'Зээлийн мөнгөөр шууд худалдан авалт хийсэн бол бүртгэх төрлөө сонгоно.',selectCat:'Зардлын ангилал сонгох',selectSub:'Дэд ангилал сонгох'},
+en:{purposeAsset:'🏠 Buy asset',newAsset:'＋ Create new asset',assetName:'Asset name',register:'Registration type',asset:'🏠 Asset',expense:'💸 Expense',expenseCat:'Expense category',expenseSub:'Subcategory',assetNote:'This is not income or expense. Money is converted into an asset.',expenseNote:'This purchase will be recorded as an expense and count toward the budget.',sourceErr:'Please check the source account and amount',nameErr:'Enter an asset name',assetType:'Asset type',purchasePrice:'Purchase price',editAsset:'Edit asset',save:'Save',cancel:'Cancel',directNote:'For a direct loan-funded purchase, choose how to record the purchase.',selectCat:'Select expense category',selectSub:'Select subcategory'},
+zh:{purposeAsset:'🏠 购买资产',newAsset:'＋ 新建资产',assetName:'资产名称',register:'记录类型',asset:'🏠 资产',expense:'💸 支出',expenseCat:'支出类别',expenseSub:'子类别',assetNote:'这不是收入或支出，而是资金转换为资产。',expenseNote:'此购买将记录为支出并计入预算。',sourceErr:'请检查付款账户和金额',nameErr:'请输入资产名称',assetType:'资产类型',purchasePrice:'购买价格',editAsset:'编辑资产',save:'保存',cancel:'取消',directNote:'贷款直接支付购买款时，请选择记录方式。',selectCat:'选择支出类别',selectSub:'选择子类别'},
+ja:{purposeAsset:'🏠 資産を購入',newAsset:'＋ 新しい資産を作成',assetName:'資産名',register:'登録方法',asset:'🏠 資産',expense:'💸 支出',expenseCat:'支出カテゴリ',expenseSub:'サブカテゴリ',assetNote:'収入・支出ではなく、現金が資産に変わります。',expenseNote:'この購入は支出として記録され、予算に反映されます。',sourceErr:'支払口座と金額を確認してください',nameErr:'資産名を入力してください',assetType:'資産タイプ',purchasePrice:'購入価格',editAsset:'資産を編集',save:'保存',cancel:'キャンセル',directNote:'ローンで直接購入した場合、登録方法を選択します。',selectCat:'支出カテゴリを選択',selectSub:'サブカテゴリを選択'},
+ko:{purposeAsset:'🏠 자산 구매',newAsset:'＋ 새 자산 만들기',assetName:'자산명',register:'등록 유형',asset:'🏠 자산',expense:'💸 지출',expenseCat:'지출 카테고리',expenseSub:'하위 카테고리',assetNote:'수입이나 지출이 아니라 현금이 자산으로 전환됩니다.',expenseNote:'이 구매는 지출로 기록되고 예산에 반영됩니다.',sourceErr:'출금 계좌와 금액을 확인하세요',nameErr:'자산명을 입력하세요',assetType:'자산 유형',purchasePrice:'구매 가격',editAsset:'자산 수정',save:'저장',cancel:'취소',directNote:'대출금으로 직접 구매한 경우 등록 방식을 선택하세요.',selectCat:'지출 카테고리 선택',selectSub:'하위 카테고리 선택'},
+ru:{purposeAsset:'🏠 Купить актив',newAsset:'＋ Создать актив',assetName:'Название актива',register:'Тип учета',asset:'🏠 Актив',expense:'💸 Расход',expenseCat:'Категория расхода',expenseSub:'Подкатегория',assetNote:'Это не доход и не расход: деньги превращаются в актив.',expenseNote:'Покупка будет учтена как расход и попадет в бюджет.',sourceErr:'Проверьте счет списания и сумму',nameErr:'Введите название актива',assetType:'Тип актива',purchasePrice:'Цена покупки',editAsset:'Редактировать актив',save:'Сохранить',cancel:'Отмена',directNote:'При прямой покупке за счет кредита выберите способ учета.',selectCat:'Выберите категорию расхода',selectSub:'Выберите подкатегорию'},
+de:{purposeAsset:'🏠 Vermögenswert kaufen',newAsset:'＋ Neuen Vermögenswert anlegen',assetName:'Name des Vermögenswerts',register:'Buchungsart',asset:'🏠 Vermögenswert',expense:'💸 Ausgabe',expenseCat:'Ausgabenkategorie',expenseSub:'Unterkategorie',assetNote:'Dies ist weder Einkommen noch Ausgabe. Geld wird in einen Vermögenswert umgewandelt.',expenseNote:'Dieser Kauf wird als Ausgabe erfasst und dem Budget zugerechnet.',sourceErr:'Bitte Abbuchungskonto und Betrag prüfen',nameErr:'Bitte Namen des Vermögenswerts eingeben',assetType:'Art des Vermögenswerts',purchasePrice:'Kaufpreis',editAsset:'Vermögenswert bearbeiten',save:'Speichern',cancel:'Abbrechen',directNote:'Bei einem direkt kreditfinanzierten Kauf wählen Sie die Buchungsart.',selectCat:'Ausgabenkategorie wählen',selectSub:'Unterkategorie wählen'}
+};
+function AFT(){return ASSET_FLOW_I18N[lang]||ASSET_FLOW_I18N.en;}
+let assetPurchaseRegistration='asset';
+function setAssetPurchaseRegistration(v){
+  assetPurchaseRegistration=v==='expense'?'expense':'asset';
+  const a=document.getElementById('t-reg-asset'),e=document.getElementById('t-reg-expense');
+  if(a)a.className='tt-btn'+(assetPurchaseRegistration==='asset'?' tt-i':'');
+  if(e)e.className='tt-btn'+(assetPurchaseRegistration==='expense'?' tt-e':'');
+  const ad=document.getElementById('t-asset-detail'),ed=document.getElementById('t-expense-detail');
+  if(ad)ad.style.display=assetPurchaseRegistration==='asset'?'block':'none';
+  if(ed)ed.style.display=assetPurchaseRegistration==='expense'?'block':'none';
+  renderAssetExpenseCategories('transfer');updateTransferPurposeNote();
+}
+function renderAssetExpenseCategories(mode){
+  const id=mode==='direct'?'d-expense-cat':'t-asset-exp-cat',sel=document.getElementById(id);if(!sel)return;
+  const old=sel.value, t=AFT();
+  sel.innerHTML=`<option value="">${t.selectCat}</option>`+bCatsExp.map(c=>`<option value="${String(c.key||c.name).replace(/"/g,'&quot;')}">${c.icon||'💸'} ${cN(c)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===old))sel.value=old;
+  renderAssetExpenseSubcats(mode);
+}
+function renderAssetExpenseSubcats(mode){
+  const cid=mode==='direct'?'d-expense-cat':'t-asset-exp-cat',sid=mode==='direct'?'d-expense-sub':'t-asset-exp-sub';
+  const csel=document.getElementById(cid),ssel=document.getElementById(sid);if(!ssel)return;
+  const key=csel?.value||'',cat=bCatsExp.find(c=>String(c.key||c.name)===String(key)),t=AFT(),old=ssel.value;
+  ssel.innerHTML=`<option value="">${t.selectSub}</option>`+(cat?.subs||[]).map(sb=>`<option value="${String(sb.key||sb.name).replace(/"/g,'&quot;')}">${cN(sb)}</option>`).join('');
+  if([...ssel.options].some(o=>o.value===old))ssel.value=old;
+}
+function updateTransferPurposeNote(){
+  const p=document.getElementById('t-transfer-purpose')?.value,n=document.getElementById('transfer-mode-note-text'),t=AFT();if(!n)return;
+  if(p==='asset')n.textContent=assetPurchaseRegistration==='expense'?t.expenseNote:t.assetNote;
+}
+function renderDirectPurchaseRegistration(){
+  const v=document.getElementById('d-purchase-registration')?.value||'asset';
+  const a=document.getElementById('d-direct-asset-fields'),e=document.getElementById('d-direct-expense-fields');
+  if(a)a.style.display=v==='asset'?'block':'none';if(e)e.style.display=v==='expense'?'block':'none';
+  if(v==='expense')renderAssetExpenseCategories('direct');
+}
+function updateAssetFlowTexts(){
+  const t=AFT(),p=document.getElementById('t-transfer-purpose');
+  if(p){const o=[...p.options].find(x=>x.value==='asset');if(o)o.textContent=t.purposeAsset;}
+  const rl=document.getElementById('t-register-label');if(rl)rl.textContent=t.register;
+  const ra=document.getElementById('t-reg-asset');if(ra)ra.textContent=t.asset;
+  const re=document.getElementById('t-reg-expense');if(re)re.textContent=t.expense;
+  const an=document.getElementById('t-asset-name');if(an)an.placeholder=t.assetName;
+  const fl=document.getElementById('lf-register-label');if(fl)fl.textContent=t.register;
+  const fn=document.getElementById('lf-asset-note');if(fn)fn.textContent=t.directNote;
+  const at=document.getElementById('lf-asset-type-label');if(at)at.textContent=t.assetType;
+  const av=document.getElementById('lf-asset-value-label');if(av)av.textContent=t.purchasePrice;
+  const al=document.getElementById('lf-asset-name-label');if(al)al.textContent=t.assetName;
+  const dr=document.getElementById('d-purchase-registration');
+  if(dr){dr.options[0].textContent=t.asset;dr.options[1].textContent=t.expense;}
+  renderAssetExpenseCategories('transfer');renderAssetExpenseCategories('direct');updateTransferPurposeNote();
+}
+
 function assetTypeOptions(selected){
   const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
   return types.map(x=>`<option value="${x.k}" ${x.k===selected?'selected':''}>${x.icon} ${x.label}</option>`).join('');
@@ -7228,7 +7317,7 @@ function renderTransferAssetFields(){
   const p=document.getElementById('t-transfer-purpose'),tar=document.getElementById('t-transfer-target'),wrap=document.getElementById('t-asset-fields');
   if(!p||!wrap)return;
   const isAsset=p.value==='asset',isNew=isAsset&&(!tar||tar.value==='__new__');
-  wrap.style.display=isNew?'block':'none';renderAssetTypeSelectors();
+  wrap.style.display=isAsset?'block':'none';if(isAsset){setAssetPurchaseRegistration(assetPurchaseRegistration);const ad=document.getElementById('t-asset-detail');if(ad)ad.style.display=(assetPurchaseRegistration==='asset'&&isNew)?'block':'none';}renderAssetTypeSelectors();updateTransferPurposeNote();
 }
 
 function renderTransferTarget(){
@@ -7241,7 +7330,7 @@ function renderTransferTarget(){
     if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Хөрөнгө оруулалтын нэр эхлээд үүсгэнэ үү':'Create an investment first'}</option>`;
   }else if(purpose==='asset'){
     const groups=getInvestGroups().filter(g=>['real','vehicle','business_asset','other'].includes(g.typeKey));
-    tar.innerHTML=`<option value="__new__">${lang==='mn'?'＋ Шинэ хөрөнгө үүсгэх':'＋ Create new asset'}</option>`+
+    tar.innerHTML=`<option value="__new__">${AFT().newAsset}</option>`+
       groups.map(g=>`<option value="${String(g.key).replace(/"/g,'&quot;')}">${IICONS[g.typeKey]||'🏠'} ${g.name}</option>`).join('');
   }else tar.innerHTML='';
   renderTransferAssetFields();
@@ -7255,11 +7344,19 @@ function addTransaction(){
     const purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
     const targetId=(document.getElementById('t-transfer-target')||{}).value||null;
     if(purpose==='asset'){
-      if(!amount||amount<=0||!fromId){showToast(lang==='mn'?'Мөнгө гарах данс болон дүнгээ шалгана уу':'Please check the source account and amount');return;}
+      if(!amount||amount<=0||!fromId){showToast(AFT().sourceErr);return;}
+      if(assetPurchaseRegistration==='expense'){
+        const ck=document.getElementById('t-asset-exp-cat')?.value||'',sk=document.getElementById('t-asset-exp-sub')?.value||'';
+        const cat=bCatsExp.find(c=>String(c.key||c.name)===String(ck));
+        if(!cat){showToast(AFT().selectCat);return;}
+        const sub=(cat.subs||[]).find(x=>String(x.key||x.name)===String(sk));
+        txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tx_'+Date.now()),type:'expense',catKey:cat.key||null,catName:cN(cat),subcatKey:sub?.key||null,subcatName:sub?cN(sub):'',desc:sub?cN(sub):cN(cat),amount,date,accountId:fromId,createdAt:new Date().toISOString()});
+        document.getElementById('t-amount').value='';saveData();rAll();renderMoneyAccounts();return;
+      }
       let assetKey=targetId;
       if(targetId==='__new__'){
         const nm=(document.getElementById('t-asset-name')||{}).value?.trim(),tk=(document.getElementById('t-asset-type')||{}).value||'other';
-        if(!nm){showToast(lang==='mn'?'Хөрөнгийн нэр оруулна уу':'Enter an asset name');return;}
+        if(!nm){showToast(AFT().nameErr);return;}
         const iid=Date.now();invests.unshift({id:iid,name:nm,typeKey:tk,invested:amount,current:amount,date,color:mongoNextColor(invests.length,'invest'),autoAdded:false,assetPurchase:true});
         assetKey=investGroupKey(invests[0]);
       }else{
@@ -7398,7 +7495,7 @@ function debtCalcNextSplit(d){
 function renderDebtFundingAccounts(){
   const mode=(document.getElementById('d-funding-mode')||{}).value||'existing',wrap=document.getElementById('d-funding-account-wrap'),sel=document.getElementById('d-funding-account');
   if(wrap)wrap.style.display=mode==='existing'?'flex':'none';
-  const aw=document.getElementById('d-asset-link-wrap');if(aw)aw.style.display=mode==='direct'?'block':'none';renderAssetTypeSelectors();
+  const aw=document.getElementById('d-asset-link-wrap');if(aw)aw.style.display=mode==='direct'?'block':'none';renderAssetTypeSelectors();renderDirectPurchaseRegistration();
   if(sel){const old=sel.value;sel.innerHTML=moneyAccounts.filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;}
 }
 function openDebtPayModal(id){
@@ -7448,12 +7545,19 @@ function addDebt(){
   const debtId=Date.now();
   let linkedAssetId=null;
   if(fundingMode==='direct'){
-    const assetName=(document.getElementById('d-asset-name')?.value||name).trim();
-    const assetValue=parseAmt(document.getElementById('d-asset-value')?.value)||total;
-    if(assetName&&assetValue>0){
-      linkedAssetId=debtId+1;
-      const typeSel=document.getElementById('d-asset-type'),typeKey=(typeSel&&typeSel.value)||'real';
-      invests.unshift({id:linkedAssetId,name:assetName,typeKey,invested:assetValue,current:assetValue,date:startDate,color:mongoNextColor(invests.length,'invest'),autoAdded:false,linkedDebtId:debtId,loanFunded:true});
+    const reg=document.getElementById('d-purchase-registration')?.value||'asset';
+    if(reg==='asset'){
+      const assetName=(document.getElementById('d-asset-name')?.value||name).trim();
+      const assetValue=parseAmt(document.getElementById('d-asset-value')?.value)||total;
+      if(assetName&&assetValue>0){
+        linkedAssetId=debtId+1;
+        const typeSel=document.getElementById('d-asset-type'),typeKey=(typeSel&&typeSel.value)||'real';
+        invests.unshift({id:linkedAssetId,name:assetName,typeKey,invested:assetValue,current:assetValue,date:startDate,color:mongoNextColor(invests.length,'invest'),autoAdded:false,linkedDebtId:debtId,loanFunded:true});
+      }
+    }else{
+      const ck=document.getElementById('d-expense-cat')?.value||'',sk=document.getElementById('d-expense-sub')?.value||'';
+      const cat=bCatsExp.find(c=>String(c.key||c.name)===String(ck)),sub=cat?(cat.subs||[]).find(x=>String(x.key||x.name)===String(sk)):null;
+      if(cat)txns.unshift({id:'loandirect_'+debtId,type:'expense',catKey:cat.key||null,catName:cN(cat),subcatKey:sub?.key||null,subcatName:sub?cN(sub):'',desc:sub?cN(sub):name,amount:total,date:startDate,accountId:null,skipAccountBalance:true,loanFundedPurchase:true,linkedDebtId:debtId,createdAt:new Date().toISOString()});
     }
   }
   debts.push({id:debtId,name,total,remaining:rem,openingRemaining:rem,monthly,rate,color,paymentType,termMonths,startDate,fundingMode,fundingAccountId,fundingAmount:(fundingMode==='existing'?total:0),linkedAssetId,payments:[],active:true,createdAt:new Date().toISOString()});
@@ -8560,6 +8664,30 @@ function getInvestGroups(){
   invests.forEach((inv,i)=>{const key=investGroupKey(inv);if(!map.has(key))map.set(key,{key,name:inv.name,typeKey:inv.typeKey,color:mongoColor(inv.color,ICOLS[inv.typeKey]||mongoNextColor(i,'invest')),items:[]});map.get(key).items.push(inv);});
   return [...map.values()].map(g=>({...g,invested:g.items.reduce((s,x)=>s+(Number(x.invested)||0),0),current:g.items.reduce((s,x)=>s+(Number(x.current)||0),0)}));
 }
+
+function editInvestGroup(key){
+  const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const t=AFT();
+  let m=document.getElementById('asset-edit-modal');if(m)m.remove();
+  m=document.createElement('div');m.id='asset-edit-modal';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.editAsset}</div>
+    <label>${t.assetName}</label><input class="fi" id="ae-name" value="${String(g.name).replace(/"/g,'&quot;')}">
+    <label>${t.assetType}</label><select class="fi" id="ae-type">${assetTypeOptions(g.typeKey)}</select>
+    <label>${t.purchasePrice}</label><input class="fi" id="ae-current" inputmode="decimal" value="${Math.round(g.current).toLocaleString('en-US')}">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-edit-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveInvestGroupEdit('${String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${t.save}</button></div></div>`;
+  document.body.appendChild(m);setupAmtInput(document.getElementById('ae-current'));
+}
+function saveInvestGroupEdit(key){
+  const items=invests.filter(x=>investGroupKey(x)===key);if(!items.length)return;
+  const nm=document.getElementById('ae-name')?.value.trim(),tk=document.getElementById('ae-type')?.value||items[0].typeKey,cv=parseAmt(document.getElementById('ae-current')?.value);
+  if(!nm)return;
+  items.forEach(x=>{x.name=nm;x.typeKey=tk;});
+  if(Number.isFinite(cv)&&cv>=0){
+    const total=items.reduce((a,x)=>a+(Number(x.current)||0),0);
+    if(total>0)items.forEach(x=>x.current=cv*((Number(x.current)||0)/total));else items[0].current=cv;
+  }
+  document.getElementById('asset-edit-modal')?.remove();saveData();rAll();rDonut('inv');uDash();
+}
+
 function toggleInvestGroup(key){openInvestGroups.has(key)?openInvestGroups.delete(key):openInvestGroups.add(key);rInvests();}
 function updateInvestGroupColor(key,color){invests.filter(x=>investGroupKey(x)===key).forEach(x=>x.color=color);saveData();rInvests();rDonut('inv');}
 function rInvests(){
@@ -8582,15 +8710,22 @@ function rInvests(){
   const pc=document.getElementById('i-pnl-card');pc.style.background=pnl>=0?'#E1F5EE':'#FCEBEB';pc.querySelector('.metric-lbl').style.color=pnl>=0?'#085041':'#791F1F';pc.querySelector('.metric-val').style.color=pnl>=0?'#085041':'#791F1F';
   const pp=document.getElementById('i-pct-card');pp.style.background=pct2>=0?'#E1F5EE':'#FCEBEB';pp.querySelector('.metric-lbl').style.color=pct2>=0?'#085041':'#791F1F';pp.querySelector('.metric-val').style.color=pct2>=0?'#085041':'#791F1F';
   const types=INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn;
-  const texts={mn:{buys:'худалдан авалт',history:'Худалдан авалтын түүх',invested:'Оруулсан',current:'Одоогийн үнэ',profit:'Ашиг/алдагдал'},en:{buys:'purchases',history:'Purchase history',invested:'Invested',current:'Current',profit:'Profit/loss'}};
+  const texts={
+mn:{buys:'худалдан авалт',history:'Худалдан авалтын түүх',invested:'Оруулсан',current:'Одоогийн үнэ',profit:'Ашиг/алдагдал'},
+en:{buys:'purchases',history:'Purchase history',invested:'Invested',current:'Current',profit:'Profit/loss'},
+zh:{buys:'次购买',history:'购买记录',invested:'投入',current:'当前价值',profit:'收益/亏损'},
+ja:{buys:'件の購入',history:'購入履歴',invested:'投資額',current:'現在価値',profit:'損益'},
+ko:{buys:'회 구매',history:'구매 내역',invested:'투입액',current:'현재 가치',profit:'손익'},
+ru:{buys:'покупок',history:'История покупок',invested:'Вложено',current:'Текущая стоимость',profit:'Прибыль/убыток'},
+de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktueller Wert',profit:'Gewinn/Verlust'}};
   let T=texts[lang]||texts.en;
   el.innerHTML=groups.sort((a,b)=>b.current-a.current).map(g=>{
     const p=g.current-g.invested,pct=g.invested>0?p/g.invested*100:0,col=g.color,icon=IICONS[g.typeKey]||'💡',typeObj=types.find(x=>x.k===g.typeKey),tlbl=typeObj?typeObj.label:g.typeKey,isOpen=openInvestGroups.has(g.key);
-    const investedLabel=['real','vehicle','business_asset','other'].includes(g.typeKey)?(lang==='mn'?'Худалдан авсан үнэ':lang==='en'?'Purchase price':T.invested):T.invested;
+    const investedLabel=['real','vehicle','business_asset','other'].includes(g.typeKey)?AFT().purchasePrice:T.invested;
     const safeKey=g.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="inv-card mongo-object-card portfolio-group" style="--object-color:${col}">
       <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}</div></div></div>
-      <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)" title="Өнгө солих"></div></div>
+      <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
       <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
@@ -9401,7 +9536,7 @@ function toggleLoanSchedule(){
 }
 
 const _origApplyLangCalc=applyLang;
-applyLang=function(){_origApplyLangCalc();updateCalcTexts();updateLoanFlowTexts();renderDebtFundingAccounts();if(document.getElementById('debts-list'))rDebts();};
+applyLang=function(){_origApplyLangCalc();updateCalcTexts();updateLoanFlowTexts();updateAssetFlowTexts();renderDebtFundingAccounts();if(document.getElementById('debts-list'))rDebts();};
 requestAnimationFrame(()=>{
   ['loan-calc-amount','loan-calc-extra'].forEach(setupAmtInput);
   updateCalcTexts();updateLoanFlowTexts();
