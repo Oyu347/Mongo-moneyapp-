@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<!-- Möngö V43.56: startup/splash fix — prevents asset-income localization from running before its dictionary is initialized. -->
-<!-- Möngö V43.55: exact-tögrög reconciliation; income-producing asset classification + linked asset income; loan budget uses total payment while principal/interest stay split internally. -->
-<!-- Möngö V43.54: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
+<!-- Möngö V43.57 rebuilt strictly from stable V43.53. Splash/startup code unchanged. -->
+<!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
 <!-- Möngö V43.39: Opening balance summary layout — 2x2 grid: cash balance + opening balance, income + expense. No calculation logic changed. -->
@@ -123,20 +122,6 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 #tab-transactions.asset-purchase-active #t-transfer-target{
   display:none !important;
 }
-
-/* V43.56 — splash hard failsafe: independent of JavaScript */
-@keyframes mongoSplashFailsafe{
-  0%,82%{opacity:1;visibility:visible;pointer-events:auto}
-  100%{opacity:0;visibility:hidden;pointer-events:none}
-}
-#mongo-splash{
-  animation:mongoSplashFailsafe 3.8s ease forwards !important;
-}
-#mongo-splash.hide{
-  opacity:0 !important;
-  visibility:hidden !important;
-  pointer-events:none !important;
-}
 </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -147,7 +132,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V43.56 Splash Failsafe</title>
+<title>Möngö — V43.57 Four Improvements Rebuilt</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -2425,17 +2410,6 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 
 </head>
 <body>
-<script>
-(function(){
-  function forceHideMongoSplash(){
-    var sp=document.getElementById('mongo-splash');
-    if(sp){sp.classList.add('hide');sp.style.pointerEvents='none';setTimeout(function(){sp.style.display='none';},650);}
-  }
-  window.__forceHideMongoSplash=forceHideMongoSplash;
-  setTimeout(forceHideMongoSplash,4000);
-  window.addEventListener('load',function(){setTimeout(forceHideMongoSplash,1800);});
-})();
-</script>
 
 <!-- ── Möngö V30 Premium Splash ── -->
 <div class="mongo-splash" id="mongo-splash">
@@ -2763,6 +2737,12 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
           <input class="fi" id="t-asset-name" placeholder="Хөрөнгийн нэр">
           <select class="fi" id="t-asset-type"></select>
         </div>
+        <div class="form-row" style="align-items:center;margin-top:7px">
+          <span class="slbl" id="lbl-t-income-producing" style="margin:0;flex:1">Орлого оруулдаг хөрөнгө</span>
+          <select class="fi" id="t-asset-income-producing" style="flex:1;max-width:220px">
+            <option value="no">Үгүй</option><option value="yes">Тийм</option>
+          </select>
+        </div>
       </div>
       <div id="t-expense-detail" style="display:none">
         <div class="form-row">
@@ -3065,6 +3045,12 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
           <span class="slbl" id="lf-asset-value-label">Хөрөнгийн үнэ</span><input class="fi" id="d-asset-value" inputmode="decimal" data-amt="1" placeholder="0">
         </div>
       </div>
+      <div class="form-row" style="align-items:center;margin-top:7px">
+        <span class="slbl" id="lbl-d-income-producing" style="margin:0;flex:1">Орлого оруулдаг хөрөнгө</span>
+        <select class="fi" id="d-asset-income-producing" style="flex:1;max-width:220px">
+          <option value="no">Үгүй</option><option value="yes">Тийм</option>
+        </select>
+      </div>
       </div>
       <div id="d-direct-expense-fields" style="display:none">
         <div class="form-row">
@@ -3155,9 +3141,9 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
         <input type="text" class="fi" id="i-name">
         <select class="fi" id="i-type"></select>
       </div>
-      <div class="form-row" style="align-items:center;margin-top:-2px">
-        <span class="slbl" id="lbl-i-income-producing" style="margin:0">Орлого оруулдаг хөрөнгө</span>
-        <select class="fi" id="i-income-producing" style="max-width:210px">
+      <div class="form-row" style="align-items:center">
+        <span class="slbl" id="lbl-i-income-producing" style="margin:0;flex:1">Орлого оруулдаг хөрөнгө</span>
+        <select class="fi" id="i-income-producing" style="flex:1;max-width:220px">
           <option value="no">Үгүй</option><option value="yes">Тийм</option>
         </select>
       </div>
@@ -7294,6 +7280,26 @@ function getDebtRemaining(d){
 
 
 
+const ASSET_INCOME_I18N={
+mn:{producing:'Орлого оруулдаг хөрөнгө',yes:'Тийм',no:'Үгүй',badge:'Орлого оруулдаг',add:'＋ Орлого',title:'Хөрөнгийн орлого',kind:'Орлогын төрөл',rent:'Түрээс',dividend:'Ногдол ашиг',interest:'Хүүгийн орлого',other:'Бусад орлого',account:'Орлого орох данс',amount:'Дүн',date:'Огноо',save:'Хадгалах',cancel:'Болих',error:'Дүн болон дансаа шалгана уу'},
+en:{producing:'Income-producing asset',yes:'Yes',no:'No',badge:'Income-producing',add:'＋ Income',title:'Asset income',kind:'Income type',rent:'Rent',dividend:'Dividend',interest:'Interest income',other:'Other income',account:'Receiving account',amount:'Amount',date:'Date',save:'Save',cancel:'Cancel',error:'Check amount and account'},
+zh:{producing:'产生收入的资产',yes:'是',no:'否',badge:'产生收入',add:'＋ 收入',title:'资产收入',kind:'收入类型',rent:'租金',dividend:'股息',interest:'利息收入',other:'其他收入',account:'收款账户',amount:'金额',date:'日期',save:'保存',cancel:'取消',error:'请检查金额和账户'},
+ja:{producing:'収益を生む資産',yes:'はい',no:'いいえ',badge:'収益あり',add:'＋ 収入',title:'資産収入',kind:'収入タイプ',rent:'家賃',dividend:'配当',interest:'利息収入',other:'その他',account:'入金口座',amount:'金額',date:'日付',save:'保存',cancel:'キャンセル',error:'金額と口座を確認してください'},
+ko:{producing:'수익 창출 자산',yes:'예',no:'아니요',badge:'수익 창출',add:'＋ 수입',title:'자산 수입',kind:'수입 유형',rent:'임대료',dividend:'배당',interest:'이자 수입',other:'기타 수입',account:'입금 계좌',amount:'금액',date:'날짜',save:'저장',cancel:'취소',error:'금액과 계좌를 확인하세요'},
+ru:{producing:'Доходный актив',yes:'Да',no:'Нет',badge:'Приносит доход',add:'＋ Доход',title:'Доход от актива',kind:'Тип дохода',rent:'Аренда',dividend:'Дивиденды',interest:'Процентный доход',other:'Другой доход',account:'Счет зачисления',amount:'Сумма',date:'Дата',save:'Сохранить',cancel:'Отмена',error:'Проверьте сумму и счет'},
+de:{producing:'Einkommensbringender Vermögenswert',yes:'Ja',no:'Nein',badge:'Einkommensbringend',add:'＋ Einnahme',title:'Vermögenseinkommen',kind:'Einnahmeart',rent:'Miete',dividend:'Dividende',interest:'Zinsertrag',other:'Sonstige Einnahme',account:'Empfangskonto',amount:'Betrag',date:'Datum',save:'Speichern',cancel:'Abbrechen',error:'Betrag und Konto prüfen'}
+};
+function AIT(){return ASSET_INCOME_I18N[lang]||ASSET_INCOME_I18N.mn;}
+function setYesNoSelect(id){
+  const e=document.getElementById(id);if(!e)return;const keep=e.value||'no',t=AIT();
+  e.innerHTML=`<option value="no">${t.no}</option><option value="yes">${t.yes}</option>`;e.value=keep;
+}
+function refreshAssetIncomeLabels(){
+  const t=AIT();
+  ['lbl-i-income-producing','lbl-t-income-producing','lbl-d-income-producing'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t.producing;});
+  ['i-income-producing','t-asset-income-producing','d-asset-income-producing'].forEach(setYesNoSelect);
+}
+
 const ASSET_FLOW_I18N={
 mn:{purposeInternal:'↔ Энгийн шилжүүлэг',purposeSavings:'🎯 Хуримтлалд хийх',purposeInvestment:'📈 Хөрөнгө оруулалтад хийх',purposeAccount:'↔ Данс хооронд шилжүүлэх',purposeAsset:'🏠 Хөрөнгө худалдаж авах',newAsset:'＋ Шинэ хөрөнгө үүсгэх',assetName:'Хөрөнгийн нэр',register:'Бүртгэх төрөл',asset:'🏠 Хөрөнгө',expense:'💸 Зардал',expenseCat:'Зардлын ангилал',expenseSub:'Дэд ангилал',assetNote:'Энэ нь орлого, зарлага биш. Мөнгө хөрөнгө болж хувирна.',expenseNote:'Энэ худалдан авалт зарлага болон төсөвт бүртгэгдэнэ.',sourceErr:'Мөнгө гарах данс болон дүнгээ шалгана уу',nameErr:'Хөрөнгийн нэр оруулна уу',assetType:'Хөрөнгийн төрөл',purchasePrice:'Худалдан авсан үнэ',editAsset:'Хөрөнгө засах',save:'Хадгалах',cancel:'Болих',directNote:'Зээлийн мөнгөөр шууд худалдан авалт хийсэн бол бүртгэх төрлөө сонгоно.',selectCat:'Зардлын ангилал сонгох',selectSub:'Дэд ангилал сонгох'},
 en:{purposeInternal:'↔ Regular transfer',purposeSavings:'🎯 Add to savings',purposeInvestment:'📈 Add to investment',purposeAccount:'↔ Transfer between accounts',purposeAsset:'🏠 Buy asset',newAsset:'＋ Create new asset',assetName:'Asset name',register:'Registration type',asset:'🏠 Asset',expense:'💸 Expense',expenseCat:'Expense category',expenseSub:'Subcategory',assetNote:'This is not income or expense. Money is converted into an asset.',expenseNote:'This purchase will be recorded as an expense and count toward the budget.',sourceErr:'Please check the source account and amount',nameErr:'Enter an asset name',assetType:'Asset type',purchasePrice:'Purchase price',editAsset:'Edit asset',save:'Save',cancel:'Cancel',directNote:'For a direct loan-funded purchase, choose how to record the purchase.',selectCat:'Select expense category',selectSub:'Select subcategory'},
@@ -7365,6 +7371,7 @@ function updateAssetFlowTexts(){
   const dr=document.getElementById('d-purchase-registration');
   if(dr){dr.options[0].textContent=t.asset;dr.options[1].textContent=t.expense;}
   renderAssetExpenseCategories('transfer');renderAssetExpenseCategories('direct');
+  refreshAssetIncomeLabels();
   renderTransferTarget();renderTransferAssetFields();updateTransferPurposeNote();
 }
 
@@ -7450,11 +7457,12 @@ function addTransaction(){
       if(targetId==='__new__'){
         const nm=(document.getElementById('t-asset-name')||{}).value?.trim(),tk=(document.getElementById('t-asset-type')||{}).value||'other';
         if(!nm){showToast(AFT().nameErr);return;}
-        const iid=Date.now();invests.unshift({id:iid,name:nm,typeKey:tk,invested:amount,current:amount,date,color:mongoNextColor(invests.length,'invest'),autoAdded:false,assetPurchase:true});
+        const iid=Date.now(),incomeProducing=document.getElementById('t-asset-income-producing')?.value==='yes';
+        invests.unshift({id:iid,name:nm,typeKey:tk,invested:amount,current:amount,date,color:mongoNextColor(invests.length,'invest'),autoAdded:false,assetPurchase:true,incomeProducing});
         assetKey=investGroupKey(invests[0]);
       }else{
         const g=getInvestGroups().find(x=>x.key===targetId);
-        if(g)invests.unshift({id:Date.now(),name:g.name,typeKey:g.typeKey,invested:amount,current:amount,date,color:g.color,autoAdded:false,assetPurchase:true});
+        if(g)invests.unshift({id:Date.now(),name:g.name,typeKey:g.typeKey,invested:amount,current:amount,date,color:g.color,autoAdded:false,assetPurchase:true,incomeProducing:g.items.some(x=>!!x.incomeProducing)});
       }
       accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId:null,amount,date,purpose:'asset',targetId:assetKey,updatedAt:new Date().toISOString()});
       document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';saveData();rAll();renderMoneyAccounts();return;
@@ -7645,7 +7653,8 @@ function addDebt(){
       if(assetName&&assetValue>0){
         linkedAssetId=debtId+1;
         const typeSel=document.getElementById('d-asset-type'),typeKey=(typeSel&&typeSel.value)||'real';
-        invests.unshift({id:linkedAssetId,name:assetName,typeKey,invested:assetValue,current:assetValue,date:startDate,color:mongoNextColor(invests.length,'invest'),autoAdded:false,linkedDebtId:debtId,loanFunded:true});
+        const incomeProducing=document.getElementById('d-asset-income-producing')?.value==='yes';
+        invests.unshift({id:linkedAssetId,name:assetName,typeKey,invested:assetValue,current:assetValue,date:startDate,color:mongoNextColor(invests.length,'invest'),autoAdded:false,linkedDebtId:debtId,loanFunded:true,incomeProducing});
       }
     }else{
       const ck=document.getElementById('d-expense-cat')?.value||'',sk=document.getElementById('d-expense-sub')?.value||'';
@@ -7664,46 +7673,6 @@ async function delDebt(id){
 }
 
 // ── Investments ────────────────────────────────────────────────────────────
-
-const ASSET_INCOME_TEXT={
-mn:{producing:'Орлого оруулдаг хөрөнгө',yes:'Тийм',no:'Үгүй',addIncome:'＋ Орлого бүртгэх',incomeTitle:'Хөрөнгийн орлого',incomeType:'Орлогын төрөл',rent:'Түрээс',dividend:'Ногдол ашиг',interest:'Хүүгийн орлого',other:'Бусад орлого',account:'Орлого орох данс',amount:'Дүн',date:'Огноо',save:'Хадгалах',cancel:'Болих',need:'Дүн болон дансаа шалгана уу',incomeBadge:'Орлого оруулдаг'},
-en:{producing:'Income-producing asset',yes:'Yes',no:'No',addIncome:'＋ Add income',incomeTitle:'Asset income',incomeType:'Income type',rent:'Rent',dividend:'Dividend',interest:'Interest income',other:'Other income',account:'Receiving account',amount:'Amount',date:'Date',save:'Save',cancel:'Cancel',need:'Check amount and account',incomeBadge:'Income-producing'},
-zh:{producing:'产生收入的资产',yes:'是',no:'否',addIncome:'＋ 记录收入',incomeTitle:'资产收入',incomeType:'收入类型',rent:'租金',dividend:'股息',interest:'利息收入',other:'其他收入',account:'收款账户',amount:'金额',date:'日期',save:'保存',cancel:'取消',need:'请检查金额和账户',incomeBadge:'产生收入'},
-ja:{producing:'収益を生む資産',yes:'はい',no:'いいえ',addIncome:'＋ 収入を記録',incomeTitle:'資産収入',incomeType:'収入タイプ',rent:'家賃',dividend:'配当',interest:'利息収入',other:'その他',account:'入金口座',amount:'金額',date:'日付',save:'保存',cancel:'キャンセル',need:'金額と口座を確認してください',incomeBadge:'収益あり'},
-ko:{producing:'수익 창출 자산',yes:'예',no:'아니요',addIncome:'＋ 수입 기록',incomeTitle:'자산 수입',incomeType:'수입 유형',rent:'임대료',dividend:'배당',interest:'이자 수입',other:'기타 수입',account:'입금 계좌',amount:'금액',date:'날짜',save:'저장',cancel:'취소',need:'금액과 계좌를 확인하세요',incomeBadge:'수익 창출'},
-ru:{producing:'Доходный актив',yes:'Да',no:'Нет',addIncome:'＋ Добавить доход',incomeTitle:'Доход от актива',incomeType:'Тип дохода',rent:'Аренда',dividend:'Дивиденды',interest:'Процентный доход',other:'Другой доход',account:'Счет зачисления',amount:'Сумма',date:'Дата',save:'Сохранить',cancel:'Отмена',need:'Проверьте сумму и счет',incomeBadge:'Приносит доход'},
-de:{producing:'Einkommensbringender Vermögenswert',yes:'Ja',no:'Nein',addIncome:'＋ Einnahme erfassen',incomeTitle:'Vermögenseinkommen',incomeType:'Einnahmeart',rent:'Miete',dividend:'Dividende',interest:'Zinsertrag',other:'Sonstige Einnahme',account:'Empfangskonto',amount:'Betrag',date:'Datum',save:'Speichern',cancel:'Abbrechen',need:'Betrag und Konto prüfen',incomeBadge:'Einkommensbringend'}
-};
-function assetIncomeText(){return ASSET_INCOME_TEXT[lang]||ASSET_INCOME_TEXT.mn;}
-function refreshAssetIncomeUI(){
-  const T=assetIncomeText(),l=document.getElementById('lbl-i-income-producing'),sel=document.getElementById('i-income-producing');
-  if(l)l.textContent=T.producing;
-  if(sel){const v=sel.value||'no';sel.innerHTML=`<option value="no">${T.no}</option><option value="yes">${T.yes}</option>`;sel.value=v;}
-}
-function groupIncomeProducing(g){return g.items.some(x=>x.incomeProducing===true||x.incomeProducing==='yes');}
-function openAssetIncomeModal(key){
-  const g=getInvestGroups().find(x=>x.key===key);if(!g||!groupIncomeProducing(g))return;
-  ensureMoneyAccounts();const T=assetIncomeText();let m=document.getElementById('asset-income-modal');if(m)m.remove();
-  m=document.createElement('div');m.id='asset-income-modal';m.className='loan-modal-backdrop';
-  const accounts=moneyAccounts.filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
-  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${T.incomeTitle} · ${g.name}</div>
-    <label>${T.incomeType}</label><select class="fi" id="ai-type"><option value="rent">${T.rent}</option><option value="dividend">${T.dividend}</option><option value="interest">${T.interest}</option><option value="other">${T.other}</option></select>
-    <label>${T.account}</label><select class="fi" id="ai-account">${accounts}</select>
-    <div class="loan-modal-grid"><div><label>${T.amount}</label><input class="fi" id="ai-amount" inputmode="decimal" data-amt="1"></div><div><label>${T.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${T.cancel}</button><button class="btn btn-p" onclick='saveAssetIncome(${JSON.stringify(key)})'>${T.save}</button></div></div>`;
-  document.body.appendChild(m);setupAmtInput(document.getElementById('ai-amount'));
-}
-function saveAssetIncome(key){
-  const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const T=assetIncomeText();
-  const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,type=document.getElementById('ai-type')?.value||'other';
-  if(amount<=0||!accountId){showToast(T.need);return;}
-  const labels={rent:T.rent,dividend:T.dividend,interest:T.interest,other:T.other};
-  txns.unshift({id:Date.now(),desc:`${g.name} · ${labels[type]}`,amount,type:'income',date,accountId,catName:labels[type],assetIncome:true,assetGroupKey:key,assetIncomeType:type});
-  document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(T.incomeTitle+' ✓');
-}
-
-requestAnimationFrame(()=>{try{refreshAssetIncomeUI();}catch(e){console.warn('Asset income UI init',e);}});
-
 function addInvest(){
   const name=document.getElementById('i-name').value.trim();
   const tK=document.getElementById('i-type').value;
@@ -8088,7 +8057,7 @@ function accountBalanceRaw(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)re
   accountTransfers.forEach(t=>{if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;});
   debts.forEach(d=>{if(d.fundingMode==='existing'&&d.fundingAccountId===id)v+=Number(d.fundingAmount)||0;debtPayments(d).forEach(p=>{if(p.accountId===id)v-=Number(p.total)||0;});});
   return v;}
-function accountBalance(id){return Math.round(accountBalanceRaw(id));}
+function accountBalance(id){return accountBalanceRaw(id);}
 function renderAccountSelectors(){
   ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;
   const note=document.getElementById('transfer-mode-note-text');
@@ -8215,18 +8184,18 @@ function debtNonPLCashImpact(d,from,to){
     if(!objInRange(p,from,to))return;
     // Interest is already an expense transaction, so only principal changes cash
     // without appearing in Income / Expense.
-    v-=Math.round((Number(p.principal)||0)+(Number(p.extraPrincipal)||0));
+    v-=(Number(p.principal)||0)+(Number(p.extraPrincipal)||0);
   });
   return v;
 }
 function cashflowForRange(from,to){
   const periodTxns=txns.filter(t=>objInRange(t,from,to));
-  const income=periodTxns.filter(t=>t.type==='income').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
-  const expense=periodTxns.filter(t=>t.type==='expense'&&!t.autoPaySelf).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
+  const income=Math.round(periodTxns.filter(t=>t.type==='income').reduce((sum,t)=>sum+(Number(t.amount)||0),0));
+  const expense=Math.round(periodTxns.filter(t=>t.type==='expense'&&!t.autoPaySelf).reduce((sum,t)=>sum+(Number(t.amount)||0),0));
   let other=0;
-  accountTransfers.forEach(t=>{if(objInRange(t,from,to))other+=transferNetCashImpact(t);});
-  debts.forEach(d=>{other+=debtNonPLCashImpact(d,from,to);});
-  income=Math.round(income);expense=Math.round(expense);other=Math.round(other);
+  accountTransfers.forEach(t=>{if(objInRange(t,from,to))other+=Math.round(transferNetCashImpact(t));});
+  debts.forEach(d=>{other+=Math.round(debtNonPLCashImpact(d,from,to));});
+  other=Math.round(other);
   return {income,expense,other,cashflow:Math.round(income-expense+other)};
 }
 function selectedCashflowTotals(){
@@ -8236,6 +8205,8 @@ function selectedCashflowTotals(){
 function allTimeCashflowTotals(){
   const r=cashflowForRange(new Date(0),new Date(8640000000000000));
   ensureMoneyAccounts();
+  // All-time reconciliation is authoritative from the account ledger.
+  // This guarantees the displayed opening balance + cash flow equals the displayed current cash balance exactly.
   r.cashflow=Math.round(moneyAccountsTotal()-Math.round(openingBalance||0));
   return r;
 }
@@ -8530,15 +8501,19 @@ function gSpent(catNm,subNm,month,subObjOverride){
   const catObj=bCatsExp.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm);
   const isSavingsBudget=!!(catObj&&(catObj.key==='savings_cat'||/хуримт|saving/i.test(String(catObj.key||'')+' '+String(catObj.name||'')+' '+String(cN(catObj)||''))));
   const isLoanBudget=!!(catObj&&(/loan|debt|зээл/i.test(String(catObj.key||'')+' '+String(catObj.name||'')+' '+String(cN(catObj)||''))));
-  // V43.54 Budget intentionally uses TOTAL loan payment (principal + interest).
-  // Debt balance and P&L still keep principal and interest separated internally.
   const loanPaid=(wantedSub)=>{
     if(!isLoanBudget)return 0;
+    // Budget shows the TOTAL cash payment for each loan.
+    // Principal reduces debt; interest remains an expense internally.
     let total=0;debts.forEach(d=>{debtPayments(d).forEach(p=>{
       if(!filterM(p))return;
-      if(wantedSub){const a=String(wantedSub).toLowerCase(),b=String(d.name||'').toLowerCase();if(!(a.includes(b)||b.includes(a)))return;}
-      total+=Number(p.total)||0;
-    });});return total;
+      if(wantedSub){
+        const a=String(wantedSub).toLowerCase().replace(/\/\s*(хүү|interest|процент|zins|利息|이자).*$/i,'').trim();
+        const b=String(d.name||'').toLowerCase().trim();
+        if(!(a.includes(b)||b.includes(a)))return;
+      }
+      total+=Math.round(Number(p.total)||0);
+    });});return Math.round(total);
   };
   const transferSaved=(wantedSub)=>{
     if(!isSavingsBudget)return 0;
@@ -8925,6 +8900,35 @@ function getInvestGroups(){
   return [...map.values()].map(g=>({...g,invested:g.items.reduce((s,x)=>s+(Number(x.invested)||0),0),current:g.items.reduce((s,x)=>s+(Number(x.current)||0),0)}));
 }
 
+
+function assetGroupIncomeProducing(g){return !!(g&&g.items&&g.items.some(x=>!!x.incomeProducing));}
+function openAssetIncomeModal(key){
+  const g=getInvestGroups().find(x=>x.key===key);if(!g||!assetGroupIncomeProducing(g))return;
+  ensureMoneyAccounts();const t=AIT();
+  document.getElementById('asset-income-modal')?.remove();
+  const m=document.createElement('div');m.id='asset-income-modal';m.className='loan-modal-backdrop';
+  const accounts=moneyAccounts.filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.title} · ${g.name}</div>
+    <label>${t.kind}</label><select class="fi" id="ai-kind"><option value="rent">${t.rent}</option><option value="dividend">${t.dividend}</option><option value="interest">${t.interest}</option><option value="other">${t.other}</option></select>
+    <label>${t.account}</label><select class="fi" id="ai-account">${accounts}</select>
+    <div class="loan-modal-grid">
+      <div><label>${t.amount}</label><input class="fi" id="ai-amount" inputmode="decimal" data-amt="1"></div>
+      <div><label>${t.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick='saveAssetIncome(${JSON.stringify(key)})'>${t.save}</button></div>
+  </div>`;
+  document.body.appendChild(m);setupAmtInput(document.getElementById('ai-amount'));
+}
+function saveAssetIncome(key){
+  const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
+  const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0);
+  const accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
+  if(amount<=0||!accountId||!date){showToast(t.error);return;}
+  const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other};
+  txns.unshift({id:Date.now(),type:'income',desc:`${g.name} · ${labels[kind]}`,catName:labels[kind],subcatName:g.name,amount,date,accountId,assetIncome:true,assetGroupKey:key,assetIncomeType:kind});
+  document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
+}
+
 function editInvestGroup(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const t=AFT();
   let m=document.getElementById('asset-edit-modal');if(m)m.remove();
@@ -8932,16 +8936,19 @@ function editInvestGroup(key){
   m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.editAsset}</div>
     <label>${t.assetName}</label><input class="fi" id="ae-name" value="${String(g.name).replace(/"/g,'&quot;')}">
     <label>${t.assetType}</label><select class="fi" id="ae-type">${assetTypeOptions(g.typeKey)}</select>
-    <label>${assetIncomeText().producing}</label><select class="fi" id="ae-income"><option value="no">${assetIncomeText().no}</option><option value="yes">${assetIncomeText().yes}</option></select>
+    <label>${AIT().producing}</label><select class="fi" id="ae-income"><option value="no">${AIT().no}</option><option value="yes">${AIT().yes}</option></select>
     <label>${t.purchasePrice}</label><input class="fi" id="ae-current" inputmode="decimal" value="${Math.round(g.current).toLocaleString('en-US')}">
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-edit-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveInvestGroupEdit('${String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${t.save}</button></div></div>`;
-  document.body.appendChild(m);const aei=document.getElementById('ae-income');if(aei)aei.value=groupIncomeProducing(g)?'yes':'no';setupAmtInput(document.getElementById('ae-current'));
+  document.body.appendChild(m);
+  const ae=document.getElementById('ae-income');if(ae)ae.value=g.items.some(x=>!!x.incomeProducing)?'yes':'no';
+  setupAmtInput(document.getElementById('ae-current'));
 }
 function saveInvestGroupEdit(key){
   const items=invests.filter(x=>investGroupKey(x)===key);if(!items.length)return;
   const nm=document.getElementById('ae-name')?.value.trim(),tk=document.getElementById('ae-type')?.value||items[0].typeKey,cv=parseAmt(document.getElementById('ae-current')?.value);
   if(!nm)return;
-  const ip=document.getElementById('ae-income')?.value==='yes';items.forEach(x=>{x.name=nm;x.typeKey=tk;x.incomeProducing=ip;});
+  const incomeProducing=document.getElementById('ae-income')?.value==='yes';
+  items.forEach(x=>{x.name=nm;x.typeKey=tk;x.incomeProducing=incomeProducing;});
   if(Number.isFinite(cv)&&cv>=0){
     const total=items.reduce((a,x)=>a+(Number(x.current)||0),0);
     if(total>0)items.forEach(x=>x.current=cv*((Number(x.current)||0)/total));else items[0].current=cv;
@@ -8985,8 +8992,8 @@ de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktuelle
     const investedLabel=['real','vehicle','business_asset','other'].includes(g.typeKey)?AFT().purchasePrice:T.invested;
     const safeKey=g.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="inv-card mongo-object-card portfolio-group" style="--object-color:${col}">
-      <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}${groupIncomeProducing(g)?` · 💰 ${assetIncomeText().incomeBadge}`:''}</div></div></div>
-      <div style="display:flex;gap:6px;align-items:center">${groupIncomeProducing(g)?`<button class="btn btn-sm" onclick="openAssetIncomeModal('${safeKey}')">${assetIncomeText().addIncome}</button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
+      <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}${assetGroupIncomeProducing(g)?` · 💰 ${AIT().badge}`:''}</div></div></div>
+      <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button class="btn btn-sm" onclick="openAssetIncomeModal('${safeKey}')">${AIT().add}</button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
       <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
@@ -9801,9 +9808,9 @@ function toggleLoanSchedule(){
 const _origApplyLangCalc=applyLang;
 applyLang=function(){
   _origApplyLangCalc();
-  updateCalcTexts();updateLoanFlowTexts();updateAssetFlowTexts();refreshAssetIncomeUI();renderDebtFundingAccounts();
+  updateCalcTexts();updateLoanFlowTexts();updateAssetFlowTexts();renderDebtFundingAccounts();
   if(document.getElementById('debts-list'))rDebts();
-  requestAnimationFrame(()=>{updateAssetFlowTexts();refreshAssetIncomeUI();renderTransferTarget();});
+  requestAnimationFrame(()=>{updateAssetFlowTexts();renderTransferTarget();});
 };
 requestAnimationFrame(()=>{
   ['loan-calc-amount','loan-calc-extra'].forEach(setupAmtInput);
@@ -10378,7 +10385,7 @@ requestAnimationFrame(()=>{
 
 // ── Möngö V30 Premium splash ─────────────────────────────────────────────
 (function(){
-  function hideSplash(){if(window.__forceHideMongoSplash)return window.__forceHideMongoSplash();const sp=document.getElementById('mongo-splash');if(sp){sp.classList.add('hide');setTimeout(()=>{sp.style.display='none';},520);}}
+  function hideSplash(){const sp=document.getElementById('mongo-splash'); if(sp){sp.classList.add('hide'); setTimeout(()=>{sp.style.display='none';},520);}}
   window.addEventListener('load',()=>setTimeout(hideSplash,1900));
   setTimeout(hideSplash,3200);
 })();
