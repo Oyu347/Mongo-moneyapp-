@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.67: asset-income display, action-button, and one-tap save fixes. -->
+<!-- Möngö V43.69: asset-income save responds on the first mobile touch. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -13579,10 +13579,27 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
     m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.title} · ${g.name}</div>
       <label>${t.kind}</label><select class="fi" id="ai-kind"><option value="rent">${t.rent}</option><option value="dividend">${t.dividend}</option><option value="interest">${t.interest}</option><option value="other">${t.other}</option></select>
       <label>${t.account}</label><select class="fi" id="ai-account">${accounts}</select>
-      <div class="loan-modal-grid"><div><label>${t.amount}</label><input class="fi" id="ai-amount" inputmode="decimal" data-amt="1"></div><div><label>${t.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div></div>
-      <div class="asset-income-plan-box"><label class="asset-income-plan-check"><input type="checkbox" id="ai-plan-enabled" onchange="toggleAssetIncomePlan()"><span>${p.include}</span></label><div class="asset-income-plan-fields" id="ai-plan-fields"><label>${p.planned}</label><input class="fi" id="ai-plan-amount" inputmode="decimal" data-amt="1"><div class="asset-income-plan-note">${p.note}</div></div></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick='saveAssetIncome(${JSON.stringify(key)})'>${t.save}</button></div></div>`;
-    document.body.appendChild(m);setupAmtInput('ai-amount');setupAmtInput('ai-plan-amount');
+      <div class="loan-modal-grid"><div><label>${t.amount}</label><input class="fi" id="ai-amount" inputmode="numeric" enterkeyhint="done" autocomplete="off" data-amt="1"></div><div><label>${t.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div></div>
+      <div class="asset-income-plan-box"><label class="asset-income-plan-check"><input type="checkbox" id="ai-plan-enabled" onchange="toggleAssetIncomePlan()"><span>${p.include}</span></label><div class="asset-income-plan-fields" id="ai-plan-fields"><label>${p.planned}</label><input class="fi" id="ai-plan-amount" inputmode="numeric" enterkeyhint="done" autocomplete="off" data-amt="1"><div class="asset-income-plan-note">${p.note}</div></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button type="button" class="btn btn-p" id="ai-save-button">${t.save}</button></div></div>`;
+    // data-amt event delegation already formats these dynamic inputs. Attaching
+    // setupAmtInput as well would run the formatter twice and move the caret.
+    document.body.appendChild(m);
+    const saveButton=document.getElementById('ai-save-button');
+    if(saveButton){
+      let submitted=false;
+      const submit=ev=>{
+        if(submitted||!document.getElementById('asset-income-modal'))return;
+        submitted=true;
+        if(ev){ev.preventDefault();ev.stopPropagation();}
+        window.saveAssetIncome(key);
+        // Validation may keep the modal open; allow a corrected retry.
+        if(document.getElementById('asset-income-modal'))setTimeout(()=>{submitted=false;},180);
+      };
+      saveButton.addEventListener('pointerup',submit,{passive:false});
+      saveButton.addEventListener('click',submit);
+      saveButton.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){submit(ev);}});
+    }
   };
   window.saveAssetIncome=function(key){
     const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
