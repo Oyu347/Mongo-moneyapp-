@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.66: clearer asset-income action and optional monthly income planning. -->
+<!-- Möngö V43.67: asset-income display, action-button, and one-tap save fixes. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -8274,6 +8274,12 @@ function tRow(t,del){
   const iv=t.type==='expense'&&expCats.find(c=>cN(c)===t.catName&&isInv(c));
   const isAuto=!!(t.autoPaySelf||iv||t.autoAdded);
   let subcatDisplay=t.subcatName||'';
+  // Asset-income transactions store a stable internal key (yield_*), but users
+  // must always see the real asset name rather than that implementation key.
+  if(t.assetIncome){
+    const assetGroup=getInvestGroups().find(g=>String(g.key)===String(t.assetGroupKey));
+    subcatDisplay=assetGroup?.name||String(t.desc||'').split(' · ')[0]||subcatDisplay;
+  }
   if(subcatDisplay){
     const cats=t.type==='income'?bCatsInc:bCatsExp;
     for(const cat of cats){
@@ -8998,7 +9004,7 @@ de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktuelle
     const safeKey=g.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="inv-card mongo-object-card portfolio-group" style="--object-color:${col}">
       <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}${assetGroupIncomeProducing(g)?` · 💰 ${AIT().badge}`:''}</div></div></div>
-      <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button class="btn btn-sm asset-income-add-btn" onclick="openAssetIncomeModal('${safeKey}')">${AIT().add}</button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
+      <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button type="button" class="btn btn-sm asset-income-add-btn" onclick="openAssetIncomeModal('${safeKey}')"><span class="asset-income-add-icon">＋</span><span>${String(AIT().add).replace(/^\s*＋\s*/, '')}</span></button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
       <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
@@ -13535,7 +13541,9 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
 })();
 </script>
 <style id="mongo-v4366-asset-income-plan-style">
-.asset-income-add-btn{min-height:38px;padding:8px 15px!important;border:0!important;color:#fff!important;background:linear-gradient(135deg,#37b8bd,#078b92)!important;box-shadow:0 8px 18px rgba(7,139,146,.22);font-weight:900!important}
+.btn.asset-income-add-btn{min-height:40px;padding:7px 13px 7px 8px!important;border:0!important;color:#fff!important;background:linear-gradient(135deg,#49B0B6,#168e96)!important;box-shadow:0 8px 18px rgba(7,139,146,.24);font-weight:900!important;display:inline-flex!important;align-items:center;gap:7px;line-height:1.05;text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.btn.asset-income-add-btn span{color:#fff!important}
+.asset-income-add-icon{width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.19);border:1px solid rgba(255,255,255,.42);font-size:18px;font-weight:600;line-height:1}
 .asset-income-add-btn:hover,.asset-income-add-btn:focus{filter:brightness(.96);transform:translateY(-1px)}
 .asset-income-plan-box{margin-top:13px;padding:13px;border:1px solid rgba(18,157,162,.22);border-radius:16px;background:rgba(232,249,249,.72)}
 .asset-income-plan-check{display:flex!important;align-items:center;gap:10px;cursor:pointer;font-weight:850!important;color:var(--text)!important;margin:0!important}
@@ -13587,6 +13595,53 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       if(planned>0&&year&&month)budgets[budgetYMKeyForYear(bSubKey(y.cat,y.sub),month,year)]=planned;
     }
     document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
+  };
+})();
+</script>
+<script id="mongo-v4367-asset-income-save-display-fix">
+(function(){
+  'use strict';
+  function assetNameForTxn(t){
+    const g=getInvestGroups().find(x=>String(x.key)===String(t.assetGroupKey));
+    return g?.name||String(t.desc||'').split(' · ')[0]||String(t.subcatName||'').replace(/^yield_/,'').replace(/_/g,' ');
+  }
+  function restoreAssetIncomeBudgetSources(){
+    (txns||[]).filter(t=>t&&t.assetIncome).forEach(t=>{
+      const name=assetNameForTxn(t);if(!name)return;
+      const g=getInvestGroups().find(x=>String(x.key)===String(t.assetGroupKey));
+      const y=ensureYieldBudgetSource(name,g?.color||'#1D9E75');
+      t.catKey=y.cat.key;t.catName=cN(y.cat);t.subcatName=y.sub.key;
+    });
+  }
+  const priorLoadData=loadData;
+  loadData=function(){const result=priorLoadData.apply(this,arguments);restoreAssetIncomeBudgetSources();return result;};
+  const priorRAll=rAll;
+  rAll=function(){restoreAssetIncomeBudgetSources();return priorRAll.apply(this,arguments);};
+  restoreAssetIncomeBudgetSources();
+
+  let assetIncomeSaving=false;
+  window.saveAssetIncome=function(key){
+    if(assetIncomeSaving)return;
+    const button=document.querySelector('#asset-income-modal .btn-p'),t=AIT();
+    try{
+      const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
+      const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
+      if(amount<=0||!accountId||!date){showToast(t.error);return;}
+      assetIncomeSaving=true;if(button)button.disabled=true;
+      const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other},y=ensureYieldBudgetSource(g.name,g.color);
+      const uuid=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now();
+      txns.unshift({id:uuid,type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount,date,accountId,assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()});
+      if(document.getElementById('ai-plan-enabled')?.checked){
+        const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount),parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
+        if(planned>0&&year&&month)budgets[budgetYMKeyForYear(bSubKey(y.cat,y.sub),month,year)]=planned;
+      }
+      document.getElementById('asset-income-modal')?.remove();
+      saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
+    }catch(err){
+      console.error('Asset income save failed',err);showToast(t.error);
+    }finally{
+      assetIncomeSaving=false;if(button&&document.body.contains(button))button.disabled=false;
+    }
   };
 })();
 </script>
