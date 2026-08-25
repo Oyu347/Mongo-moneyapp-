@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.61: loan-payment activity colors follow loan cards; legacy full-screen splash disabled. -->
+<!-- Möngö V43.62: clean loan-entry flow, compact in-app pickers, complete seven-language dynamic labels. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -8095,9 +8095,14 @@ function accountInlineDetail(a){
 function renderMoneyAccounts(){
   ensureMoneyAccounts();const T=accountText();const title=document.getElementById('accounts-title');if(title)title.textContent=T.title;const add=document.getElementById('account-add-toggle');if(add)add.textContent=T.add;const el=document.getElementById('account-list');if(!el)return;
   const active=moneyAccounts.filter(a=>a.active!==false&&!a.legacy), inactive=moneyAccounts.filter(a=>a.active===false&&!a.legacy);
+  const groupLabels={
+    mn:['ХАРИЛЦАХ БА БЭЛЭН МӨНГӨ','ХАДГАЛАМЖИЙН ДАНС'],en:['EVERYDAY MONEY','SAVINGS ACCOUNTS'],
+    zh:['日常资金','储蓄账户'],ja:['日常用口座・現金','貯蓄口座'],ko:['생활 자금','저축 계좌'],
+    ru:['ПОВСЕДНЕВНЫЕ СРЕДСТВА','НАКОПИТЕЛЬНЫЕ СЧЕТА'],de:['ALLTAGSGELD','SPARKONTEN']
+  }[lang]||['EVERYDAY MONEY','SAVINGS ACCOUNTS'];
   const groups=[
-    [lang==='mn'?'ХАРИЛЦАХ БА БЭЛЭН МӨНГӨ':'EVERYDAY MONEY',active.filter(a=>normalizeAccountType(a.type)!=='savings')],
-    [lang==='mn'?'ХАДГАЛАМЖИЙН ДАНС':'SAVINGS ACCOUNTS',active.filter(a=>normalizeAccountType(a.type)==='savings')]
+    [groupLabels[0],active.filter(a=>normalizeAccountType(a.type)!=='savings')],
+    [groupLabels[1],active.filter(a=>normalizeAccountType(a.type)==='savings')]
   ];
   let html=groups.map(([label,arr])=>arr.length?`<div class="account-group-title">${label}</div>`+arr.map(a=>`<div class="account-row" onclick="showAccountDetail('${a.id}')"><div class="account-main"><span class="account-icon">${accountIcon(a)}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${accountTypeLabel(a)} · ${a.startDate||''}</div></div></div><div class="account-actions"><div class="account-bal">${fmt(accountBalance(a.id))}</div><button class="account-mini-btn" onclick="event.stopPropagation();showAccountDetail('${a.id}')">⋯</button></div></div>${accountInlineDetail(a)}`).join(''):'').join('');
   if(inactive.length)html+=`<div class="account-group-title">${T.inactive}</div>`+inactive.map(a=>`<div class="account-row" style="opacity:.55" onclick="showAccountDetail('${a.id}')"><div class="account-main"><span class="account-icon">${accountIcon(a)}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${accountTypeLabel(a)} · ${T.inactive}</div></div></div><div class="account-bal">${fmt(accountBalance(a.id))}</div></div>`).join('');
@@ -12948,7 +12953,7 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
     const opts=document.getElementById('mongo-calc-picker-options');
     const close=document.getElementById('mongo-calc-picker-close');
     if(!box||!opts)return;
-    const label=sel.closest('div')?.querySelector('.slbl');
+    const label=sel.closest('div')?.querySelector('label,.slbl');
     title.textContent=(label&&label.textContent.trim())||PT().choose;
     close.textContent=PT().close;
     opts.innerHTML='';
@@ -12968,7 +12973,7 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
   };
   function wire(){
     document.querySelectorAll(
-      '#debts-panel-calc select,#invest-panel-calc select,#goals-panel-calc select'
+      '#debts-panel-calc select,#invest-panel-calc select,#goals-panel-calc select,#account-add-form select,#account-edit-modal select'
     ).forEach(sel=>{
       if(sel.dataset.mongoLocalizedPicker==='1')return;
       sel.dataset.mongoLocalizedPicker='1';
@@ -13319,7 +13324,7 @@ function v59Parent(id){const e=document.getElementById(id);return e?e.parentElem
 function v59AccountName(prefix){return prefix==='account'?(document.getElementById('account-name')?.value||'').trim():(document.getElementById('account-edit-name')?.value||'').trim();}
 function v59RefreshNewGoalOption(prefix){
   const sel=document.getElementById(prefix+'-linked-goal');if(!sel)return;let opt=[...sel.options].find(o=>o.value==='__new__');
-  if(!opt){opt=document.createElement('option');opt.value='__new__';sel.appendChild(opt);}const nm=v59AccountName(prefix)||(lang==='mn'?'Шинэ хуримтлал':'New savings');opt.textContent=T59().newGoal.replace('{name}',nm);
+  if(!opt){opt=document.createElement('option');opt.value='__new__';sel.appendChild(opt);}const nm=v59AccountName(prefix)||({mn:'Шинэ хуримтлал',en:'New savings',zh:'新储蓄',ja:'新しい貯蓄',ko:'새 저축',ru:'Новое накопление',de:'Neues Sparen'}[lang]||'New savings');opt.textContent=T59().newGoal.replace('{name}',nm);
 }
 function v59EnsureGoalFields(prefix){
   const sel=document.getElementById(prefix+'-linked-goal');if(!sel)return;v59RefreshNewGoalOption(prefix);
@@ -13386,7 +13391,7 @@ function optionText(id,map){const e=document.getElementById(id);if(!e)return;[..
 function localizePrefix(prefix){
   const q=Q();labelFor(prefix+'-interest-mode',q.rule);labelFor(prefix+'-interest-rate',q.rate);labelFor(prefix+'-interest-frequency',q.freq);labelFor(prefix+'-interest-account',q.receiver);labelFor(prefix+'-linked-goal',q.goal);labelFor(prefix+'-maturity',q.end);labelFor(prefix+'-new-goal-target',q.target);labelFor(prefix+'-new-goal-deadline',q.deadline);
   optionText(prefix+'-interest-mode',{compound:q.compound,payout:q.payout,maturity:q.maturity,none:q.none});optionText(prefix+'-interest-frequency',{monthly:q.monthly,quarterly:q.quarterly,yearly:q.yearly,maturity:q.atMaturity});
-  const goals=document.getElementById(prefix+'-linked-goal');if(goals){const no=[...goals.options].find(o=>o.value==='');if(no)no.textContent=q.noGoal;const nw=[...goals.options].find(o=>o.value==='__new__');if(nw){const name=(document.getElementById(prefix==='account'?'account-name':'account-edit-name')?.value||'').trim()||(lang==='mn'?'Шинэ хуримтлал':'New savings');nw.textContent=q.newGoal.replace('{name}',name);}}
+  const goals=document.getElementById(prefix+'-linked-goal');if(goals){const no=[...goals.options].find(o=>o.value==='');if(no)no.textContent=q.noGoal;const nw=[...goals.options].find(o=>o.value==='__new__');if(nw){const name=(document.getElementById(prefix==='account'?'account-name':'account-edit-name')?.value||'').trim()||({mn:'Шинэ хуримтлал',en:'New savings',zh:'新储蓄',ja:'新しい貯蓄',ko:'새 저축',ru:'Новое накопление',de:'Neues Sparen'}[lang]||'New savings');nw.textContent=q.newGoal.replace('{name}',name);}}
   const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(root){const notes=[...root.querySelectorAll('.flow-only-note')].filter(x=>!x.id||x.id!==prefix+'-self-interest-note');if(notes[0])notes[0].textContent=q.actual;}
   const mode=document.getElementById(prefix+'-interest-mode')?.value||'compound',self=document.getElementById(prefix+'-self-interest-note');if(self)self.textContent=mode==='compound'?q.selfC:(mode==='maturity'?q.selfM:'');
 }
@@ -13399,6 +13404,40 @@ document.addEventListener('input',function(e){if(e.target&&['account-new-goal-ta
 const baseApply60=applyLang;applyLang=function(){baseApply60();setTimeout(refresh60,0);};
 const baseEdit60=editMoneyAccount;editMoneyAccount=async function(id){await baseEdit60(id);setTimeout(()=>{localizePrefix('edit');const e=document.getElementById('edit-new-goal-target');if(e)e.dataset.amt='1';},0);};
 refresh60();
+})();
+</script>
+<style id="mongo-v4362-clean-entry-style">
+#debts-panel-mine>.card{padding:18px}
+#debts-panel-mine>.card>.form-row{gap:10px}
+#debts-panel-mine .loan-create-extra{margin-top:12px;padding-top:12px;border-top:1px solid rgba(73,176,182,.14)}
+.loan-create-action{display:flex;align-items:flex-end;justify-content:flex-end;gap:12px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(73,176,182,.14)}
+.loan-create-action .mongo-color-field{margin:0;min-width:64px;align-items:center}
+.loan-create-action #btn-adddebt{min-width:150px;min-height:46px;padding:10px 18px!important;font-size:14px!important;border-radius:18px}
+.mongo-calc-picker-sheet{padding:14px 14px 16px!important;border-radius:24px 24px 0 0!important}
+.mongo-calc-picker-title{font-size:15px!important;line-height:1.35!important;padding:3px 4px 8px!important}
+.mongo-calc-picker-option{min-height:44px!important;border-radius:14px!important;font-size:13px!important;line-height:1.35!important;padding:9px 12px!important;margin:5px 0!important;font-weight:800!important}
+.mongo-calc-picker-option.active:after{font-size:15px!important}
+.mongo-calc-picker-close{min-height:42px!important;font-size:13px!important;border-radius:14px!important;margin-top:8px!important}
+@media(max-width:520px){
+  #debts-panel-mine>.card{padding:16px 14px}
+  #debts-panel-mine>.card>.form-row:first-of-type>div:first-child{flex-basis:100%!important}
+  .loan-create-action{justify-content:space-between}
+  .loan-create-action #btn-adddebt{flex:1;min-width:0;max-width:230px}
+}
+</style>
+<script id="mongo-v4362-clean-entry-script">
+(function(){
+  function arrangeLoanForm(){
+    const card=document.querySelector('#debts-panel-mine>.card'),color=document.getElementById('d-color')?.closest('.mongo-color-field'),button=document.getElementById('btn-adddebt'),info=document.getElementById('lbl-debtinfo');
+    if(!card||!color||!button||!info)return;
+    let row=document.getElementById('loan-create-action');
+    if(!row){row=document.createElement('div');row.id='loan-create-action';row.className='loan-create-action';card.insertBefore(row,info);}
+    if(color.parentElement!==row)row.appendChild(color);
+    if(button.parentElement!==row)row.appendChild(button);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arrangeLoanForm);else arrangeLoanForm();
+  window.addEventListener('pageshow',arrangeLoanForm);
+  setTimeout(arrangeLoanForm,200);
 })();
 </script>
 </body>
