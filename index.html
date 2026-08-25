@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.57 rebuilt strictly from stable V43.53. Splash/startup code unchanged. -->
+<!-- Möngö V43.61: loan-payment activity colors follow loan cards; legacy full-screen splash disabled. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -1690,7 +1690,7 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 
 /* ── Möngö V30: Premium splash + FIRE/score intelligence ── */
-.mongo-splash{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
+.mongo-splash{display:none!important;position:fixed;inset:0;z-index:12000;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
 .mongo-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
 .splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);}
 .splash-logo{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(31,127,134,.18));animation:splashFloat 1.8s ease-in-out infinite alternate;}
@@ -13151,7 +13151,7 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
 </script>
 <!-- Möngö V43.58: unified loan activity, protected system flows, savings-account interest rules -->
 <style>
-.loan-activity-row{border-left:4px solid #4F8FD8;background:linear-gradient(90deg,rgba(79,143,216,.08),transparent 62%)}
+.loan-activity-row{border-left:4px solid var(--loan-color,#4F8FD8);background:linear-gradient(90deg,color-mix(in srgb,var(--loan-color,#4F8FD8) 9%,transparent),transparent 62%)}
 .loan-activity-split{font-size:10px;color:var(--text2);margin-top:3px;line-height:1.45}
 .flow-only-note{margin:6px 0 0;padding:8px 10px;border-radius:10px;background:#EEF6FF;color:#245B8A;font-size:11px;font-weight:750}
 .savings-interest-fields{display:none;margin-top:10px;padding:11px;border-radius:14px;background:#F3FAFA;border:1px solid rgba(73,176,182,.25)}
@@ -13224,7 +13224,7 @@ saveAssetIncome=function(key){
 };
 
 function loanActivities(){
-  const out=[];debts.forEach(d=>debtPayments(d).forEach(p=>out.push({id:'loanact_'+p.id,_loanActivity:true,debtId:d.id,paymentId:p.id,date:p.date,accountId:p.accountId,amount:Number(p.total)||0,principal:(Number(p.principal)||0)+(Number(p.extraPrincipal)||0),interest:Number(p.interest)||0,debtName:d.name,type:'loan_payment'})));return out;
+  const out=[];debts.forEach(d=>debtPayments(d).forEach(p=>out.push({id:'loanact_'+p.id,_loanActivity:true,debtId:d.id,paymentId:p.id,date:p.date,accountId:p.accountId,amount:Number(p.total)||0,principal:(Number(p.principal)||0)+(Number(p.extraPrincipal)||0),interest:Number(p.interest)||0,debtName:d.name,loanColor:d.color||'#4F8FD8',type:'loan_payment'})));return out;
 }
 function unifiedActivities(){
   const normal=txns.filter(t=>!t.loanPaymentId);
@@ -13232,7 +13232,8 @@ function unifiedActivities(){
 }
 function loanActivityRow(a,del){
   const q=V58(),acc=moneyAccounts.find(x=>x.id===a.accountId),accText=acc?` · ${accountIcon(acc)} ${acc.name}`:'';
-  return `<div class="list-item loan-activity-row"><div class="il"><div class="txn-main-line"><span class="lbl1">${q.loanPay} · ${a.debtName}</span><span class="txn-auto-badge">${q.cashOut}</span></div><div class="txn-meta-line"><span class="lbl2">💳 ${a.date}${accText}</span></div><div class="loan-activity-split">${q.principal}: ${fmt(a.principal)} · ${q.interest}: ${fmt(a.interest)}</div></div><div class="ir"><span class="amt amt-e">-${fmt(a.amount)}</span>${del?`<button class="btn btn-sm btn-d" onclick="deleteLoanActivity('${a.debtId}','${a.paymentId}')">✕</button>`:''}</div></div>`;
+  const loanColor=/^#[0-9a-f]{3,8}$/i.test(a.loanColor||'')?a.loanColor:'#4F8FD8';
+  return `<div class="list-item loan-activity-row" style="--loan-color:${loanColor}"><div class="il"><div class="txn-main-line"><span class="lbl1">${q.loanPay} · ${a.debtName}</span><span class="txn-auto-badge">${q.cashOut}</span></div><div class="txn-meta-line"><span class="lbl2">💳 ${a.date}${accText}</span></div><div class="loan-activity-split">${q.principal}: ${fmt(a.principal)} · ${q.interest}: ${fmt(a.interest)}</div></div><div class="ir"><span class="amt amt-e">-${fmt(a.amount)}</span>${del?`<button class="btn btn-sm btn-d" onclick="deleteLoanActivity('${a.debtId}','${a.paymentId}')">✕</button>`:''}</div></div>`;
 }
 const v58BaseTRow=tRow;
 tRow=function(t,del){return t&&t._loanActivity?loanActivityRow(t,del):v58BaseTRow(t,del);};
