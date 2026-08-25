@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.63: every arrow select uses one-tap in-app picker; account types localized in all seven languages. -->
+<!-- Möngö V43.64: one-tap picker always renders above edit/add/payment modals. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -13443,6 +13443,8 @@ refresh60();
 <style id="mongo-v4363-all-selects-style">
 select{touch-action:manipulation;cursor:pointer}
 select.fi,select.budget-select,select.calc-native-select-localized{min-height:44px}
+#mongo-calc-picker{z-index:2147483000!important}
+#mongo-calc-picker .mongo-calc-picker-sheet{position:relative;z-index:1}
 </style>
 <script id="mongo-v4363-all-selects-script">
 (function(){
