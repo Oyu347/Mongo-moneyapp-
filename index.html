@@ -13149,6 +13149,153 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ try{ const u=window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser; if(u) start(u); }catch(e){} } });
 })();
 </script>
+<!-- Möngö V43.58: unified loan activity, protected system flows, savings-account interest rules -->
+<style>
+.loan-activity-row{border-left:4px solid #4F8FD8;background:linear-gradient(90deg,rgba(79,143,216,.08),transparent 62%)}
+.loan-activity-split{font-size:10px;color:var(--text2);margin-top:3px;line-height:1.45}
+.flow-only-note{margin:6px 0 0;padding:8px 10px;border-radius:10px;background:#EEF6FF;color:#245B8A;font-size:11px;font-weight:750}
+.savings-interest-fields{display:none;margin-top:10px;padding:11px;border-radius:14px;background:#F3FAFA;border:1px solid rgba(73,176,182,.25)}
+.savings-interest-fields.show{display:block}.savings-interest-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.savings-interest-grid label{display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px}
+.savings-interest-badge{display:inline-flex;margin-top:3px;padding:2px 7px;border-radius:999px;background:#E8F8F8;color:#1F7F86;font-size:9px;font-weight:850}
+.interest-account-panel{margin:-6px 0 10px;padding:9px 12px;border-radius:0 0 16px 16px;background:#F6FBFB;border:1px solid rgba(73,176,182,.2);border-top:0}
+.interest-account-panel .btn{font-size:10px;padding:4px 8px}
+@media(max-width:480px){.savings-interest-grid{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+'use strict';
+const V4358_TEXT={
+ mn:{loanPay:'Зээлийн төлөлт',principal:'Үндсэн төлбөр',interest:'Хүү',cashOut:'Нийт мөнгө гарсан',loanOut:'Зээлийн төлөлт',special:'Энэ ангиллыг зориулалтын хэсгээс бүртгэнэ.',accountsTitle:'Миний данс ба эхний үлдэгдэл',interestRule:'Хүүгийн нөхцөл',compound:'Хуримтлалдаа нэмж, нийлмэл хүү бодох',payout:'Хүүг тусдаа дансанд авах',maturity:'Хугацааны эцэст авах',none:'Хүүгүй',rate:'Жилийн хүү (%)',frequency:'Хүү бодох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',yearly:'Жил бүр',atMaturity:'Хугацааны эцэст',interestAccount:'Хүү хүлээн авах данс',linkedGoal:'Холбох хуримтлалын зорилго',noGoal:'Зорилготой холбохгүй',maturityDate:'Дуусах хугацаа',recordInterest:'Хүү бүртгэх',amount:'Бодитоор орсон хүү',date:'Огноо',save:'Хадгалах',cancel:'Болих',interestIncome:'Хөрөнгийн орлого',assetIncome:'Хөрөнгийн орлого',deletePay:'Энэ зээлийн төлөлтийг устгах уу?',actualOnly:'Банкнаас бодитоор олгосон хүүг бүртгэнэ.'},
+ en:{loanPay:'Loan payment',principal:'Principal',interest:'Interest',cashOut:'Total money out',loanOut:'Loan payment',special:'Record this category from its dedicated section.',accountsTitle:'My accounts and opening balances',interestRule:'Interest rule',compound:'Add to savings and compound',payout:'Pay interest to another account',maturity:'Pay at maturity',none:'No interest',rate:'Annual interest (%)',frequency:'Interest frequency',monthly:'Monthly',quarterly:'Quarterly',yearly:'Yearly',atMaturity:'At maturity',interestAccount:'Interest receiving account',linkedGoal:'Linked savings goal',noGoal:'No linked goal',maturityDate:'Maturity date',recordInterest:'Record interest',amount:'Interest actually credited',date:'Date',save:'Save',cancel:'Cancel',interestIncome:'Investment income',assetIncome:'Investment income',deletePay:'Delete this loan payment?',actualOnly:'Record only interest actually credited by the bank.'},
+ zh:{loanPay:'贷款还款',principal:'本金',interest:'利息',cashOut:'资金流出总额',loanOut:'贷款还款',special:'请从专用模块登记此类别。',accountsTitle:'我的账户与期初余额',interestRule:'利息方式',compound:'计入储蓄并复利',payout:'利息转入其他账户',maturity:'到期支付',none:'无利息',rate:'年利率 (%)',frequency:'计息频率',monthly:'每月',quarterly:'每季度',yearly:'每年',atMaturity:'到期',interestAccount:'收息账户',linkedGoal:'关联储蓄目标',noGoal:'不关联目标',maturityDate:'到期日',recordInterest:'登记利息',amount:'实际到账利息',date:'日期',save:'保存',cancel:'取消',interestIncome:'资产收入',assetIncome:'资产收入',deletePay:'删除此笔贷款还款？',actualOnly:'仅登记银行实际支付的利息。'},
+ ja:{loanPay:'ローン返済',principal:'元金',interest:'利息',cashOut:'資金流出合計',loanOut:'ローン返済',special:'この項目は専用画面から登録します。',accountsTitle:'口座と開始残高',interestRule:'利息条件',compound:'貯蓄に加算し複利運用',payout:'別口座で利息を受取る',maturity:'満期時に受取る',none:'利息なし',rate:'年利 (%)',frequency:'利息頻度',monthly:'毎月',quarterly:'四半期',yearly:'毎年',atMaturity:'満期時',interestAccount:'利息受取口座',linkedGoal:'連携する貯蓄目標',noGoal:'目標に連携しない',maturityDate:'満期日',recordInterest:'利息を登録',amount:'実際に入金された利息',date:'日付',save:'保存',cancel:'キャンセル',interestIncome:'資産収入',assetIncome:'資産収入',deletePay:'この返済を削除しますか？',actualOnly:'銀行から実際に付与された利息だけを登録します。'},
+ ko:{loanPay:'대출 상환',principal:'원금',interest:'이자',cashOut:'총 출금액',loanOut:'대출 상환',special:'이 항목은 전용 메뉴에서 등록하세요.',accountsTitle:'내 계좌와 시작 잔액',interestRule:'이자 조건',compound:'저축에 더해 복리 적용',payout:'다른 계좌로 이자 받기',maturity:'만기 때 받기',none:'무이자',rate:'연 이율 (%)',frequency:'이자 주기',monthly:'매월',quarterly:'분기별',yearly:'매년',atMaturity:'만기',interestAccount:'이자 수령 계좌',linkedGoal:'연결할 저축 목표',noGoal:'목표에 연결하지 않음',maturityDate:'만기일',recordInterest:'이자 등록',amount:'실제 입금된 이자',date:'날짜',save:'저장',cancel:'취소',interestIncome:'자산 수입',assetIncome:'자산 수입',deletePay:'이 대출 상환을 삭제할까요?',actualOnly:'은행에서 실제 지급된 이자만 등록합니다.'},
+ ru:{loanPay:'Платёж по кредиту',principal:'Основной долг',interest:'Проценты',cashOut:'Общий отток денег',loanOut:'Платёж по кредиту',special:'Используйте специальный раздел для этой операции.',accountsTitle:'Мои счета и начальные остатки',interestRule:'Условие процентов',compound:'Добавлять к сбережениям с капитализацией',payout:'Получать проценты на другой счёт',maturity:'Получать в конце срока',none:'Без процентов',rate:'Годовая ставка (%)',frequency:'Периодичность',monthly:'Ежемесячно',quarterly:'Ежеквартально',yearly:'Ежегодно',atMaturity:'В конце срока',interestAccount:'Счёт получения процентов',linkedGoal:'Связанная цель',noGoal:'Без связи с целью',maturityDate:'Дата окончания',recordInterest:'Записать проценты',amount:'Фактически начисленные проценты',date:'Дата',save:'Сохранить',cancel:'Отмена',interestIncome:'Доход от активов',assetIncome:'Доход от активов',deletePay:'Удалить этот платёж?',actualOnly:'Записывайте только фактически начисленные банком проценты.'},
+ de:{loanPay:'Darlehenszahlung',principal:'Tilgung',interest:'Zinsen',cashOut:'Gesamter Geldabfluss',loanOut:'Darlehenszahlung',special:'Diese Kategorie im eigenen Bereich erfassen.',accountsTitle:'Meine Konten und Anfangssalden',interestRule:'Zinsbedingung',compound:'Dem Sparkonto gutschreiben und verzinsen',payout:'Zinsen auf anderes Konto auszahlen',maturity:'Am Laufzeitende auszahlen',none:'Ohne Zinsen',rate:'Jahreszins (%)',frequency:'Zinsintervall',monthly:'Monatlich',quarterly:'Vierteljährlich',yearly:'Jährlich',atMaturity:'Bei Fälligkeit',interestAccount:'Zinsempfangskonto',linkedGoal:'Verknüpftes Sparziel',noGoal:'Kein Sparziel',maturityDate:'Fälligkeitsdatum',recordInterest:'Zinsen erfassen',amount:'Tatsächlich gutgeschriebene Zinsen',date:'Datum',save:'Speichern',cancel:'Abbrechen',interestIncome:'Vermögenseinkommen',assetIncome:'Vermögenseinkommen',deletePay:'Diese Darlehenszahlung löschen?',actualOnly:'Nur tatsächlich gutgeschriebene Zinsen erfassen.'}
+};
+function V58(){return V4358_TEXT[lang]||V4358_TEXT.en;}
+function systemFlowCat(c){const k=String(c&&c.key||'').toLowerCase();return k==='loan_cat'||k==='savings_cat'||k==='invest_cat';}
+
+// Keep the system categories in Budget, but remove them from ordinary Expense entry.
+const v58BaseGCats=gCats;
+gCats=function(){const arr=v58BaseGCats();return curType==='expense'?arr.filter(c=>!systemFlowCat(c)):arr;};
+
+// Dedicated asset/investment transfers still fulfil the matching Budget row.
+const v58BaseGSpent=gSpent;
+gSpent=function(catNm,subNm,month,subObjOverride){
+  const base=v58BaseGSpent(catNm,subNm,month,subObjOverride),cat=bCatsExp.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm);
+  if(!cat||cat.key!=='invest_cat')return base;
+  const wanted=subObjOverride||(subNm?(cat.subs||[]).find(s=>cN(s)===subNm||s.key===subNm||s.name===subNm):null);
+  const wantedName=String(wanted?cN(wanted):subNm||'').trim().toLowerCase(),wantedType=wanted?getInvestmentSubType(wanted):null;
+  const specialized=accountTransfers.filter(t=>{
+    if(!['investment','asset'].includes(t.purpose)||!t.date)return false;
+    const p=t.date.split('-');if(month&&(parseInt(p[1])!==month||parseInt(p[0])!==budgetYear))return false;
+    if(!wantedName)return true;
+    const group=getInvestGroups().find(g=>String(g.key)===String(t.targetId));
+    const name=String(group?.name||String(t.targetId||'').split(':::').slice(1).join(':::')).trim().toLowerCase();
+    const type=group?.typeKey||String(t.targetId||'').split(':::')[0]||null;
+    return name===wantedName&&(!wantedType||type===wantedType);
+  }).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  return Math.round(base+specialized);
+};
+
+function ensureYieldBudgetSource(sourceName,color){
+  const names={mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'};
+  let cat=bCatsInc.find(c=>c.key==='asset_income_cat');
+  if(!cat){cat={key:'asset_income_cat',names,icon:'💹',color:'#1D9E75',subs:[]};bCatsInc.push(cat);}
+  if(!incCats.find(c=>c.key==='asset_income_cat'))incCats.push({key:'asset_income_cat',names,icon:'💹',color:'#1D9E75'});
+  if(!String(sourceName||'').trim())return {cat,sub:null};
+  const key='yield_'+String(sourceName||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45);
+  let sub=(cat.subs||[]).find(s=>s.key===key||cN(s)===sourceName);
+  if(!sub){sub={key,names:{mn:sourceName,en:sourceName,zh:sourceName,ja:sourceName,ko:sourceName,ru:sourceName,de:sourceName},color:color||'#1D9E75'};cat.subs.push(sub);}
+  return {cat,sub};
+}
+
+// Asset income uses one shared income category and the asset as its budget subcategory.
+saveAssetIncome=function(key){
+  const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
+  const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0);
+  const accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
+  if(amount<=0||!accountId||!date){showToast(t.error);return;}
+  const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other},y=ensureYieldBudgetSource(g.name,g.color);
+  txns.unshift({id:crypto.randomUUID?crypto.randomUUID():Date.now(),type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount,date,accountId,assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()});
+  document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
+};
+
+function loanActivities(){
+  const out=[];debts.forEach(d=>debtPayments(d).forEach(p=>out.push({id:'loanact_'+p.id,_loanActivity:true,debtId:d.id,paymentId:p.id,date:p.date,accountId:p.accountId,amount:Number(p.total)||0,principal:(Number(p.principal)||0)+(Number(p.extraPrincipal)||0),interest:Number(p.interest)||0,debtName:d.name,type:'loan_payment'})));return out;
+}
+function unifiedActivities(){
+  const normal=txns.filter(t=>!t.loanPaymentId);
+  return normal.concat(loanActivities());
+}
+function loanActivityRow(a,del){
+  const q=V58(),acc=moneyAccounts.find(x=>x.id===a.accountId),accText=acc?` · ${accountIcon(acc)} ${acc.name}`:'';
+  return `<div class="list-item loan-activity-row"><div class="il"><div class="txn-main-line"><span class="lbl1">${q.loanPay} · ${a.debtName}</span><span class="txn-auto-badge">${q.cashOut}</span></div><div class="txn-meta-line"><span class="lbl2">💳 ${a.date}${accText}</span></div><div class="loan-activity-split">${q.principal}: ${fmt(a.principal)} · ${q.interest}: ${fmt(a.interest)}</div></div><div class="ir"><span class="amt amt-e">-${fmt(a.amount)}</span>${del?`<button class="btn btn-sm btn-d" onclick="deleteLoanActivity('${a.debtId}','${a.paymentId}')">✕</button>`:''}</div></div>`;
+}
+const v58BaseTRow=tRow;
+tRow=function(t,del){return t&&t._loanActivity?loanActivityRow(t,del):v58BaseTRow(t,del);};
+window.deleteLoanActivity=async function(debtId,paymentId){
+  if(!await showConfirm(V58().deletePay))return;const d=debts.find(x=>String(x.id)===String(debtId));if(!d)return;
+  d.payments=debtPayments(d).filter(p=>String(p.id)!==String(paymentId));txns=txns.filter(t=>String(t.loanPaymentId)!==String(paymentId));saveData();rAll();rDonut('dbt');uDash();
+};
+function unifiedMatchesSearch(t){if(!txnSearchOpen||!txnSearchQuery)return true;if(t._loanActivity)return [V58().loanPay,t.debtName,V58().principal,V58().interest].join(' ').toLowerCase().includes(txnSearchQuery);return txnMatchesSearch(t);}
+function renderUnifiedSummary(source){
+  const el=document.getElementById('txn-account-summary');if(!el)return;const T=txnFilterText(),q=V58();
+  const inc=source.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const normalExp=source.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const loanInterest=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.interest)||0),0);
+  const loanOut=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const trs=accountTransfers.filter(t=>txnInSelectedPeriod(t)&&(txnAccountFilter==='all'||t.fromId===txnAccountFilter||t.toId===txnAccountFilter));let tin=0,tout=0;
+  trs.forEach(t=>{if(txnAccountFilter==='all'){tin+=Number(t.amount)||0;tout+=Number(t.amount)||0;}else{if(t.toId===txnAccountFilter)tin+=Number(t.amount)||0;if(t.fromId===txnAccountFilter)tout+=Number(t.amount)||0;}});
+  el.innerHTML=`<div class="txn-sum-box"><div class="txn-sum-lbl">${T.inc}</div><div class="txn-sum-val txn-sum-in">+${fmt(inc)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.exp}</div><div class="txn-sum-val txn-sum-out">-${fmt(normalExp+loanInterest)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${q.loanOut}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(loanOut)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.tin}</div><div class="txn-sum-val txn-sum-transfer">+${fmt(tin)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.tout}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(tout)}</div></div>`;
+}
+rTxns=function(){
+  const el=document.getElementById('all-txns');if(!el)return;renderTxnAccountFilter();
+  let source=unifiedActivities().filter(t=>txnInSelectedPeriod(t)&&(txnAccountFilter==='all'||t.accountId===txnAccountFilter));if(txnSearchOpen&&txnSearchQuery)source=source.filter(unifiedMatchesSearch);renderUnifiedSummary(source);
+  if(!source.length){el.innerHTML=`<div class="txn-search-empty">${L.notxn}</div>`;return;}
+  const groups={};source.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{const ym=t.date?t.date.substring(0,7):'';(groups[ym]||(groups[ym]=[])).push(t);});let html='';
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),out=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0)+items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / ${V58().cashOut} -${fmt(out)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
+};
+rRecent=function(){
+  const el=document.getElementById('recent-list');if(!el)return;const source=unifiedActivities().sort((a,b)=>new Date(b.date)-new Date(a.date));if(!source.length){el.innerHTML=`<div class="empty">${L.notxn}</div>`;return;}const groups={};source.forEach(t=>{const ym=(t.date||'').substring(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],preview=items.slice(0,3),id='rg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">(${items.length})</span></div><span id="arr_${id}">▾</span></div><div id="${id}" class="grp-body">${preview.map(t=>tRow(t,false)).join('')}</div>`;});el.innerHTML=html;
+};
+
+function interestModeOptions(selected){const q=V58();return [['compound',q.compound],['payout',q.payout],['maturity',q.maturity],['none',q.none]].map(x=>`<option value="${x[0]}"${selected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
+function frequencyOptions(selected){const q=V58();return [['monthly',q.monthly],['quarterly',q.quarterly],['yearly',q.yearly],['maturity',q.atMaturity]].map(x=>`<option value="${x[0]}"${selected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
+function accountOptions(selected,exclude){return moneyAccounts.filter(a=>a.active!==false&&String(a.id)!==String(exclude||'')).map(a=>`<option value="${a.id}"${String(selected)===String(a.id)?' selected':''}>${accountIcon(a)} ${a.name}</option>`).join('');}
+function goalOptions(selected){return `<option value="">${V58().noGoal}</option>`+goals.map(g=>`<option value="${g.id}"${String(selected)===String(g.id)?' selected':''}>🎯 ${g.name}</option>`).join('');}
+function interestFieldsHtml(prefix,a){const q=V58(),x=a||{};return `<div class="savings-interest-grid"><div><label>${q.interestRule}</label><select class="fi" id="${prefix}-interest-mode">${interestModeOptions(x.interestMode||'compound')}</select></div><div><label>${q.rate}</label><input class="fi" id="${prefix}-interest-rate" type="number" min="0" step="0.01" value="${Number(x.annualInterestRate)||''}"></div><div><label>${q.frequency}</label><select class="fi" id="${prefix}-interest-frequency">${frequencyOptions(x.interestFrequency||'monthly')}</select></div><div><label>${q.interestAccount}</label><select class="fi" id="${prefix}-interest-account">${accountOptions(x.interestAccountId,x.id)}</select></div><div><label>${q.linkedGoal}</label><select class="fi" id="${prefix}-linked-goal">${goalOptions(x.linkedGoalId)}</select></div><div><label>${q.maturityDate}</label><input class="fi" id="${prefix}-maturity" type="date" value="${x.maturityDate||''}"></div></div><div class="flow-only-note">${q.actualOnly}</div>`;}
+function toggleNewInterestFields(){const box=document.getElementById('account-interest-fields'),ty=document.getElementById('account-type');if(box)box.classList.toggle('show',ty&&ty.value==='savings');}
+function installNewAccountInterestFields(){
+  const form=document.getElementById('account-add-form'),ty=document.getElementById('account-type');if(!form||!ty||document.getElementById('account-interest-fields'))return;
+  const box=document.createElement('div');box.id='account-interest-fields';box.className='savings-interest-fields';box.innerHTML=interestFieldsHtml('account',{});form.appendChild(box);ty.addEventListener('change',toggleNewInterestFields);toggleNewInterestFields();
+  const title=document.getElementById('accounts-title');if(title)title.textContent=V58().accountsTitle;
+}
+addMoneyAccount=function(){
+  const n=document.getElementById('account-name'),ty=document.getElementById('account-type'),dt=document.getElementById('account-start-date'),op=document.getElementById('account-opening'),name=(n.value||'').trim();if(!name)return;
+  const type=normalizeAccountType(ty.value),a={id:crypto.randomUUID?crypto.randomUUID():'acc_'+Date.now(),name,type,startDate:dt.value||new Date().toISOString().slice(0,10),openingBalance:Math.max(0,parseAmt(op.value)||0),active:true};
+  if(type==='savings'){a.interestMode=document.getElementById('account-interest-mode')?.value||'compound';a.annualInterestRate=Math.max(0,Number(document.getElementById('account-interest-rate')?.value)||0);a.interestFrequency=document.getElementById('account-interest-frequency')?.value||'monthly';a.interestAccountId=document.getElementById('account-interest-account')?.value||null;a.linkedGoalId=document.getElementById('account-linked-goal')?.value||null;a.maturityDate=document.getElementById('account-maturity')?.value||'';}
+  moneyAccounts.push(a);openingBalance=moneyAccounts.reduce((s,x)=>s+(Number(x.openingBalance)||0),0);n.value='';op.value='';saveData();renderMoneyAccounts();renderOpeningBalance();uDash();
+};
+const v58BaseEditAccount=editMoneyAccount;
+editMoneyAccount=async function(id){
+  await v58BaseEditAccount(id);const a=moneyAccounts.find(x=>x.id===id),m=document.getElementById('account-edit-modal');if(!a||!m)return;const card=m.firstElementChild,actions=card.lastElementChild,box=document.createElement('div');box.id='edit-interest-fields';box.className='savings-interest-fields'+(normalizeAccountType(a.type)==='savings'?' show':'');box.innerHTML=interestFieldsHtml('edit',a);card.insertBefore(box,actions);const typeSel=document.getElementById('account-edit-type');typeSel.onchange=()=>box.classList.toggle('show',typeSel.value==='savings');
+  document.getElementById('account-edit-save').onclick=()=>{const name=document.getElementById('account-edit-name').value.trim();if(!name)return;a.name=name;a.type=typeSel.value;if(a.type==='savings'){a.interestMode=document.getElementById('edit-interest-mode').value;a.annualInterestRate=Math.max(0,Number(document.getElementById('edit-interest-rate').value)||0);a.interestFrequency=document.getElementById('edit-interest-frequency').value;a.interestAccountId=document.getElementById('edit-interest-account').value||null;a.linkedGoalId=document.getElementById('edit-linked-goal').value||null;a.maturityDate=document.getElementById('edit-maturity').value||'';}saveData();m.remove();renderMoneyAccounts();};
+};
+const v58BaseInline=accountInlineDetail;
+accountInlineDetail=function(a){const base=v58BaseInline(a);if(String(expandedMoneyAccountId)!==String(a.id)||normalizeAccountType(a.type)!=='savings')return base;const q=V58(),mode=q[a.interestMode]||q.compound;return base+`<div class="interest-account-panel"><span class="savings-interest-badge">${q.interestRule}: ${mode}</span> ${Number(a.annualInterestRate)>0?`<span class="savings-interest-badge">${a.annualInterestRate}%</span>`:''}<div style="margin-top:7px"><button class="btn btn-p" onclick="event.stopPropagation();openSavingsInterestModal('${a.id}')">＋ ${q.recordInterest}</button></div></div>`;};
+window.openSavingsInterestModal=function(id){const a=moneyAccounts.find(x=>x.id===id);if(!a||a.interestMode==='none')return;const q=V58(),dest=a.interestMode==='payout'?(a.interestAccountId||getDefaultAccountId()):a.id;document.getElementById('savings-interest-modal')?.remove();const m=document.createElement('div');m.id='savings-interest-modal';m.className='loan-modal-backdrop';m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${q.recordInterest} · ${a.name}</div><label>${q.amount}</label><input class="fi" id="si-amount" inputmode="decimal"><label>${q.date}</label><input class="fi" id="si-date" type="date" value="${new Date().toISOString().slice(0,10)}"><label>${q.interestAccount}</label><select class="fi" id="si-account">${accountOptions(dest)}</select><div class="flow-only-note">${q.actualOnly}</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('savings-interest-modal').remove()">${q.cancel}</button><button class="btn btn-p" onclick="saveSavingsInterest('${id}')">${q.save}</button></div></div>`;document.body.appendChild(m);setupAmtInput(document.getElementById('si-amount'));};
+window.saveSavingsInterest=function(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return;const amount=Math.round(parseAmt(document.getElementById('si-amount')?.value)||0),date=document.getElementById('si-date')?.value,accountId=document.getElementById('si-account')?.value;if(amount<=0||!date||!accountId)return;const y=ensureYieldBudgetSource(a.name,'#1D9E75'),goalId=a.linkedGoalId||a.goalId||null;txns.unshift({id:crypto.randomUUID?crypto.randomUUID():Date.now(),type:'income',desc:`${a.name} · ${V58().interest}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount,date,accountId,savingsInterest:true,savingsAccountId:id,interestMode:a.interestMode,incomePurpose:'savings_interest',goalId,createdAt:new Date().toISOString()});document.getElementById('savings-interest-modal')?.remove();saveData();rAll();renderMoneyAccounts();};
+
+const v58BaseApplyLang=typeof applyFullLang==='function'?applyFullLang:null;
+if(v58BaseApplyLang)applyFullLang=function(l){v58BaseApplyLang(l);const title=document.getElementById('accounts-title');if(title)title.textContent=V58().accountsTitle;};
+ensureYieldBudgetSource('','#1D9E75');installNewAccountInterestFields();
+const v58BaseRenderAccounts=renderMoneyAccounts;renderMoneyAccounts=function(){v58BaseRenderAccounts();installNewAccountInterestFields();const title=document.getElementById('accounts-title');if(title)title.textContent=V58().accountsTitle;};
+try{rCatSel();rTxns();rRecent();renderMoneyAccounts();}catch(e){console.warn('V43.58 init',e);}
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
