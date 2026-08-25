@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.62: clean loan-entry flow, compact in-app pickers, complete seven-language dynamic labels. -->
+<!-- Möngö V43.63: every arrow select uses one-tap in-app picker; account types localized in all seven languages. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -12953,7 +12953,7 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
     const opts=document.getElementById('mongo-calc-picker-options');
     const close=document.getElementById('mongo-calc-picker-close');
     if(!box||!opts)return;
-    const label=sel.closest('div')?.querySelector('label,.slbl');
+    const label=(sel.id&&document.querySelector(`label[for="${sel.id}"]`))||((sel.previousElementSibling&&sel.previousElementSibling.matches('label,.slbl'))?sel.previousElementSibling:null)||sel.parentElement?.querySelector(':scope > label,:scope > .slbl');
     title.textContent=(label&&label.textContent.trim())||PT().choose;
     close.textContent=PT().close;
     opts.innerHTML='';
@@ -13438,6 +13438,54 @@ refresh60();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arrangeLoanForm);else arrangeLoanForm();
   window.addEventListener('pageshow',arrangeLoanForm);
   setTimeout(arrangeLoanForm,200);
+})();
+</script>
+<style id="mongo-v4363-all-selects-style">
+select{touch-action:manipulation;cursor:pointer}
+select.fi,select.budget-select,select.calc-native-select-localized{min-height:44px}
+</style>
+<script id="mongo-v4363-all-selects-script">
+(function(){
+  'use strict';
+  const accountTypes={
+    mn:{checking:'🏦 Харилцах',savings:'🐷 Хадгаламж',cash:'💵 Бэлэн мөнгө'},
+    en:{checking:'🏦 Checking',savings:'🐷 Savings',cash:'💵 Cash'},
+    zh:{checking:'🏦 活期账户',savings:'🐷 储蓄账户',cash:'💵 现金'},
+    ja:{checking:'🏦 普通口座',savings:'🐷 貯蓄口座',cash:'💵 現金'},
+    ko:{checking:'🏦 입출금 계좌',savings:'🐷 저축 계좌',cash:'💵 현금'},
+    ru:{checking:'🏦 Расчётный счёт',savings:'🐷 Накопительный счёт',cash:'💵 Наличные'},
+    de:{checking:'🏦 Girokonto',savings:'🐷 Sparkonto',cash:'💵 Bargeld'}
+  };
+  function localizeAccountTypeSelects(){
+    const t=accountTypes[(typeof lang!=='undefined'&&lang)||'mn']||accountTypes.en;
+    document.querySelectorAll('#account-type,#account-edit-type').forEach(sel=>{
+      [...sel.options].forEach(o=>{if(t[o.value]&&o.textContent!==t[o.value])o.textContent=t[o.value];});
+    });
+  }
+  function eligible(sel){
+    return sel&&sel.tagName==='SELECT'&&!sel.disabled&&!sel.multiple&&Number(sel.size||0)<=1&&!sel.closest('#mongo-calc-picker')&&!sel.classList.contains('mongo-native-select');
+  }
+  let lastSelect=null,lastOpened=0;
+  function openFromEvent(ev){
+    const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+    if(!eligible(sel)||typeof window.openMongoCalcPicker!=='function')return;
+    ev.preventDefault();ev.stopImmediatePropagation();
+    const now=Date.now();if(lastSelect===sel&&now-lastOpened<320)return;
+    lastSelect=sel;lastOpened=now;window.openMongoCalcPicker(sel);
+  }
+  document.addEventListener('touchstart',openFromEvent,{capture:true,passive:false});
+  document.addEventListener('pointerdown',openFromEvent,true);
+  document.addEventListener('click',openFromEvent,true);
+  document.addEventListener('keydown',ev=>{
+    if(!eligible(ev.target)||!['Enter',' ','ArrowDown','ArrowUp'].includes(ev.key))return;
+    ev.preventDefault();ev.stopImmediatePropagation();window.openMongoCalcPicker(ev.target);
+  },true);
+  const oldApply=window.applyLang;
+  if(typeof oldApply==='function')window.applyLang=function(){const r=oldApply.apply(this,arguments);setTimeout(localizeAccountTypeSelects,0);return r;};
+  const observer=new MutationObserver(localizeAccountTypeSelects);
+  function boot(){localizeAccountTypeSelects();observer.observe(document.body,{childList:true,subtree:true});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  window.addEventListener('pageshow',localizeAccountTypeSelects);
 })();
 </script>
 </body>
