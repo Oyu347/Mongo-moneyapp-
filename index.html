@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.64: one-tap picker always renders above edit/add/payment modals. -->
+<!-- Möngö V43.66: clearer asset-income action and optional monthly income planning. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -8285,7 +8285,7 @@ function tRow(t,del){
   const subLabel=showSub?`<span style="font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:5px;margin-left:3px">${subcatDisplay}</span>`:'';
   const acc=moneyAccounts.find(a=>a.id===t.accountId);const accountChip=acc?`<span style="font-size:10px;color:var(--text2);margin-left:4px">${acc.type==='cash'?'💵':'🏦'} ${acc.name}</span>`:'';
   const budgeted=isTxnBudgeted(t);
-  const budgetChip=budgeted?'':`<span class="txn-budget-chip">${L.descPh||'Unbudgeted'}</span>`;
+  const budgetChip=budgeted?'':`<span class="txn-budget-chip${t.assetIncome?' asset-income-extra':''}">${t.assetIncome&&typeof assetIncomeUnplannedText==='function'?assetIncomeUnplannedText():(L.descPh||'Unbudgeted')}</span>`;
   const amtClass=`amt amt-${t.type[0]} ${budgeted?'amt-budgeted':'amt-unbudgeted'}`;
   const autoBadge=isAuto?`<span class="txn-auto-badge">📈 ${L.automark||'automatic'}</span>`:'';
   return`<div class="list-item">
@@ -8653,7 +8653,7 @@ function rBProg(){
       ${hasSubs&&isOpen?`<div class="bbody" style="padding:8px 12px">
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
           const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&t.catName===nm&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo,sb);
+          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&(t.catKey===cat.key||t.catName===nm)&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo,sb);
           const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
           const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
           return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
@@ -8998,7 +8998,7 @@ de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktuelle
     const safeKey=g.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="inv-card mongo-object-card portfolio-group" style="--object-color:${col}">
       <div class="portfolio-group-head"><div class="portfolio-group-title"><div class="portfolio-group-icon" style="background:${hexToRgba(col,.13)}">${icon}</div><div style="min-width:0"><div class="portfolio-group-name">${g.name}</div><div class="portfolio-group-meta">${tlbl} · ${g.items.length} ${T.buys}${assetGroupIncomeProducing(g)?` · 💰 ${AIT().badge}`:''}</div></div></div>
-      <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button class="btn btn-sm" onclick="openAssetIncomeModal('${safeKey}')">${AIT().add}</button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
+      <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button class="btn btn-sm asset-income-add-btn" onclick="openAssetIncomeModal('${safeKey}')">${AIT().add}</button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
       <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
@@ -13488,6 +13488,106 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   function boot(){localizeAccountTypeSelects();observer.observe(document.body,{childList:true,subtree:true});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   window.addEventListener('pageshow',localizeAccountTypeSelects);
+})();
+</script>
+<style id="mongo-v4365-account-months-style">
+.account-month-group{margin:7px 0;border:1px solid rgba(73,176,182,.14);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.64)}
+.account-month-head{width:100%;border:0;background:rgba(73,176,182,.07);padding:10px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#374151;text-align:left;cursor:pointer}
+.account-month-name{font-size:12px;font-weight:950;color:#1F7F86}.account-month-summary{font-size:9px;font-weight:850;color:#6B7280;white-space:nowrap}
+.account-month-arrow{font-size:11px;color:#1F7F86;transition:transform .18s ease}.account-month-group.open .account-month-arrow{transform:rotate(90deg)}
+.account-month-body{display:none;padding:0 10px 4px}.account-month-group.open .account-month-body{display:block}
+.account-month-body .account-history-item:last-child{border-bottom:0}
+@media(max-width:420px){.account-month-head{align-items:flex-start}.account-month-head>span:first-child{display:flex;flex-direction:column;gap:2px}.account-month-summary{white-space:normal}}
+</style>
+<script id="mongo-v4365-account-months-script">
+(function(){
+  'use strict';
+  const TX={
+    mn:{edit:'Засах',off:'Идэвхгүй болгох',in:'Орсон',out:'Гарсан'},en:{edit:'Edit',off:'Deactivate',in:'In',out:'Out'},
+    zh:{edit:'编辑',off:'停用',in:'转入',out:'转出'},ja:{edit:'編集',off:'無効にする',in:'入金',out:'出金'},
+    ko:{edit:'수정',off:'비활성화',in:'입금',out:'출금'},ru:{edit:'Изменить',off:'Отключить',in:'Приход',out:'Расход'},
+    de:{edit:'Bearbeiten',off:'Deaktivieren',in:'Eingang',out:'Ausgang'}
+  };
+  const locales={mn:'mn-MN',en:'en-US',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',ru:'ru-RU',de:'de-DE'};
+  const monthState=window.MONGO_ACCOUNT_MONTH_STATE||(window.MONGO_ACCOUNT_MONTH_STATE=new Map());
+  function text(){return TX[(typeof lang!=='undefined'&&lang)||'mn']||TX.en;}
+  function monthName(key){
+    const p=String(key).split('-'),y=Number(p[0]),m=Number(p[1]);
+    if(!y||!m)return key;
+    try{return new Intl.DateTimeFormat(locales[lang]||'en-US',{year:'numeric',month:'long'}).format(new Date(y,m-1,1));}catch(e){return key;}
+  }
+  function safeId(v){return String(v).replace(/[^a-zA-Z0-9_-]/g,'_');}
+  window.toggleAccountHistoryMonth=function(accountId,key){
+    const stateKey=String(accountId)+'|'+key,id='account-month-'+safeId(accountId)+'-'+safeId(key),el=document.getElementById(id);if(!el)return;
+    const next=!el.classList.contains('open');el.classList.toggle('open',next);monthState.set(stateKey,next);
+  };
+  accountInlineDetail=function(a){
+    if(String(expandedMoneyAccountId)!==String(a.id))return '';
+    const rows=accountRowsFor(a),t=text(),groups=[];
+    rows.forEach(r=>{const key=/^\d{4}-\d{2}/.test(String(r.date||''))?String(r.date).slice(0,7):'—';let g=groups.find(x=>x.key===key);if(!g){g={key,rows:[]};groups.push(g);}g.rows.push(r);});
+    const monthly=groups.map((g,i)=>{
+      const inc=g.rows.filter(r=>r.amount>0).reduce((s,r)=>s+(Number(r.amount)||0),0),out=Math.abs(g.rows.filter(r=>r.amount<0).reduce((s,r)=>s+(Number(r.amount)||0),0));
+      const stateKey=String(a.id)+'|'+g.key,open=monthState.has(stateKey)?monthState.get(stateKey):i===0,id='account-month-'+safeId(a.id)+'-'+safeId(g.key);
+      return `<div class="account-month-group${open?' open':''}" id="${id}"><button type="button" class="account-month-head" onclick="event.stopPropagation();toggleAccountHistoryMonth('${a.id}','${g.key}')"><span><span class="account-month-name">${monthName(g.key)} (${g.rows.length})</span><span class="account-month-summary">${t.in} +${fmt(inc)} · ${t.out} -${fmt(out)}</span></span><span class="account-month-arrow">▶</span></button><div class="account-month-body">${g.rows.map(r=>`<div class="account-history-item"><span>${r.date} · ${r.label}</span><b>${r.amount>0?'+':''}${fmt(r.amount)}</b></div>`).join('')}</div></div>`;
+    }).join('');
+    return `<div class="account-detail show" style="margin:-4px 0 10px 0;border-radius:0 0 18px 18px"><div style="display:flex;gap:6px;margin:4px 0 9px"><button class="btn btn-sm" onclick="event.stopPropagation();editMoneyAccount('${a.id}')">✎ ${t.edit}</button>${a.active!==false?`<button class="btn btn-sm" onclick="event.stopPropagation();archiveMoneyAccount('${a.id}')">${t.off}</button>`:''}</div><div>${rows.length?monthly:`<div class="empty">${L.notxn}</div>`}</div></div>`;
+  };
+})();
+</script>
+<style id="mongo-v4366-asset-income-plan-style">
+.asset-income-add-btn{min-height:38px;padding:8px 15px!important;border:0!important;color:#fff!important;background:linear-gradient(135deg,#37b8bd,#078b92)!important;box-shadow:0 8px 18px rgba(7,139,146,.22);font-weight:900!important}
+.asset-income-add-btn:hover,.asset-income-add-btn:focus{filter:brightness(.96);transform:translateY(-1px)}
+.asset-income-plan-box{margin-top:13px;padding:13px;border:1px solid rgba(18,157,162,.22);border-radius:16px;background:rgba(232,249,249,.72)}
+.asset-income-plan-check{display:flex!important;align-items:center;gap:10px;cursor:pointer;font-weight:850!important;color:var(--text)!important;margin:0!important}
+.asset-income-plan-check input{width:20px;height:20px;accent-color:#129da2;flex:0 0 auto}
+.asset-income-plan-fields{display:none;margin-top:11px}.asset-income-plan-fields.show{display:block}
+.asset-income-plan-note{font-size:11px;line-height:1.45;color:var(--text2);margin-top:7px}
+.txn-budget-chip.asset-income-extra{background:#e5f7ef!important;color:#16795d!important;border-color:#bfe9d9!important}
+</style>
+<script id="mongo-v4366-asset-income-plan-script">
+(function(){
+  'use strict';
+  const P={
+    mn:{include:'Энэ сарын орлогын төлөвлөгөөнд оруулах',planned:'Төлөвлөсөн дүн',note:'Түрээс зэрэг тогтмол орлогыг төлөвлөж болно. Ногдол ашиг, хүү зэрэг урьдчилан таахад төвөгтэй орлогыг заавал төлөвлөх шаардлагагүй.',extra:'Төлөвлөгөөнөөс гадуур орсон'},
+    en:{include:"Include in this month's income plan",planned:'Planned amount',note:'Predictable income such as rent can be planned. Dividends and interest do not have to be planned.',extra:'Outside income plan'},
+    zh:{include:'计入本月收入计划',planned:'计划金额',note:'租金等稳定收入可以纳入计划；股息、利息等难以预测的收入无需强制计划。',extra:'计划外收入'},
+    ja:{include:'今月の収入計画に含める',planned:'予定金額',note:'家賃などの定期収入は計画できます。配当や利息は無理に計画する必要はありません。',extra:'収入計画外'},
+    ko:{include:'이번 달 수입 계획에 포함',planned:'계획 금액',note:'임대료 같은 정기 수입은 계획할 수 있습니다. 배당과 이자는 반드시 계획할 필요가 없습니다.',extra:'수입 계획 외'},
+    ru:{include:'Включить в план доходов этого месяца',planned:'Плановая сумма',note:'Регулярный доход, например аренду, можно планировать. Дивиденды и проценты планировать необязательно.',extra:'Вне плана доходов'},
+    de:{include:'In den Einnahmenplan dieses Monats aufnehmen',planned:'Geplanter Betrag',note:'Regelmäßige Einnahmen wie Miete können geplant werden. Dividenden und Zinsen müssen nicht geplant werden.',extra:'Außerhalb des Einnahmenplans'}
+  };
+  function pt(){return P[(typeof lang!=='undefined'&&lang)||'mn']||P.mn;}
+  window.assetIncomeUnplannedText=function(){return pt().extra;};
+  window.toggleAssetIncomePlan=function(){
+    const on=document.getElementById('ai-plan-enabled')?.checked,box=document.getElementById('ai-plan-fields'),target=document.getElementById('ai-plan-amount'),actual=document.getElementById('ai-amount');
+    if(box)box.classList.toggle('show',!!on);
+    if(on&&target&&!target.value&&actual?.value){target.value=actual.value;applyCommaFmt(target);}
+  };
+  window.openAssetIncomeModal=function(key){
+    const g=getInvestGroups().find(x=>x.key===key);if(!g||!assetGroupIncomeProducing(g))return;
+    ensureMoneyAccounts();const t=AIT(),p=pt();document.getElementById('asset-income-modal')?.remove();
+    const m=document.createElement('div');m.id='asset-income-modal';m.className='loan-modal-backdrop';
+    const accounts=moneyAccounts.filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name}</option>`).join('');
+    m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.title} · ${g.name}</div>
+      <label>${t.kind}</label><select class="fi" id="ai-kind"><option value="rent">${t.rent}</option><option value="dividend">${t.dividend}</option><option value="interest">${t.interest}</option><option value="other">${t.other}</option></select>
+      <label>${t.account}</label><select class="fi" id="ai-account">${accounts}</select>
+      <div class="loan-modal-grid"><div><label>${t.amount}</label><input class="fi" id="ai-amount" inputmode="decimal" data-amt="1"></div><div><label>${t.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div></div>
+      <div class="asset-income-plan-box"><label class="asset-income-plan-check"><input type="checkbox" id="ai-plan-enabled" onchange="toggleAssetIncomePlan()"><span>${p.include}</span></label><div class="asset-income-plan-fields" id="ai-plan-fields"><label>${p.planned}</label><input class="fi" id="ai-plan-amount" inputmode="decimal" data-amt="1"><div class="asset-income-plan-note">${p.note}</div></div></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick='saveAssetIncome(${JSON.stringify(key)})'>${t.save}</button></div></div>`;
+    document.body.appendChild(m);setupAmtInput('ai-amount');setupAmtInput('ai-plan-amount');
+  };
+  window.saveAssetIncome=function(key){
+    const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
+    const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
+    if(amount<=0||!accountId||!date){showToast(t.error);return;}
+    const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other},y=ensureYieldBudgetSource(g.name,g.color);
+    txns.unshift({id:crypto.randomUUID?crypto.randomUUID():Date.now(),type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount,date,accountId,assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()});
+    if(document.getElementById('ai-plan-enabled')?.checked){
+      const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount),parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
+      if(planned>0&&year&&month)budgets[budgetYMKeyForYear(bSubKey(y.cat,y.sub),month,year)]=planned;
+    }
+    document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
+  };
 })();
 </script>
 </body>
