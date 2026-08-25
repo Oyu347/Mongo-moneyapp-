@@ -13296,6 +13296,76 @@ const v58BaseRenderAccounts=renderMoneyAccounts;renderMoneyAccounts=function(){v
 try{rCatSel();rTxns();rRecent();renderMoneyAccounts();}catch(e){console.warn('V43.58 init',e);}
 })();
 </script>
+<!-- Möngö V43.59: self-destination interest rules and create-and-link savings goal -->
+<style>
+.v4359-hidden{display:none!important}.v4359-new-goal{display:none;grid-column:1/-1;padding:9px;border-radius:11px;background:#FFFDF2;border:1px solid #F2D784}.v4359-new-goal.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:480px){.v4359-new-goal.show{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+'use strict';
+const X={
+ mn:{newGoal:'＋ “{name}” зорилго шинээр үүсгэх',target:'Зорилтот дүн',deadline:'Зорилгын хугацаа',needTarget:'Шинэ зорилгын зорилтот дүнг оруулна уу',selfCompound:'Хүү энэ хуримтлалын дансанд өөрт нь автоматаар нэмэгдэнэ.',selfMaturity:'Хугацааны эцэст хүү энэ хуримтлалын дансанд автоматаар нэмэгдэнэ.'},
+ en:{newGoal:'＋ Create a new “{name}” goal',target:'Goal target',deadline:'Goal deadline',needTarget:'Enter the new goal target',selfCompound:'Interest is automatically added to this savings account.',selfMaturity:'At maturity, interest is automatically added to this savings account.'},
+ zh:{newGoal:'＋ 新建“{name}”目标',target:'目标金额',deadline:'目标日期',needTarget:'请输入新目标金额',selfCompound:'利息会自动计入此储蓄账户。',selfMaturity:'到期时利息会自动计入此储蓄账户。'},
+ ja:{newGoal:'＋「{name}」目標を新規作成',target:'目標金額',deadline:'目標期限',needTarget:'新しい目標金額を入力してください',selfCompound:'利息はこの貯蓄口座に自動で加算されます。',selfMaturity:'満期時に利息はこの貯蓄口座に自動で加算されます。'},
+ ko:{newGoal:'＋ “{name}” 목표 새로 만들기',target:'목표 금액',deadline:'목표 기한',needTarget:'새 목표 금액을 입력하세요',selfCompound:'이자는 이 저축 계좌에 자동으로 더해집니다.',selfMaturity:'만기 때 이자는 이 저축 계좌에 자동으로 더해집니다.'},
+ ru:{newGoal:'＋ Создать цель «{name}»',target:'Сумма цели',deadline:'Срок цели',needTarget:'Укажите сумму новой цели',selfCompound:'Проценты автоматически добавляются на этот накопительный счёт.',selfMaturity:'В конце срока проценты автоматически добавляются на этот счёт.'},
+ de:{newGoal:'＋ Neues Ziel „{name}“ erstellen',target:'Zielbetrag',deadline:'Zieldatum',needTarget:'Zielbetrag für das neue Ziel eingeben',selfCompound:'Zinsen werden automatisch diesem Sparkonto gutgeschrieben.',selfMaturity:'Bei Fälligkeit werden Zinsen automatisch diesem Sparkonto gutgeschrieben.'}
+};
+function T59(){return X[lang]||X.en;}
+function v59Parent(id){const e=document.getElementById(id);return e?e.parentElement:null;}
+function v59AccountName(prefix){return prefix==='account'?(document.getElementById('account-name')?.value||'').trim():(document.getElementById('account-edit-name')?.value||'').trim();}
+function v59RefreshNewGoalOption(prefix){
+  const sel=document.getElementById(prefix+'-linked-goal');if(!sel)return;let opt=[...sel.options].find(o=>o.value==='__new__');
+  if(!opt){opt=document.createElement('option');opt.value='__new__';sel.appendChild(opt);}const nm=v59AccountName(prefix)||(lang==='mn'?'Шинэ хуримтлал':'New savings');opt.textContent=T59().newGoal.replace('{name}',nm);
+}
+function v59EnsureGoalFields(prefix){
+  const sel=document.getElementById(prefix+'-linked-goal');if(!sel)return;v59RefreshNewGoalOption(prefix);
+  const host=sel.closest('.savings-interest-grid');if(!host)return;let box=document.getElementById(prefix+'-new-goal-fields');
+  if(!box){box=document.createElement('div');box.id=prefix+'-new-goal-fields';box.className='v4359-new-goal';box.innerHTML=`<div><label>${T59().target}</label><input class="fi" id="${prefix}-new-goal-target" inputmode="decimal"></div><div><label>${T59().deadline}</label><input class="fi" id="${prefix}-new-goal-deadline" type="date"></div>`;host.appendChild(box);const amt=document.getElementById(prefix+'-new-goal-target');if(amt&&typeof setupAmtInput==='function')setupAmtInput(amt);}
+  const toggle=()=>box.classList.toggle('show',sel.value==='__new__');sel.onchange=toggle;toggle();
+}
+function v59Note(prefix,text){const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(!root)return;let n=document.getElementById(prefix+'-self-interest-note');if(!n){n=document.createElement('div');n.id=prefix+'-self-interest-note';n.className='flow-only-note';root.appendChild(n);}n.textContent=text||'';n.classList.toggle('v4359-hidden',!text);}
+function v59ApplyMode(prefix){
+  const mode=document.getElementById(prefix+'-interest-mode')?.value||'compound';
+  const rate=v59Parent(prefix+'-interest-rate'),freq=v59Parent(prefix+'-interest-frequency'),receiver=v59Parent(prefix+'-interest-account'),maturity=v59Parent(prefix+'-maturity');
+  if(rate)rate.classList.toggle('v4359-hidden',mode==='none');
+  if(freq)freq.classList.toggle('v4359-hidden',mode==='none'||mode==='maturity');
+  if(receiver)receiver.classList.toggle('v4359-hidden',mode!=='payout');
+  if(maturity)maturity.classList.toggle('v4359-hidden',mode!=='maturity');
+  v59Note(prefix,mode==='compound'?T59().selfCompound:(mode==='maturity'?T59().selfMaturity:''));
+}
+function v59Enhance(prefix){
+  v59EnsureGoalFields(prefix);v59ApplyMode(prefix);const mode=document.getElementById(prefix+'-interest-mode');if(mode)mode.onchange=()=>v59ApplyMode(prefix);
+  const name=document.getElementById(prefix==='account'?'account-name':'account-edit-name');if(name)name.addEventListener('input',()=>v59RefreshNewGoalOption(prefix));
+}
+function v59CreateGoal(prefix,name,opening,maturity){
+  const selected=document.getElementById(prefix+'-linked-goal')?.value||'';if(selected!=='__new__')return {id:selected||null};
+  const target=parseAmt(document.getElementById(prefix+'-new-goal-target')?.value);if(target<=0){showToast(T59().needTarget);return {error:true};}
+  const dead=document.getElementById(prefix+'-new-goal-deadline')?.value||maturity||'',id=Date.now()+Math.floor(Math.random()*500),color=mongoNextColor(goals.length,'goal');
+  goals.push({id,name,target,saved:Math.max(0,opening||0),dead,color,createdAt:new Date().toISOString().slice(0,10),history:[]});
+  const parent=(bCatsExp||[]).find(c=>c.key==='savings_cat');if(parent){parent.subs=parent.subs||[];if(!parent.subs.some(s=>cN(s)===name))parent.subs.push({key:'goal_'+id,names:{mn:name,en:name,zh:name,ja:name,ko:name,ru:name,de:name},color});}
+  return {id};
+}
+
+// The account does not exist until Save, so compound/maturity modes point to self automatically after the ID is created.
+addMoneyAccount=function(){
+  const n=document.getElementById('account-name'),ty=document.getElementById('account-type'),dt=document.getElementById('account-start-date'),op=document.getElementById('account-opening'),name=(n?.value||'').trim();if(!name)return;
+  const type=normalizeAccountType(ty.value),id=crypto.randomUUID?crypto.randomUUID():'acc_'+Date.now(),opening=Math.max(0,parseAmt(op.value)||0),mode=document.getElementById('account-interest-mode')?.value||'compound',maturity=document.getElementById('account-maturity')?.value||'';
+  const goal=type==='savings'?v59CreateGoal('account',name,opening,maturity):{id:null};if(goal.error)return;
+  const a={id,name,type,startDate:dt.value||new Date().toISOString().slice(0,10),openingBalance:opening,active:true};
+  if(type==='savings'){a.interestMode=mode;a.annualInterestRate=mode==='none'?0:Math.max(0,Number(document.getElementById('account-interest-rate')?.value)||0);a.interestFrequency=mode==='maturity'?'maturity':(document.getElementById('account-interest-frequency')?.value||'monthly');a.interestAccountId=mode==='payout'?(document.getElementById('account-interest-account')?.value||null):id;a.linkedGoalId=goal.id;a.maturityDate=maturity;}
+  moneyAccounts.push(a);openingBalance=moneyAccounts.reduce((s,x)=>s+(Number(x.openingBalance)||0),0);n.value='';op.value='';saveData();renderMoneyAccounts();renderOpeningBalance();rGoals();rBList();uDash();
+};
+
+const v59BaseEdit=editMoneyAccount;
+  editMoneyAccount=async function(id){await v59BaseEdit(id);setTimeout(()=>{const a=moneyAccounts.find(x=>String(x.id)===String(id)),m=document.getElementById('account-edit-modal');if(!a||!m)return;v59Enhance('edit');const sel=document.getElementById('edit-linked-goal');if(sel&&a.linkedGoalId)sel.value=String(a.linkedGoalId);v59ApplyMode('edit');const btn=document.getElementById('account-edit-save');if(!btn)return;btn.onclick=()=>{const name=document.getElementById('account-edit-name').value.trim();if(!name)return;const type=document.getElementById('account-edit-type').value,mode=document.getElementById('edit-interest-mode')?.value||'compound',maturity=document.getElementById('edit-maturity')?.value||'';const goal=type==='savings'?v59CreateGoal('edit',name,0,maturity):{id:null};if(goal.error)return;a.name=name;a.type=type;if(type==='savings'){a.interestMode=mode;a.annualInterestRate=mode==='none'?0:Math.max(0,Number(document.getElementById('edit-interest-rate')?.value)||0);a.interestFrequency=mode==='maturity'?'maturity':(document.getElementById('edit-interest-frequency')?.value||'monthly');a.interestAccountId=mode==='payout'?(document.getElementById('edit-interest-account')?.value||null):a.id;a.linkedGoalId=goal.id;a.maturityDate=maturity;}saveData();m.remove();renderMoneyAccounts();rGoals();rBList();};},0);};
+
+function boot59(){v59Enhance('account');const ty=document.getElementById('account-type');if(ty)ty.addEventListener('change',()=>setTimeout(()=>v59Enhance('account'),0));}
+boot59();
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
