@@ -7119,7 +7119,7 @@ function rBList(){
           <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
             ${investmentBudgetCat(cat)?`<select class="fi" style="flex:0 0 150px;max-width:45%;font-size:11px;padding:4px 7px" onchange="setBudgetInvestType(${ci},${si},this.value)">${(INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn).map(it=>`<option value="${it.k}"${getInvestmentSubType(sb)===it.k?' selected':''}>${it.icon} ${it.label}</option>`).join('')}</select>`:''}
             <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))">
-            <button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats()[${ci}].subs.splice(${si},1);rBList();saveData();}})">✕</button>
+            ${/^(goal|debt|invest)_/.test(String(sb.key||''))?'':`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats()[${ci}].subs.splice(${si},1);rBList();saveData();}})">✕</button>`}
           </div>
         </div>`}).join('')}
         <div class="asr">
@@ -14001,6 +14001,140 @@ select.fi{touch-action:pan-y;cursor:pointer}
   window.addEventListener('pageshow',()=>setTimeout(refresh80,80));
   const observer=new MutationObserver(()=>{if(!document.getElementById('account-submit-row')||document.getElementById('account-add-form')?.lastElementChild?.id!=='account-submit-row')positionAccountSubmit();});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>observer.observe(document.body,{childList:true,subtree:true}));else observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script id="mongo-v4385-auto-planning-budget">
+(function(){
+  'use strict';
+
+  const SOURCE_PREFIX=/^(goal|debt|invest)_/;
+  const allNames=name=>({mn:name,en:name,zh:name,ja:name,ko:name,ru:name,de:name});
+  const sourceKey=(kind,id)=>kind+'_'+String(id);
+  const selectedPeriodIsCurrentOrFuture=()=>{
+    const now=new Date();
+    return Number(budgetYear)>now.getFullYear() ||
+      (Number(budgetYear)===now.getFullYear()&&Number(budgetMonth)>=now.getMonth()+1);
+  };
+  function firstInvestmentId(group){
+    const linked=(group?.items||[]).map(x=>String(x.budgetSourceId||'')).filter(Boolean).sort()[0];
+    if(linked)return linked;
+    const ids=(group?.items||[]).map(x=>String(x.id||'')).filter(Boolean);
+    return ids.sort((a,b)=>{
+      const an=Number(a),bn=Number(b);
+      return Number.isFinite(an)&&Number.isFinite(bn)?an-bn:a.localeCompare(b);
+    })[0]||String(group?.key||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,45);
+  }
+  function suggestedGoal(goal){
+    const left=Math.max(0,(Number(goal.target)||0)-getGoalEffectiveSaved(goal));
+    const months=parseGoalMonths(goal);
+    return months>0&&left>0?Math.ceil(left/months):0;
+  }
+  function suggestedDebt(debt){
+    if(debt?.active===false||getDebtRemaining(debt)<=0)return 0;
+    return Math.max(0,Math.round(Number(debt.monthly)||Number(debtCalcNextSplit(debt).total)||0));
+  }
+  function ensureParent(key){
+    const cat=(bCatsExp||[]).find(c=>c&&c.key===key);
+    if(cat&&!Array.isArray(cat.subs))cat.subs=[];
+    return cat||null;
+  }
+  function upsert(parent,kind,id,name,color,extra){
+    if(!parent||!name)return null;
+    const key=sourceKey(kind,id);
+    let sub=parent.subs.find(s=>String(s.key)===key);
+    if(!sub){
+      // Reuse a legacy same-name row only when it is not already linked. This
+      // preserves its old monthly budgets and still lets duplicate names coexist.
+      sub=parent.subs.find(s=>!SOURCE_PREFIX.test(String(s.key||''))&&mongoNormName(cN(s))===mongoNormName(name));
+      if(sub){
+        const oldKey=bSubKey(parent,sub);
+        sub.key=key;
+        Object.keys(budgets||{}).forEach(k=>{
+          if(k.endsWith(oldKey)&&budgets[k]!==undefined){
+            const nk=k.slice(0,k.length-oldKey.length)+bSubKey(parent,sub);
+            if(budgets[nk]===undefined)budgets[nk]=budgets[k];
+          }
+        });
+      }else{
+        sub={key,names:allNames(name),color:color||parent.color};
+        parent.subs.push(sub);
+      }
+    }
+    sub.names=allNames(name);
+    sub.color=mongoColor(color,sub.color||parent.color);
+    Object.assign(sub,extra||{});
+    return sub;
+  }
+  function seed(parent,sub,value){
+    if(!selectedPeriodIsCurrentOrFuture()||!value||value<=0)return false;
+    const k=budgetYMKeyForYear(bSubKey(parent,sub),budgetMonth,budgetYear);
+    if(Object.prototype.hasOwnProperty.call(budgets,k))return false;
+    budgets[k]=Math.round(value);
+    return true;
+  }
+  window.ensurePlanningBudgetSources=function(options){
+    options=options||{};
+    let changed=false;
+    const savings=ensureParent('savings_cat'),loans=ensureParent('loan_cat'),investments=ensureParent('invest_cat');
+    (goals||[]).forEach(g=>{
+      const before=savings?.subs?.length||0;
+      const sub=upsert(savings,'goal',g.id,g.name,g.color,{sourceKind:'goal',sourceId:String(g.id)});
+      if((savings?.subs?.length||0)!==before)changed=true;
+      if(options.seed&&sub&&seed(savings,sub,suggestedGoal(g)))changed=true;
+    });
+    (debts||[]).forEach(d=>{
+      const before=loans?.subs?.length||0;
+      const sub=upsert(loans,'debt',d.id,d.name,d.color,{sourceKind:'debt',sourceId:String(d.id)});
+      if((loans?.subs?.length||0)!==before)changed=true;
+      if(options.seed&&sub&&seed(loans,sub,suggestedDebt(d)))changed=true;
+    });
+    (getInvestGroups?.()||[]).forEach(g=>{
+      const id=firstInvestmentId(g),before=investments?.subs?.length||0;
+      const sub=upsert(investments,'invest',id,g.name,g.color,{sourceKind:'invest',sourceId:String(id),investTypeKey:g.typeKey||'other'});
+      (g.items||[]).forEach(item=>item.budgetSourceId=String(id));
+      if((investments?.subs?.length||0)!==before)changed=true;
+      // An existing asset is not automatically a recurring purchase. Its row is
+      // supplied automatically, while the user chooses this month's plan amount.
+      if(options.seed&&sub&&Number(g.monthlyPlan)>0&&seed(investments,sub,Number(g.monthlyPlan)))changed=true;
+    });
+    if(changed&&options.persist!==false)saveData();
+    return changed;
+  };
+
+  const baseRBudgetList=rBList;
+  rBList=function(){ensurePlanningBudgetSources({seed:budgetType==='expense'});return baseRBudgetList.apply(this,arguments);};
+
+  // Exact-ID actuals keep two goals or loans with the same visible name separate.
+  const baseGSpent=gSpent;
+  gSpent=function(catNm,subNm,month,subObj){
+    const key=String(subObj?.key||'');
+    const parts=key.match(/^(goal|debt|invest)_(.+)$/);
+    if(!parts)return baseGSpent.apply(this,arguments);
+    const inMonth=row=>{const p=String(row?.date||'').split('-');return Number(p[0])===Number(budgetYear)&&Number(p[1])===Number(month);};
+    if(parts[1]==='goal'){
+      const moved=(accountTransfers||[]).filter(t=>t.purpose==='savings'&&String(t.targetId)===parts[2]&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+      const interest=(txns||[]).filter(t=>t.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===parts[2]&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+      return moved+interest;
+    }
+    if(parts[1]==='debt'){
+      const debt=(debts||[]).find(d=>String(d.id)===parts[2]);
+      return debt?debtPayments(debt).filter(inMonth).reduce((s,p)=>s+(Number(p.total)||0),0):0;
+    }
+    const group=(getInvestGroups?.()||[]).find(g=>firstInvestmentId(g)===parts[2]);
+    if(!group)return 0;
+    const keys=new Set([String(group.key),...group.items.map(i=>String(i.legacyGroupKey||'')).filter(Boolean)]);
+    return (accountTransfers||[]).filter(t=>(t.purpose==='investment'||t.purpose==='asset')&&keys.has(String(t.targetId))&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+  };
+
+  // Keep source names and colors current after edits/additions without ever
+  // replacing a budget amount that the user has already edited for that month.
+  const baseSaveData=saveData;
+  let syncing=false;
+  saveData=function(){
+    if(!syncing){syncing=true;try{ensurePlanningBudgetSources({seed:false,persist:false});}finally{syncing=false;}}
+    return baseSaveData.apply(this,arguments);
+  };
+  ensurePlanningBudgetSources({seed:false,persist:false});
 })();
 </script>
 </body>
