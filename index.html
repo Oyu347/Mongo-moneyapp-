@@ -13656,6 +13656,88 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   };
 })();
 </script>
+<script id="mongo-v4372-asset-income-root-fix">
+(function(){
+  'use strict';
+  let committing=false;
+
+  function safeAssetIncomeCategoryName(){
+    const names={mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'};
+    return names[(typeof lang!=='undefined'&&lang)||'mn']||names.mn;
+  }
+
+  // The actual bank transaction is the source of truth. Budget planning is an
+  // optional follow-up and is never allowed to block the transaction itself.
+  window.mongoCommitAssetIncomeV4372=function(key){
+    if(committing)return;
+    const modal=document.getElementById('asset-income-modal');
+    const button=document.getElementById('ai-save-button');
+    const t=AIT();
+    try{
+      const g=getInvestGroups().find(x=>String(x.key)===String(key));
+      const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0);
+      const accountId=document.getElementById('ai-account')?.value;
+      const date=document.getElementById('ai-date')?.value;
+      const kind=document.getElementById('ai-kind')?.value||'other';
+      if(!g||amount<=0||!accountId||!date){showToast(t.error);return;}
+
+      committing=true;
+      if(button)button.disabled=true;
+      const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other};
+      const planEnabled=!!document.getElementById('ai-plan-enabled')?.checked;
+      const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount);
+      const txn={
+        id:(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now(),
+        type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:'asset_income_cat',
+        catName:safeAssetIncomeCategoryName(),subcatName:g.name,amount,date,accountId,
+        assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()
+      };
+
+      // Commit and persist first, before any budget/category helper is called.
+      txns.unshift(txn);
+      saveData();
+      modal?.remove();
+
+      // Planning is optional. A planning error must not undo the real income.
+      if(planEnabled){
+        try{
+          const parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
+          const y=ensureYieldBudgetSource(g.name,g.color);
+          if(y?.cat&&y?.sub){
+            txn.catKey=y.cat.key;txn.catName=cN(y.cat);txn.subcatName=y.sub.key;
+            if(planned>0&&year&&month)budgets[`${year}_${month}_${y.cat.key}:::${y.sub.key}`]=planned;
+            saveData();
+          }
+        }catch(planError){console.error('Asset income planning failed after transaction save',planError);}
+      }
+
+      try{rAll();}catch(renderError){console.error('Asset income render failed',renderError);}
+      try{renderMoneyAccounts();}catch(accountRenderError){console.error('Account render failed',accountRenderError);}
+      showToast(t.title+' ✓');
+    }catch(err){
+      console.error('Asset income transaction save failed',err);
+      showToast(t.error);
+    }finally{
+      committing=false;
+      if(button&&document.body.contains(button))button.disabled=false;
+    }
+  };
+
+  const priorOpen=window.openAssetIncomeModal;
+  window.openAssetIncomeModal=function(key){
+    const result=priorOpen.apply(this,arguments);
+    const button=document.getElementById('ai-save-button');
+    if(button){
+      button.removeAttribute('onclick');
+      button.onclick=function(event){
+        event.preventDefault();event.stopPropagation();
+        window.mongoCommitAssetIncomeV4372(key);
+      };
+    }
+    return result;
+  };
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
