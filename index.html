@@ -11700,6 +11700,7 @@ auth.onAuthStateChanged(async user=>{
   const SNAP_KEY_PREFIX='mongo_cloud_snapshot_';
   const META_KEY_PREFIX='mongo_sync_meta_';
   const LOCAL_UPDATED_KEY_PREFIX='mongo_local_updated_';
+  const CLEAR_BARRIER_KEY_PREFIX='mongo_clear_barrier_';
   const MAX_QUEUE=40;
   const MAX_RETRY=5;
   const BASE_RETRY_MS=1200;
@@ -11769,7 +11770,7 @@ auth.onAuthStateChanged(async user=>{
   function opId(){ return 'op_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10); }
   function hasMeaningfulFinancialData(d){
     d=safeObj(d);
-    return safeArray(d.txns).length>0 || safeArray(d.goals).length>0 || safeArray(d.debts).length>0 || safeArray(d.invests).length>0 || Object.keys(safeObj(d.budgets)).length>0 || safeNum(d.openingBalance)>0;
+    return safeArray(d.txns).length>0 || safeArray(d.goals).length>0 || safeArray(d.debts).length>0 || safeArray(d.invests).length>0 || safeArray(d.moneyAccounts).some(a=>safeNum(a&&a.openingBalance)>0) || safeArray(d.accountTransfers).length>0 || Object.keys(safeObj(d.budgets)).length>0 || safeNum(d.openingBalance)>0;
   }
   function getLocalUpdatedAt(){
     if(window.MONGO_LOCAL_DATA_UPDATED_AT) return window.MONGO_LOCAL_DATA_UPDATED_AT;
@@ -11786,6 +11787,12 @@ auth.onAuthStateChanged(async user=>{
     window.MONGO_LOCAL_DATA_UPDATED_AT=v;
     try{localStorage.setItem(uidKey(LOCAL_UPDATED_KEY_PREFIX),v);}catch(e){}
     return v;
+  }
+  function getClearBarrier(){
+    try{return JSON.parse(localStorage.getItem(uidKey(CLEAR_BARRIER_KEY_PREFIX))||'null');}catch(e){return null;}
+  }
+  function saveClearBarrier(clearedAt,data){
+    try{localStorage.setItem(uidKey(CLEAR_BARRIER_KEY_PREFIX),JSON.stringify({clearedAt,data}));}catch(e){}
   }
 
   function getQueue(){
@@ -12175,7 +12182,17 @@ auth.onAuthStateChanged(async user=>{
         return tb-ta;
       });
       const newestCandidate=candidates[0]||null;
-      if(newestCandidate && newestCandidate.raw && newestCandidate.raw.clearedAt){
+      const clearBarrier=getClearBarrier();
+      const barrierTime=Date.parse(clearBarrier&&clearBarrier.clearedAt||0)||0;
+      const localTime=Date.parse(getLocalUpdatedAt()||0)||0;
+      const newestCloudTime=Date.parse(newestCandidate&&newestCandidate.raw&&((newestCandidate.raw.updatedAtClient)||(newestCandidate.raw.data&&newestCandidate.raw.data.clientUpdatedAt))||0)||0;
+      /* A locally completed reset is authoritative even while its Cloud write
+         is queued. Old Cloud copies cannot repopulate this device. A genuinely
+         newer local save or Cloud save is still allowed normally. */
+      if(clearBarrier&&clearBarrier.data&&barrierTime>=localTime&&barrierTime>=newestCloudTime){
+        raw={ownerUid:sessionUid,clearedAt:clearBarrier.clearedAt,updatedAtClient:clearBarrier.clearedAt,data:clearBarrier.data};
+        sourceRef='local-clear-barrier';
+      }else if(newestCandidate && newestCandidate.raw && newestCandidate.raw.clearedAt){
         raw=newestCandidate.raw; sourceRef=newestCandidate.source+'-clear-marker';
       }else{
         const meaningful=candidates.filter(c=>hasMeaningfulFinancialData(c.raw&&c.raw.data));
@@ -12260,19 +12277,24 @@ auth.onAuthStateChanged(async user=>{
       expCatsCustom:[],bCatsExpSave:[],bCatsIncSave:[],netWorthSnapshots:[],
       clientUpdatedAt:clearedAt
     }));
-    try{await writeCloud(emptyData,'clear-tombstone',uid);}
-    catch(e){clearingFinancialData=false;throw e;}
+    /* The device reset succeeds immediately. If Cloud is temporarily blocked,
+       retain the empty state in the retry queue instead of restoring old data
+       or telling the user that nothing was cleared. */
+    saveClearBarrier(clearedAt,emptyData);
+    let cloudClearSynced=false;
+    try{await writeCloud(emptyData,'clear-tombstone',uid);cloudClearSynced=true;}
+    catch(e){console.warn('Cloud clear queued for retry',e);clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;}
     try{
-      localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
+      if(cloudClearSynced)localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
       localStorage.removeItem(uidKey(META_KEY_PREFIX));
-      localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
       localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
       localStorage.removeItem(typeof DB_KEY_BASE!=='undefined'?DB_KEY_BASE:'mongo_v4');
     }catch(e){}
     lastCloudFingerprint='';
     window.MONGO_LOCAL_DATA_UPDATED_AT='';
     resetDefaultFinanceShell();
+    updateSyncStatus(cloudClearSynced?'synced':'pending');
     return true;
   }
 
@@ -12630,7 +12652,11 @@ button:focus-visible,.btn:focus-visible,.auth-btn:focus-visible,.nav-btn:focus-v
     setTimeout(()=>clearInterval(wait),15000);
     document.addEventListener('click',e=>{
       const sync=e.target.closest&&e.target.closest('#mongo-sync-status');
-      if(sync){sync.title=sync.textContent.trim();}
+      if(sync){
+        const label=(document.getElementById('mongo-sync-text')?.textContent||sync.textContent||'Cloud').trim();
+        sync.title=label;
+        if(typeof showToast==='function')showToast(label);
+      }
     });
     polishHeader();setTimeout(polishHeader,1200);setTimeout(normalizeLegacyTransactionIds,1600);
   }
