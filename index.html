@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.69: asset-income save responds on the first mobile touch. -->
+<!-- Möngö V43.70: asset-income save uses direct capture-phase mobile submission. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -13215,6 +13215,8 @@ function ensureYieldBudgetSource(sourceName,color){
   const names={mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'};
   let cat=bCatsInc.find(c=>c.key==='asset_income_cat');
   if(!cat){cat={key:'asset_income_cat',names,icon:'💹',color:'#1D9E75',subs:[]};bCatsInc.push(cat);}
+  if(!Array.isArray(cat.subs))cat.subs=[];
+  if(!cat.names)cat.names=names;
   if(!incCats.find(c=>c.key==='asset_income_cat'))incCats.push({key:'asset_income_cat',names,icon:'💹',color:'#1D9E75'});
   if(!String(sourceName||'').trim())return {cat,sub:null};
   const key='yield_'+String(sourceName||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45);
@@ -13592,16 +13594,17 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
         if(submitted||!document.getElementById('asset-income-modal'))return;
         submitted=true;
         if(ev){ev.preventDefault();ev.stopPropagation();}
-        window.saveAssetIncome(key);
+        window.saveAssetIncome(key,g);
         // Validation may keep the modal open; allow a corrected retry.
         if(document.getElementById('asset-income-modal'))setTimeout(()=>{submitted=false;},180);
       };
-      saveButton.addEventListener('pointerup',submit,{passive:false});
+      saveButton.addEventListener('pointerdown',submit,{capture:true,passive:false});
+      saveButton.addEventListener('touchstart',submit,{capture:true,passive:false});
       saveButton.addEventListener('click',submit);
       saveButton.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){submit(ev);}});
     }
   };
-  window.saveAssetIncome=function(key){
+  window.saveAssetIncome=function(key,groupOverride){
     const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
     const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
     if(amount<=0||!accountId||!date){showToast(t.error);return;}
@@ -13637,11 +13640,12 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   restoreAssetIncomeBudgetSources();
 
   let assetIncomeSaving=false;
-  window.saveAssetIncome=function(key){
+  window.saveAssetIncome=function(key,groupOverride){
     if(assetIncomeSaving)return;
     const button=document.querySelector('#asset-income-modal .btn-p'),t=AIT();
     try{
-      const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
+      const g=groupOverride||getInvestGroups().find(x=>x.key===key);
+      if(!g){showToast(t.error);return;}
       const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
       if(amount<=0||!accountId||!date){showToast(t.error);return;}
       assetIncomeSaving=true;if(button)button.disabled=true;
