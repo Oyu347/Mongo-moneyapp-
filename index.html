@@ -3449,7 +3449,7 @@ const IICONS={vehicle:'🚗',business_asset:'💼',stock:'📈',crypto:'🪙',re
 const DEF_INC=new Set(['salary','bonus','business','other_inc']);
 const DEF_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
 const DEF_B_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
-const DEF_B_INC=new Set(['salary','bonus','business','other_inc']);
+const DEF_B_INC=new Set(['salary','bonus','business','asset_income_cat','other_inc']);
 const INVEST_CAT_KEY='invest_cat';
 
 let lang='mn',L=LANGS.mn,CS='₮';
@@ -6656,7 +6656,7 @@ function updateWelcomeCard(){
   const idx=(dayOfYear()-1)%quotes.length;
   qt.textContent=quotes[idx];
 }
-function profileNetWorth(){return invests.reduce((s,i)=>s+(Number(i.current)||0),0)+goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0)-debts.reduce((s,d)=>s+getDebtRemaining(d),0);}
+function profileNetWorth(){return moneyAccountsTotal()+invests.reduce((s,i)=>s+(Number(i.current)||0),0)-debts.reduce((s,d)=>s+getDebtRemaining(d),0);}
 function timeGreeting(){
   const h=new Date().getHours();
   const d={
@@ -6719,7 +6719,7 @@ function renderWealthLevel(){
   }
 }
 function renderProfileProgress(){
-  const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0); const score=getCurrentFinancialScore();
+  const PT=profileText(); const net=profileNetWorth(); const delta=periodWealthDelta(); const savings=savingsAccountsTotal(); const score=getCurrentFinancialScore();
   [['profile-progress-title',PT.progress],['profile-net-k',PT.net],['profile-growth-k',PT.growth],['profile-savings-k',PT.savings],['profile-score-k',PT.score]].forEach(([id,t])=>{const e=document.getElementById(id);if(e)e.textContent=t;});
   const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   set('profile-net-v',fmt(net));
@@ -6786,7 +6786,7 @@ function renderProfileBadges(){
   const title=document.getElementById('profile-badge-title'); if(title)title.textContent=PT.badges;
   const el=document.getElementById('profile-badges-list'); if(!el)return;
   const net=profileNetWorth();
-  const savings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0);
+  const savings=savingsAccountsTotal();
   const score=getCurrentFinancialScore();
   const completedGoals=goals.filter(g=>goalProgressPct(g)>=100).length;
   const names=PT.badgesList||['First saving','100 transactions','30-day tracking','100M net worth','Score 90+','Goal 100%','Möngö Master'];
@@ -8157,8 +8157,13 @@ async function archiveMoneyAccount(id){
   a.active=false;saveData();renderMoneyAccounts();const d=document.getElementById('account-detail');if(d)d.classList.remove('show');
 }
 function moneyAccountsTotal(){ensureMoneyAccounts();return moneyAccounts.reduce((s,a)=>s+accountBalance(a.id),0);}
+function isSpendableAccount(a){return !!a&&a.active!==false&&['checking','cash'].includes(normalizeAccountType(a.type));}
+function isSavingsAccount(a){return !!a&&a.active!==false&&normalizeAccountType(a.type)==='savings';}
+function spendableAccountsTotal(){ensureMoneyAccounts();return moneyAccounts.filter(isSpendableAccount).reduce((s,a)=>s+accountBalance(a.id),0);}
+function spendableOpeningTotal(){ensureMoneyAccounts();return moneyAccounts.filter(isSpendableAccount).reduce((s,a)=>s+(Number(a.openingBalance)||0),0);}
+function savingsAccountsTotal(){ensureMoneyAccounts();return moneyAccounts.filter(isSavingsAccount).reduce((s,a)=>s+accountBalance(a.id),0);}
 const OPENING_BALANCE_TEXT={
-  mn:{title:'Эхний үлдэгдэл',sub:'Данс бүрийн эхний үлдэгдлийг оруулна. Нийт дүн автоматаар тооцогдоно.',label:'Эхний нийт үлдэгдэл',current:'Одоогийн мөнгөн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'Нийт эхний үлдэгдэл нь банк болон бэлэн мөнгөний дансуудын эхний үлдэгдлийн нийлбэр. Тусдаа нийт дүн дахин оруулах шаардлагагүй.',reconcile:'Эхний үлдэгдэл + мөнгөн урсгал = одоогийн мөнгөн үлдэгдэл.'},
+  mn:{title:'Эхний үлдэгдэл',sub:'Данс бүрийн эхний үлдэгдлийг оруулна. Нийт дүн автоматаар тооцогдоно.',label:'Эхний үлдэгдэл',current:'Одоогийн үлдэгдэл',income:'Нийт орлого',expense:'Нийт зарлага',note:'',reconcile:''},
   en:{title:'Opening balance',sub:'Enter an opening balance for each account. The total is calculated automatically.',label:'Total opening balance',current:'Current money balance',income:'Total income',expense:'Total expense',note:'Your total opening balance is the sum of the opening balances of your bank and cash accounts. You do not need to enter the same total separately.'},
   zh:{title:'期初余额',sub:'为每个账户输入期初余额，总额将自动计算。',label:'期初余额合计',current:'当前资金余额',income:'总收入',expense:'总支出',note:'期初余额合计等于所有银行账户和现金账户期初余额之和，无需再次单独输入总额。'},
   ja:{title:'開始残高',sub:'口座ごとに開始残高を入力すると、合計は自動計算されます。',label:'開始残高合計',current:'現在の資金残高',income:'総収入',expense:'総支出',note:'開始残高合計は銀行口座と現金口座の開始残高の合計です。同じ総額を別に入力する必要はありません。',reconcile:'開始残高 + キャッシュフロー = 現在の資金残高。'},
@@ -8226,7 +8231,7 @@ function openingBalanceText(){return OPENING_BALANCE_TEXT[lang]||OPENING_BALANCE
 function allTimeCashTotals(){
   const income=txns.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
   const expense=txns.filter(t=>t.type==='expense'&&!t.autoPaySelf).reduce((s,t)=>s+(Number(t.amount)||0),0);
-  ensureMoneyAccounts();return {income,expense,balance:moneyAccountsTotal()};
+  ensureMoneyAccounts();return {income,expense,balance:spendableAccountsTotal()};
 }
 function renderOpeningBalance(){
   ensureMoneyAccounts();
@@ -8235,7 +8240,7 @@ function renderOpeningBalance(){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('opening-balance-title',T.title);set('opening-balance-sub',T.sub);
   set('opening-current-label',T.current);set('opening-start-label',T.label);set('opening-income-label',T.income);set('opening-expense-label',T.expense);set('opening-balance-note',T.note);
-  set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(openingBalance||0));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
+  set('opening-current-value',fmt(totals.balance));set('opening-start-value',fmt(spendableOpeningTotal()));set('opening-income-value','+'+fmt(totals.income));set('opening-expense-value','−'+fmt(totals.expense));
   const rc=allTimeCashflowTotals(),rn=document.getElementById('opening-reconcile-note');
   if(rn)rn.textContent=`${T.reconcile}  ${fmt(openingBalance||0)} ${rc.cashflow>=0?'+':'−'} ${fmt(Math.abs(rc.cashflow))} = ${fmt(totals.balance)}`;
   const op=document.getElementById('account-opening');if(op)op.placeholder=CS+' 0';
@@ -8250,7 +8255,7 @@ function uDash(){
   const dbt=debts.reduce((s,d)=>s+getDebtRemaining(d),0);
   const tIn=invests.reduce((s,i)=>s+i.invested,0);
   const tCur=invests.reduce((s,i)=>s+i.current,0);
-  const totalSavings=goals.reduce((s,g)=>s+getGoalEffectiveSaved(g),0);
+  const totalSavings=savingsAccountsTotal();
   document.getElementById('d-inc').textContent=fmt(inc);
   document.getElementById('d-exp').textContent=fmt(exp);
   const cashTotals=allTimeCashTotals();
@@ -8715,10 +8720,9 @@ function dashChangeMo(dir){
 }
 
 function getGoalAutoSaved(goal){
-  const legacy=txns.filter(t=>t.type==='expense'&&!t.autoPaySelf&&(t.catName===goal.name||t.desc===goal.name||t.subcatName===goal.name)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const transfers=accountTransfers.filter(t=>t.purpose==='savings'&&String(t.targetId)===String(goal.id)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   const interest=txns.filter(t=>t.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===String(goal.id)).reduce((s,t)=>s+(Number(t.amount)||0),0);
-  return legacy+transfers+interest;
+  return transfers+interest;
 }
 function getGoalEffectiveSaved(goal){
   return Math.max(0,goal.saved||0)+getGoalAutoSaved(goal);
@@ -8850,7 +8854,6 @@ function rGoals(){
           <div style="font-size:12px;color:var(--brand);font-weight:600;margin-top:1px">${fmt(effectiveSaved)} / ${fmt(g.target)}${g.dead?` · ${g.dead}`:''}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">
             ${manualSaved>0?`<span style="font-size:10px;color:var(--text2)">✏️ ${fmt(manualSaved)}</span>`:''}
-            ${autoPaid>0?`<span style="font-size:10px;color:#1D9E75">⚡ ${L.autosave||'Автомат'}: ${fmt(autoPaid)}</span>`:''}
           </div>
         </div>
         <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
@@ -9207,18 +9210,15 @@ function rDonut(type){
   else if(type==='exp'){cid='c-exp';lid='l-exp';sumByKey(expCats,'expense');}
   else if(type==='gls'){
     cid='c-gls';lid='l-gls';
-    // V43.31: Savings donut represents each goal's share of TOTAL CURRENT SAVINGS.
-    // Goal cards still show their own target-completion progress separately.
+    // Savings chart is sourced from actual savings-account balances. Goals are
+    // planning/progress objects and must never inflate the user's real savings.
     const savingsPalette=['#6C4CF5','#24A9B5','#F0444E','#FF7A1A','#20B96B','#F2B01E','#2E7BC4','#D94FA8'];
-    goals.forEach((g,i)=>{
-      const saved=Math.max(0,Number(getGoalEffectiveSaved(g))||0);
-      const target=Math.max(0,Number(g.target)||0);
-      const goalPct=target>0?Math.max(0,Math.min(100,Math.round(saved/target*100))):0;
-      const col=resolveCanvasColor(g.color||savingsPalette[i%savingsPalette.length],savingsPalette[i%savingsPalette.length]);
-      // Use the saved amount for donut geometry so slices add up to 100% of current savings.
-      // Zero-balance goals stay out of the donut until they have an actual saved amount.
+    moneyAccounts.filter(isSavingsAccount).forEach((a,i)=>{
+      const saved=Math.max(0,Number(accountBalance(a.id))||0);
+      const linkedGoal=goals.find(g=>String(g.id)===String(a.linkedGoalId||a.goalId)||String(g.name)===String(a.name));
+      const col=resolveCanvasColor(linkedGoal?.color||a.color||savingsPalette[i%savingsPalette.length],savingsPalette[i%savingsPalette.length]);
       if(saved>0){
-        data.push(saved);colors.push(col);labels.push({name:g.name,val:saved,color:col,saved,target,goalPct});
+        data.push(saved);colors.push(col);labels.push({name:a.name,val:saved,color:col,saved});
       }
     });
   }
@@ -9237,7 +9237,7 @@ function rDonut(type){
     color:(labels[i]&&labels[i].color)||colors[i]||palette[i%palette.length],
     label:labels[i]
   })).sort((a,b)=>b.v-a.v);
-  const savingsTotal=type==='gls'?goals.reduce((sum,g)=>sum+Math.max(0,Number(getGoalEffectiveSaved(g))||0),0):0;
+  const savingsTotal=type==='gls'?savingsAccountsTotal():0;
   const chartOptions={
     centerValue:type==='gls'?compactChartAmount(savingsTotal):compactChartAmount(combined.reduce((s,x)=>s+x.v,0)),
     centerLabel:(L.total||'Нийт'),
@@ -13780,6 +13780,10 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   rInvests=function(){ensureAllAssetIncomeSources();return baseRInvestsV4374.apply(this,arguments);};
 })();
 </script>
+<style id="mongo-v4375-clean-balance-style">
+#opening-balance-note,#opening-reconcile-note,.opening-secondary-grid,#lbl-savinginfo{display:none!important}
+.opening-summary-hero{margin-bottom:12px}
+</style>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
