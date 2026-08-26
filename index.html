@@ -13074,16 +13074,17 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
       sel.classList.add('calc-native-select-localized');
       let pointerStart=null;
       sel.addEventListener('pointerdown',ev=>{
-        const r=sel.getBoundingClientRect();
-        pointerStart={x:ev.clientX,y:ev.clientY,onArrow:ev.clientX>=r.right-Math.min(58,r.width*.3)};
+        if(ev.pointerType==='touch')return;
+        pointerStart={x:ev.clientX,y:ev.clientY};
         // A native select opens on touch-down on some mobile browsers. Keep it
         // closed until a deliberate tap on the comfortable arrow area ends.
         ev.preventDefault();
       },true);
       sel.addEventListener('pointerup',ev=>{
+        if(ev.pointerType==='touch')return;
         if(!pointerStart)return;
         const moved=Math.hypot(ev.clientX-pointerStart.x,ev.clientY-pointerStart.y);
-        const shouldOpen=pointerStart.onArrow&&moved<10;
+        const shouldOpen=moved<28;
         pointerStart=null;ev.preventDefault();ev.stopPropagation();
         if(shouldOpen)openMongoCalcPicker(sel);
       },true);
@@ -13579,27 +13580,48 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   function eligible(sel){
     return sel&&sel.tagName==='SELECT'&&!sel.disabled&&!sel.multiple&&Number(sel.size||0)<=1&&!sel.closest('#mongo-calc-picker')&&!sel.classList.contains('mongo-native-select');
   }
-  let selectGesture=null,lastSelect=null,lastOpened=0;
+  let selectGesture=null,touchGesture=null,lastSelect=null,lastOpened=0;
+  function openSelect(sel){
+    if(!eligible(sel)||typeof window.openMongoCalcPicker!=='function')return;
+    const now=Date.now();if(lastSelect===sel&&now-lastOpened<320)return;
+    lastSelect=sel;lastOpened=now;window.openMongoCalcPicker(sel);
+  }
+  document.addEventListener('touchstart',ev=>{
+    const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+    if(!eligible(sel)||!ev.touches?.length)return;
+    const p=ev.touches[0];touchGesture={sel,x:p.clientX,y:p.clientY};
+    // Do not prevent the start: vertical page scrolling must remain natural.
+    ev.stopImmediatePropagation();
+  },{capture:true,passive:true});
+  document.addEventListener('touchend',ev=>{
+    if(!touchGesture)return;
+    const g=touchGesture;touchGesture=null;
+    const p=ev.changedTouches?.[0];if(!p)return;
+    if(Math.hypot(p.clientX-g.x,p.clientY-g.y)>=28)return;
+    ev.preventDefault();ev.stopImmediatePropagation();openSelect(g.sel);
+  },{capture:true,passive:false});
+  document.addEventListener('touchcancel',()=>{touchGesture=null;},true);
   document.addEventListener('pointerdown',ev=>{
+    if(ev.pointerType==='touch')return;
     const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
     if(!eligible(sel))return;
-    const r=sel.getBoundingClientRect();
-    selectGesture={sel,x:ev.clientX,y:ev.clientY,onArrow:ev.clientX>=r.right-Math.min(58,r.width*.3)};
+    selectGesture={sel,x:ev.clientX,y:ev.clientY};
     ev.preventDefault();ev.stopImmediatePropagation();
   },true);
   document.addEventListener('pointerup',ev=>{
+    if(ev.pointerType==='touch')return;
     if(!selectGesture)return;
     const g=selectGesture;selectGesture=null;
     ev.preventDefault();ev.stopImmediatePropagation();
-    if(!g.onArrow||Math.hypot(ev.clientX-g.x,ev.clientY-g.y)>=10||typeof window.openMongoCalcPicker!=='function')return;
-    const now=Date.now();if(lastSelect===g.sel&&now-lastOpened<320)return;
-    lastSelect=g.sel;lastOpened=now;window.openMongoCalcPicker(g.sel);
+    if(Math.hypot(ev.clientX-g.x,ev.clientY-g.y)>=28||typeof window.openMongoCalcPicker!=='function')return;
+    openSelect(g.sel);
   },true);
   document.addEventListener('pointercancel',()=>{selectGesture=null;},true);
   document.addEventListener('click',ev=>{
     const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
     if(!eligible(sel))return;
     ev.preventDefault();ev.stopImmediatePropagation();
+    openSelect(sel);
   },true);
   document.addEventListener('keydown',ev=>{
     if(!eligible(ev.target)||!['Enter',' ','ArrowDown','ArrowUp'].includes(ev.key))return;
@@ -13895,6 +13917,7 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
 select.fi{touch-action:pan-y;cursor:pointer}
 #account-submit-row{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;grid-column:1/-1}
 #account-submit-row #account-save-btn{min-width:150px;min-height:48px}
+#custom-modal{z-index:2147483646!important}
 @media(max-width:480px){#account-submit-row #account-save-btn{width:100%}}
 </style>
 <script id="mongo-v4380-account-ledger-form-ux">
@@ -13919,7 +13942,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     (debts||[]).forEach(d=>{
       if(d.fundingMode==='existing'&&String(d.fundingAccountId)===String(a.id)){
         const amount=Number(d.fundingAmount)||Number(d.total)||0;
-        if(amount>0)rows.push({date:d.startDate||d.date||String(d.createdAt||'').slice(0,10),label:t80().loanIn,amount,kind:'loan_funding',debtId:d.id});
+        if(amount>0)rows.push({date:d.startDate||d.date||String(d.createdAt||'').slice(0,10),label:d.name+' · '+t80().loanIn,amount,kind:'loan_funding',debtId:d.id});
       }
     });
     return rows.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
@@ -13945,16 +13968,9 @@ select.fi{touch-action:pan-y;cursor:pointer}
       const actions=button.parentElement;
       const field=document.createElement('div');
       field.id='account-edit-opening-field';field.style.margin='0 0 14px';
-      field.innerHTML=`<label style="font-size:12px;font-weight:800;color:var(--text2)">${t80().opening}</label><input id="account-edit-opening" class="fi" inputmode="decimal" style="width:100%;margin-top:6px" value="${Math.round(Number(a.openingBalance)||0).toLocaleString('en-US')}">`;
+      field.innerHTML=`<label style="font-size:12px;font-weight:800;color:var(--text2)">${t80().opening}</label><input id="account-edit-opening" class="fi" inputmode="decimal" data-amt="1" style="width:100%;margin-top:6px" value="${Math.round(Number(a.openingBalance)||0).toLocaleString('en-US')}">`;
       card.insertBefore(field,actions);
       const input=document.getElementById('account-edit-opening');
-      // Editing a formatted number one digit at a time moved the caret whenever
-      // commas were reinserted. Edit raw digits while focused, format on exit.
-      input.addEventListener('focus',()=>{
-        input.value=String(Math.round(parseAmt(input.value)||0));
-        requestAnimationFrame(()=>input.select());
-      });
-      input.addEventListener('blur',()=>{input.value=Math.max(0,Math.round(parseAmt(input.value)||0)).toLocaleString('en-US');});
       const oldSave=button.onclick;
       button.onclick=async function(event){
         event?.preventDefault();event?.stopPropagation();
@@ -13965,9 +13981,17 @@ select.fi{touch-action:pan-y;cursor:pointer}
           if(!await showConfirm(message))return;
           a.openingBalance=after;
           openingBalance=(moneyAccounts||[]).reduce((s,x)=>s+(Number(x.openingBalance)||0),0);
+          // Persist the corrected opening balance before delegating the rest of
+          // the account form, so an unrelated dynamic field cannot lose it.
+          saveData();
         }
-        if(typeof oldSave==='function')oldSave.call(this,event);
-        try{renderOpeningBalance();uDash();}catch(e){}
+        try{if(typeof oldSave==='function')oldSave.call(this,event);}
+        catch(saveError){console.error('Account form save failed after opening balance update',saveError);}
+        finally{
+          openingBalance=(moneyAccounts||[]).reduce((s,x)=>s+(Number(x.openingBalance)||0),0);
+          saveData();
+          try{renderMoneyAccounts();renderOpeningBalance();uDash();}catch(e){}
+        }
       };
     },30);
   };
