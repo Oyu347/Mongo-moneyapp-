@@ -10406,7 +10406,14 @@ requestAnimationFrame(()=>{
 
 // ── Möngö V30 Premium splash ─────────────────────────────────────────────
 (function(){
-  function hideSplash(){const sp=document.getElementById('mongo-splash'); if(sp){sp.classList.add('hide'); setTimeout(()=>{sp.style.display='none';},520);}}
+  function hideSplash(){
+    const sp=document.getElementById('mongo-splash'); if(!sp)return;
+    const card=sp.querySelector('.splash-card');
+    /* The final PNG lockup is declared by a later compatibility block. Do not
+       let the fallback timer dismiss the splash while that block is loading. */
+    if(card&&!card.classList.contains('mongo-splash-ready')){setTimeout(hideSplash,120);return;}
+    sp.classList.add('hide');setTimeout(()=>{sp.style.display='none';},520);
+  }
   window.addEventListener('load',()=>setTimeout(hideSplash,1900));
   setTimeout(hideSplash,3200);
 })();
@@ -11536,6 +11543,11 @@ auth.onAuthStateChanged(async user=>{
   .mongo-brand-lockup img{width:112px!important;height:112px!important;}
   .mongo-brand-name{font-size:38px!important;}
   .mongo-brand-sub{font-size:12px!important;}
+  /* The legacy inline SVG is parsed before the final brand image is injected.
+     Keep the whole card hidden until the one canonical lockup is ready, so the
+     browser never paints SVG -> text -> final logo as three separate stages. */
+  #mongo-splash .splash-card{opacity:0!important;visibility:hidden!important;transition:opacity .18s ease!important;}
+  #mongo-splash .splash-card.mongo-splash-ready{opacity:1!important;visibility:visible!important;}
   .splash-card > .splash-logo,.splash-card > .splash-name,.splash-card > .splash-sub{display:none!important;}
   @media(max-width:520px){
     .auth-logo img,#auth-logo-img,#auth-logo-img2,#auth-logo-img3{width:88px!important;height:88px!important;}
@@ -11596,6 +11608,12 @@ auth.onAuthStateChanged(async user=>{
       var lock=document.createElement('div'); lock.className='mongo-brand-lockup';
       lock.innerHTML='<img alt="Möngö logo"><div><div class="mongo-brand-name">Möngö</div><div class="mongo-brand-sub">MONEY FLOW SYSTEM</div></div>';
       lock.querySelector('img').src=MONGO_CORRECT_LOGO; splashCard.insertBefore(lock, splashCard.firstChild);
+    }
+    if(splashCard){
+      var finalSplashLogo=splashCard.querySelector('.mongo-brand-lockup img');
+      var revealSplash=function(){splashCard.classList.add('mongo-splash-ready');};
+      if(finalSplashLogo && finalSplashLogo.complete) revealSplash();
+      else if(finalSplashLogo){ finalSplashLogo.addEventListener('load',revealSplash,{once:true}); finalSplashLogo.addEventListener('error',revealSplash,{once:true}); }
     }
   }
   applyCorrectMongoLogo();
@@ -12146,19 +12164,29 @@ auth.onAuthStateChanged(async user=>{
           if(rd && rd.financialState && rd.financialState.data) candidates.push({raw:rd.financialState,source:'user-root-fallback'});
         }catch(rootErr){ console.warn('User-root cloud read skipped:',rootErr); }
       }
-      const meaningful=candidates.filter(c=>hasMeaningfulFinancialData(c.raw&&c.raw.data));
-      const pool=meaningful.length?meaningful:candidates;
-      pool.sort((a,b)=>{
+      /* A clear marker is a real state, not an "empty candidate" to ignore.
+         Sort every mirror first. If the newest write is a tombstone, older
+         meaningful mirrors must never resurrect the deleted data. */
+      candidates.sort((a,b)=>{
         const ta=Date.parse((a.raw&&a.raw.updatedAtClient)||(a.raw&&a.raw.data&&a.raw.data.clientUpdatedAt)||0)||0;
         const tb=Date.parse((b.raw&&b.raw.updatedAtClient)||(b.raw&&b.raw.data&&b.raw.data.clientUpdatedAt)||0)||0;
         return tb-ta;
       });
-      if(pool.length){ raw=pool[0].raw; sourceRef=pool[0].source; }
+      const newestCandidate=candidates[0]||null;
+      if(newestCandidate && newestCandidate.raw && newestCandidate.raw.clearedAt){
+        raw=newestCandidate.raw; sourceRef=newestCandidate.source+'-clear-marker';
+      }else{
+        const meaningful=candidates.filter(c=>hasMeaningfulFinancialData(c.raw&&c.raw.data));
+        const selected=meaningful[0]||newestCandidate;
+        if(selected){raw=selected.raw;sourceRef=selected.source;}
+      }
 
       if(raw && raw.data){
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
-        const chosen=chooseCloudOrLocal(raw.data,raw.updatedAtClient);
+        const chosen=raw.clearedAt
+          ? {data:raw.data,source:'cloud-cleared'}
+          : chooseCloudOrLocal(raw.data,raw.updatedAtClient);
         const ok=applyFinancialState(chosen.data,chosen.source);
 
         // Migrate legacy storage to appState/main so all future devices read the
@@ -12213,29 +12241,50 @@ auth.onAuthStateChanged(async user=>{
         localStorage.removeItem(uidKey(META_KEY_PREFIX));
         localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
         localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
+        localStorage.removeItem(typeof DB_KEY_BASE!=='undefined'?DB_KEY_BASE:'mongo_v4');
       }catch(e){}
       resetDefaultFinanceShell();
       return true;
     }
     const uid=currentUid();
+    /* Firestore rules can permit set() while denying delete(). Store one newer
+       empty state in every writable mirror instead of silently skipping a
+       denied delete. The clearedAt marker also wins over an older mirror that
+       this device is not allowed to remove. */
+    resetDefaultFinanceShell();
+    const clearedAt=nowIso();
+    const emptyData=sanitizeFinancialData(Object.assign(collectFinancialState(),{
+      txns:[],goals:[],debts:[],invests:[],budgets:{},openingBalance:0,
+      moneyAccounts:[],accountTransfers:[],lockedCats:[],incCatsCustom:[],
+      expCatsCustom:[],bCatsExpSave:[],bCatsIncSave:[],netWorthSnapshots:[],
+      clientUpdatedAt:clearedAt
+    }));
+    const tombstone={ownerUid:uid,version:CLOUD_FINANCIAL_VERSION,clearedAt:clearedAt,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAtClient:clearedAt,
+      clientId:getClientId(),lastOperationId:opId(),data:emptyData};
+    const writes=[];
     const ref=cloudDocRef(uid);
-    if(ref) await ref.delete();
-    // Also remove the legacy V43 financial/main document so a later login can
-    // never resurrect data that the user explicitly cleared.
+    if(ref)writes.push(ref.set(tombstone).then(()=>true).catch(e=>{console.warn('appState clear marker skipped',e);return false;}));
     const legacyRef=legacyCloudDocRef(uid);
-    if(legacyRef){ try{ await legacyRef.delete(); }catch(e){ console.warn('Legacy cloud clear skipped',e); } }
+    if(legacyRef)writes.push(legacyRef.set(tombstone).then(()=>true).catch(e=>{console.warn('financial clear marker skipped',e);return false;}));
     const settingsRef=settingsCloudDocRef(uid);
-    if(settingsRef){ try{ await settingsRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('Settings cloud clear skipped',e); } }
+    if(settingsRef)writes.push(settingsRef.set({financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('settings clear marker skipped',e);return false;}));
     const profileRef=profileCloudDocRef(uid);
-    if(profileRef){ try{ await profileRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('Profile cloud clear skipped',e); } }
+    if(profileRef)writes.push(profileRef.set({financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('profile clear marker skipped',e);return false;}));
     const rootRef=rootCloudDocRef(uid);
-    if(rootRef){ try{ await rootRef.set({financialState:firebase.firestore.FieldValue.delete(),financialStateUpdatedAt:firebase.firestore.FieldValue.delete(),financialStateUpdatedAtClient:firebase.firestore.FieldValue.delete()},{merge:true}); }catch(e){ console.warn('User-root cloud clear skipped',e); } }
+    if(rootRef)writes.push(rootRef.set({uid:uid,financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('user-root clear marker skipped',e);return false;}));
+    const clearResults=await Promise.all(writes);
+    if(!clearResults.some(Boolean)){
+      clearingFinancialData=false;
+      throw new Error('ALL_CLOUD_CLEAR_WRITES_FAILED');
+    }
     try{
       localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
       localStorage.removeItem(uidKey(META_KEY_PREFIX));
       localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
       localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
+      localStorage.removeItem(typeof DB_KEY_BASE!=='undefined'?DB_KEY_BASE:'mongo_v4');
     }catch(e){}
     lastCloudFingerprint='';
     window.MONGO_LOCAL_DATA_UPDATED_AT='';
