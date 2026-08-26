@@ -13068,17 +13068,26 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
     box.classList.add('show');
   };
   function wire(){
-    document.querySelectorAll(
-      '#debts-panel-calc select,#invest-panel-calc select,#goals-panel-calc select,#account-add-form select,#account-edit-modal select'
-    ).forEach(sel=>{
+    document.querySelectorAll('select.fi').forEach(sel=>{
       if(sel.dataset.mongoLocalizedPicker==='1')return;
       sel.dataset.mongoLocalizedPicker='1';
       sel.classList.add('calc-native-select-localized');
+      let pointerStart=null;
       sel.addEventListener('pointerdown',ev=>{
+        const r=sel.getBoundingClientRect();
+        pointerStart={x:ev.clientX,y:ev.clientY,onArrow:ev.clientX>=r.right-Math.min(58,r.width*.3)};
+        // A native select opens on touch-down on some mobile browsers. Keep it
+        // closed until a deliberate tap on the comfortable arrow area ends.
         ev.preventDefault();
-        ev.stopPropagation();
-        openMongoCalcPicker(sel);
       },true);
+      sel.addEventListener('pointerup',ev=>{
+        if(!pointerStart)return;
+        const moved=Math.hypot(ev.clientX-pointerStart.x,ev.clientY-pointerStart.y);
+        const shouldOpen=pointerStart.onArrow&&moved<10;
+        pointerStart=null;ev.preventDefault();ev.stopPropagation();
+        if(shouldOpen)openMongoCalcPicker(sel);
+      },true);
+      sel.addEventListener('pointercancel',()=>{pointerStart=null;},true);
       sel.addEventListener('keydown',ev=>{
         if(ev.key==='Enter'||ev.key===' '||ev.key==='ArrowDown'){
           ev.preventDefault(); openMongoCalcPicker(sel);
@@ -13866,6 +13875,88 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
 #opening-balance-note,#opening-reconcile-note,.opening-secondary-grid,#lbl-savinginfo{display:none!important}
 .opening-summary-hero{margin-bottom:12px}
 </style>
+<style id="mongo-v4380-account-ledger-form-ux-style">
+select.fi{touch-action:pan-y;cursor:pointer}
+#account-submit-row{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;grid-column:1/-1}
+#account-submit-row #account-save-btn{min-width:150px;min-height:48px}
+@media(max-width:480px){#account-submit-row #account-save-btn{width:100%}}
+</style>
+<script id="mongo-v4380-account-ledger-form-ux">
+(function(){
+  'use strict';
+  const UI={
+    mn:{loanIn:'Зээлийн мөнгө орсон',opening:'Эхний үлдэгдэл',confirm:'“{name}” дансны эхний үлдэгдлийг {old} → {next} болгож засах уу?\nОдоогийн үлдэгдэл {current} → {result} болж өөрчлөгдөнө.'},
+    en:{loanIn:'Loan proceeds received',opening:'Opening balance',confirm:'Change “{name}” opening balance from {old} to {next}?\nCurrent balance will change from {current} to {result}.'},
+    zh:{loanIn:'贷款资金到账',opening:'期初余额',confirm:'将“{name}”的期初余额从 {old} 改为 {next}？\n当前余额将从 {current} 变为 {result}。'},
+    ja:{loanIn:'融資金の入金',opening:'開始残高',confirm:'「{name}」の開始残高を {old} から {next} に変更しますか？\n現在残高は {current} から {result} に変わります。'},
+    ko:{loanIn:'대출금 입금',opening:'시작 잔액',confirm:'“{name}”의 시작 잔액을 {old}에서 {next}(으)로 변경할까요?\n현재 잔액은 {current}에서 {result}(으)로 바뀝니다.'},
+    ru:{loanIn:'Получены кредитные средства',opening:'Начальный остаток',confirm:'Изменить начальный остаток счёта «{name}» с {old} на {next}?\nТекущий остаток изменится с {current} на {result}.'},
+    de:{loanIn:'Darlehensbetrag eingegangen',opening:'Anfangssaldo',confirm:'Anfangssaldo von „{name}“ von {old} auf {next} ändern?\nDer aktuelle Saldo ändert sich von {current} auf {result}.'}
+  };
+  function t80(){return UI[(typeof lang!=='undefined'&&lang)||'mn']||UI.en;}
+
+  // Loan funding is already part of accountBalanceRaw. Derive its visible
+  // ledger row from the loan itself so no second balance-changing record is made.
+  const baseAccountRowsFor=accountRowsFor;
+  accountRowsFor=function(a){
+    const rows=baseAccountRowsFor(a);
+    (debts||[]).forEach(d=>{
+      if(d.fundingMode==='existing'&&String(d.fundingAccountId)===String(a.id)){
+        const amount=Number(d.fundingAmount)||Number(d.total)||0;
+        if(amount>0)rows.push({date:d.startDate||d.date||String(d.createdAt||'').slice(0,10),label:t80().loanIn+' · '+d.name,amount,kind:'loan_funding',debtId:d.id});
+      }
+    });
+    return rows.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+  };
+
+  function positionAccountSubmit(){
+    const form=document.getElementById('account-add-form'),button=document.getElementById('account-save-btn');
+    if(!form||!button)return;
+    let row=document.getElementById('account-submit-row');
+    if(!row){row=document.createElement('div');row.id='account-submit-row';}
+    if(button.parentElement!==row)row.appendChild(button);
+    if(form.lastElementChild!==row)form.appendChild(row);
+  }
+
+  const priorEditAccount80=editMoneyAccount;
+  editMoneyAccount=async function(id){
+    await priorEditAccount80.apply(this,arguments);
+    setTimeout(()=>{
+      const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+      const modal=document.getElementById('account-edit-modal');
+      const card=modal?.firstElementChild,button=document.getElementById('account-edit-save');
+      if(!a||!card||!button||document.getElementById('account-edit-opening'))return;
+      const actions=button.parentElement;
+      const field=document.createElement('div');
+      field.id='account-edit-opening-field';field.style.margin='0 0 14px';
+      field.innerHTML=`<label style="font-size:12px;font-weight:800;color:var(--text2)">${t80().opening}</label><input id="account-edit-opening" class="fi" inputmode="decimal" data-amt="1" style="width:100%;margin-top:6px" value="${Math.round(Number(a.openingBalance)||0).toLocaleString('en-US')}">`;
+      card.insertBefore(field,actions);
+      const input=document.getElementById('account-edit-opening');
+      if(typeof setupAmtInput==='function')setupAmtInput('account-edit-opening');
+      const oldSave=button.onclick;
+      button.onclick=async function(event){
+        event?.preventDefault();event?.stopPropagation();
+        const before=Math.round(Number(a.openingBalance)||0),after=Math.max(0,Math.round(parseAmt(input.value)||0));
+        if(after!==before){
+          const current=Math.round(accountBalance(a.id)),result=current+(after-before);
+          const message=t80().confirm.replace('{name}',a.name).replace('{old}',fmt(before)).replace('{next}',fmt(after)).replace('{current}',fmt(current)).replace('{result}',fmt(result));
+          if(!await showConfirm(message))return;
+          a.openingBalance=after;
+          openingBalance=(moneyAccounts||[]).reduce((s,x)=>s+(Number(x.openingBalance)||0),0);
+        }
+        if(typeof oldSave==='function')oldSave.call(this,event);
+        try{renderOpeningBalance();uDash();}catch(e){}
+      };
+    },30);
+  };
+
+  function refresh80(){positionAccountSubmit();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh80,50));else setTimeout(refresh80,50);
+  window.addEventListener('pageshow',()=>setTimeout(refresh80,80));
+  const observer=new MutationObserver(()=>{if(!document.getElementById('account-submit-row')||document.getElementById('account-add-form')?.lastElementChild?.id!=='account-submit-row')positionAccountSubmit();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>observer.observe(document.body,{childList:true,subtree:true}));else observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
