@@ -1692,7 +1692,8 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 /* ── Möngö V30: Premium splash + FIRE/score intelligence ── */
 .mongo-splash{display:flex!important;position:fixed;inset:0;z-index:12000;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
 .mongo-splash.hide{display:none!important;opacity:0;visibility:hidden;pointer-events:none;}
-.splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);}
+.splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);opacity:0!important;visibility:hidden!important;transition:opacity .18s ease!important;}
+.splash-card.mongo-splash-ready{opacity:1!important;visibility:visible!important;}
 .splash-logo{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(31,127,134,.18));animation:splashFloat 1.8s ease-in-out infinite alternate;}
 .splash-name{font-size:38px;font-weight:950;letter-spacing:-.06em;color:#1F7F86;line-height:1.1;margin-top:12px;}
 .splash-sub{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#8B97A3;font-weight:900;margin-top:4px;}
@@ -11980,7 +11981,7 @@ auth.onAuthStateChanged(async user=>{
     // not prove every Firestore mirror path exists. Login/bootstrap/migration
     // writes must still run so users such as older accounts get financial/main
     // and the other compatible mirrors created automatically.
-    const mirrorReasons=new Set(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror']);
+    const mirrorReasons=new Set(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
     if(fp===lastCloudFingerprint && !mirrorReasons.has(reason||'')) return {skipped:true};
     if(!accountReadyForCloud() || currentUid()!==uid || window._authUid!==uid) throw new Error('AUTH_SWITCHED');
 
@@ -11994,6 +11995,7 @@ auth.onAuthStateChanged(async user=>{
       data:clean,
       backup:{updatedAtClient:nowIso(),data:clean}
     };
+    if(reason==='clear-tombstone') payload.clearedAt=clean.clientUpdatedAt||payload.updatedAtClient;
 
     // V43.34: save the same user-scoped state to every already-established
     // Firestore surface that this deployment is allowed to write. Some older
@@ -12247,10 +12249,9 @@ auth.onAuthStateChanged(async user=>{
       return true;
     }
     const uid=currentUid();
-    /* Firestore rules can permit set() while denying delete(). Store one newer
-       empty state in every writable mirror instead of silently skipping a
-       denied delete. The clearedAt marker also wins over an older mirror that
-       this device is not allowed to remove. */
+    /* Use the exact same validated writer and payload shape as a normal save.
+       Some Firestore rules reject a reduced tombstone document even though
+       they allow the regular financial payload. */
     resetDefaultFinanceShell();
     const clearedAt=nowIso();
     const emptyData=sanitizeFinancialData(Object.assign(collectFinancialState(),{
@@ -12259,25 +12260,8 @@ auth.onAuthStateChanged(async user=>{
       expCatsCustom:[],bCatsExpSave:[],bCatsIncSave:[],netWorthSnapshots:[],
       clientUpdatedAt:clearedAt
     }));
-    const tombstone={ownerUid:uid,version:CLOUD_FINANCIAL_VERSION,clearedAt:clearedAt,
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAtClient:clearedAt,
-      clientId:getClientId(),lastOperationId:opId(),data:emptyData};
-    const writes=[];
-    const ref=cloudDocRef(uid);
-    if(ref)writes.push(ref.set(tombstone).then(()=>true).catch(e=>{console.warn('appState clear marker skipped',e);return false;}));
-    const legacyRef=legacyCloudDocRef(uid);
-    if(legacyRef)writes.push(legacyRef.set(tombstone).then(()=>true).catch(e=>{console.warn('financial clear marker skipped',e);return false;}));
-    const settingsRef=settingsCloudDocRef(uid);
-    if(settingsRef)writes.push(settingsRef.set({financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('settings clear marker skipped',e);return false;}));
-    const profileRef=profileCloudDocRef(uid);
-    if(profileRef)writes.push(profileRef.set({financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('profile clear marker skipped',e);return false;}));
-    const rootRef=rootCloudDocRef(uid);
-    if(rootRef)writes.push(rootRef.set({uid:uid,financialState:tombstone,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:clearedAt},{merge:true}).then(()=>true).catch(e=>{console.warn('user-root clear marker skipped',e);return false;}));
-    const clearResults=await Promise.all(writes);
-    if(!clearResults.some(Boolean)){
-      clearingFinancialData=false;
-      throw new Error('ALL_CLOUD_CLEAR_WRITES_FAILED');
-    }
+    try{await writeCloud(emptyData,'clear-tombstone',uid);}
+    catch(e){clearingFinancialData=false;throw e;}
     try{
       localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
