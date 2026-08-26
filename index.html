@@ -3598,10 +3598,15 @@ let lockedCats=new Set();
 let paySettings={enabled:true,rate:20,alloc:{}};
 let pendingPayPlan=null;
 
+function assetIncomeDefaultCat(){
+  return {key:'asset_income_cat',names:{mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'},icon:'💹',color:'#1D9E75'};
+}
+
 let incCats=[
   {key:'salary',icon:'💰',color:'#22C55E'},
   {key:'bonus',icon:'🎁',color:'#06B6D4'},
   {key:'business',icon:'💼',color:'#49B0B6'},
+  {key:'asset_income_cat',names:{mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'},icon:'💹',color:'#1D9E75'},
   {key:'other_inc',icon:'📈',color:'#64748B'}
 ];
 let expCats=[
@@ -3636,6 +3641,7 @@ let bCatsInc=[
   {key:'salary',icon:'💰',color:'#43a047',subs:[]},
   {key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},
   {key:'business',icon:'💼',color:'#1e88e5',subs:[]},
+  {key:'asset_income_cat',names:{mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'},icon:'💹',color:'#1D9E75',subs:[]},
   {key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}
 ];
 
@@ -9339,6 +9345,7 @@ function saveData(){
     const bCatsExpSave=bCatsExp.map(c=>({
       key:c.key||null,
       name:c.name||null,
+      names:c.names||null,
       icon:c.icon,
       color:c.color,
       subs:(c.subs||[]).map(s=>({
@@ -9351,6 +9358,7 @@ function saveData(){
     const bCatsIncSave=bCatsInc.map(c=>({
       key:c.key||null,
       name:c.name||null,
+      names:c.names||null,
       icon:c.icon,
       color:c.color,
       subs:(c.subs||[]).map(s=>({
@@ -9427,8 +9435,8 @@ function loadData(){
               if(/^#[0-9a-fA-F]{6}$/.test(ms.color||'')) exSub.color=ms.color;
             }
           });
-        } else if(sv.name){
-          current.push({name:sv.name,icon:sv.icon||'📌',color:sv.color||PAL[0],subs:(sv.subs||[]).map(migrateSub)});
+        } else if(sv.name||sv.key){
+          current.push({key:sv.key||null,name:sv.name||null,names:sv.names||null,icon:sv.icon||'📌',color:sv.color||PAL[0],subs:(sv.subs||[]).map(migrateSub)});
         }
       });
     }
@@ -11420,10 +11428,10 @@ auth.onAuthStateChanged(async user=>{
         lockedCats=new Set();
         window.netWorthSnapshots=[];
         window.MONGO_LOCAL_DATA_UPDATED_AT='';
-        incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
+        incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
         expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
         bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
-        bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+        bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5' ,subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
       }catch(e){ console.warn('Account isolation pre-reset failed',e); }
     }
     let cloudPrefs={};
@@ -11448,10 +11456,10 @@ auth.onAuthStateChanged(async user=>{
       // Өөр хэрэглэгч нэвтэрсэн — өгөгдлийг цэвэрлэж дахин ачаална
       txns=[];goals=[];debts=[];invests=[];budgets={};
       lockedCats=new Set();
-      incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
+      incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
       expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
       bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
-      bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+      bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
 
       // Тухайн хэрэглэгчийн өгөгдлийг ачаална
       loadData();
@@ -11889,13 +11897,13 @@ auth.onAuthStateChanged(async user=>{
 
   function resetDefaultFinanceShell(){
     if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0;if(typeof moneyAccounts!=='undefined')moneyAccounts=[];if(typeof accountTransfers!=='undefined')accountTransfers=[]; if(typeof lockedCats!=='undefined') lockedCats=new Set();
-    if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},{key:'other_inc',icon:'📈',color:'#64748B'}];
+    if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
     if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
     if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
-    if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
+    if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
   }
   function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
-  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ if(/^#[0-9a-fA-F]{6}$/.test(sv.color||''))ex.color=sv.color; if(sv.icon)ex.icon=sv.icon; safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); if(/^#[0-9a-fA-F]{6}$/.test(ms.color||''))exSub.color=ms.color; if(ms.investTypeKey)exSub.investTypeKey=ms.investTypeKey; } }); } else if(sv.name){ current.push({name:sv.name,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
+  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ if(sv.names)ex.names=Object.assign({},ex.names||{},sv.names); if(/^#[0-9a-fA-F]{6}$/.test(sv.color||''))ex.color=sv.color; if(sv.icon)ex.icon=sv.icon; safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); if(/^#[0-9a-fA-F]{6}$/.test(ms.color||''))exSub.color=ms.color; if(ms.investTypeKey)exSub.investTypeKey=ms.investTypeKey; } }); } else if(sv.name||sv.key){ current.push({key:sv.key||null,name:sv.name||null,names:sv.names||null,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
 
   function applyFinancialState(raw, source){
     if(!raw || typeof raw!=='object') return false;
@@ -13633,7 +13641,7 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
       if(amount<=0||!accountId||!date){showToast(t.error);return;}
       assetIncomeSaving=true;if(button)button.disabled=true;
-      const planEnabled=!!document.getElementById('ai-plan-enabled')?.checked;
+      const planEnabled=!!document.getElementById('ai-plan-enabled')?.checked||modal?.dataset.incomePlanIncluded==='1';
       const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount);
       const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other},y=ensureYieldBudgetSource(g.name,g.color);
       const uuid=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now();
@@ -13702,15 +13710,11 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
         id:(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now(),
         type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:source?.cat?.key||'asset_income_cat',
         catName:source?.cat?cN(source.cat):safeAssetIncomeCategoryName(),subcatName:source?.sub?.key||g.name,amount,date,accountId,
-        assetIncome:true,assetGroupKey:key,assetIncomeType:kind,incomePlanIncluded:false,createdAt:new Date().toISOString()
+        assetIncome:true,assetGroupKey:key,assetIncomeType:kind,incomePlanIncluded:planEnabled,createdAt:new Date().toISOString()
       };
 
-      // Commit and persist first, before any budget/category helper is called.
+      // The transaction and its optional monthly plan share one explicit state.
       txns.unshift(txn);
-      saveData();
-      modal?.remove();
-
-      // Planning is optional. A planning error must not undo the real income.
       if(planEnabled){
         try{
           const parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
@@ -13718,13 +13722,17 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
           if(y?.cat&&y?.sub){
             txn.catKey=y.cat.key;txn.catName=cN(y.cat);txn.subcatName=y.sub.key;
             if(planned>0&&year&&month)budgets[`${year}_${month}_${y.cat.key}:::${y.sub.key}`]=planned;
-            txn.incomePlanIncluded=true;
-            saveData();
           }
         }catch(planError){console.error('Asset income planning failed after transaction save',planError);}
       }
+      saveData();
+      modal?.remove();
 
+      // Refresh the visible transaction list directly. A failure in another
+      // dashboard widget must not delay this new row until the user changes tabs.
+      try{rTxns();}catch(transactionRenderError){console.error('Transaction list render failed',transactionRenderError);}
       try{rAll();}catch(renderError){console.error('Asset income render failed',renderError);}
+      try{if(budgetType==='income'){rBList();rBProg();updateBudgetTotal();}}catch(budgetRenderError){console.error('Income plan render failed',budgetRenderError);}
       try{renderMoneyAccounts();}catch(accountRenderError){console.error('Account render failed',accountRenderError);}
       showToast(t.title+' ✓');
     }catch(err){
@@ -13748,6 +13756,10 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   const priorOpen=window.openAssetIncomeModal;
   window.openAssetIncomeModal=function(key){
     const result=priorOpen.apply(this,arguments);
+    const modal=document.getElementById('asset-income-modal');
+    const planToggle=document.getElementById('ai-plan-enabled');
+    if(modal)modal.dataset.incomePlanIncluded=planToggle?.checked?'1':'0';
+    if(planToggle)planToggle.addEventListener('change',()=>{if(modal)modal.dataset.incomePlanIncluded=planToggle.checked?'1':'0';});
     const button=document.getElementById('ai-save-button');
     if(button){
       button.removeAttribute('onclick');
@@ -13764,6 +13776,8 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   ensureAllAssetIncomeSources();
   const baseLoadDataV4373=loadData;
   loadData=function(){const out=baseLoadDataV4373.apply(this,arguments);ensureAllAssetIncomeSources();return out;};
+  const baseRInvestsV4374=rInvests;
+  rInvests=function(){ensureAllAssetIncomeSources();return baseRInvestsV4374.apply(this,arguments);};
 })();
 </script>
 </body>
