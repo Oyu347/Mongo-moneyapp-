@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Möngö V43.70: asset-income save uses direct capture-phase mobile submission. -->
+<!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
 <!-- Möngö V43.40: Money Accounts — bank/cash accounts, per-account opening balances, transaction account selection, and internal transfers. -->
@@ -13583,26 +13583,10 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       <label>${t.account}</label><select class="fi" id="ai-account">${accounts}</select>
       <div class="loan-modal-grid"><div><label>${t.amount}</label><input class="fi" id="ai-amount" inputmode="numeric" enterkeyhint="done" autocomplete="off" data-amt="1"></div><div><label>${t.date}</label><input type="date" class="fi" id="ai-date" value="${new Date().toISOString().slice(0,10)}"></div></div>
       <div class="asset-income-plan-box"><label class="asset-income-plan-check"><input type="checkbox" id="ai-plan-enabled" onchange="toggleAssetIncomePlan()"><span>${p.include}</span></label><div class="asset-income-plan-fields" id="ai-plan-fields"><label>${p.planned}</label><input class="fi" id="ai-plan-amount" inputmode="numeric" enterkeyhint="done" autocomplete="off" data-amt="1"><div class="asset-income-plan-note">${p.note}</div></div></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button type="button" class="btn btn-p" id="ai-save-button">${t.save}</button></div></div>`;
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button type="button" class="btn btn-sm" onclick="document.getElementById('asset-income-modal').remove()">${t.cancel}</button><button type="button" class="btn btn-p" id="ai-save-button" onclick='saveAssetIncome(${JSON.stringify(key)})'>${t.save}</button></div></div>`;
     // data-amt event delegation already formats these dynamic inputs. Attaching
     // setupAmtInput as well would run the formatter twice and move the caret.
     document.body.appendChild(m);
-    const saveButton=document.getElementById('ai-save-button');
-    if(saveButton){
-      let submitted=false;
-      const submit=ev=>{
-        if(submitted||!document.getElementById('asset-income-modal'))return;
-        submitted=true;
-        if(ev){ev.preventDefault();ev.stopPropagation();}
-        window.saveAssetIncome(key,g);
-        // Validation may keep the modal open; allow a corrected retry.
-        if(document.getElementById('asset-income-modal'))setTimeout(()=>{submitted=false;},180);
-      };
-      saveButton.addEventListener('pointerdown',submit,{capture:true,passive:false});
-      saveButton.addEventListener('touchstart',submit,{capture:true,passive:false});
-      saveButton.addEventListener('click',submit);
-      saveButton.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){submit(ev);}});
-    }
   };
   window.saveAssetIncome=function(key,groupOverride){
     const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
@@ -13649,14 +13633,20 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       const amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
       if(amount<=0||!accountId||!date){showToast(t.error);return;}
       assetIncomeSaving=true;if(button)button.disabled=true;
+      const planEnabled=!!document.getElementById('ai-plan-enabled')?.checked;
+      const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount);
       const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other},y=ensureYieldBudgetSource(g.name,g.color);
       const uuid=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now();
       txns.unshift({id:uuid,type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount,date,accountId,assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()});
-      if(document.getElementById('ai-plan-enabled')?.checked){
-        const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount),parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
-        if(planned>0&&year&&month)budgets[budgetYMKeyForYear(bSubKey(y.cat,y.sub),month,year)]=planned;
-      }
+      // Close immediately after the income transaction is created. Planning is
+      // optional and must never block or roll back the actual income entry.
       document.getElementById('asset-income-modal')?.remove();
+      if(planEnabled){
+        try{
+          const parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
+          if(planned>0&&year&&month)budgets[`${year}_${month}_${y.cat.key}:::${y.sub.key}`]=planned;
+        }catch(planError){console.error('Asset income plan save failed',planError);}
+      }
       saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
     }catch(err){
       console.error('Asset income save failed',err);showToast(t.error);
