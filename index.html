@@ -13088,6 +13088,11 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
         if(shouldOpen)openMongoCalcPicker(sel);
       },true);
       sel.addEventListener('pointercancel',()=>{pointerStart=null;},true);
+      sel.addEventListener('click',ev=>{
+        // Android may still run the native select click after pointerup.
+        // The custom picker has already been opened only from the arrow area.
+        ev.preventDefault();ev.stopImmediatePropagation();
+      },true);
       sel.addEventListener('keydown',ev=>{
         if(ev.key==='Enter'||ev.key===' '||ev.key==='ArrowDown'){
           ev.preventDefault(); openMongoCalcPicker(sel);
@@ -13548,7 +13553,7 @@ refresh60();
 })();
 </script>
 <style id="mongo-v4363-all-selects-style">
-select{touch-action:manipulation;cursor:pointer}
+select{touch-action:pan-y;cursor:pointer}
 select.fi,select.budget-select,select.calc-native-select-localized{min-height:44px}
 #mongo-calc-picker{z-index:2147483000!important}
 #mongo-calc-picker .mongo-calc-picker-sheet{position:relative;z-index:1}
@@ -13574,17 +13579,28 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   function eligible(sel){
     return sel&&sel.tagName==='SELECT'&&!sel.disabled&&!sel.multiple&&Number(sel.size||0)<=1&&!sel.closest('#mongo-calc-picker')&&!sel.classList.contains('mongo-native-select');
   }
-  let lastSelect=null,lastOpened=0;
-  function openFromEvent(ev){
+  let selectGesture=null,lastSelect=null,lastOpened=0;
+  document.addEventListener('pointerdown',ev=>{
     const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
-    if(!eligible(sel)||typeof window.openMongoCalcPicker!=='function')return;
+    if(!eligible(sel))return;
+    const r=sel.getBoundingClientRect();
+    selectGesture={sel,x:ev.clientX,y:ev.clientY,onArrow:ev.clientX>=r.right-Math.min(58,r.width*.3)};
     ev.preventDefault();ev.stopImmediatePropagation();
-    const now=Date.now();if(lastSelect===sel&&now-lastOpened<320)return;
-    lastSelect=sel;lastOpened=now;window.openMongoCalcPicker(sel);
-  }
-  document.addEventListener('touchstart',openFromEvent,{capture:true,passive:false});
-  document.addEventListener('pointerdown',openFromEvent,true);
-  document.addEventListener('click',openFromEvent,true);
+  },true);
+  document.addEventListener('pointerup',ev=>{
+    if(!selectGesture)return;
+    const g=selectGesture;selectGesture=null;
+    ev.preventDefault();ev.stopImmediatePropagation();
+    if(!g.onArrow||Math.hypot(ev.clientX-g.x,ev.clientY-g.y)>=10||typeof window.openMongoCalcPicker!=='function')return;
+    const now=Date.now();if(lastSelect===g.sel&&now-lastOpened<320)return;
+    lastSelect=g.sel;lastOpened=now;window.openMongoCalcPicker(g.sel);
+  },true);
+  document.addEventListener('pointercancel',()=>{selectGesture=null;},true);
+  document.addEventListener('click',ev=>{
+    const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+    if(!eligible(sel))return;
+    ev.preventDefault();ev.stopImmediatePropagation();
+  },true);
   document.addEventListener('keydown',ev=>{
     if(!eligible(ev.target)||!['Enter',' ','ArrowDown','ArrowUp'].includes(ev.key))return;
     ev.preventDefault();ev.stopImmediatePropagation();window.openMongoCalcPicker(ev.target);
@@ -13885,13 +13901,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
 (function(){
   'use strict';
   const UI={
-    mn:{loanIn:'Зээлийн мөнгө орсон',opening:'Эхний үлдэгдэл',confirm:'“{name}” дансны эхний үлдэгдлийг {old} → {next} болгож засах уу?\nОдоогийн үлдэгдэл {current} → {result} болж өөрчлөгдөнө.'},
-    en:{loanIn:'Loan proceeds received',opening:'Opening balance',confirm:'Change “{name}” opening balance from {old} to {next}?\nCurrent balance will change from {current} to {result}.'},
-    zh:{loanIn:'贷款资金到账',opening:'期初余额',confirm:'将“{name}”的期初余额从 {old} 改为 {next}？\n当前余额将从 {current} 变为 {result}。'},
-    ja:{loanIn:'融資金の入金',opening:'開始残高',confirm:'「{name}」の開始残高を {old} から {next} に変更しますか？\n現在残高は {current} から {result} に変わります。'},
-    ko:{loanIn:'대출금 입금',opening:'시작 잔액',confirm:'“{name}”의 시작 잔액을 {old}에서 {next}(으)로 변경할까요?\n현재 잔액은 {current}에서 {result}(으)로 바뀝니다.'},
-    ru:{loanIn:'Получены кредитные средства',opening:'Начальный остаток',confirm:'Изменить начальный остаток счёта «{name}» с {old} на {next}?\nТекущий остаток изменится с {current} на {result}.'},
-    de:{loanIn:'Darlehensbetrag eingegangen',opening:'Anfangssaldo',confirm:'Anfangssaldo von „{name}“ von {old} auf {next} ändern?\nDer aktuelle Saldo ändert sich von {current} auf {result}.'}
+    mn:{loanIn:'Зээл',opening:'Эхний үлдэгдэл',confirm:'“{name}” дансны эхний үлдэгдлийг {old} → {next} болгож засах уу?\nОдоогийн үлдэгдэл {current} → {result} болж өөрчлөгдөнө.'},
+    en:{loanIn:'Loan',opening:'Opening balance',confirm:'Change “{name}” opening balance from {old} to {next}?\nCurrent balance will change from {current} to {result}.'},
+    zh:{loanIn:'贷款',opening:'期初余额',confirm:'将“{name}”的期初余额从 {old} 改为 {next}？\n当前余额将从 {current} 变为 {result}。'},
+    ja:{loanIn:'ローン',opening:'開始残高',confirm:'「{name}」の開始残高を {old} から {next} に変更しますか？\n現在残高は {current} から {result} に変わります。'},
+    ko:{loanIn:'대출',opening:'시작 잔액',confirm:'“{name}”의 시작 잔액을 {old}에서 {next}(으)로 변경할까요?\n현재 잔액은 {current}에서 {result}(으)로 바뀝니다.'},
+    ru:{loanIn:'Кредит',opening:'Начальный остаток',confirm:'Изменить начальный остаток счёта «{name}» с {old} на {next}?\nТекущий остаток изменится с {current} на {result}.'},
+    de:{loanIn:'Darlehen',opening:'Anfangssaldo',confirm:'Anfangssaldo von „{name}“ von {old} auf {next} ändern?\nDer aktuelle Saldo ändert sich von {current} auf {result}.'}
   };
   function t80(){return UI[(typeof lang!=='undefined'&&lang)||'mn']||UI.en;}
 
@@ -13903,7 +13919,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     (debts||[]).forEach(d=>{
       if(d.fundingMode==='existing'&&String(d.fundingAccountId)===String(a.id)){
         const amount=Number(d.fundingAmount)||Number(d.total)||0;
-        if(amount>0)rows.push({date:d.startDate||d.date||String(d.createdAt||'').slice(0,10),label:t80().loanIn+' · '+d.name,amount,kind:'loan_funding',debtId:d.id});
+        if(amount>0)rows.push({date:d.startDate||d.date||String(d.createdAt||'').slice(0,10),label:t80().loanIn,amount,kind:'loan_funding',debtId:d.id});
       }
     });
     return rows.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
@@ -13929,10 +13945,16 @@ select.fi{touch-action:pan-y;cursor:pointer}
       const actions=button.parentElement;
       const field=document.createElement('div');
       field.id='account-edit-opening-field';field.style.margin='0 0 14px';
-      field.innerHTML=`<label style="font-size:12px;font-weight:800;color:var(--text2)">${t80().opening}</label><input id="account-edit-opening" class="fi" inputmode="decimal" data-amt="1" style="width:100%;margin-top:6px" value="${Math.round(Number(a.openingBalance)||0).toLocaleString('en-US')}">`;
+      field.innerHTML=`<label style="font-size:12px;font-weight:800;color:var(--text2)">${t80().opening}</label><input id="account-edit-opening" class="fi" inputmode="decimal" style="width:100%;margin-top:6px" value="${Math.round(Number(a.openingBalance)||0).toLocaleString('en-US')}">`;
       card.insertBefore(field,actions);
       const input=document.getElementById('account-edit-opening');
-      if(typeof setupAmtInput==='function')setupAmtInput('account-edit-opening');
+      // Editing a formatted number one digit at a time moved the caret whenever
+      // commas were reinserted. Edit raw digits while focused, format on exit.
+      input.addEventListener('focus',()=>{
+        input.value=String(Math.round(parseAmt(input.value)||0));
+        requestAnimationFrame(()=>input.select());
+      });
+      input.addEventListener('blur',()=>{input.value=Math.max(0,Math.round(parseAmt(input.value)||0)).toLocaleString('en-US');});
       const oldSave=button.onclick;
       button.onclick=async function(event){
         event?.preventDefault();event?.stopPropagation();
