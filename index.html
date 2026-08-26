@@ -1690,8 +1690,8 @@ button:disabled,.btn:disabled,.auth-btn:disabled{color:#49B0B6 !important;opacit
 
 
 /* ── Möngö V30: Premium splash + FIRE/score intelligence ── */
-.mongo-splash{display:none!important;position:fixed;inset:0;z-index:12000;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
-.mongo-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.mongo-splash{display:flex!important;position:fixed;inset:0;z-index:12000;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 0%,rgba(255,204,51,.22),transparent 30%),radial-gradient(circle at 80% 18%,rgba(73,176,182,.28),transparent 32%),linear-gradient(145deg,#F8FFFF,#EAFBFB 55%,#FFFFFF);transition:opacity .45s ease,visibility .45s ease;}
+.mongo-splash.hide{display:none!important;opacity:0;visibility:hidden;pointer-events:none;}
 .splash-card{width:min(390px,100%);text-align:center;border-radius:36px;padding:34px 24px 28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.86);box-shadow:0 28px 70px rgba(31,127,134,.18);backdrop-filter:blur(18px);}
 .splash-logo{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(31,127,134,.18));animation:splashFloat 1.8s ease-in-out infinite alternate;}
 .splash-name{font-size:38px;font-weight:950;letter-spacing:-.06em;color:#1F7F86;line-height:1.1;margin-top:12px;}
@@ -9452,12 +9452,14 @@ function loadData(){
 async function clearData(){
   if(!await showConfirm(L.confirmDel))return;
   try{
-    localStorage.removeItem(getDBKey());
+    let cloudCleared=true;
     if(window.CloudDataService && typeof window.CloudDataService.clearFinancialData==='function'){
-      await window.CloudDataService.clearFinancialData();
+      cloudCleared=await window.CloudDataService.clearFinancialData();
     }
-  }catch(e){console.warn('Clear data failed',e);}
-  location.reload();
+    if(cloudCleared===false){showToast(lang==='mn'?'Cloud холболт бэлэн болоогүй байна. Түр хүлээгээд дахин оролдоно уу.':'Cloud is not ready. Please wait and try again.');return;}
+    localStorage.removeItem(getDBKey());
+    location.reload();
+  }catch(e){console.warn('Clear data failed',e);showToast(lang==='mn'?'Өгөгдөл бүрэн устгагдсангүй. Дахин оролдоно уу.':'Data was not fully cleared. Please try again.');}
 }
 
 function exportData(){
@@ -11686,6 +11688,7 @@ auth.onAuthStateChanged(async user=>{
   let retryTimer=null;
   let applyingCloud=false;
   let processingQueue=false;
+  let clearingFinancialData=false;
   let lastCloudFingerprint='';
   let syncStatus='waiting';
 
@@ -11936,6 +11939,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   function enqueueSave(reason,data){
+    if(clearingFinancialData)return null;
     const q=getQueue();
     const payload={id:opId(),type:'saveFinancialData',reason:reason||'auto',createdAt:nowIso(),tryCount:0,data:data||collectFinancialState()};
     const fp=fingerprint(payload.data);
@@ -12041,6 +12045,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   async function processQueue(){
+    if(clearingFinancialData)return false;
     if(processingQueue || !navigator.onLine || !hasFirebaseUser() || !accountReadyForCloud()) { updateSyncStatus(navigator.onLine?'waiting':'offline'); return false; }
     const sessionUid=currentUid();
     let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
@@ -12068,7 +12073,7 @@ auth.onAuthStateChanged(async user=>{
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
   function scheduleCloudSave(reason){
-    if(applyingCloud) return;
+    if(applyingCloud||clearingFinancialData) return;
     clearTimeout(cloudSaveTimer);
     cloudSaveTimer=setTimeout(()=>saveCloudNow(reason||'auto'),650);
     if(!navigator.onLine) updateSyncStatus('offline'); else updateSyncStatus(getQueue().length?'pending':'waiting');
@@ -12193,7 +12198,25 @@ auth.onAuthStateChanged(async user=>{
   if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
 
   async function clearCloudFinancialData(){
-    if(!hasFirebaseUser() || !accountReadyForCloud()) return false;
+    clearingFinancialData=true;
+    clearTimeout(cloudSaveTimer);clearTimeout(retryTimer);
+    // Let an already-running write finish before deleting every mirror, then
+    // prevent any new queue item from recreating the deleted state.
+    for(let i=0;i<30&&processingQueue;i++)await new Promise(resolve=>setTimeout(resolve,100));
+    try{localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));}catch(e){}
+    // Deletion must not depend on the normal sync-ready gate. A signed-in user
+    // must be able to delete stale cloud data even while sync is reconnecting.
+    if(!hasFirebaseUser()){
+      try{
+        localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
+        localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
+        localStorage.removeItem(uidKey(META_KEY_PREFIX));
+        localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
+        localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
+      }catch(e){}
+      resetDefaultFinanceShell();
+      return true;
+    }
     const uid=currentUid();
     const ref=cloudDocRef(uid);
     if(ref) await ref.delete();
