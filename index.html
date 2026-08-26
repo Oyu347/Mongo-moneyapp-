@@ -8930,7 +8930,7 @@ function openAssetIncomeModal(key){
   </div>`;
   document.body.appendChild(m);setupAmtInput(document.getElementById('ai-amount'));
 }
-function saveAssetIncome(key){
+function legacySaveAssetIncomeBase(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
   const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0);
   const accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
@@ -13226,7 +13226,7 @@ function ensureYieldBudgetSource(sourceName,color){
 }
 
 // Asset income uses one shared income category and the asset as its budget subcategory.
-saveAssetIncome=function(key){
+window.legacySaveAssetIncomeV4358=function(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
   const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0);
   const accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
@@ -13588,7 +13588,7 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
     // setupAmtInput as well would run the formatter twice and move the caret.
     document.body.appendChild(m);
   };
-  window.saveAssetIncome=function(key,groupOverride){
+  window.legacySaveAssetIncomeV4366=function(key,groupOverride){
     const g=getInvestGroups().find(x=>x.key===key);if(!g)return;
     const t=AIT(),amount=Math.round(parseAmt(document.getElementById('ai-amount')?.value)||0),accountId=document.getElementById('ai-account')?.value,date=document.getElementById('ai-date')?.value,kind=document.getElementById('ai-kind')?.value||'other';
     if(amount<=0||!accountId||!date){showToast(t.error);return;}
@@ -13624,7 +13624,7 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   restoreAssetIncomeBudgetSources();
 
   let assetIncomeSaving=false;
-  window.saveAssetIncome=function(key,groupOverride){
+  window.legacySaveAssetIncomeV4367=function(key,groupOverride){
     if(assetIncomeSaving)return;
     const button=document.querySelector('#asset-income-modal .btn-p'),t=AIT();
     try{
@@ -13656,7 +13656,7 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
   };
 })();
 </script>
-<script id="mongo-v4372-asset-income-root-fix">
+<script id="mongo-v4373-asset-income-category-cleanup">
 (function(){
   'use strict';
   let committing=false;
@@ -13666,9 +13666,20 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
     return names[(typeof lang!=='undefined'&&lang)||'mn']||names.mn;
   }
 
+  function ensureAssetIncomeSource(group){
+    if(!group)return null;
+    try{return ensureYieldBudgetSource(group.name,group.color);}
+    catch(error){console.error('Asset income category preparation failed',error);return null;}
+  }
+
+  function ensureAllAssetIncomeSources(){
+    try{getInvestGroups().filter(assetGroupIncomeProducing).forEach(ensureAssetIncomeSource);}
+    catch(error){console.error('Asset income category refresh failed',error);}
+  }
+
   // The actual bank transaction is the source of truth. Budget planning is an
   // optional follow-up and is never allowed to block the transaction itself.
-  window.mongoCommitAssetIncomeV4372=function(key){
+  window.mongoCommitAssetIncomeV4373=function(key){
     if(committing)return;
     const modal=document.getElementById('asset-income-modal');
     const button=document.getElementById('ai-save-button');
@@ -13686,11 +13697,12 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       const labels={rent:t.rent,dividend:t.dividend,interest:t.interest,other:t.other};
       const planEnabled=!!document.getElementById('ai-plan-enabled')?.checked;
       const planned=Math.round(parseAmt(document.getElementById('ai-plan-amount')?.value)||amount);
+      const source=ensureAssetIncomeSource(g);
       const txn={
         id:(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():'asset_income_'+Date.now(),
-        type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:'asset_income_cat',
-        catName:safeAssetIncomeCategoryName(),subcatName:g.name,amount,date,accountId,
-        assetIncome:true,assetGroupKey:key,assetIncomeType:kind,createdAt:new Date().toISOString()
+        type:'income',desc:`${g.name} · ${labels[kind]}`,catKey:source?.cat?.key||'asset_income_cat',
+        catName:source?.cat?cN(source.cat):safeAssetIncomeCategoryName(),subcatName:source?.sub?.key||g.name,amount,date,accountId,
+        assetIncome:true,assetGroupKey:key,assetIncomeType:kind,incomePlanIncluded:false,createdAt:new Date().toISOString()
       };
 
       // Commit and persist first, before any budget/category helper is called.
@@ -13702,10 +13714,11 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       if(planEnabled){
         try{
           const parts=date.split('-'),year=Number(parts[0]),month=Number(parts[1]);
-          const y=ensureYieldBudgetSource(g.name,g.color);
+          const y=source||ensureAssetIncomeSource(g);
           if(y?.cat&&y?.sub){
             txn.catKey=y.cat.key;txn.catName=cN(y.cat);txn.subcatName=y.sub.key;
             if(planned>0&&year&&month)budgets[`${year}_${month}_${y.cat.key}:::${y.sub.key}`]=planned;
+            txn.incomePlanIncluded=true;
             saveData();
           }
         }catch(planError){console.error('Asset income planning failed after transaction save',planError);}
@@ -13723,6 +13736,15 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
     }
   };
 
+  // Planned asset income carries an explicit flag; it is no longer inferred
+  // indirectly from a category lookup after the transaction is saved.
+  const baseIsTxnBudgeted=isTxnBudgeted;
+  isTxnBudgeted=function(txn){
+    if(txn?.assetIncome&&txn.incomePlanIncluded===true)return true;
+    if(txn?.assetIncome&&txn.incomePlanIncluded===false)return false;
+    return baseIsTxnBudgeted(txn);
+  };
+
   const priorOpen=window.openAssetIncomeModal;
   window.openAssetIncomeModal=function(key){
     const result=priorOpen.apply(this,arguments);
@@ -13731,11 +13753,17 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
       button.removeAttribute('onclick');
       button.onclick=function(event){
         event.preventDefault();event.stopPropagation();
-        window.mongoCommitAssetIncomeV4372(key);
+        window.mongoCommitAssetIncomeV4373(key);
       };
     }
     return result;
   };
+
+  // Keep the standard Income and Income-plan category lists ready before a
+  // transaction is entered. Each income-producing asset is its subcategory.
+  ensureAllAssetIncomeSources();
+  const baseLoadDataV4373=loadData;
+  loadData=function(){const out=baseLoadDataV4373.apply(this,arguments);ensureAllAssetIncomeSources();return out;};
 })();
 </script>
 </body>
