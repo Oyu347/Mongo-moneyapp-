@@ -7452,6 +7452,7 @@ function addTransaction(){
     const targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
     if(purpose==='asset'){
       if(!amount||amount<=0||!fromId){showToast(AFT().sourceErr);return;}
+      if(rejectInsufficientBalance(fromId,amount))return;
       if(assetPurchaseRegistration==='expense'){
         const ck=document.getElementById('t-asset-exp-cat')?.value||'',sk=document.getElementById('t-asset-exp-sub')?.value||'';
         const cat=bCatsExp.find(c=>String(c.key||c.name)===String(ck));
@@ -7475,6 +7476,7 @@ function addTransaction(){
       document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';saveData();rAll();renderMoneyAccounts();return;
     }
     if(!amount||amount<=0||!fromId||!toId||fromId===toId){showToast(lang==='mn'?'Шилжүүлгийн данс болон дүнгээ зөв оруулна уу':'Please check the transfer accounts and amount');return;}
+    if(rejectInsufficientBalance(fromId,amount))return;
     accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId,amount,date,purpose,targetId,updatedAt:new Date().toISOString()});
     document.getElementById('t-amount').value='';saveData();rAll();renderMoneyAccounts();return;
   }
@@ -7497,6 +7499,11 @@ function addTransaction(){
   const isInvestmentExpense=curType==='expense'&&catKey==='invest_cat';
   const investTypeKey=isInvestmentExpense?((document.getElementById('t-inv-type')&&document.getElementById('t-inv-type').value)||'stock'):null;
   const accountId=(document.getElementById('t-account')||{}).value||getDefaultAccountId();
+  if(curType==='expense'){
+    const prior=editingTxnId?txns.find(x=>String(x.id)===String(editingTxnId)):null;
+    const creditBack=prior&&prior.type==='expense'&&String(prior.accountId)===String(accountId)?(Number(prior.amount)||0):0;
+    if(rejectInsufficientBalance(accountId,amount,creditBack))return;
+  }
 
   if(editingTxnId){
     const t=txns.find(x=>String(x.id)===String(editingTxnId));
@@ -7622,8 +7629,19 @@ function openDebtPayModal(id){
       <div><label>${t.extraPrincipal}</label><input class="fi" id="lp-extra" inputmode="decimal" value="0"></div>
     </div>
     <div class="loan-split-note">${t.note}</div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('loan-pay-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveDebtPayment('${id}')">${t.savePayment}</button></div></div>`;
+    <div id="lp-balance-warning" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:#FFF0F1;border:1px solid #F2B8BD;color:#A32835;font-size:11px;font-weight:750;white-space:pre-line"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('loan-pay-modal').remove()">${t.cancel}</button><button id="lp-save-button" class="btn btn-p" onclick="saveDebtPayment('${id}')">${t.savePayment}</button></div></div>`;
   document.body.appendChild(m);['lp-total','lp-principal','lp-interest','lp-extra'].forEach(setupAmtInput);
+  ['lp-account','lp-total','lp-principal','lp-interest','lp-extra'].forEach(x=>{const e=document.getElementById(x);if(e){e.addEventListener('input',updateDebtPaymentBalanceGuard);e.addEventListener('change',updateDebtPaymentBalanceGuard);}});updateDebtPaymentBalanceGuard();
+}
+function debtPaymentFormTotal(){
+  const principal=parseAmt(document.getElementById('lp-principal')?.value),interest=parseAmt(document.getElementById('lp-interest')?.value),extra=parseAmt(document.getElementById('lp-extra')?.value),shown=parseAmt(document.getElementById('lp-total')?.value),split=principal+interest+extra;
+  return Math.abs(shown-split)>1?split:shown;
+}
+function updateDebtPaymentBalanceGuard(){
+  const accountId=document.getElementById('lp-account')?.value,total=debtPaymentFormTotal(),warning=document.getElementById('lp-balance-warning'),button=document.getElementById('lp-save-button');
+  if(!warning||!button)return;const insufficient=total>0&&!hasAccountBalanceFor(accountId,total);
+  warning.style.display=insufficient?'block':'none';warning.textContent=insufficient?insufficientBalanceMessage(accountId,total):'';button.disabled=insufficient;button.style.opacity=insufficient?'.48':'';button.setAttribute('aria-disabled',insufficient?'true':'false');
 }
 function saveDebtPayment(id){
   const d=debts.find(x=>String(x.id)===String(id));if(!d)return;
@@ -7632,6 +7650,7 @@ function saveDebtPayment(id){
   let total=parseAmt(document.getElementById('lp-total').value);
   const split=principal+interest+extraPrincipal;if(Math.abs(total-split)>1)total=split;
   if(!accountId||!date||total<=0||principal+extraPrincipal>getDebtRemaining(d)+1){showToast(LFT().checkAmount);return;}
+  if(rejectInsufficientBalance(accountId,total)){updateDebtPaymentBalanceGuard();return;}
   const pid=(crypto.randomUUID?crypto.randomUUID():'lp_'+Date.now());
   debtPayments(d).push({id:pid,date,accountId,total,principal,interest,extraPrincipal,createdAt:new Date().toISOString()});
   if(interest>0){
@@ -8065,6 +8084,23 @@ function accountBalanceRaw(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)re
   debts.forEach(d=>{if(d.fundingMode==='existing'&&d.fundingAccountId===id)v+=Number(d.fundingAmount)||0;debtPayments(d).forEach(p=>{if(p.accountId===id)v-=Number(p.total)||0;});});
   return v;}
 function accountBalance(id){return accountBalanceRaw(id);}
+const ACCOUNT_BALANCE_GUARD_TEXT={
+  mn:{title:'Дансны үлдэгдэл хүрэлцэхгүй байна.',available:'Боломжит үлдэгдэл',payment:'Гарах дүн',shortage:'Дутуу дүн'},
+  en:{title:'The account balance is insufficient.',available:'Available balance',payment:'Amount to pay',shortage:'Shortfall'},
+  zh:{title:'账户余额不足。',available:'可用余额',payment:'支出金额',shortage:'不足金额'},
+  ja:{title:'口座残高が不足しています。',available:'利用可能残高',payment:'支払額',shortage:'不足額'},
+  ko:{title:'계좌 잔액이 부족합니다.',available:'사용 가능 잔액',payment:'출금액',shortage:'부족액'},
+  ru:{title:'Недостаточно средств на счёте.',available:'Доступный остаток',payment:'Сумма списания',shortage:'Недостающая сумма'},
+  de:{title:'Das Kontoguthaben reicht nicht aus.',available:'Verfügbares Guthaben',payment:'Auszahlungsbetrag',shortage:'Fehlbetrag'}
+};
+function accountBalanceGuardText(){return ACCOUNT_BALANCE_GUARD_TEXT[lang]||ACCOUNT_BALANCE_GUARD_TEXT.en;}
+function accountAvailableForOutgoing(accountId,creditBack){return Math.max(0,Number(accountBalance(accountId))||0)+(Math.max(0,Number(creditBack))||0);}
+function hasAccountBalanceFor(accountId,amount,creditBack){return !!accountId&&accountAvailableForOutgoing(accountId,creditBack)+.001>=Math.max(0,Number(amount)||0);}
+function insufficientBalanceMessage(accountId,amount,creditBack){
+  const t=accountBalanceGuardText(),available=accountAvailableForOutgoing(accountId,creditBack),out=Math.max(0,Number(amount)||0);
+  return `${t.title}\n${t.available}: ${fmt(available)}\n${t.payment}: ${fmt(out)}\n${t.shortage}: ${fmt(Math.max(0,out-available))}`;
+}
+function rejectInsufficientBalance(accountId,amount,creditBack){if(hasAccountBalanceFor(accountId,amount,creditBack))return false;showToast(insufficientBalanceMessage(accountId,amount,creditBack));return true;}
 function renderAccountSelectors(){
   ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;
   const note=document.getElementById('transfer-mode-note-text');
