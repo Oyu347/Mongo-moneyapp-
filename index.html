@@ -14196,7 +14196,15 @@ select.fi{touch-action:pan-y;cursor:pointer}
     });
     const eligibleIds=new Set(eligibleGroups.map(firstInvestmentId).map(String));
     const beforeInvestSubs=investments?.subs?.length||0;
-    if(investments&&Array.isArray(investments.subs))investments.subs=investments.subs.filter(s=>s.sourceKind!=='invest'||eligibleIds.has(String(s.sourceId)));
+    if(investments&&Array.isArray(investments.subs)){
+      const removed=[];
+      investments.subs=investments.subs.filter(s=>{
+        const keep=s.sourceKind==='invest'?eligibleIds.has(String(s.sourceId)):RECURRING_INVEST_TYPES.has(String(getInvestmentSubType(s)||''));
+        if(!keep)removed.push(bSubKey(investments,s));
+        return keep;
+      });
+      if(removed.length)Object.keys(budgets||{}).forEach(k=>{if(removed.some(oldKey=>k.endsWith(oldKey))){delete budgets[k];changed=true;}});
+    }
     if((investments?.subs?.length||0)!==beforeInvestSubs)changed=true;
     if(changed&&options.persist!==false)saveData();
     return changed;
