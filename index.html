@@ -14346,6 +14346,34 @@ select.fi{touch-action:pan-y;cursor:pointer}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)restorePending();});
 })();
 </script>
+<script id="mongo-v4394-transaction-tab-live-refresh">
+(function(){
+  'use strict';
+  function refreshTransactionTab(){
+    const section=document.getElementById('tab-transactions');
+    if(!section||!section.classList.contains('active'))return;
+    const accountSelect=document.getElementById('txn-account-filter');
+    if(accountSelect)txnAccountFilter=accountSelect.value||'all';
+    try{rTxns();}catch(e){console.error('Transaction tab live refresh failed',e);}
+  }
+  const baseShowTab94=showTab;
+  showTab=function(tab,btn){
+    const result=baseShowTab94.apply(this,arguments);
+    if(tab==='transactions'){
+      refreshTransactionTab();
+      requestAnimationFrame(refreshTransactionTab);
+      setTimeout(refreshTransactionTab,120);
+    }
+    return result;
+  };
+  const transactionSection=document.getElementById('tab-transactions');
+  if(transactionSection&&window.MutationObserver){
+    new MutationObserver(()=>refreshTransactionTab()).observe(transactionSection,{attributes:true,attributeFilter:['class']});
+  }
+  window.addEventListener('pageshow',refreshTransactionTab);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTransactionTab();});
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
