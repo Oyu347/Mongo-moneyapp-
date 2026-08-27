@@ -14383,6 +14383,64 @@ select.fi{touch-action:pan-y;cursor:pointer}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTransactionTab();});
 })();
 </script>
+<script id="mongo-v4396-transaction-visibility-fix">
+(function(){
+  'use strict';
+  function dateKey(value){
+    const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m?`${m[1]}-${m[2]}-${m[3]}`:'';
+  }
+  function shiftToday(amount,unit){
+    const d=new Date();d.setHours(12,0,0,0);
+    if(unit==='day')d.setDate(d.getDate()+amount);
+    if(unit==='month')d.setMonth(d.getMonth()+amount);
+    if(unit==='year')d.setFullYear(d.getFullYear()+amount);
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function inVisiblePeriod(row){
+    const key=dateKey(row&&row.date);if(!key)return false;
+    if(txnPeriod==='all')return true;
+    const today=shiftToday(0,'day');let from='0000-01-01';
+    if(txnPeriod==='7d')from=shiftToday(-7,'day');
+    else if(txnPeriod==='1m')from=shiftToday(-1,'month');
+    else if(txnPeriod==='3m')from=shiftToday(-3,'month');
+    else if(txnPeriod==='1y')from=shiftToday(-1,'year');
+    return key>=from&&key<=today;
+  }
+  function currentAccountFilter(){
+    const select=document.getElementById('txn-account-filter');
+    return select&&select.value?String(select.value):String(txnAccountFilter||'all');
+  }
+  function visibleSearchActive(){
+    const panel=document.getElementById('txn-search-panel');
+    return !!(txnSearchOpen&&txnSearchQuery&&panel&&panel.style.display!=='none');
+  }
+  rTxns=function(){
+    const el=document.getElementById('all-txns');if(!el)return;
+    renderTxnAccountFilter();
+    txnAccountFilter=currentAccountFilter();
+    let source=unifiedActivities().filter(t=>inVisiblePeriod(t)&&(txnAccountFilter==='all'||String(t.accountId||'')===txnAccountFilter));
+    if(visibleSearchActive())source=source.filter(unifiedMatchesSearch);
+    const summary=document.getElementById('txn-account-summary');
+    if(summary){
+      const T=txnFilterText(),q=V58();
+      const inc=source.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
+      const normalExp=source.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
+      const loanInterest=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.interest)||0),0);
+      const loanOut=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0);
+      summary.innerHTML=`<div class="txn-sum-box"><div class="txn-sum-lbl">${T.inc}</div><div class="txn-sum-val txn-sum-in">+${fmt(inc)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.exp}</div><div class="txn-sum-val txn-sum-out">-${fmt(normalExp+loanInterest)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${q.loanOut}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(loanOut)}</div></div>`;
+    }
+    if(!source.length){el.innerHTML=`<div class="txn-search-empty">${L.notxn}</div>`;return;}
+    const groups={};source.sort((a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))).forEach(t=>{const ym=dateKey(t.date).slice(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),exp=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0),loan=items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(exp+loan)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});
+    el.innerHTML=html;
+  };
+  function refreshBoth(){try{rTxns();rRecent();uDash();}catch(e){console.error('Money activity refresh failed',e);}}
+  const baseAddTransaction96=addTransaction;
+  addTransaction=function(){const result=baseAddTransaction96.apply(this,arguments);refreshBoth();setTimeout(refreshBoth,120);setTimeout(refreshBoth,700);return result;};
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
