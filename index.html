@@ -14301,6 +14301,51 @@ select.fi{touch-action:pan-y;cursor:pointer}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMoneyRefresh();});
 })();
 </script>
+<script id="mongo-v4393-transaction-commit-journal">
+(function(){
+  'use strict';
+  const PENDING_MAX_AGE=7*24*60*60*1000,COMMITTED_KEEP=5*60*1000;
+  const journalKey=()=>`mongo_txn_commit_journal_${window._authUid||'guest'}`;
+  const readJournal=()=>{try{return (JSON.parse(localStorage.getItem(journalKey())||'[]')||[]).filter(Boolean);}catch(e){return [];}};
+  const writeJournal=rows=>{try{localStorage.setItem(journalKey(),JSON.stringify((rows||[]).slice(-300)));}catch(e){}};
+  function cleanJournal(){
+    const now=Date.now(),rows=readJournal().filter(x=>x&&x.txn&&x.txn.id&&now-(x.recordedAt||now)<PENDING_MAX_AGE&&(!x.committedAt||now-x.committedAt<COMMITTED_KEEP));writeJournal(rows);return rows;
+  }
+  function rememberTransactions(rows){
+    if(!rows||!rows.length)return;const journal=cleanJournal(),byId=new Map(journal.map(x=>[String(x.txn.id),x])),now=Date.now();
+    rows.forEach(t=>{if(!t||(t.type!=='income'&&t.type!=='expense')||t.loanPaymentId)return;byId.set(String(t.id),{txn:JSON.parse(JSON.stringify(t)),recordedAt:now,committedAt:null});});writeJournal([...byId.values()]);
+  }
+  function forgetTransaction(id){writeJournal(readJournal().filter(x=>String(x?.txn?.id)!==String(id)));}
+  function mergeJournal(){
+    const journal=cleanJournal();if(!journal.length)return false;let changed=false;const byId=new Map((txns||[]).map(t=>[String(t.id),t]));
+    journal.forEach(x=>{if(!byId.has(String(x.txn.id))){txns.unshift(JSON.parse(JSON.stringify(x.txn)));changed=true;}});
+    if(changed){try{saveData();rAll();rTxns();uDash();renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('Transaction journal merge failed',e);}}
+    return changed;
+  }
+  function markJournalCommitted(ids){
+    const wanted=new Set((ids||[]).map(String)),now=Date.now(),rows=readJournal();rows.forEach(x=>{if(wanted.has(String(x?.txn?.id)))x.committedAt=now;});writeJournal(rows);
+  }
+  function commitNow(ids){
+    mergeJournal();
+    const service=window.CloudDataService;
+    if(!service||typeof service.saveFinancialData!=='function')return;
+    Promise.resolve(service.saveFinancialData('transaction-immediate')).then(ok=>{if(ok)markJournalCommitted(ids);}).catch(()=>{});
+  }
+  function repeatMerge(){[0,150,500,1200,2500,5000].forEach(ms=>setTimeout(mergeJournal,ms));}
+  const baseAddTransaction93=addTransaction;
+  addTransaction=function(){
+    const before=new Map((txns||[]).map(t=>[String(t.id),JSON.stringify(t)])),result=baseAddTransaction93.apply(this,arguments),changed=(txns||[]).filter(t=>(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&before.get(String(t.id))!==JSON.stringify(t));
+    if(changed.length){rememberTransactions(changed);repeatMerge();commitNow(changed.map(t=>t.id));}
+    return result;
+  };
+  const baseDelTxn93=delTxn;
+  delTxn=async function(id){forgetTransaction(id);const result=await baseDelTxn93.apply(this,arguments);commitNow([]);return result;};
+  function restorePending(){mergeJournal();repeatMerge();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restorePending);else restorePending();
+  window.addEventListener('pageshow',restorePending);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)restorePending();});
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
