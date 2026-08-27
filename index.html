@@ -14253,6 +14253,38 @@ select.fi{touch-action:pan-y;cursor:pointer}
   ensurePlanningBudgetSources({seed:false,persist:false});
 })();
 </script>
+<script id="mongo-v4391-income-expense-transaction-refresh">
+(function(){
+  'use strict';
+  function visibleMoneyActivities(){
+    const normal=(txns||[]).filter(t=>t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&!t.autoPaySelf);
+    return normal.concat(typeof loanActivities==='function'?loanActivities():[]);
+  }
+  function refreshMoneyViews(){
+    try{rTxns();}catch(e){console.error('Transaction refresh failed',e);}
+    try{uDash();}catch(e){console.error('Balance refresh failed',e);}
+    try{renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('Account refresh failed',e);}
+  }
+  rTxns=function(){
+    const el=document.getElementById('all-txns');if(!el)return;renderTxnAccountFilter();
+    let source=visibleMoneyActivities().filter(t=>txnInSelectedPeriod(t)&&(txnAccountFilter==='all'||String(t.accountId)===String(txnAccountFilter)));
+    if(txnSearchOpen&&txnSearchQuery)source=source.filter(unifiedMatchesSearch);
+    const summary=document.getElementById('txn-account-summary');
+    if(summary){
+      const T=txnFilterText(),q=V58(),inc=source.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),normalExp=source.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0),loanInterest=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.interest)||0),0),exp=normalExp+loanInterest,loanOut=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0);
+      summary.innerHTML=`<div class="txn-sum-box"><div class="txn-sum-lbl">${T.inc}</div><div class="txn-sum-val txn-sum-in">+${fmt(inc)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.exp}</div><div class="txn-sum-val txn-sum-out">-${fmt(exp)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${q.loanOut}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(loanOut)}</div></div>`;
+    }
+    if(!source.length){el.innerHTML=`<div class="txn-search-empty">${L.notxn}</div>`;return;}
+    const groups={};source.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{const ym=String(t.date||'').substring(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),exp=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0),loan=items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(exp+loan)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
+  };
+  const baseAddTransaction91=addTransaction;
+  addTransaction=function(){const result=baseAddTransaction91.apply(this,arguments);refreshMoneyViews();setTimeout(refreshMoneyViews,40);return result;};
+  const baseConfirmPay91=confirmPayAssistant;
+  confirmPayAssistant=function(){const result=baseConfirmPay91.apply(this,arguments);refreshMoneyViews();setTimeout(refreshMoneyViews,40);return result;};
+  window.addEventListener('pageshow',()=>setTimeout(refreshMoneyViews,80));
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
