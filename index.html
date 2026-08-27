@@ -12028,7 +12028,7 @@ auth.onAuthStateChanged(async user=>{
     try{
       document.querySelectorAll('.btype-btn').forEach(b=>b.classList.remove('active')); const activeBtn=document.getElementById('btype-'+(typeof budgetType!=='undefined'?budgetType:'expense')); if(activeBtn)activeBtn.classList.add('active');
       if(typeof rTIrow==='function')rTIrow(); if(typeof rTCrow==='function')rTCrow(); if(typeof rInvSel==='function'){rInvSel('t-inv-type');rInvSel('i-type');} if(typeof rCatSel==='function')rCatSel(); if(typeof rTChips==='function')rTChips();
-      if(typeof rBList==='function')rBList(); if(typeof rBMonthSel==='function')rBMonthSel(); if(typeof rGoals==='function')rGoals(); if(typeof rDebts==='function')rDebts(); if(typeof rInvests==='function')rInvests(); if(typeof rDash==='function')rDash();
+      if(typeof rBList==='function')rBList(); if(typeof rBMonthSel==='function')rBMonthSel(); if(typeof rGoals==='function')rGoals(); if(typeof rDebts==='function')rDebts(); if(typeof rInvests==='function')rInvests(); if(typeof rDash==='function')rDash(); if(typeof rTxns==='function')rTxns();
       if(typeof applyFullLang==='function')applyFullLang(lang); else if(typeof applyLang==='function')applyLang(); if(typeof renderOpeningBalance==='function')renderOpeningBalance(); if(typeof updateBudgetTotal==='function')updateBudgetTotal(); if(typeof rProfile==='function')rProfile(); ensureSyncStatusUI(); updateSyncStatus(syncStatus);
     }catch(e){ updateSyncStatus('error'); }
   }
@@ -12186,7 +12186,10 @@ auth.onAuthStateChanged(async user=>{
     if(!localHas && !cloudHas) return {data:cloudData||local,source:'cloud-empty'};
     const localTime=Date.parse(local.clientUpdatedAt||getLocalUpdatedAt()||0)||0;
     const cloudTime=Date.parse((cloudData&&cloudData.clientUpdatedAt)||cloudUpdatedAt||0)||0;
-    if(localTime && cloudTime && localTime>cloudTime+5000) return {data:local,source:'local-newer'};
+    // A transaction is committed locally before its cloud mirror. Even a
+    // one-millisecond-newer local state must win; the old five-second tolerance
+    // allowed a just-entered income/expense to be overwritten by stale cloud data.
+    if(localTime && cloudTime && localTime>cloudTime) return {data:local,source:'local-newer'};
     return {data:cloudData,source:'cloud'};
   }
 
