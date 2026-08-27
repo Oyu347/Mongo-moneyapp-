@@ -707,6 +707,11 @@ button[onclick="addTransaction()"]{
   color:#ffffff !important;
   min-width:48px;
 }
+.txn-add-action{position:relative;flex:0 0 auto;align-self:stretch;display:flex;align-items:stretch}
+#txn-balance-warning{display:none;position:absolute;z-index:80;right:0;bottom:calc(100% + 8px);width:max-content;max-width:min(310px,82vw);padding:9px 11px;border-radius:11px;background:#FFF0F1;border:1px solid #EFAEB5;color:#A32835;box-shadow:0 10px 24px rgba(125,35,47,.18);font-size:11px;font-weight:800;line-height:1.4;white-space:pre-line}
+#txn-balance-warning::after{content:"";position:absolute;right:18px;top:100%;border:7px solid transparent;border-top-color:#EFAEB5}
+#txn-balance-warning.show{display:block}
+#btn-add-txn:disabled{opacity:.48;box-shadow:none !important;cursor:not-allowed}
 
 @media(max-width:0px){
   :root{--text:#F3F4F6;--text2:#CBD5E1;--text3:#94A3B8;--brand-dark:#74D7DC;--brand-light:#123B3F;}
@@ -2774,7 +2779,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="form-row">
       <select class="fi" id="t-cat" onchange="onCatChange()"></select>
       <input type="date" class="fi" id="t-date">
-      <button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button>
+      <div class="txn-add-action"><button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button><div id="txn-balance-warning" role="alert" aria-live="polite"></div></div>
     </div>
 
     <div id="txn-editing-hint" class="txn-editing-hint">✎ Засварлах горим</div>
@@ -6883,7 +6888,7 @@ function setType(t){
   const n=document.getElementById('invest-auto-notice'); if(n)n.style.display='none';
   const ex=document.getElementById('invest-extra'); if(ex)ex.style.display='none';
   const sw=document.getElementById('t-subcat-wrap'); if(sw)sw.style.display=t==='transfer'?'none':'flex';
-  rTxns();
+  rTxns();setTimeout(updateTxnBalanceGuard,0);
 }
 function gCats(){
   if(curType==='expense') return expCats;
@@ -8100,7 +8105,30 @@ function insufficientBalanceMessage(accountId,amount,creditBack){
   const t=accountBalanceGuardText(),available=accountAvailableForOutgoing(accountId,creditBack),out=Math.max(0,Number(amount)||0);
   return `${t.title}\n${t.available}: ${fmt(available)}\n${t.payment}: ${fmt(out)}\n${t.shortage}: ${fmt(Math.max(0,out-available))}`;
 }
-function rejectInsufficientBalance(accountId,amount,creditBack){if(hasAccountBalanceFor(accountId,amount,creditBack))return false;showToast(insufficientBalanceMessage(accountId,amount,creditBack));return true;}
+function rejectInsufficientBalance(accountId,amount,creditBack){
+  if(hasAccountBalanceFor(accountId,amount,creditBack))return false;
+  if(document.getElementById('loan-pay-modal')&&typeof updateDebtPaymentBalanceGuard==='function')updateDebtPaymentBalanceGuard();
+  else if(typeof updateTxnBalanceGuard==='function')updateTxnBalanceGuard();
+  else showToast(insufficientBalanceMessage(accountId,amount,creditBack));
+  return true;
+}
+function currentTxnOutgoingCheck(){
+  const amount=parseAmt(document.getElementById('t-amount')?.value)||0;
+  if(curType==='income'||amount<=0)return null;
+  if(curType==='transfer')return {accountId:document.getElementById('t-from-account')?.value,amount,creditBack:0};
+  const accountId=document.getElementById('t-account')?.value,prior=editingTxnId?txns.find(x=>String(x.id)===String(editingTxnId)):null;
+  const creditBack=prior&&prior.type==='expense'&&String(prior.accountId)===String(accountId)?(Number(prior.amount)||0):0;
+  return {accountId,amount,creditBack};
+}
+function updateTxnBalanceGuard(){
+  const warning=document.getElementById('txn-balance-warning'),button=document.getElementById('btn-add-txn');if(!warning||!button)return;
+  const check=currentTxnOutgoingCheck(),insufficient=!!(check&&check.accountId&&!hasAccountBalanceFor(check.accountId,check.amount,check.creditBack));
+  warning.textContent=insufficient?insufficientBalanceMessage(check.accountId,check.amount,check.creditBack):'';warning.classList.toggle('show',insufficient);button.disabled=insufficient;button.setAttribute('aria-disabled',insufficient?'true':'false');
+}
+function installTxnBalanceGuard(){
+  ['t-amount','t-account','t-from-account','t-to-account','t-transfer-purpose'].forEach(id=>{const e=document.getElementById(id);if(e){e.addEventListener('input',updateTxnBalanceGuard);e.addEventListener('change',updateTxnBalanceGuard);}});updateTxnBalanceGuard();
+}
+setTimeout(installTxnBalanceGuard,0);
 function renderAccountSelectors(){
   ensureMoneyAccounts();const T=accountText();const bt=document.getElementById('btn-transfer');if(bt)bt.textContent=T.transfer;
   const note=document.getElementById('transfer-mode-note-text');
