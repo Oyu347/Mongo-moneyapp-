@@ -14257,13 +14257,26 @@ select.fi{touch-action:pan-y;cursor:pointer}
 (function(){
   'use strict';
   function visibleMoneyActivities(){
-    const normal=(txns||[]).filter(t=>t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&!t.autoPaySelf);
+    const realLoanPaymentIds=new Set();
+    (debts||[]).forEach(d=>(debtPayments(d)||[]).forEach(p=>realLoanPaymentIds.add(String(p.id))));
+    const normal=(txns||[]).filter(t=>{
+      if(!t||(t.type!=='income'&&t.type!=='expense'))return false;
+      // Only the technical interest companion of a real loan payment is hidden;
+      // the visible unified loan row already contains the principal/interest split.
+      if(t.loanPaymentId&&realLoanPaymentIds.has(String(t.loanPaymentId)))return false;
+      return true;
+    });
     return normal.concat(typeof loanActivities==='function'?loanActivities():[]);
   }
   function refreshMoneyViews(){
     try{rTxns();}catch(e){console.error('Transaction refresh failed',e);}
     try{uDash();}catch(e){console.error('Balance refresh failed',e);}
     try{renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('Account refresh failed',e);}
+  }
+  let refreshTimers=[];
+  function scheduleMoneyRefresh(){
+    refreshTimers.forEach(clearTimeout);refreshTimers=[];
+    [0,120,650].forEach(delay=>refreshTimers.push(setTimeout(refreshMoneyViews,delay)));
   }
   rTxns=function(){
     const el=document.getElementById('all-txns');if(!el)return;renderTxnAccountFilter();
@@ -14279,10 +14292,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
     Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),exp=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0),loan=items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(exp+loan)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
   };
   const baseAddTransaction91=addTransaction;
-  addTransaction=function(){const result=baseAddTransaction91.apply(this,arguments);refreshMoneyViews();setTimeout(refreshMoneyViews,40);return result;};
+  addTransaction=function(){const result=baseAddTransaction91.apply(this,arguments);scheduleMoneyRefresh();return result;};
   const baseConfirmPay91=confirmPayAssistant;
-  confirmPayAssistant=function(){const result=baseConfirmPay91.apply(this,arguments);refreshMoneyViews();setTimeout(refreshMoneyViews,40);return result;};
-  window.addEventListener('pageshow',()=>setTimeout(refreshMoneyViews,80));
+  confirmPayAssistant=function(){const result=baseConfirmPay91.apply(this,arguments);scheduleMoneyRefresh();return result;};
+  const baseSaveData92=saveData;
+  saveData=function(){const result=baseSaveData92.apply(this,arguments);scheduleMoneyRefresh();return result;};
+  window.addEventListener('pageshow',scheduleMoneyRefresh);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMoneyRefresh();});
 })();
 </script>
 </body>
