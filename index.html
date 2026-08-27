@@ -7528,6 +7528,10 @@ function addTransaction(){
     const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('txn_'+Date.now()+'_'+Math.random().toString(36).slice(2,9));
     const txn={id,desc,amount,catName,catKey,subcatName:subcatKey,investTypeKey,date,type:curType,accountId,updatedAt:new Date().toISOString()};
     txns.unshift(txn);
+    // Preserve the new row before saveData can start any asynchronous cloud
+    // reconciliation. This prevents an older cloud snapshot from erasing the
+    // transaction between its creation and the post-save journal wrapper.
+    if(typeof window.mongoRememberTxnImmediate==='function')window.mongoRememberTxnImmediate(txn);
     if(curType==='income'){
       preparePayAssistant(amount,date,accountId);
     }
@@ -14315,6 +14319,11 @@ select.fi{touch-action:pan-y;cursor:pointer}
     if(!rows||!rows.length)return;const journal=cleanJournal(),byId=new Map(journal.map(x=>[String(x.txn.id),x])),now=Date.now();
     rows.forEach(t=>{if(!t||(t.type!=='income'&&t.type!=='expense')||t.loanPaymentId)return;byId.set(String(t.id),{txn:JSON.parse(JSON.stringify(t)),recordedAt:now,committedAt:null});});writeJournal([...byId.values()]);
   }
+  window.mongoRememberTxnImmediate=function(txn){
+    if(!txn||(txn.type!=='income'&&txn.type!=='expense')||txn.loanPaymentId)return;
+    rememberTransactions([txn]);
+    repeatMerge();
+  };
   function forgetTransaction(id){writeJournal(readJournal().filter(x=>String(x?.txn?.id)!==String(id)));}
   function mergeJournal(){
     const journal=cleanJournal();if(!journal.length)return false;let changed=false;const byId=new Map((txns||[]).map(t=>[String(t.id),t]));
