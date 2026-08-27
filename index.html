@@ -707,9 +707,8 @@ button[onclick="addTransaction()"]{
   color:#ffffff !important;
   min-width:48px;
 }
-.txn-add-action{position:relative;flex:0 0 auto;align-self:stretch;display:flex;align-items:stretch}
-#txn-balance-warning{display:none;position:absolute;z-index:80;right:0;bottom:calc(100% + 8px);width:max-content;max-width:min(310px,82vw);padding:9px 11px;border-radius:11px;background:#FFF0F1;border:1px solid #EFAEB5;color:#A32835;box-shadow:0 10px 24px rgba(125,35,47,.18);font-size:11px;font-weight:800;line-height:1.4;white-space:pre-line}
-#txn-balance-warning::after{content:"";position:absolute;right:18px;top:100%;border:7px solid transparent;border-top-color:#EFAEB5}
+.txn-add-action{flex:0 0 auto;align-self:stretch;display:flex;align-items:stretch}
+#txn-balance-warning{display:none;width:100%;box-sizing:border-box;margin-top:8px;padding:9px 11px;border-radius:11px;background:#FFF0F1;border:1px solid #EFAEB5;color:#A32835;box-shadow:0 6px 16px rgba(125,35,47,.10);font-size:11px;font-weight:800;line-height:1.4;white-space:pre-line}
 #txn-balance-warning.show{display:block}
 #btn-add-txn:disabled{opacity:.48;box-shadow:none !important;cursor:not-allowed}
 
@@ -2779,8 +2778,9 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
     <div class="form-row">
       <select class="fi" id="t-cat" onchange="onCatChange()"></select>
       <input type="date" class="fi" id="t-date">
-      <div class="txn-add-action"><button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button><div id="txn-balance-warning" role="alert" aria-live="polite"></div></div>
+      <div class="txn-add-action"><button class="btn btn-p" onclick="addTransaction()" id="btn-add-txn" style="font-size:16px;padding:6px 16px;min-width:44px">＋</button></div>
     </div>
+    <div id="txn-balance-warning" role="alert" aria-live="polite"></div>
 
     <div id="txn-editing-hint" class="txn-editing-hint">✎ Засварлах горим</div>
   </div>
