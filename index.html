@@ -14260,9 +14260,11 @@ select.fi{touch-action:pan-y;cursor:pointer}
   ensurePlanningBudgetSources({seed:false,persist:false});
 })();
 </script>
+<script>window.MONGO_TX_CORE_V4398=true;</script>
 <script id="mongo-v4391-income-expense-transaction-refresh">
 (function(){
   'use strict';
+  if(window.MONGO_TX_CORE_V4398)return;
   function visibleMoneyActivities(){
     const realLoanPaymentIds=new Set();
     (debts||[]).forEach(d=>(debtPayments(d)||[]).forEach(p=>realLoanPaymentIds.add(String(p.id))));
@@ -14311,6 +14313,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 <script id="mongo-v4393-transaction-commit-journal">
 (function(){
   'use strict';
+  if(window.MONGO_TX_CORE_V4398)return;
   const PENDING_MAX_AGE=7*24*60*60*1000,COMMITTED_KEEP=5*60*1000;
   const journalKey=()=>`mongo_txn_commit_journal_${window._authUid||'guest'}`;
   const readJournal=()=>{try{return (JSON.parse(localStorage.getItem(journalKey())||'[]')||[]).filter(Boolean);}catch(e){return [];}};
@@ -14361,6 +14364,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 <script id="mongo-v4394-transaction-tab-live-refresh">
 (function(){
   'use strict';
+  if(window.MONGO_TX_CORE_V4398)return;
   function refreshTransactionTab(){
     const section=document.getElementById('tab-transactions');
     if(!section||!section.classList.contains('active'))return;
@@ -14389,6 +14393,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 <script id="mongo-v4396-transaction-visibility-fix">
 (function(){
   'use strict';
+  if(window.MONGO_TX_CORE_V4398)return;
   function dateKey(value){
     const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m?`${m[1]}-${m[2]}-${m[3]}`:'';
@@ -14442,6 +14447,97 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function refreshBoth(){try{rTxns();rRecent();uDash();}catch(e){console.error('Money activity refresh failed',e);}}
   const baseAddTransaction96=addTransaction;
   addTransaction=function(){const result=baseAddTransaction96.apply(this,arguments);refreshBoth();setTimeout(refreshBoth,120);setTimeout(refreshBoth,700);return result;};
+})();
+</script>
+<script id="mongo-v4398-central-transaction-core">
+(function(){
+  'use strict';
+  const BUILD='V43.98',MAX_ROWS=5000;
+  const ledgerKey=()=>`mongo_transaction_ledger_v4398_${window._authUid||'guest'}`;
+  const clone=v=>JSON.parse(JSON.stringify(v));
+  const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&t.id!=null;
+  function readLedger(){
+    try{const v=JSON.parse(localStorage.getItem(ledgerKey())||'[]');return Array.isArray(v)?v.filter(isMoneyTxn):[];}catch(e){return [];}
+  }
+  function writeLedger(rows){
+    try{localStorage.setItem(ledgerKey(),JSON.stringify((rows||[]).filter(isMoneyTxn).slice(0,MAX_ROWS)));}catch(e){}
+  }
+  function rowTime(t){const n=Date.parse(t?.updatedAt||t?.createdAt||'');return Number.isFinite(n)?n:0;}
+  function remember(rows){
+    const map=new Map(readLedger().map(t=>[String(t.id),t]));
+    (rows||[]).filter(isMoneyTxn).forEach(t=>{const id=String(t.id),old=map.get(id);if(!old||rowTime(t)>=rowTime(old))map.set(id,clone(t));});
+    writeLedger([...map.values()].sort((a,b)=>rowTime(b)-rowTime(a)));
+  }
+  function forget(id){writeLedger(readLedger().filter(t=>String(t.id)!==String(id)));}
+  let cloudTimer=null;
+  function queueCloud(){
+    clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>{
+      try{window.CloudDataService?.saveFinancialData?.('transaction-core-v4398');}catch(e){}
+    },180);
+  }
+  function mergeLedger(){
+    const stored=readLedger();if(!stored.length)return false;
+    const current=new Map((txns||[]).filter(isMoneyTxn).map(t=>[String(t.id),t]));let changed=false;
+    stored.forEach(t=>{const id=String(t.id),old=current.get(id);if(!old||rowTime(t)>rowTime(old)){current.set(id,clone(t));changed=true;}});
+    if(changed){
+      const technical=(txns||[]).filter(t=>!isMoneyTxn(t));
+      txns=[...current.values(),...technical].sort((a,b)=>rowTime(b)-rowTime(a));
+      try{localStorage.setItem(getDBKey(),JSON.stringify(window.CloudDataService?.collectFinancialState?.()||{}));}catch(e){}
+      queueCloud();
+    }
+    return changed;
+  }
+  window.mongoRememberTxnImmediate=function(txn){remember([txn]);};
+  function dateKey(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[1]}-${m[2]}-${m[3]}`:'';}
+  function localDay(offset,unit){
+    const d=new Date();d.setHours(12,0,0,0);
+    if(unit==='day')d.setDate(d.getDate()+offset);else if(unit==='month')d.setMonth(d.getMonth()+offset);else if(unit==='year')d.setFullYear(d.getFullYear()+offset);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function inPeriod(t){
+    const k=dateKey(t?.date);if(!k)return false;if(txnPeriod==='all')return true;
+    const from=txnPeriod==='1m'?localDay(-1,'month'):txnPeriod==='3m'?localDay(-3,'month'):txnPeriod==='1y'?localDay(-1,'year'):localDay(-7,'day');
+    return k>=from&&k<=localDay(0,'day');
+  }
+  function moneyActivities(){
+    mergeLedger();
+    const normal=(txns||[]).filter(isMoneyTxn);
+    return normal.concat(typeof loanActivities==='function'?loanActivities():[]);
+  }
+  function activeAccount(){const s=document.getElementById('txn-account-filter');return String(s?.value||txnAccountFilter||'all');}
+  function searchIsVisible(){const p=document.getElementById('txn-search-panel');return !!(txnSearchOpen&&txnSearchQuery&&p&&getComputedStyle(p).display!=='none');}
+  function renderSummary(source){
+    const el=document.getElementById('txn-account-summary');if(!el)return;const T=txnFilterText(),q=V58();
+    const inc=source.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
+    const exp=source.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0)+source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.interest)||0),0);
+    const loan=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0);
+    el.innerHTML=`<div class="txn-sum-box"><div class="txn-sum-lbl">${T.inc}</div><div class="txn-sum-val txn-sum-in">+${fmt(inc)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.exp}</div><div class="txn-sum-val txn-sum-out">-${fmt(exp)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${q.loanOut}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(loan)}</div></div>`;
+  }
+  rTxns=function(){
+    const el=document.getElementById('all-txns');if(!el)return;renderTxnAccountFilter();txnAccountFilter=activeAccount();
+    let source=moneyActivities().filter(t=>inPeriod(t)&&(txnAccountFilter==='all'||String(t.accountId||'')===txnAccountFilter));
+    if(searchIsVisible())source=source.filter(unifiedMatchesSearch);renderSummary(source);
+    if(!source.length){el.innerHTML=`<div class="txn-search-empty">${L.notxn}</div>`;return;}
+    const groups={};source.sort((a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||rowTime(b)-rowTime(a)).forEach(t=>{const ym=dateKey(t.date).slice(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),out=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0)+items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(out)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
+  };
+  rRecent=function(){
+    const el=document.getElementById('recent-list');if(!el)return;const source=moneyActivities().sort((a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||rowTime(b)-rowTime(a));
+    if(!source.length){el.innerHTML=`<div class="empty">${L.notxn}</div>`;return;}const groups={};source.forEach(t=>{const ym=dateKey(t.date).slice(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],preview=items.slice(0,3),id='rg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">(${items.length})</span></div><span id="arr_${id}">▾</span></div><div id="${id}" class="grp-body">${preview.map(t=>tRow(t,false)).join('')}</div>`;});el.innerHTML=html;
+  };
+  function refreshAllMoney(){mergeLedger();try{rTxns();rRecent();uDash();renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('V43.98 money refresh failed',e);}}
+  const coreSave=saveData;
+  saveData=function(){remember((txns||[]).filter(isMoneyTxn));const result=coreSave.apply(this,arguments);refreshAllMoney();return result;};
+  const coreAdd=addTransaction;
+  addTransaction=function(){const before=new Map((txns||[]).map(t=>[String(t.id),JSON.stringify(t)]));const result=coreAdd.apply(this,arguments);const changed=(txns||[]).filter(t=>isMoneyTxn(t)&&before.get(String(t.id))!==JSON.stringify(t));remember(changed);[0,80,300,900,2200].forEach(ms=>setTimeout(refreshAllMoney,ms));queueCloud();return result;};
+  const coreDelete=delTxn;
+  delTxn=async function(id){forget(id);const result=await coreDelete.apply(this,arguments);refreshAllMoney();queueCloud();return result;};
+  function showBuild(){const badge=document.getElementById('mongo-trial-test-indicator');if(badge&&!badge.textContent.includes(BUILD))badge.textContent=`${badge.textContent} · ${BUILD}`;}
+  function boot(){remember((txns||[]).filter(isMoneyTxn));mergeLedger();showBuild();refreshAllMoney();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  [100,600,1600].forEach(ms=>setTimeout(showBuild,ms));
+  window.addEventListener('pageshow',boot);document.addEventListener('visibilitychange',()=>{if(!document.hidden)boot();});
 })();
 </script>
 </body>
