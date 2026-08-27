@@ -7477,7 +7477,8 @@ function addTransaction(){
         const g=getInvestGroups().find(x=>x.key===targetId);
         if(g)invests.unshift({id:Date.now(),name:g.name,typeKey:g.typeKey,invested:amount,current:amount,date,color:g.color,autoAdded:false,assetPurchase:true,incomeProducing:g.items.some(x=>!!x.incomeProducing)});
       }
-      accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId:null,amount,date,purpose:'asset',targetId:assetKey,updatedAt:new Date().toISOString()});
+      const boughtGroup=getInvestGroups().find(x=>String(x.key)===String(assetKey));
+      accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId:null,amount,date,purpose:'asset',targetId:assetKey,assetId:boughtGroup?.items?.[0]?.id||null,updatedAt:new Date().toISOString()});
       document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';saveData();rAll();renderMoneyAccounts();return;
     }
     if(!amount||amount<=0||!fromId||!toId||fromId===toId){showToast(lang==='mn'?'Шилжүүлгийн данс болон дүнгээ зөв оруулна уу':'Please check the transfer accounts and amount');return;}
@@ -14136,9 +14137,40 @@ select.fi{touch-action:pan-y;cursor:pointer}
     budgets[k]=Math.round(value);
     return true;
   }
+  const RECURRING_INVEST_TYPES=new Set(['stock','bond','fund','crypto','gold']);
+  function investmentBudgetEligible(group){
+    if(!group||!RECURRING_INVEST_TYPES.has(String(group.typeKey||'')))return false;
+    return !(group.items||[]).some(item=>item.loanFunded===true||item.linkedDebtId!=null);
+  }
+  window.investmentBudgetEligible=investmentBudgetEligible;
+  function migrateAssetFundingLinks(){
+    let changed=false;
+    const groups=getInvestGroups?.()||[];
+    (accountTransfers||[]).filter(t=>t&&t.purpose==='asset').forEach(t=>{
+      let group=groups.find(g=>String(g.key)===String(t.targetId));
+      if(!group&&t.assetId!=null)group=groups.find(g=>(g.items||[]).some(i=>String(i.id)===String(t.assetId)));
+      if(!group){
+        const candidates=groups.filter(g=>(g.items||[]).some(i=>String(i.date||'')===String(t.date||'')&&Math.abs((Number(i.invested)||0)-(Number(t.amount)||0))<1));
+        if(candidates.length===1)group=candidates[0];
+      }
+      if(group){
+        const item=(group.items||[]).find(i=>String(i.id)===String(t.assetId))||(group.items||[])[0];
+        if(item&&String(t.assetId||'')!==String(item.id)){t.assetId=item.id;changed=true;}
+        if(String(t.targetId||'')!==String(group.key)){t.targetId=group.key;changed=true;}
+        const loanCandidates=(debts||[]).filter(d=>d.fundingMode==='existing'&&String(d.fundingAccountId)===String(t.fromId)&&String(d.startDate||'')===String(t.date||'')&&Math.abs((Number(d.fundingAmount)||Number(d.total)||0)-(Number(t.amount)||0))<1);
+        if(item&&loanCandidates.length===1){
+          const debt=loanCandidates[0];
+          if(item.loanFunded!==true){item.loanFunded=true;changed=true;}
+          if(String(item.linkedDebtId||'')!==String(debt.id)){item.linkedDebtId=debt.id;changed=true;}
+          if(String(debt.linkedAssetId||'')!==String(item.id)){debt.linkedAssetId=item.id;changed=true;}
+        }
+      }
+    });
+    return changed;
+  }
   window.ensurePlanningBudgetSources=function(options){
     options=options||{};
-    let changed=false;
+    let changed=migrateAssetFundingLinks();
     const savings=ensureParent('savings_cat'),loans=ensureParent('loan_cat'),investments=ensureParent('invest_cat');
     (goals||[]).forEach(g=>{
       const before=savings?.subs?.length||0;
@@ -14152,7 +14184,8 @@ select.fi{touch-action:pan-y;cursor:pointer}
       if((loans?.subs?.length||0)!==before)changed=true;
       if(options.seed&&sub&&seed(loans,sub,suggestedDebt(d)))changed=true;
     });
-    (getInvestGroups?.()||[]).forEach(g=>{
+    const eligibleGroups=(getInvestGroups?.()||[]).filter(investmentBudgetEligible);
+    eligibleGroups.forEach(g=>{
       const id=firstInvestmentId(g),before=investments?.subs?.length||0;
       const sub=upsert(investments,'invest',id,g.name,g.color,{sourceKind:'invest',sourceId:String(id),investTypeKey:g.typeKey||'other'});
       (g.items||[]).forEach(item=>item.budgetSourceId=String(id));
@@ -14161,6 +14194,10 @@ select.fi{touch-action:pan-y;cursor:pointer}
       // supplied automatically, while the user chooses this month's plan amount.
       if(options.seed&&sub&&Number(g.monthlyPlan)>0&&seed(investments,sub,Number(g.monthlyPlan)))changed=true;
     });
+    const eligibleIds=new Set(eligibleGroups.map(firstInvestmentId).map(String));
+    const beforeInvestSubs=investments?.subs?.length||0;
+    if(investments&&Array.isArray(investments.subs))investments.subs=investments.subs.filter(s=>s.sourceKind!=='invest'||eligibleIds.has(String(s.sourceId)));
+    if((investments?.subs?.length||0)!==beforeInvestSubs)changed=true;
     if(changed&&options.persist!==false)saveData();
     return changed;
   };
@@ -14173,8 +14210,15 @@ select.fi{touch-action:pan-y;cursor:pointer}
   gSpent=function(catNm,subNm,month,subObj){
     const key=String(subObj?.key||'');
     const parts=key.match(/^(goal|debt|invest)_(.+)$/);
-    if(!parts)return baseGSpent.apply(this,arguments);
     const inMonth=row=>{const p=String(row?.date||'').split('-');return Number(p[0])===Number(budgetYear)&&Number(p[1])===Number(month);};
+    const investParent=(bCatsExp||[]).find(c=>c&&c.key==='invest_cat');
+    const isInvestParent=investParent&&(catNm===cN(investParent)||catNm===investParent.key||catNm===investParent.name);
+    if(!parts&&isInvestParent&&!subObj){
+      const eligibleKeys=new Set();
+      (getInvestGroups?.()||[]).filter(investmentBudgetEligible).forEach(g=>{eligibleKeys.add(String(g.key));(g.items||[]).forEach(i=>{eligibleKeys.add(String(i.id));if(i.legacyGroupKey)eligibleKeys.add(String(i.legacyGroupKey));});});
+      return (accountTransfers||[]).filter(t=>(t.purpose==='investment'||t.purpose==='asset')&&inMonth(t)&&(eligibleKeys.has(String(t.targetId))||eligibleKeys.has(String(t.assetId)))).reduce((s,t)=>s+(Number(t.amount)||0),0);
+    }
+    if(!parts)return baseGSpent.apply(this,arguments);
     if(parts[1]==='goal'){
       const moved=(accountTransfers||[]).filter(t=>t.purpose==='savings'&&String(t.targetId)===parts[2]&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
       const interest=(txns||[]).filter(t=>t.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===parts[2]&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
@@ -14185,9 +14229,9 @@ select.fi{touch-action:pan-y;cursor:pointer}
       return debt?debtPayments(debt).filter(inMonth).reduce((s,p)=>s+(Number(p.total)||0),0):0;
     }
     const group=(getInvestGroups?.()||[]).find(g=>firstInvestmentId(g)===parts[2]);
-    if(!group)return 0;
-    const keys=new Set([String(group.key),...group.items.map(i=>String(i.legacyGroupKey||'')).filter(Boolean)]);
-    return (accountTransfers||[]).filter(t=>(t.purpose==='investment'||t.purpose==='asset')&&keys.has(String(t.targetId))&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
+    if(!group||!investmentBudgetEligible(group))return 0;
+    const keys=new Set([String(group.key),...group.items.map(i=>String(i.id)),...group.items.map(i=>String(i.legacyGroupKey||'')).filter(Boolean)]);
+    return (accountTransfers||[]).filter(t=>(t.purpose==='investment'||t.purpose==='asset')&&(keys.has(String(t.targetId))||keys.has(String(t.assetId)))&&inMonth(t)).reduce((s,t)=>s+(Number(t.amount)||0),0);
   };
 
   // Keep source names and colors current after edits/additions without ever
