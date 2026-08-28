@@ -132,7 +132,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V44.11 Unified Money Ledger</title>
+<title>Möngö — V44.11.1 Cloud Ledger Migration Fix</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -14621,7 +14621,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 /* Möngö V44.03 — one durable source of truth for loan payments.
    Loan cards, Transactions, Accounts and Budget all derive from debts[].payments. */
 (()=>{
-  const BUILD='V44.11';
+  const BUILD='V44.11.1';
   const uid=()=>{try{return (typeof getCurrentUid==='function'&&getCurrentUid())||currentUserEmail?.()||'local';}catch(e){return 'local';}};
   const journalKey=()=>`mongo_loan_payment_journal_v4403_${uid()}`;
   const clone=v=>JSON.parse(JSON.stringify(v));
@@ -14785,7 +14785,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4411-unified-money-ledger">
 (()=>{
-  const BUILD='V44.11',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
+  const BUILD='V44.11.1',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
   const LEDGER_KINDS=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']);
   const cleanId=v=>String(v??'');
   function ledgerKindForTxn(t){if(t.assetIncome)return'asset_income';if(t.savingsInterest)return'savings_interest';return t.type==='income'?'income':'expense';}
@@ -14819,17 +14819,19 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function validateLedger(){
     const issues=[],seen=new Set();(moneyLedger||[]).forEach(e=>{if(!e.id||seen.has(cleanId(e.id)))issues.push(`Давхардсан бүртгэл: ${e.id||'ID байхгүй'}`);seen.add(cleanId(e.id));if(!LEDGER_KINDS.has(e.kind))issues.push(`Төрөл буруу: ${e.kind}`);if(!(Number(e.amount)>0))issues.push(`Дүн буруу: ${e.id}`);if(e.kind==='loan_payment'&&Math.abs((Number(e.principal)||0)+(Number(e.interest)||0)+(Number(e.extraPrincipal)||0)-(Number(e.amount)||0))>1)issues.push(`Зээлийн төлөлтийн задаргаа зөрсөн: ${e.id}`);});return issues;
   }
-  window.mongoMoneyLedger=()=>clone(moneyLedger||[]);window.validateUnifiedMoneyLedger=validateLedger;window.rebuildMoneyViewsFromLedger=()=>{projectViewsFromLedger();rAll();};
+  function expectedLedgerIds(){const ids=[];(txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>ids.push(`txn:${cleanId(t.id)}`));(accountTransfers||[]).forEach(t=>ids.push(`transfer:${cleanId(t.id)}`));(debts||[]).forEach(d=>{if(d.fundingMode==='existing'&&Number(d.fundingAmount)>0&&d.fundingAccountId)ids.push(`loan-received:${cleanId(d.id)}`);(Array.isArray(d.payments)?d.payments:[]).forEach(p=>ids.push(`loan-payment:${cleanId(p.id)}`));});return ids;}
+  function ensureUnifiedLedger(persist=true){const expected=expectedLedgerIds(),actual=new Set((moneyLedger||[]).map(e=>cleanId(e.id))),missing=expected.some(id=>!actual.has(id));if(!missing&&actual.size===expected.length)return false;syncLedgerFromViews();if(persist)priorSave();return true;}
+  window.mongoMoneyLedger=()=>clone(moneyLedger||[]);window.validateUnifiedMoneyLedger=validateLedger;window.ensureUnifiedMoneyLedger=ensureUnifiedLedger;window.rebuildMoneyViewsFromLedger=()=>{projectViewsFromLedger();rAll();};
   const priorSave=saveData;saveData=function(){syncLedgerFromViews();const out=priorSave.apply(this,arguments);return out;};
   // From V44.11 onward every balance is the sum of the unified ledger entries.
   accountBalanceRaw=function(id){return ledgerBalance(id);};accountBalance=function(id){return ledgerBalance(id);};
-  function boot(){if(Array.isArray(moneyLedger)&&moneyLedger.length)projectViewsFromLedger();else syncLedgerFromViews();const b=document.getElementById('mongo-build-version');if(b)b.textContent=BUILD;}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('pageshow',boot);document.addEventListener('visibilitychange',()=>{if(!document.hidden)boot();});
+  function boot(){if(Array.isArray(moneyLedger)&&moneyLedger.length)projectViewsFromLedger();ensureUnifiedLedger(true);const b=document.getElementById('mongo-build-version');if(b)b.textContent=BUILD;}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('pageshow',boot);document.addEventListener('visibilitychange',()=>{if(!document.hidden)boot();});[700,1800,4200,7500].forEach(ms=>setTimeout(()=>ensureUnifiedLedger(true),ms));
 })();
 </script>
 <script id="mongo-v4410-financial-integrity-audit">
 (()=>{
-  const BUILD='V44.11';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
+  const BUILD='V44.11.1';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
   const TXT={
     mn:{title:'Санхүүгийн уялдааны шалгалт',ok:'Зөрүү илрээгүй',warn:'Анхаарах зөрүү',close:'Хаах',rerun:'Дахин шалгах',summary:'Шалгасан бүртгэл',txn:'Гүйлгээ',transfer:'Шилжүүлэг',loan:'Зээл',payment:'Зээлийн төлөлт',account:'Данс',budget:'Төсвийн холбоос'},
     en:{title:'Financial integrity check',ok:'No inconsistency found',warn:'Issues to review',close:'Close',rerun:'Run again',summary:'Records checked',txn:'Transactions',transfer:'Transfers',loan:'Loans',payment:'Loan payments',account:'Accounts',budget:'Budget links'},
@@ -14844,6 +14846,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     const seen=new Set();(rows||[]).forEach(r=>{const id=String(r?.id??'');if(!id)issues.push(`${label}: ID байхгүй`);else if(seen.has(id))issues.push(`${label}: давхардсан ID ${id}`);else seen.add(id);});
   }
   function run(){
+    if(typeof ensureUnifiedMoneyLedger==='function')ensureUnifiedMoneyLedger(true);
     const q=T(),issues=[],accountIds=new Set((moneyAccounts||[]).map(a=>String(a.id))),paymentIds=new Set();let paymentCount=0;
     duplicateIds(txns,q.txn,issues);duplicateIds(accountTransfers,q.transfer,issues);duplicateIds(debts,q.loan,issues);duplicateIds(moneyAccounts,q.account,issues);
     (moneyAccounts||[]).forEach(a=>{const bal=Number(accountBalance(a.id));if(!Number.isFinite(bal))issues.push(`${q.account} · ${a.name}: үлдэгдэл буруу`);if(bal<-.001)issues.push(`${q.account} · ${a.name}: сөрөг үлдэгдэл ${fmt(bal)}`);});
