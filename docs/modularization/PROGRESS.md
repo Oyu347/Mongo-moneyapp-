@@ -10,42 +10,38 @@ Use the exact latest prepared V44 full HTML; never reconstruct the monolith from
 
 ## Completed
 - Storage Phase 1 compatibility foundation.
-- Core Phase 1 COMPLETE: `src/core/ledger.js` owns pure ledger construction/balance/validation/rebuild logic.
-- Accounts Phase 1 COMPLETE through 1E. Latest module commit `f1732051b19a36913d054506f20dfde06f2b9372`; latest Accounts tests `5dda927d4bce419b2fc3424c046946b10d492129`.
+- Core Phase 1 COMPLETE.
+- Accounts Phase 1 COMPLETE through 1E.
 
-### Transactions — Phase 1A: compatibility foundation
-Module commit: `4b830c4823857b784fe0ddc05192df6be238d18d`
-Regression harness commit: `82a6fed6ff5d8400f59982091050356cf253c084`
+### Transactions — Phase 1A
+Module `4b830c4823857b784fe0ddc05192df6be238d18d`; tests `82a6fed6ff5d8400f59982091050356cf253c084`.
+Created pure transaction/transfer construction, filtering and summary foundation; prepared HTML delegated low-risk read helpers.
 
-Created `src/features/transactions/transactions.js` with pure helpers for:
-- ordinary income/expense transaction construction and edit-shape application,
-- internal/asset transfer construction and validation,
-- immutable delete-by-id filtering,
-- period range/in-period checks,
-- account filtering,
-- income/expense/transfer-in/transfer-out summaries.
+### Transactions — Phase 1B: ordinary add/edit boundary
+Module update: `2f15dc6eff62c133703cba80f39ae5faf9f45a5f`
+Regression update: `1c5433330aa2b4e1c7cae48d07228c7bd41a0209`
 
-Ownership boundaries:
-- Ledger semantics remain in `MongoLedgerCore`.
-- Account metadata/selection remains in `MongoAccounts`.
-- Loan principal/interest, savings, investments/assets and Pay Yourself First side effects remain inline for their later feature phases.
-- DOM, `saveData()`, Firebase/cloud and `main` remain untouched.
-
-Prepared `index.modular-transactions-phase1a.html` from exact Accounts Phase 1E HTML. It loads Transactions after Accounts and delegates safe read-only period/filter/summary helpers. Risky add/edit/delete transaction mutations remain inline.
-
-Static syntax validation of prepared HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors. The first user-visible checker command used an incorrectly escaped extraction regex and undercounted 11 blocks; a corrected check immediately confirmed the authoritative count of 44/0. Node regression suites/browser runtime parity are not recorded as executed.
+- `makeTransaction()` now preserves explicit category/subcategory keys and optional `createdAt` metadata.
+- `applyEdit()` preserves stable transaction ID and original `createdAt`, and validates the replacement shape before mutating the existing object.
+- Prepared `index.modular-transactions-phase1b.html` delegates ordinary income/expense new-object construction and edit field application to `MongoTransactions`.
+- Existing insufficient-balance checks remain inline before construction/edit.
+- Pay Yourself First sync/removal, investment sync/removal, loan-specific compatibility behavior, UI reset, save/render and cloud journal wrappers remain inline.
+- Transfer/asset-purchase mutation paths remain inline for a later bounded phase.
+- Regression harness extended for account/category/subcategory/date/type preservation, stable ID/createdAt and invalid-edit non-mutation.
+- Static syntax validation executed on prepared Phase 1B HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- Node regression suites and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Storage, Core and Accounts foundations are complete. Transactions Phase 1A foundation is created and only low-risk read helpers are delegated.
+Transactions owns ordinary transaction construction/edit shape plus read/filter/summary helpers. Special cross-feature side effects and persistence remain compatibility boundaries.
 
 ## NEXT STEP
-### Transactions — Phase 1B: ordinary transaction construction/edit boundary
-1. Delegate ordinary income/expense transaction object construction to `MongoTransactions.makeTransaction()` while preserving existing insufficient-balance checks and feature side effects.
-2. Delegate edit field application to `MongoTransactions.applyEdit()` but keep Pay Yourself First, investment sync/removal, loan-specific behavior, UI reset, save/render inline.
-3. Preserve stable transaction IDs on edit and account/category/subcategory/date fields exactly.
-4. Add regression cases for edit ID stability and no mutation on invalid input.
-5. Do not migrate transfer/asset purchase mutations yet unless isolated safely.
-6. Re-run static syntax checks; do not claim runtime tests unless actually executed.
+### Transactions — Phase 1C: ordinary delete + internal transfer construction boundary
+1. Delegate ordinary transaction delete-array calculation to `MongoTransactions.removeById()` while keeping confirmation and linked feature cleanup inline.
+2. Delegate internal account-to-account transfer object construction to `makeTransfer()` after existing balance validation.
+3. Preserve transfer invariants: source decreases, destination increases, total account money/income/expense unchanged solely due internal transfer.
+4. Keep asset-purchase transfer branch inline; do not mix asset registration into ordinary transfer extraction.
+5. Extend regression coverage for delete immutability and internal-transfer metadata.
+6. Re-run static syntax checks; runtime tests only if actually executed.
 
 ## Future order
 Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
