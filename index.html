@@ -132,7 +132,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V44.13.2 Budget Link Preservation</title>
+<title>Möngö — V44.13.3 Persistent Stable Links</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -9440,7 +9440,13 @@ function saveData(){
         key:s.key||null,
         name:s.name||null,
         names:s.names||null,
-        color:s.color
+        color:s.color,
+        sourceKind:s.sourceKind||null,
+        sourceId:s.sourceId||null,
+        sourceActive:s.sourceActive!==false,
+        sourceEndedYm:s.sourceEndedYm||null,
+        sourceExcluded:s.sourceExcluded===true,
+        investTypeKey:s.investTypeKey||null
       }))
     }));
     const bCatsIncSave=bCatsInc.map(c=>({
@@ -9453,7 +9459,13 @@ function saveData(){
         key:s.key||null,
         name:s.name||null,
         names:s.names||null,
-        color:s.color
+        color:s.color,
+        sourceKind:s.sourceKind||null,
+        sourceId:s.sourceId||null,
+        sourceActive:s.sourceActive!==false,
+        sourceEndedYm:s.sourceEndedYm||null,
+        sourceExcluded:s.sourceExcluded===true,
+        investTypeKey:s.investTypeKey||null
       }))
     }));
     if(!window.MONGO_LOCAL_DATA_UPDATED_AT) window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
@@ -9521,6 +9533,7 @@ function loadData(){
               if(!exSub.names)exSub.names={};
               if(ms.names)Object.assign(exSub.names,ms.names);
               if(/^#[0-9a-fA-F]{6}$/.test(ms.color||'')) exSub.color=ms.color;
+              ['sourceKind','sourceId','sourceActive','sourceEndedYm','sourceExcluded','investTypeKey'].forEach(k=>{if(ms[k]!==undefined&&ms[k]!==null)exSub[k]=ms[k];});
             }
           });
         } else if(sv.name||sv.key){
@@ -11945,7 +11958,7 @@ auth.onAuthStateChanged(async user=>{
       names:safeObj(c.names),
       icon:safeStr(c.icon,12)||'📌',
       color:/^#[0-9a-fA-F]{6}$/.test(c.color||'')?c.color:'#49B0B6',
-      subs:safeArray(c.subs).map(s=>({key:safeStr(s.key,80)||null,name:safeStr(s.name,120)||null,names:safeObj(s.names),color:/^#[0-9a-fA-F]{6}$/.test(s.color||'')?s.color:(c.color||'#49B0B6'),investTypeKey:safeStr(s.investTypeKey,24)||null}))
+      subs:safeArray(c.subs).map(s=>({key:safeStr(s.key,80)||null,name:safeStr(s.name,120)||null,names:safeObj(s.names),color:/^#[0-9a-fA-F]{6}$/.test(s.color||'')?s.color:(c.color||'#49B0B6'),investTypeKey:safeStr(s.investTypeKey,24)||null,sourceKind:safeStr(s.sourceKind,24)||null,sourceId:safeStr(s.sourceId,120)||null,sourceActive:s.sourceActive!==false,sourceEndedYm:s.sourceEndedYm?Math.max(0,Math.round(safeNum(s.sourceEndedYm))):null,sourceExcluded:s.sourceExcluded===true}))
     }));
   }
 
@@ -12021,7 +12034,7 @@ auth.onAuthStateChanged(async user=>{
     if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
   }
   function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
-  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ if(sv.names)ex.names=Object.assign({},ex.names||{},sv.names); if(/^#[0-9a-fA-F]{6}$/.test(sv.color||''))ex.color=sv.color; if(sv.icon)ex.icon=sv.icon; safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); if(/^#[0-9a-fA-F]{6}$/.test(ms.color||''))exSub.color=ms.color; if(ms.investTypeKey)exSub.investTypeKey=ms.investTypeKey; } }); } else if(sv.name||sv.key){ current.push({key:sv.key||null,name:sv.name||null,names:sv.names||null,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
+  function mergeBudgetCats(saved,current){ safeArray(saved).forEach(sv=>{ const ex=current.find(c=>(sv.key&&c.key===sv.key)||(sv.name&&c.name===sv.name)); if(ex){ if(sv.names)ex.names=Object.assign({},ex.names||{},sv.names); if(/^#[0-9a-fA-F]{6}$/.test(sv.color||''))ex.color=sv.color; if(sv.icon)ex.icon=sv.icon; safeArray(sv.subs).forEach(ssub=>{ const ms=migrateSub(ssub); if(!ms)return; const exSub=safeArray(ex.subs).find(s=>(ms.key&&s.key===ms.key)); if(!exSub){ if(!ex.subs)ex.subs=[]; ex.subs.push(ms); } else { if(!exSub.names)exSub.names={}; if(ms.names)Object.assign(exSub.names,ms.names); if(/^#[0-9a-fA-F]{6}$/.test(ms.color||''))exSub.color=ms.color; ['sourceKind','sourceId','sourceActive','sourceEndedYm','sourceExcluded','investTypeKey'].forEach(k=>{if(ms[k]!==undefined&&ms[k]!==null)exSub[k]=ms[k];}); } }); } else if(sv.name||sv.key){ current.push({key:sv.key||null,name:sv.name||null,names:sv.names||null,icon:sv.icon||'📌',color:sv.color||'#49B0B6',subs:safeArray(sv.subs).map(migrateSub).filter(Boolean)}); } }); }
 
   function applyFinancialState(raw, source){
     if(!raw || typeof raw!=='object') return false;
@@ -14697,7 +14710,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 /* Möngö V44.03 — one durable source of truth for loan payments.
    Loan cards, Transactions, Accounts and Budget all derive from debts[].payments. */
 (()=>{
-  const BUILD='V44.13.2';
+  const BUILD='V44.13.3';
   const uid=()=>{try{return (typeof getCurrentUid==='function'&&getCurrentUid())||currentUserEmail?.()||'local';}catch(e){return 'local';}};
   const journalKey=()=>`mongo_loan_payment_journal_v4403_${uid()}`;
   const clone=v=>JSON.parse(JSON.stringify(v));
@@ -14861,7 +14874,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4411-unified-money-ledger">
 (()=>{
-  const BUILD='V44.13.2',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
+  const BUILD='V44.13.3',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
   const LEDGER_KINDS=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']);
   const cleanId=v=>String(v??'');
   function ledgerKindForTxn(t){if(t.assetIncome)return'asset_income';if(t.savingsInterest)return'savings_interest';return t.type==='income'?'income':'expense';}
@@ -14929,7 +14942,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4412-edit-delete-cloud-guarantee">
 (()=>{
-  const BUILD='V44.13.2',clone=v=>JSON.parse(JSON.stringify(v)),iso=()=>new Date().toISOString(),id=v=>String(v??'');
+  const BUILD='V44.13.3',clone=v=>JSON.parse(JSON.stringify(v)),iso=()=>new Date().toISOString(),id=v=>String(v??'');
   let internalSave=false,cloudGuardInstalled=false;
   const snapshot=()=>new Map((moneyLedger||[]).map(e=>[id(e.id),JSON.stringify(e)]));
   let committed=snapshot();
@@ -15038,20 +15051,51 @@ select.fi{touch-action:pan-y;cursor:pointer}
 (()=>{
   const id=v=>String(v??''),norm=v=>String(v??'').trim(),ym=(y,m)=>Number(y)*100+Number(m);
   function futurePlans(parent,sub,endYm){const suffix=bSubKey(parent,sub);return Object.keys(budgets||{}).filter(k=>{const m=String(k).match(/^(\d{4})_(\d{1,2})_/);return m&&k.endsWith(suffix)&&ym(m[1],m[2])>Number(endYm||0)&&(Number(budgets[k])||0)!==0;});}
+  function names(v){return{mn:v,en:v,zh:v,ja:v,ko:v,ru:v,de:v};}
+  function repairRows(parentKey,kind,rows){
+    const parent=(bCatsExp||[]).find(c=>c&&c.key===parentKey);if(!parent)return false;
+    if(!Array.isArray(parent.subs))parent.subs=[];let changed=false;
+    (rows||[]).forEach(row=>{
+      const sourceId=id(row.id),key=kind+'_'+sourceId;
+      let sub=parent.subs.find(s=>id(s.key)===key||id(s.sourceId)===sourceId);
+      if(!sub)sub=parent.subs.find(s=>!s.sourceId&&!/^(goal|debt|invest)_/.test(id(s.key))&&norm(cN(s))===norm(row.name));
+      if(!sub){sub={key,names:names(row.name||sourceId),color:row.color||parent.color};parent.subs.push(sub);changed=true;}
+      if(id(sub.key)!==key){sub.key=key;changed=true;}
+      if(sub.sourceKind!==kind||id(sub.sourceId)!==sourceId){sub.sourceKind=kind;sub.sourceId=sourceId;changed=true;}
+      if(norm(cN(sub))!==norm(row.name)){sub.names=names(row.name||sourceId);changed=true;}
+      if(sub.sourceActive===undefined){sub.sourceActive=row.active!==false;changed=true;}
+    });
+    return changed;
+  }
+  window.repairV4413StableLinks=function(){
+    let changed=false;
+    if(repairRows('savings_cat','goal',goals||[]))changed=true;
+    if(repairRows('loan_cat','debt',debts||[]))changed=true;
+    const incomeParent=(bCatsInc||[]).find(c=>c&&c.key==='asset_income_cat');
+    (txns||[]).filter(t=>t&&t.assetIncome&&!t.assetSourceId).forEach(t=>{
+      const linked=(incomeParent?.subs||[]).find(s=>id(s.key)===id(t.subcatName));
+      const fromKey=id(linked?.key).match(/^yield_(asset_.+)$/)?.[1];
+      const fallback=t.assetGroupKey?'asset_'+id(t.assetGroupKey):'asset_legacy_'+id(t.id);
+      const source=id(linked?.sourceId||fromKey||fallback);if(!source)return;
+      t.assetSourceId=source;if(linked){linked.sourceKind='asset_income';linked.sourceId=source;}changed=true;
+    });
+    return changed;
+  };
   window.validateV4413BudgetLinks=function(){
+    repairV4413StableLinks();
     const issues=[],parents={goal:(bCatsExp||[]).find(c=>c.key==='savings_cat'),debt:(bCatsExp||[]).find(c=>c.key==='loan_cat'),invest:(bCatsExp||[]).find(c=>c.key==='invest_cat')};
     const check=(kind,rows)=>{const parent=parents[kind],subs=(parent?.subs||[]).filter(s=>s.sourceKind===kind);const seen=new Set();subs.forEach(s=>{const k=id(s.sourceId);if(seen.has(k))issues.push(`${kind}: давхардсан төсвийн холбоос ${k}`);seen.add(k);if(s.sourceActive===false&&futurePlans(parent,s,s.sourceEndedYm).length)issues.push(`${kind}: идэвхгүй холбоосын ирээдүйн төсөв үлдсэн ${k}`);});rows.forEach(r=>{const matches=subs.filter(s=>id(s.sourceId)===id(r.id));if(matches.length!==1)issues.push(`${kind}: ${r.name||r.id} төсвийн холбоос ${matches.length} байна`);else if(norm(cN(matches[0]))!==norm(r.name))issues.push(`${kind}: ${r.name||r.id} нэр шинэчлэгдээгүй`);});};
     check('goal',goals||[]);check('debt',debts||[]);
     (txns||[]).filter(t=>t&&t.assetIncome).forEach(t=>{if(!t.assetSourceId)issues.push(`Хөрөнгийн орлого тогтвортой холбоосгүй: ${t.id}`);});
     return issues;
   };
-  function boot(){try{if(typeof ensurePlanningBudgetSources==='function')ensurePlanningBudgetSources({seed:false,persist:false});}catch(e){}const b=document.getElementById('mongo-build-version');if(b)b.textContent='V44.13.2';}
+  function boot(){let changed=false;try{if(typeof ensurePlanningBudgetSources==='function')changed=ensurePlanningBudgetSources({seed:false,persist:false})||changed;}catch(e){}try{changed=repairV4413StableLinks()||changed;if(changed)saveData();}catch(e){}const b=document.getElementById('mongo-build-version');if(b)b.textContent='V44.13.3';}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('pageshow',boot);[800,2200,5000].forEach(ms=>setTimeout(boot,ms));
 })();
 </script>
 <script id="mongo-v4410-financial-integrity-audit">
 (()=>{
-  const BUILD='V44.13.2';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
+  const BUILD='V44.13.3';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
   const TXT={
     mn:{title:'Санхүүгийн уялдааны шалгалт',ok:'Зөрүү илрээгүй',warn:'Анхаарах зөрүү',close:'Хаах',rerun:'Дахин шалгах',summary:'Шалгасан бүртгэл',txn:'Гүйлгээ',transfer:'Шилжүүлэг',loan:'Зээл',payment:'Зээлийн төлөлт',account:'Данс',budget:'Төсвийн холбоос'},
     en:{title:'Financial integrity check',ok:'No inconsistency found',warn:'Issues to review',close:'Close',rerun:'Run again',summary:'Records checked',txn:'Transactions',transfer:'Transfers',loan:'Loans',payment:'Loan payments',account:'Accounts',budget:'Budget links'},
