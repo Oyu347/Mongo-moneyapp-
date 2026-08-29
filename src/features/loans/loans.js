@@ -1,5 +1,5 @@
-// Möngö Loans — Phase 1D
-// Pure loan calculations/repayment normalization only. UI, persistence, account movement and linked effects stay outside.
+// Möngö Loans — Phase 1 COMPLETE
+// Pure loan calculations/repayment normalization. UI, persistence, account movement and cross-feature linked effects stay outside.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
