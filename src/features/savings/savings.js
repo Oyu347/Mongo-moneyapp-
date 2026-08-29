@@ -1,5 +1,5 @@
-// Möngö Savings — Phase 1B
-// Pure goal/savings calculations and savings-account metadata normalization. Transfers remain movements, not expenses.
+// Möngö Savings — Phase 1C
+// Pure goal/savings calculations, metadata and user-confirmed interest transaction construction.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0,MODES=new Set(['compound','payout','maturity','none']),FREQUENCIES=new Set(['monthly','quarterly','yearly','maturity']);
@@ -14,5 +14,6 @@ function calendarMonthsDaysBetween(from,to){const start=new Date(from.getFullYea
 function normalizeInterestMetadata(input){const x=input||{},mode=MODES.has(x.interestMode)?x.interestMode:'compound',frequency=FREQUENCIES.has(x.interestFrequency)?x.interestFrequency:'monthly';return {interestMode:mode,annualInterestRate:Math.max(0,num(x.annualInterestRate)),interestFrequency:frequency,interestAccountId:x.interestAccountId||null,linkedGoalId:x.linkedGoalId||null,maturityDate:x.maturityDate||''};}
 function interestDestination(account,defaultAccountId){if(!account||account.interestMode==='none')return null;return account.interestMode==='payout'?(account.interestAccountId||defaultAccountId||null):(account.id||null);}
 function linkedGoalId(account){return account?.linkedGoalId||account?.goalId||null;}
-global.MongoSavings=Object.freeze({transferContribution,interestContribution,autoSaved,effectiveSaved,progressPct,addMonthsSafe,monthsBetweenCeil,calendarMonthsDaysBetween,normalizeInterestMetadata,interestDestination,linkedGoalId});
+function makeInterestTransaction(input,options={}){const x=input||{},amount=Math.round(num(x.amount));if(!(amount>0))return {ok:false,reason:'amount_required'};if(!x.date)return {ok:false,reason:'date_required'};if(!x.accountId)return {ok:false,reason:'account_required'};if(!x.savingsAccountId)return {ok:false,reason:'savings_account_required'};return {ok:true,transaction:{id:x.id||options.id||null,type:'income',desc:x.desc||'',catKey:x.catKey||null,catName:x.catName||'',subcatName:x.subcatName||'',amount,date:x.date,accountId:x.accountId,savingsInterest:true,savingsAccountId:x.savingsAccountId,interestMode:x.interestMode||'compound',incomePurpose:'savings_interest',goalId:x.goalId||null,createdAt:x.createdAt||options.timestamp||new Date().toISOString()}};}
+global.MongoSavings=Object.freeze({transferContribution,interestContribution,autoSaved,effectiveSaved,progressPct,addMonthsSafe,monthsBetweenCeil,calendarMonthsDaysBetween,normalizeInterestMetadata,interestDestination,linkedGoalId,makeInterestTransaction});
 })(window);
