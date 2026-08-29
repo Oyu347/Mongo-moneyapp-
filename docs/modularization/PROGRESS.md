@@ -15,34 +15,32 @@ Use the exact latest prepared V44 full HTML; never reconstruct the monolith from
 - Transactions Phase 1 COMPLETE through 1E.
 - Loans Phase 1 COMPLETE through 1E.
 
-### Loans Phase 1 closure
-- 1A module `447fdf7116c0aa0a3173c6fac5c26a191927e36c`; tests `a805e8c4ba19cbdeb770db9203ec54004888b5ef`.
-- 1B module `66aa6aeb203fc2ff2eaf41f89a889135d17ca25d`; tests `a2a23dc2df89f0811eda1d9332ddde8af2788b99`.
-- 1C module `b287e9c7464483cf409480edb9c954e9a17b99c6`; tests `aeb6ef0255d87a4476f6c126803cd729f66a422b`.
-- 1D module `1b1ded95131073dd69a3ad5c54e4217784a09607`; tests `9aec8556f639a0911dd8fc067237d412411af83b`.
-- 1E closure marker `07944603036691659949f6b2043546b529e83685`.
+### Savings — Phase 1A: pure goal calculation foundation
+Module: `ca69457a11561da57710f78fefa7b02dad713a83`
+Tests: `045a049e509541264dea00da3e8a81ff24c5691b`
 
-### Loans — Phase 1E closure audit
-- Prepared `index.modular-loans-phase1e.html` preserves Phase 1D behavior; closure adds no speculative monolith mutation.
-- Confirmed unified ledger contains distinct `loan_received` and `loan_payment` kinds and delegates funding/payment entry construction to `MongoLedgerCore`.
-- Confirmed ledger projection removes compatibility `loanPaymentId` technical interest rows from ordinary transactions, preventing the interest mirror from surviving as a second ordinary expense representation in the projected transaction view.
-- Confirmed new/edit repayment normalization remains delegated to `MongoLoans`.
-- Loan funding remains a loan/account movement rather than ordinary income; repayment remains unified loan-payment semantics rather than an ordinary expense transaction.
-- Asset cross-feature branch remains outside Loans closure and is intentionally untouched.
+- Created `src/features/savings/savings.js` with pure goal contribution/progress and calendar helpers.
+- Goal auto-saved value counts only `purpose:'savings'` transfers linked by targetId plus actual savings-interest income linked by goalId.
+- Ordinary/internal transfers, unrelated income and expense transactions do not contribute to goal savings.
+- Effective saved preserves existing manual `goal.saved` plus automatic contributions; progress remains rounded and capped at 100%.
+- Extracted safe month arithmetic, ceiling month count and calendar month/day difference with the same noon-local date behavior.
+- Prepared `index.modular-savings-phase1a.html` loads Savings after Loans and delegates `getGoalAutoSaved`, `getGoalEffectiveSaved`, `goalProgressPct`, `addMonthsSafe`, `monthsBetweenCeil` and `calendarMonthsDaysBetween` through `MongoSavings`.
+- Savings transfer mutation/migration, savings account creation/linking, interest recording, Budget integration, persistence and UI remain inline.
+- No savings contribution is reclassified as an expense.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Node loan regression suite and browser/runtime parity are not recorded as executed.
+- Node savings regression suite and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Loans Phase 1 is closed. Pure schedule, aggregation, remaining balance, next split, repayment creation/edit normalization are modularized. Ledger owns loan funding/payment accounting semantics; UI/persistence/account availability/cross-feature effects remain compatibility boundaries.
+Savings Phase 1 has a pure goal/progress calculation foundation. Actual account balances remain the source for Savings total/chart; goals remain planning/progress objects and do not inflate real savings.
 
 ## NEXT STEP
-### Savings — Phase 1A: pure savings/goal calculation foundation
-1. Inspect exact savings account, goal progress, transfer contribution and interest calculation logic in the latest prepared HTML.
-2. Extract only pure savings/goal calculations to `src/features/savings/savings.js`.
-3. Preserve the invariant that savings contributions via account transfers are not expenses.
-4. Preserve goal-to-savings-account linkage and current compound/payout interest semantics exactly.
-5. Keep account transfer mutation, persistence, UI and Budget integration outside the pure module initially.
-6. Add focused savings regression tests and run static syntax validation.
+### Savings — Phase 1B: goal/account linkage + interest metadata boundary
+1. Inspect savings account `goalId/linkedGoalId`, interest mode/rate/frequency/destination and maturity metadata normalization.
+2. Extract pure linkage/metadata normalization only; do not move account creation or persistence yet.
+3. Preserve compound vs payout vs maturity/none semantics exactly.
+4. Preserve actual credited interest recording rather than forecasting it as received cash.
+5. Add regression tests and delegate only exact low-risk callers.
+6. Re-run static syntax validation; runtime tests only if actually executed.
 
 ## Future order
 Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
