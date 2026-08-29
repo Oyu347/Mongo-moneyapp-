@@ -1,4 +1,4 @@
-// Möngö Loans — Phase 1A
+// Möngö Loans — Phase 1B
 // Pure loan calculations only. UI, persistence, account movement and linked asset/transaction effects stay outside.
 (function(global){
 'use strict';
@@ -8,7 +8,8 @@ function principalPaid(debt){return payments(debt).reduce((s,p)=>s+num(p.princip
 function totalPaid(debt){return payments(debt).reduce((s,p)=>s+num(p.total),0);}
 function interestPaid(debt){return payments(debt).reduce((s,p)=>s+num(p.interest),0);}
 function openingRemaining(debt){if(!debt)return 0;const open=Number(debt.openingRemaining);if(Number.isFinite(open)&&open>=0)return open;const rem=Number(debt.remaining);if(Number.isFinite(rem)&&rem>=0)return rem;return Math.max(0,num(debt.total));}
-function remaining(debt,legacyPrincipalPaid=0){return Math.max(0,openingRemaining(debt)-principalPaid(debt)-Math.max(0,num(legacyPrincipalPaid)));}
+function paidAmount(debt,legacyPrincipalPaid=0){return principalPaid(debt)+Math.max(0,num(legacyPrincipalPaid));}
+function remaining(debt,legacyPrincipalPaid=0){return Math.max(0,openingRemaining(debt)-paidAmount(debt,legacyPrincipalPaid));}
 function nextSplit(debt,balance){
  const bal=Math.max(0,balance==null?remaining(debt):num(balance)),months=Math.max(1,num(debt?.termMonths)||1),rate=Math.max(0,num(debt?.rate)),r=rate/12/100;
  const paidCount=payments(debt).length,remainMonths=Math.max(1,months-paidCount);let interest=bal*r,principal=0,total=0;
@@ -26,5 +27,5 @@ function buildSchedule(P,annualRate,months,type,extra,extraMonths){
  }
  return {schedule,totalInterest,totalPay:P+totalInterest,monthly:type==='diff'?(schedule[0]?.payment||0):annPay};
 }
-global.MongoLoans=Object.freeze({payments,principalPaid,totalPaid,interestPaid,openingRemaining,remaining,nextSplit,buildSchedule});
+global.MongoLoans=Object.freeze({payments,principalPaid,totalPaid,interestPaid,openingRemaining,paidAmount,remaining,nextSplit,buildSchedule});
 })(window);
