@@ -1,69 +1,54 @@
 # Möngö Modularization Progress
 
-This file is the handoff/checkpoint for future modularization sessions. Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuing.
+Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuing.
 
 ## Branch
 `development-modular` — never use `main` for modularization work.
 
 ## Baseline
-Use the exact latest working/prepared V44 full HTML. Never reconstruct the monolith from truncated GitHub contents.
+Use the exact latest prepared V44 full HTML; never reconstruct the monolith from truncated GitHub contents.
 
 ## Completed
+- Storage Phase 1 compatibility foundation.
+- Core Phase 1 COMPLETE: `src/core/ledger.js` owns pure ledger construction/balance/validation/rebuild logic.
+- Accounts Phase 1 COMPLETE through 1E. Latest module commit `f1732051b19a36913d054506f20dfde06f2b9372`; latest Accounts tests `5dda927d4bce419b2fc3424c046946b10d492129`.
 
-### Storage — Phase 1
-`src/services/storage/storage.js` compatibility foundation exists. Firebase/cloud remains for later.
+### Transactions — Phase 1A: compatibility foundation
+Module commit: `4b830c4823857b784fe0ddc05192df6be238d18d`
+Regression harness commit: `82a6fed6ff5d8400f59982091050356cf253c084`
 
-### Core — Phase 1: COMPLETE
-`src/core/ledger.js` owns pure ledger construction, balances, validation and rebuild detection. Regression/parity harnesses exist under `tests/core/`. UI/persistence/Firebase remain outside Core.
+Created `src/features/transactions/transactions.js` with pure helpers for:
+- ordinary income/expense transaction construction and edit-shape application,
+- internal/asset transfer construction and validation,
+- immutable delete-by-id filtering,
+- period range/in-period checks,
+- account filtering,
+- income/expense/transfer-in/transfer-out summaries.
 
-### Accounts — Phase 1: COMPLETE
+Ownership boundaries:
+- Ledger semantics remain in `MongoLedgerCore`.
+- Account metadata/selection remains in `MongoAccounts`.
+- Loan principal/interest, savings, investments/assets and Pay Yourself First side effects remain inline for their later feature phases.
+- DOM, `saveData()`, Firebase/cloud and `main` remain untouched.
 
-Phase commits:
-- 1A foundation: `67dfae3e3621189b0288ceb0b9f3118da551f0fd`
-- 1B metadata: `b57ab57d250d99894d2e6079e87efce07dc456e6`
-- 1C safe mutation boundaries: `78481fd0ec24a4150fe68e62fb27ce39f539c793`
-- 1D creation/edit construction: `165d0f02802736f903b932b83c027d35641ee0a9`
-- 1E selection helpers: `f1732051b19a36913d054506f20dfde06f2b9372`
-- Latest Accounts tests: `5dda927d4bce419b2fc3424c046946b10d492129`
+Prepared `index.modular-transactions-phase1a.html` from exact Accounts Phase 1E HTML. It loads Transactions after Accounts and delegates safe read-only period/filter/summary helpers. Risky add/edit/delete transaction mutations remain inline.
 
-Accounts Phase 1 now owns pure compatibility logic for:
-- legacy `bank` → `checking` normalization and active/spendable/savings classification,
-- account metadata/bootstrap and `legacy_main`,
-- default account assignment for legacy transactions,
-- account lookup and active-account filtering/selection,
-- source/destination exclusion and distinct transfer destination selection,
-- account creation/edit metadata construction,
-- opening-balance totals and edit preview,
-- ledger-derived account totals and zero-balance deactivation eligibility,
-- transfer-only account history rows,
-- safe metadata deactivation without deleting historical transactions/transfers/ledger entries.
-
-Prepared HTML progression delegates the safe pure callers while preserving compatibility UI, confirmation, rendering and persistence boundaries. Phase 1E delegates active selector lists, account option exclusion and distinct destination selection to `MongoAccounts` without moving DOM rendering.
-
-Savings-interest and goal-specific business behavior remains outside Accounts intentionally and should be handled in the Savings phase. Transfer financial semantics remain owned by Core/Transactions rather than Accounts. Firebase/cloud remains untouched.
-
-Static syntax validation of prepared `index.modular-accounts-phase1e.html`: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-
-Execution note: static syntax validation was executed locally. GitHub Node regression suites and browser/runtime parity are not recorded as executed yet; do not treat static syntax success as runtime proof.
+Static syntax validation of prepared HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors. The first user-visible checker command used an incorrectly escaped extraction regex and undercounted 11 blocks; a corrected check immediately confirmed the authoritative count of 44/0. Node regression suites/browser runtime parity are not recorded as executed.
 
 ## Current state
-Storage Phase 1, Core Phase 1 and Accounts Phase 1 modular foundations are complete on `development-modular`. The exact prepared full HTML remains local because the monolithic file is too large to safely replace through the GitHub contents connector.
+Storage, Core and Accounts foundations are complete. Transactions Phase 1A foundation is created and only low-risk read helpers are delegated.
 
 ## NEXT STEP
-### Transactions — Phase 1A: identify boundaries and create compatibility module
-
-Target: `src/features/transactions/transactions.js`
-
-1. Inspect exact latest prepared full HTML for ordinary income/expense transaction creation/edit/delete, transfer form routing, account selection, category/subcategory assignment, date/amount normalization and transaction list/search/filter helpers.
-2. Keep ledger construction in `MongoLedgerCore`; Transactions should prepare/validate transaction-facing data, not duplicate ledger semantics.
-3. Keep account metadata/selection ownership in `MongoAccounts`; reuse it rather than duplicating account filters.
-4. Preserve transfer invariants: Bank ↔ Cash/internal account transfers must not become income/expense and must not change total money solely because of the transfer.
-5. Preserve loan-payment exclusion from ordinary expense rows and leave loan-specific principal/interest business logic for Loans.
-6. Start with pure compatibility helpers and a focused regression harness before migrating risky transaction mutations.
-7. Keep DOM, `saveData()`, Firebase/cloud and `main` untouched.
+### Transactions — Phase 1B: ordinary transaction construction/edit boundary
+1. Delegate ordinary income/expense transaction object construction to `MongoTransactions.makeTransaction()` while preserving existing insufficient-balance checks and feature side effects.
+2. Delegate edit field application to `MongoTransactions.applyEdit()` but keep Pay Yourself First, investment sync/removal, loan-specific behavior, UI reset, save/render inline.
+3. Preserve stable transaction IDs on edit and account/category/subcategory/date fields exactly.
+4. Add regression cases for edit ID stability and no mutation on invalid input.
+5. Do not migrate transfer/asset purchase mutations yet unless isolated safely.
+6. Re-run static syntax checks; do not claim runtime tests unless actually executed.
 
 ## Future order
 Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
 
 ## Handoff rule
-At the end of every modularization session update this document with changes, commits, tests, unresolved risks and exact next step.
+At each phase end record exact commits, tests actually performed, unresolved risks and exact next step.
