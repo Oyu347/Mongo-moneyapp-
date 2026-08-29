@@ -17,30 +17,34 @@ Use the exact latest prepared V44 full HTML; never reconstruct the monolith from
 Module `4b830c4823857b784fe0ddc05192df6be238d18d`; tests `82a6fed6ff5d8400f59982091050356cf253c084`.
 Created pure transaction/transfer construction, filtering and summary foundation; prepared HTML delegated low-risk read helpers.
 
-### Transactions — Phase 1B: ordinary add/edit boundary
-Module update: `2f15dc6eff62c133703cba80f39ae5faf9f45a5f`
-Regression update: `1c5433330aa2b4e1c7cae48d07228c7bd41a0209`
+### Transactions — Phase 1B
+Module `2f15dc6eff62c133703cba80f39ae5faf9f45a5f`; tests `1c5433330aa2b4e1c7cae48d07228c7bd41a0209`.
+Ordinary income/expense construction and edit shape delegated while special linked side effects remain inline.
 
-- `makeTransaction()` now preserves explicit category/subcategory keys and optional `createdAt` metadata.
-- `applyEdit()` preserves stable transaction ID and original `createdAt`, and validates the replacement shape before mutating the existing object.
-- Prepared `index.modular-transactions-phase1b.html` delegates ordinary income/expense new-object construction and edit field application to `MongoTransactions`.
-- Existing insufficient-balance checks remain inline before construction/edit.
-- Pay Yourself First sync/removal, investment sync/removal, loan-specific compatibility behavior, UI reset, save/render and cloud journal wrappers remain inline.
-- Transfer/asset-purchase mutation paths remain inline for a later bounded phase.
-- Regression harness extended for account/category/subcategory/date/type preservation, stable ID/createdAt and invalid-edit non-mutation.
-- Static syntax validation executed on prepared Phase 1B HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Node regression suites and browser/runtime parity are not recorded as executed.
+### Transactions — Phase 1C: ordinary removal + internal transfer boundary
+Module update: `dfcf541f16a43c1c8d8d43c0c5785af21b6818e1`
+Regression update: `a92e024440ca015b6c49e61c250cd9cddaf86e92`
+
+- Added `makeInternalTransfer()` as an explicit internal account-to-account transfer constructor over `makeTransfer()`.
+- Added `removalPreview()` plus existing immutable `removeById()` for ordinary transaction deletion calculation.
+- Regression coverage verifies internal transfer purpose/source/destination/amount, rejects same/missing destination, and verifies deletion helpers do not mutate the source array.
+- Prepared `index.modular-transactions-phase1c.html` from exact Phase 1B HTML.
+- Ordinary exact `txns.filter(...id...)` deletion expressions found in the prepared monolith were delegated to `MongoTransactions.removeById()` where exact matches existed.
+- The monolith's internal-transfer construction did not match the conservative exact object pattern used for automatic migration, so no risky guessed replacement was made in the prepared HTML. The module boundary and regression coverage are ready; exact caller migration remains for Phase 1D after inspecting the real transfer handler.
+- Asset-purchase transfer branch remains inline and untouched.
+- Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- Node regression suites/browser runtime parity are not recorded as executed.
 
 ## Current state
-Transactions owns ordinary transaction construction/edit shape plus read/filter/summary helpers. Special cross-feature side effects and persistence remain compatibility boundaries.
+Transactions owns ordinary construction/edit/read/filter/summary plus safe immutable deletion calculation and a validated internal-transfer constructor. Cross-feature cleanup, persistence, asset purchase and exact internal-transfer caller mutation remain compatibility boundaries.
 
 ## NEXT STEP
-### Transactions — Phase 1C: ordinary delete + internal transfer construction boundary
-1. Delegate ordinary transaction delete-array calculation to `MongoTransactions.removeById()` while keeping confirmation and linked feature cleanup inline.
-2. Delegate internal account-to-account transfer object construction to `makeTransfer()` after existing balance validation.
-3. Preserve transfer invariants: source decreases, destination increases, total account money/income/expense unchanged solely due internal transfer.
-4. Keep asset-purchase transfer branch inline; do not mix asset registration into ordinary transfer extraction.
-5. Extend regression coverage for delete immutability and internal-transfer metadata.
+### Transactions — Phase 1D: exact transfer handler migration + delete boundary audit
+1. Inspect the exact current transfer-submit handler in the prepared Phase 1C HTML rather than guessing its shape.
+2. Delegate only the ordinary account-to-account transfer object construction to `makeInternalTransfer()` after existing balance validation.
+3. Leave asset purchase, savings/loan/investment linked effects and persistence/UI inline.
+4. Audit ordinary delete callers so linked cleanup happens before immutable array replacement and no special transaction is accidentally treated as ordinary.
+5. Add/adjust regression cases only for behavior actually migrated.
 6. Re-run static syntax checks; runtime tests only if actually executed.
 
 ## Future order
