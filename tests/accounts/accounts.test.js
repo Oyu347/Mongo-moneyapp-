@@ -17,13 +17,19 @@ assert.strictEqual(saving.account.interestAccountId,'save-1','compound interest 
 const edit=A.editMetadata(saving.account,{name:'Goal 2',type:'savings',interestMode:'payout',annualInterestRate:10,interestAccountId:'new-bank',linkedGoalId:'g2'});
 assert.strictEqual(edit.ok,true); assert.strictEqual(saving.account.name,'Goal 2'); assert.strictEqual(saving.account.interestAccountId,'new-bank'); assert.strictEqual(saving.account.linkedGoalId,'g2');
 
-const accounts=[{id:'bank',type:'checking',openingBalance:100000,active:true},{id:'cash',type:'cash',openingBalance:10000,active:true},{id:'zero',type:'checking',openingBalance:0,active:true}];
+const accounts=[{id:'bank',type:'checking',openingBalance:100000,active:true},{id:'cash',type:'cash',openingBalance:10000,active:true},{id:'save',type:'savings',openingBalance:0,active:true},{id:'old',type:'checking',openingBalance:0,active:false},{id:'legacy',type:'cash',openingBalance:0,active:true,legacy:true},{id:'zero',type:'checking',openingBalance:0,active:true}];
+assert.deepStrictEqual(A.activeAccounts(accounts).map(a=>a.id),['bank','cash','save','legacy','zero']);
+assert.deepStrictEqual(A.activeAccounts(accounts,{excludeLegacy:true,type:'checking'}).map(a=>a.id),['bank','zero']);
+assert.strictEqual(A.accountById(accounts,'cash').id,'cash'); assert.strictEqual(A.accountById(accounts,'missing'),null);
+assert.strictEqual(A.validSelection(accounts,'old'),false); assert.strictEqual(A.validSelection(accounts,'save',{type:'savings'}),true);
+assert.strictEqual(A.distinctDestinationId(accounts,'bank','bank'),'cash'); assert.strictEqual(A.distinctDestinationId(accounts,'bank','save'),'save');
+
 const transfers=[{id:'t',amount:25000,fromId:'bank',toId:'cash',date:'2026-08-20'}];
 const ledger=global.MongoLedgerCore.buildLedger({txns:[],debts:[],accountTransfers:transfers},[],'2026-08-30T00:00:00.000Z');
 assert.strictEqual(A.accountTotal(accounts,ledger),110000,'internal transfer preserves total account money');
 const change=A.openingBalanceChange('bank',120000,accounts,ledger); assert.deepStrictEqual(change,{before:100000,after:120000,delta:20000,current:75000,result:95000,changed:true});
 assert.strictEqual(accounts[0].openingBalance,100000,'preview must not mutate opening balance'); assert.strictEqual(transfers.length,1,'opening balance preview must not rewrite history');
 assert.strictEqual(A.canDeactivate('bank',accounts,ledger),false); assert.deepStrictEqual(A.deactivateMetadata('bank',accounts,ledger),{ok:false,reason:'non_zero_balance'}); assert.strictEqual(accounts[0].active,true);
-const zeroResult=A.deactivateMetadata('zero',accounts,ledger); assert.strictEqual(zeroResult.ok,true); assert.strictEqual(accounts[2].active,false); assert.strictEqual(transfers.length,1,'deactivation must not delete historical transfers');
+const zeroResult=A.deactivateMetadata('zero',accounts,ledger); assert.strictEqual(zeroResult.ok,true); assert.strictEqual(accounts[5].active,false); assert.strictEqual(transfers.length,1,'deactivation must not delete historical transfers');
 const rows=A.transferRows('cash',accounts,transfers); assert.strictEqual(rows.length,1); assert.strictEqual(rows[0].amount,25000);
 console.log('Möngö accounts regression tests: PASS');
