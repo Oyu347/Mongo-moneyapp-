@@ -14,33 +14,30 @@ Use the exact latest prepared V44 full HTML; never reconstruct the monolith from
 - Accounts Phase 1 COMPLETE through 1E.
 - Transactions Phase 1 COMPLETE through 1E.
 
-### Transactions Phase 1 closure
-- 1A module `4b830c4823857b784fe0ddc05192df6be238d18d`, tests `82a6fed6ff5d8400f59982091050356cf253c084`.
-- 1B module `2f15dc6eff62c133703cba80f39ae5faf9f45a5f`, tests `1c5433330aa2b4e1c7cae48d07228c7bd41a0209`.
-- 1C module `dfcf541f16a43c1c8d8d43c0c5785af21b6818e1`, tests `a92e024440ca015b6c49e61c250cd9cddaf86e92`.
-- 1D regression `87498e78579f02f6c23e02395a2fbcef9d4aec2f`; exact ordinary internal-transfer caller migrated in prepared HTML.
-- 1E closure module marker `7116a3617f463d1a3397fdec8046084f97d98468`.
+### Loans — Phase 1A: pure calculation foundation
+Module: `447fdf7116c0aa0a3173c6fac5c26a191927e36c`
+Tests: `a805e8c4ba19cbdeb770db9203ec54004888b5ef`
 
-### Transactions Phase 1E audit
-- Prepared `index.modular-transactions-phase1e.html` preserves the exact Phase 1D behavior; Phase 1E is an audit/closure checkpoint, not a speculative behavior change.
-- Confirmed module load order in prepared HTML: Core → Accounts → Transactions.
-- Confirmed ordinary transaction construction, edit, delete-array calculation and ordinary internal-transfer construction delegate to `MongoTransactions`.
-- Confirmed asset-purchase and loan-special logic remain outside Transactions as intended; savings/investment/PYF linked side effects remain compatibility boundaries.
-- No additional ordinary constructor was migrated because no further low-risk duplicate boundary justified a change.
+- Created `src/features/loans/loans.js` with pure payment aggregation, opening/remaining principal, next-payment principal/interest split and full schedule calculation.
+- Preserved existing `annuity` and `diff` formulas from the prepared V44 HTML, including extra-principal schedule behavior and the 1000-iteration guard.
+- Remaining principal subtracts principal + extra principal, not interest; optional legacy principal-paid input keeps old transaction migration outside the pure module.
+- Added regression cases for payment aggregation, opening/remaining balance, zero-interest annuity, declining equal-principal payment, annuity payoff, extra-payment benefit and next-split principal/interest values.
+- Prepared `index.modular-loans-phase1a.html` loads Loans after Transactions and delegates the standalone `buildLoanSchedule()` compatibility wrapper to `MongoLoans.buildSchedule()`.
+- Debt creation, repayment persistence, interest-expense mirror transaction, account balance guard, linked asset purchase and legacy loan-payment transaction detection remain inline.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Node Transactions regression suite and browser/runtime parity are not recorded as executed.
+- Node loan regression suite and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Transactions Phase 1 is closed. `MongoTransactions` owns ordinary transaction shape/edit/read/filter/summary, immutable ordinary deletion calculation, and ordinary internal account-to-account transfer construction. Cross-feature business rules and persistence/UI remain outside.
+Loans Phase 1 has a pure calculation foundation. Only the standalone schedule calculator caller is delegated so far; debt remaining/next-split compatibility callers remain inline until legacy-payment semantics are wired explicitly.
 
 ## NEXT STEP
-### Loans — Phase 1A: pure loan calculation/metadata boundary
-1. Inspect exact loan creation, repayment schedule, equal-principal/equal-payment and remaining-balance logic in the latest prepared HTML.
-2. Identify pure calculations that can move to `src/features/loans/loans.js` without UI/storage/Firebase dependencies.
-3. Preserve principal-vs-interest semantics and extra-payment behavior exactly.
-4. Do not reclassify loan repayment as ordinary expense; preserve account/transfer integration boundaries.
-5. Add focused loan regression tests before caller migration.
-6. Prepare the next full HTML from `index.modular-transactions-phase1e.html` and run static syntax validation.
+### Loans — Phase 1B: remaining balance + next payment split caller migration
+1. Delegate modern payment aggregation to `MongoLoans` while preserving legacy transaction-based principal additions exactly.
+2. Migrate `getDebtOpeningRemaining()`, `getDebtRemaining()` and `debtCalcNextSplit()` through compatibility wrappers without changing UI behavior.
+3. Verify interest is never subtracted from principal balance and extra principal is.
+4. Keep `saveDebtPayment()` mutation, interest expense mirror transaction and account balance validation inline.
+5. Extend regression coverage for mixed modern + legacy principal history and extra principal.
+6. Re-run static syntax validation; execute runtime/Node tests only if actually run.
 
 ## Future order
 Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
