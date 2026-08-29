@@ -1,6 +1,6 @@
-// Möngö Transactions — Phase 1A
-// Pure compatibility helpers for transaction/transfer construction, filtering and summaries.
-// Ledger semantics stay in MongoLedgerCore; account metadata stays in MongoAccounts.
+// Möngö Transactions — Phase 1B
+// Pure compatibility helpers for transaction/transfer construction, editing, filtering and summaries.
+// Ledger semantics stay in MongoLedgerCore; UI/persistence/special linked side effects stay outside.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
@@ -11,13 +11,14 @@ function makeTransaction(input,options={}){
  if(!(amount>0))return {ok:false,reason:'amount_required'};
  if(!s.accountId)return {ok:false,reason:'account_required'};
  const desc=clean(s.desc)||clean(s.subcatName)||clean(s.catName);
- const txn={id:s.id||makeId('txn',options.uuid,options.now),desc,amount,catName:s.catName||'',catKey:s.catKey||null,subcatName:s.subcatName||null,investTypeKey:s.investTypeKey||null,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),type,accountId:s.accountId,updatedAt:options.timestamp||new Date().toISOString()};
+ const txn={id:s.id||makeId('txn',options.uuid,options.now),desc,amount,catName:s.catName||'',catKey:s.catKey||null,subcatKey:s.subcatKey||null,subcatName:s.subcatName||null,investTypeKey:s.investTypeKey||null,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),type,accountId:s.accountId,updatedAt:options.timestamp||new Date().toISOString()};
+ if(s.createdAt!=null)txn.createdAt=s.createdAt;
  return {ok:true,txn};
 }
 function applyEdit(txn,patch,options={}){
  if(!txn)return {ok:false,reason:'not_found'};
  const made=makeTransaction(Object.assign({},txn,patch,{id:txn.id}),options); if(!made.ok)return made;
- Object.assign(txn,made.txn,{id:txn.id}); return {ok:true,txn};
+ const id=txn.id,createdAt=txn.createdAt;Object.assign(txn,made.txn,{id});if(createdAt!=null)txn.createdAt=createdAt;return {ok:true,txn};
 }
 function makeTransfer(input,options={}){
  const s=input||{}, amount=num(s.amount), purpose=s.purpose||'internal';
