@@ -17,15 +17,13 @@ Use the exact latest working/prepared V44 full HTML for caller migration. Do not
 ### Storage — Phase 1
 
 - `src/services/storage/storage.js` compatibility foundation created.
-- First small local-persistence callers prepared for migration.
 - Firebase/cloud remains separate for later `services/cloud` work.
 
 ### Core — Phase 1: COMPLETE
 
-- `src/core/ledger.js` owns pure unified-ledger kind mapping, entry construction, ledger building, account-balance calculation, validation and rebuild detection.
+- `src/core/ledger.js` owns pure unified-ledger construction, balance, validation and rebuild logic.
 - Regression/parity harnesses exist under `tests/core/`.
-- Prepared Phase 1F HTML delegates the selected compatibility wrappers to Core while leaving UI, persistence and Firebase outside Core.
-- Static syntax validation passed with 0 errors.
+- Prepared HTML delegates selected compatibility wrappers to Core while UI, persistence and Firebase remain outside Core.
 
 Key commits:
 - Core foundation: `61164ec3277107b9ca6f71d098e680a31e963b73`
@@ -37,41 +35,45 @@ Key commits:
 Module commit: `67dfae3e3621189b0288ceb0b9f3118da551f0fd`
 
 - Created `src/features/accounts/accounts.js`.
-- Accounts module deliberately does not recalculate financial ledger semantics. It calls `MongoLedgerCore.accountBalance()` for balances/totals.
-- Added pure compatibility helpers for:
-  - account-type normalization (`bank` legacy value → `checking`),
-  - active/spendable/savings classification,
-  - default account selection,
-  - opening-balance totals,
-  - ledger-derived account totals,
-  - transfer-only account-history rows,
-  - zero-balance eligibility check for deactivation.
-- Inspected current account boundaries in the exact Phase 1F prepared HTML. Current inline account ownership includes `ensureMoneyAccounts`, legacy account bootstrap, selectors, transfer history display, create/edit/deactivate UI, opening balance totals and account classifications.
-- Prepared `index.modular-accounts-phase1a.html` from the exact Phase 1F file and loaded `src/features/accounts/accounts.js` immediately after Core.
-- Migrated only small pure compatibility callers in the prepared HTML:
-  - `getDefaultAccountId()` → `MongoAccounts.defaultAccountId()`
-  - `normalizeAccountType()` → `MongoAccounts.normalizeType()`
-  - `accountRowsFor()` → `MongoAccounts.transferRows()`
-  - spendable/savings predicates and account/opening totals → `MongoAccounts` helpers.
-- Account creation, edit, deactivation mutation, legacy bootstrap, persistence, Firebase and rendering remain inline.
-- Static syntax validation of the prepared Accounts Phase 1A HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- Added pure helpers for account type/classification, default selection, opening/account totals, transfer history and deactivation eligibility.
+- Prepared HTML loads Accounts after Core and delegates the smallest pure callers.
 
-Execution note: static syntax validation is complete. Browser/runtime parity and committed Node suites still need an executable app/checkout before production/main integration.
+### Accounts — Phase 1B: metadata normalization + regression harness
+
+Module update commit: `b57ab57d250d99894d2e6079e87efce07dc456e6`
+Regression-test commit: `d50df6233d1e2563a6ab18e976f9cc679f94dec2`
+
+- Extended `MongoAccounts` with pure metadata/bootstrap helpers:
+  - `earliestTransactionDate()`
+  - `makeLegacyAccount()`
+  - `normalizeMetadata()`
+  - `ensureLegacyAccount()`
+  - `assignMissingTransactionAccounts()`
+- Legacy `bank` continues to normalize to `checking`.
+- Opening balances are normalized as non-negative numeric metadata; existing explicit `active:false` is preserved.
+- Legacy bootstrap preserves `legacy_main`, cash type, earliest transaction start date and existing opening-balance semantics.
+- Added `tests/accounts/accounts.test.js` covering type normalization, metadata normalization, legacy bootstrap, missing transaction-account assignment, internal-transfer total conservation, deactivation eligibility and transfer history.
+- Prepared `index.modular-accounts-phase1b.html` from the exact Phase 1A file.
+- `ensureMoneyAccounts()` now delegates metadata/bootstrap/default transaction-account assignment/opening total to `MongoAccounts`, while preserving the existing legacy-account auto-deactivation check inline.
+- Account create/edit/deactivate mutations, rendering, persistence and Firebase remain inline.
+- Static syntax validation of the prepared Phase 1B HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+
+Execution note: static syntax validation has been executed locally. GitHub Node regression suites and browser/runtime parity still require an executable checkout/app environment before production/main integration; do not record them as executed yet.
 
 ## Current state
 
-Storage Phase 1 and Core Phase 1 foundations are complete. Accounts Phase 1A now has a rollback-safe compatibility module and the smallest pure callers are delegated in the prepared full HTML. Account mutations and persistence remain untouched.
+Accounts now owns pure account identity/type/metadata normalization/bootstrap and account-facing read helpers. Riskier account mutations are still protected behind existing inline compatibility code.
 
 ## NEXT STEP
 
-### Accounts — Phase 1B: account metadata normalization + regression tests
+### Accounts — Phase 1C: opening-balance and deactivation mutation boundaries
 
-1. Add focused `tests/accounts/accounts.test.js` covering default account selection, legacy `bank` normalization, spendable/savings classification, opening totals, ledger-derived totals, transfer history and deactivation eligibility.
-2. Extract a pure account normalization/bootstrap helper without persistence/UI side effects. Preserve the existing stored account object shape and legacy `legacy_main` behavior.
-3. Keep `addMoneyAccount`, `editMoneyAccount`, `archiveMoneyAccount`, `saveData`, Firebase and UI rendering inline during this phase.
-4. Delegate only metadata normalization/default assignment from `ensureMoneyAccounts()` after parity is established.
-5. Verify that a later-created account opening balance appears once and does not rewrite older transaction history.
-6. Re-run syntax/regression checks.
+1. Extract pure helpers for opening-balance edits: calculate delta/resulting balance and recompute aggregate opening total without persistence/UI side effects.
+2. Add regression cases proving an opening-balance edit changes only that account's opening contribution and does not rewrite historical transactions/transfers.
+3. Inspect `archiveMoneyAccount()` and preserve the current rule for historical ledger entries; do not delete history when deactivating.
+4. Delegate only calculation/eligibility portions of edit/deactivation; keep confirmation dialogs, rendering and `saveData()` inline.
+5. Keep Firebase/cloud untouched.
+6. Re-run static syntax checks; run stored Node/browser suites when an executable checkout is available.
 
 ## Future order
 
