@@ -1,6 +1,6 @@
-// Möngö Transactions — Phase 1C
-// Pure compatibility helpers for transaction/transfer construction, editing, filtering and safe removal.
-// Ledger semantics stay in MongoLedgerCore; UI/persistence/special linked side effects stay outside.
+// Möngö Transactions — Phase 1 COMPLETE
+// Pure compatibility helpers for ordinary transaction/transfer construction, editing, filtering and safe removal.
+// Ledger semantics stay in MongoLedgerCore; UI/persistence and loan/savings/investment/asset/PYF business rules stay outside.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
