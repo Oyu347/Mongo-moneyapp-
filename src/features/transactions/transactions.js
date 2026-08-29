@@ -1,5 +1,5 @@
-// Möngö Transactions — Phase 1B
-// Pure compatibility helpers for transaction/transfer construction, editing, filtering and summaries.
+// Möngö Transactions — Phase 1C
+// Pure compatibility helpers for transaction/transfer construction, editing, filtering and safe removal.
 // Ledger semantics stay in MongoLedgerCore; UI/persistence/special linked side effects stay outside.
 (function(global){
 'use strict';
@@ -27,7 +27,9 @@ function makeTransfer(input,options={}){
  if(purpose!=='asset'&&(!s.toId||String(s.fromId)===String(s.toId)))return {ok:false,reason:'destination_required'};
  return {ok:true,transfer:{id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId:purpose==='asset'?null:s.toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()}};
 }
+function makeInternalTransfer(input,options={}){return makeTransfer(Object.assign({},input,{purpose:'internal'}),options);}
 function removeById(items,id){return (Array.isArray(items)?items:[]).filter(x=>String(x?.id)!==String(id));}
+function removalPreview(items,id){const list=Array.isArray(items)?items:[],item=list.find(x=>String(x?.id)===String(id));return item?{ok:true,item,items:removeById(list,id)}:{ok:false,reason:'not_found',items:list.slice()};}
 function periodRange(period,now){
  if(period==='all')return {from:new Date(0),to:new Date(8640000000000000)};
  const to=new Date(now||Date.now());to.setHours(23,59,59,999);const from=new Date(to);
@@ -42,5 +44,5 @@ function summarize(items,transfers,accountId){
  let transferIn=0,transferOut=0;trs.forEach(t=>{const a=num(t.amount);if(accountId==='all'||!accountId){transferIn+=a;transferOut+=a;}else{if(String(t.toId)===String(accountId))transferIn+=a;if(String(t.fromId)===String(accountId))transferOut+=a;}});
  return {income,expense,transferIn,transferOut};
 }
-global.MongoTransactions=Object.freeze({makeTransaction,applyEdit,makeTransfer,removeById,periodRange,inPeriod,filterByAccount,summarize});
+global.MongoTransactions=Object.freeze({makeTransaction,applyEdit,makeTransfer,makeInternalTransfer,removeById,removalPreview,periodRange,inPeriod,filterByAccount,summarize});
 })(window);
