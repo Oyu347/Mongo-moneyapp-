@@ -1,6 +1,6 @@
-// Möngö Accounts — Phase 1C
+// Möngö Accounts — Phase 1D
 // Pure compatibility helpers for account identity, metadata, totals and safe mutations.
-// Balance calculation stays owned by MongoLedgerCore.
+// Balance calculation stays owned by MongoLedgerCore; UI/persistence stay outside this module.
 
 (function (global) {
   'use strict';
@@ -9,6 +9,8 @@
   function isActive(account) { return !!account && account.active !== false; }
   function isSpendable(account) { return isActive(account) && ['checking', 'cash'].includes(normalizeType(account.type)); }
   function isSavings(account) { return isActive(account) && normalizeType(account.type) === 'savings'; }
+  function cleanName(name) { return String(name == null ? '' : name).trim(); }
+  function cleanDate(value, fallbackDate) { return value || fallbackDate || new Date().toISOString().slice(0, 10); }
 
   function defaultAccountId(accounts) {
     const list = Array.isArray(accounts) ? accounts : [];
@@ -51,6 +53,52 @@
     if (!accountId) return transactions || [];
     (Array.isArray(transactions) ? transactions : []).forEach(transaction => { if (transaction && !transaction.accountId) transaction.accountId = accountId; });
     return transactions || [];
+  }
+
+  function makeAccount(input, id, fallbackDate) {
+    const source = input || {}, name = cleanName(source.name);
+    if (!name) return { ok:false, reason:'name_required' };
+    const accountId = id || source.id;
+    if (!accountId) return { ok:false, reason:'id_required' };
+    const type = normalizeType(source.type);
+    const account = {
+      id: accountId,
+      name,
+      type,
+      startDate: cleanDate(source.startDate, fallbackDate),
+      openingBalance: Math.max(0, Number(source.openingBalance) || 0),
+      active: source.active !== false
+    };
+    if (type === 'savings') {
+      const mode = source.interestMode || 'compound';
+      account.interestMode = mode;
+      account.annualInterestRate = mode === 'none' ? 0 : Math.max(0, Number(source.annualInterestRate) || 0);
+      account.interestFrequency = mode === 'maturity' ? 'maturity' : (source.interestFrequency || 'monthly');
+      account.interestAccountId = mode === 'payout' ? (source.interestAccountId || null) : accountId;
+      account.linkedGoalId = source.linkedGoalId || null;
+      account.maturityDate = source.maturityDate || '';
+    }
+    return { ok:true, account };
+  }
+
+  function editMetadata(account, patch) {
+    if (!account || typeof account !== 'object') return { ok:false, reason:'not_found' };
+    const source = patch || {}, name = source.name == null ? cleanName(account.name) : cleanName(source.name);
+    if (!name) return { ok:false, reason:'name_required' };
+    const type = normalizeType(source.type == null ? account.type : source.type);
+    account.name = name;
+    account.type = type;
+    if (source.startDate != null) account.startDate = cleanDate(source.startDate, account.startDate);
+    if (type === 'savings') {
+      const mode = source.interestMode == null ? (account.interestMode || 'compound') : source.interestMode;
+      account.interestMode = mode;
+      account.annualInterestRate = mode === 'none' ? 0 : Math.max(0, Number(source.annualInterestRate == null ? account.annualInterestRate : source.annualInterestRate) || 0);
+      account.interestFrequency = mode === 'maturity' ? 'maturity' : (source.interestFrequency || account.interestFrequency || 'monthly');
+      account.interestAccountId = mode === 'payout' ? (source.interestAccountId || account.interestAccountId || null) : account.id;
+      if (source.linkedGoalId !== undefined) account.linkedGoalId = source.linkedGoalId || null;
+      if (source.maturityDate !== undefined) account.maturityDate = source.maturityDate || '';
+    }
+    return { ok:true, account };
   }
 
   function accountTotal(accounts, ledger, predicate) {
@@ -101,5 +149,5 @@
     return {ok:true, account};
   }
 
-  global.MongoAccounts = Object.freeze({ normalizeType,isActive,isSpendable,isSavings,defaultAccountId,openingTotal,earliestTransactionDate,makeLegacyAccount,normalizeMetadata,ensureLegacyAccount,assignMissingTransactionAccounts,accountTotal,transferRows,openingBalanceChange,canDeactivate,deactivateMetadata });
+  global.MongoAccounts = Object.freeze({ normalizeType,isActive,isSpendable,isSavings,cleanName,cleanDate,defaultAccountId,openingTotal,earliestTransactionDate,makeLegacyAccount,normalizeMetadata,ensureLegacyAccount,assignMissingTransactionAccounts,makeAccount,editMetadata,accountTotal,transferRows,openingBalanceChange,canDeactivate,deactivateMetadata });
 })(window);
