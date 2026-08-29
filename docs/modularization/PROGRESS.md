@@ -1,84 +1,57 @@
 # Möngö Modularization Progress
 
-This file is the handoff/checkpoint for every future modularization session. Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuing work.
+This file is the handoff/checkpoint for future modularization sessions. Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuing.
 
 ## Branch
-
-`development-modular`
-
-`main` is not the modularization work branch.
+`development-modular` — never use `main` for modularization work.
 
 ## Baseline
-
-Use the exact latest working/prepared V44 full HTML for caller migration. Do not reconstruct the monolithic file from truncated GitHub contents responses.
+Use the exact latest working/prepared V44 full HTML. Never reconstruct the monolith from truncated GitHub contents.
 
 ## Completed
 
 ### Storage — Phase 1
-
-- `src/services/storage/storage.js` compatibility foundation created.
-- Firebase/cloud remains separate for later `services/cloud` work.
+`src/services/storage/storage.js` compatibility foundation exists. Firebase/cloud remains for later.
 
 ### Core — Phase 1: COMPLETE
+`src/core/ledger.js` owns pure ledger construction, balances, validation and rebuild detection. Regression/parity harnesses exist under `tests/core/`. UI/persistence/Firebase remain outside Core.
 
-- `src/core/ledger.js` owns pure unified-ledger construction, balance, validation and rebuild logic.
-- Regression/parity harnesses exist under `tests/core/`.
-- Prepared HTML delegates selected compatibility wrappers to Core while UI, persistence and Firebase remain outside Core.
+### Accounts — Phase 1A
+Commit `67dfae3e3621189b0288ceb0b9f3118da551f0fd`: created `src/features/accounts/accounts.js` and delegated smallest pure account read helpers.
 
-Key commits:
-- Core foundation: `61164ec3277107b9ca6f71d098e680a31e963b73`
-- Regression test: `a64d312ce0c9a9c17f396bd52f282c35862bc0b1`
-- Parity harness: `b954b26929ae18ed6b651898a16586586413a182`
+### Accounts — Phase 1B
+Module `b57ab57d250d99894d2e6079e87efce07dc456e6`; tests `d50df6233d1e2563a6ab18e976f9cc679f94dec2`.
+Accounts owns pure metadata normalization/bootstrap, legacy `legacy_main`, default assignment, account totals/history helpers. `ensureMoneyAccounts()` delegates the safe metadata/bootstrap pieces.
 
-### Accounts — Phase 1A: compatibility foundation
+### Accounts — Phase 1C: opening balance + deactivation boundaries
+Module commit: `78481fd0ec24a4150fe68e62fb27ce39f539c793`
+Test update commit: `6b7468ff637835c3200ace09907d8b9ea912c26b`
 
-Module commit: `67dfae3e3621189b0288ceb0b9f3118da551f0fd`
+- Added `openingBalanceChange()` as a pure preview/calculation helper. It returns before/after/delta/current/result/changed and does not mutate the account or historical movements.
+- Added `deactivateMetadata()` which only marks account metadata inactive after `canDeactivate()` confirms ledger-derived balance is zero within tolerance.
+- Prepared `index.modular-accounts-phase1c.html` from exact Phase 1B prepared HTML.
+- Opening-balance edit UI now delegates its balance/delta/result calculation to `MongoAccounts.openingBalanceChange()`; confirmation, actual metadata assignment, rendering and `saveData()` remain inline.
+- `archiveMoneyAccount()` delegates zero-balance eligibility and final metadata deactivation to `MongoAccounts`; confirmation/render/save remain inline.
+- No transactions, transfers or ledger history are deleted during deactivation.
+- Updated Accounts regression test with opening-balance preview non-mutation, history preservation, non-zero deactivation rejection and zero-balance deactivation success.
+- Static syntax validation of prepared Phase 1C HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
 
-- Created `src/features/accounts/accounts.js`.
-- Added pure helpers for account type/classification, default selection, opening/account totals, transfer history and deactivation eligibility.
-- Prepared HTML loads Accounts after Core and delegates the smallest pure callers.
-
-### Accounts — Phase 1B: metadata normalization + regression harness
-
-Module update commit: `b57ab57d250d99894d2e6079e87efce07dc456e6`
-Regression-test commit: `d50df6233d1e2563a6ab18e976f9cc679f94dec2`
-
-- Extended `MongoAccounts` with pure metadata/bootstrap helpers:
-  - `earliestTransactionDate()`
-  - `makeLegacyAccount()`
-  - `normalizeMetadata()`
-  - `ensureLegacyAccount()`
-  - `assignMissingTransactionAccounts()`
-- Legacy `bank` continues to normalize to `checking`.
-- Opening balances are normalized as non-negative numeric metadata; existing explicit `active:false` is preserved.
-- Legacy bootstrap preserves `legacy_main`, cash type, earliest transaction start date and existing opening-balance semantics.
-- Added `tests/accounts/accounts.test.js` covering type normalization, metadata normalization, legacy bootstrap, missing transaction-account assignment, internal-transfer total conservation, deactivation eligibility and transfer history.
-- Prepared `index.modular-accounts-phase1b.html` from the exact Phase 1A file.
-- `ensureMoneyAccounts()` now delegates metadata/bootstrap/default transaction-account assignment/opening total to `MongoAccounts`, while preserving the existing legacy-account auto-deactivation check inline.
-- Account create/edit/deactivate mutations, rendering, persistence and Firebase remain inline.
-- Static syntax validation of the prepared Phase 1B HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-
-Execution note: static syntax validation has been executed locally. GitHub Node regression suites and browser/runtime parity still require an executable checkout/app environment before production/main integration; do not record them as executed yet.
+Execution note: static syntax validation was executed locally. GitHub Node regression suites/browser runtime parity are not yet recorded as executed in an executable checkout.
 
 ## Current state
-
-Accounts now owns pure account identity/type/metadata normalization/bootstrap and account-facing read helpers. Riskier account mutations are still protected behind existing inline compatibility code.
+Accounts owns safe pure metadata/bootstrap/read logic plus opening-balance calculation and deactivation eligibility/metadata mutation. UI confirmation/rendering/persistence remain compatibility boundaries. Historical ledger/transfer data stays untouched.
 
 ## NEXT STEP
-
-### Accounts — Phase 1C: opening-balance and deactivation mutation boundaries
-
-1. Extract pure helpers for opening-balance edits: calculate delta/resulting balance and recompute aggregate opening total without persistence/UI side effects.
-2. Add regression cases proving an opening-balance edit changes only that account's opening contribution and does not rewrite historical transactions/transfers.
-3. Inspect `archiveMoneyAccount()` and preserve the current rule for historical ledger entries; do not delete history when deactivating.
-4. Delegate only calculation/eligibility portions of edit/deactivation; keep confirmation dialogs, rendering and `saveData()` inline.
+### Accounts — Phase 1D: account creation/edit metadata construction
+1. Extract pure `makeAccount()` and `applyAccountMetadataEdit()` helpers for name/type/startDate/openingBalance/active shape.
+2. Preserve IDs and existing start-date/opening-balance semantics; do not modify ledger/history.
+3. Delegate construction/calculation portions of `addMoneyAccount()` and account edit while leaving DOM, confirmation, save/render inline.
+4. Add regression cases for later-created account: opening balance counted once, earlier transaction/transfer history unchanged.
 5. Keep Firebase/cloud untouched.
-6. Re-run static syntax checks; run stored Node/browser suites when an executable checkout is available.
+6. Re-run static syntax checks; execute Node/browser suites only when an executable environment is actually used.
 
 ## Future order
-
 Accounts → Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
 
 ## Handoff rule
-
-At the end of every modularization session, update this document with what changed, commit SHA(s), tests performed, unresolved risks, and the exact next step.
+At the end of every modularization session update this document with changes, commits, tests, unresolved risks and exact next step.
