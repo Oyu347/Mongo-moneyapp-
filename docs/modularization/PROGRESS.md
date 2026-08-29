@@ -16,47 +16,54 @@ Use the exact latest working/prepared V44 full HTML. Never reconstruct the monol
 ### Core — Phase 1: COMPLETE
 `src/core/ledger.js` owns pure ledger construction, balances, validation and rebuild detection. Regression/parity harnesses exist under `tests/core/`. UI/persistence/Firebase remain outside Core.
 
-### Accounts — Phase 1A
-Commit `67dfae3e3621189b0288ceb0b9f3118da551f0fd`: created `src/features/accounts/accounts.js` and delegated smallest pure account read helpers.
+### Accounts — Phase 1: COMPLETE
 
-### Accounts — Phase 1B
-Module `b57ab57d250d99894d2e6079e87efce07dc456e6`; tests `d50df6233d1e2563a6ab18e976f9cc679f94dec2`. Metadata normalization/bootstrap and regression harness added.
+Phase commits:
+- 1A foundation: `67dfae3e3621189b0288ceb0b9f3118da551f0fd`
+- 1B metadata: `b57ab57d250d99894d2e6079e87efce07dc456e6`
+- 1C safe mutation boundaries: `78481fd0ec24a4150fe68e62fb27ce39f539c793`
+- 1D creation/edit construction: `165d0f02802736f903b932b83c027d35641ee0a9`
+- 1E selection helpers: `f1732051b19a36913d054506f20dfde06f2b9372`
+- Latest Accounts tests: `5dda927d4bce419b2fc3424c046946b10d492129`
 
-### Accounts — Phase 1C
-Module `78481fd0ec24a4150fe68e62fb27ce39f539c793`; tests `6b7468ff637835c3200ace09907d8b9ea912c26b`. Opening-balance preview and safe deactivation boundaries extracted without deleting history.
+Accounts Phase 1 now owns pure compatibility logic for:
+- legacy `bank` → `checking` normalization and active/spendable/savings classification,
+- account metadata/bootstrap and `legacy_main`,
+- default account assignment for legacy transactions,
+- account lookup and active-account filtering/selection,
+- source/destination exclusion and distinct transfer destination selection,
+- account creation/edit metadata construction,
+- opening-balance totals and edit preview,
+- ledger-derived account totals and zero-balance deactivation eligibility,
+- transfer-only account history rows,
+- safe metadata deactivation without deleting historical transactions/transfers/ledger entries.
 
-### Accounts — Phase 1D: creation/edit metadata construction
-Module commit: `165d0f02802736f903b932b83c027d35641ee0a9`
-Test update commit: `af4627fafed3c291343886f7ddf90d7cb7e74eb1`
+Prepared HTML progression delegates the safe pure callers while preserving compatibility UI, confirmation, rendering and persistence boundaries. Phase 1E delegates active selector lists, account option exclusion and distinct destination selection to `MongoAccounts` without moving DOM rendering.
 
-- Added `cleanName()` and `cleanDate()` metadata helpers.
-- Added `makeAccount(input,id,fallbackDate)` to construct the persisted account metadata shape without DOM, persistence or ledger mutation.
-- `makeAccount()` preserves legacy `bank` → `checking`, non-negative opening balance, active state, start date and savings metadata.
-- Savings construction preserves compound/maturity self-destination semantics and payout destination semantics.
-- Added `editMetadata(account,patch)` for name/type/startDate and savings metadata edits while preserving account ID/opening balance/history.
-- Regression harness now covers account creation normalization, required-name validation, savings self-interest destination and savings metadata edits.
-- Prepared `index.modular-accounts-phase1d.html` from the exact Phase 1C prepared HTML.
-- Migrated the base `addMoneyAccount()` account-object construction to `MongoAccounts.makeAccount()` and the base edit modal name/type assignment to `MongoAccounts.editMetadata()`.
-- Later V43.58/V43.59 savings-specific wrappers remain inline for compatibility; they are not removed or rewritten in this phase.
-- `saveData()`, DOM, rendering, goal creation, Firebase/cloud and ledger/history remain outside Accounts.
-- Static syntax validation of prepared Phase 1D HTML: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+Savings-interest and goal-specific business behavior remains outside Accounts intentionally and should be handled in the Savings phase. Transfer financial semantics remain owned by Core/Transactions rather than Accounts. Firebase/cloud remains untouched.
 
-Execution note: static syntax validation was executed locally. GitHub Node regression suites and browser/runtime parity are not recorded as executed yet.
+Static syntax validation of prepared `index.modular-accounts-phase1e.html`: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+
+Execution note: static syntax validation was executed locally. GitHub Node regression suites and browser/runtime parity are not recorded as executed yet; do not treat static syntax success as runtime proof.
 
 ## Current state
-Accounts owns pure account identity/type/bootstrap/read helpers, opening-balance calculation, safe deactivation metadata, and base account create/edit metadata construction. Compatibility UI and later savings-account enhancement wrappers remain inline.
+Storage Phase 1, Core Phase 1 and Accounts Phase 1 modular foundations are complete on `development-modular`. The exact prepared full HTML remains local because the monolithic file is too large to safely replace through the GitHub contents connector.
 
 ## NEXT STEP
-### Accounts — Phase 1E: account option/selection helpers + phase closure review
-1. Extract pure active-account option/filter selection data helpers used by transaction/loan/asset selectors without moving DOM rendering.
-2. Verify account creation/edit/deactivation callers consistently preserve IDs, opening balances, active state and historical ledger references.
-3. Add regression cases for active/inactive selection and excluded source/destination account behavior.
-4. Review whether remaining account-owned pure logic is safe to extract; leave savings-interest/goal business logic for Savings rather than overloading Accounts.
-5. If Accounts boundary is clean, mark Accounts Phase 1 complete and move next to Transactions Phase 1A.
-6. Keep Firebase/cloud untouched and do not modify `main`.
+### Transactions — Phase 1A: identify boundaries and create compatibility module
+
+Target: `src/features/transactions/transactions.js`
+
+1. Inspect exact latest prepared full HTML for ordinary income/expense transaction creation/edit/delete, transfer form routing, account selection, category/subcategory assignment, date/amount normalization and transaction list/search/filter helpers.
+2. Keep ledger construction in `MongoLedgerCore`; Transactions should prepare/validate transaction-facing data, not duplicate ledger semantics.
+3. Keep account metadata/selection ownership in `MongoAccounts`; reuse it rather than duplicating account filters.
+4. Preserve transfer invariants: Bank ↔ Cash/internal account transfers must not become income/expense and must not change total money solely because of the transfer.
+5. Preserve loan-payment exclusion from ordinary expense rows and leave loan-specific principal/interest business logic for Loans.
+6. Start with pure compatibility helpers and a focused regression harness before migrating risky transaction mutations.
+7. Keep DOM, `saveData()`, Firebase/cloud and `main` untouched.
 
 ## Future order
-Accounts → Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
+Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
 
 ## Handoff rule
 At the end of every modularization session update this document with changes, commits, tests, unresolved risks and exact next step.
