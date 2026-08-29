@@ -18,54 +18,48 @@ Modularization is based on the latest working V44-era monolithic `index.html`. W
 
 - Created `src/services/storage/storage.js`.
 - Added a safe compatibility API for local storage access.
-- API includes get/set/remove and JSON helpers; later hardening added availability-safe access and utility helpers.
-- Prepared a full uploaded `index.html` variant that loads `src/services/storage/storage.js` before the existing application scripts.
-- Migrated a small first group of local financial persistence operations in that prepared variant: primary save/load, local clear, backup export and backup restore.
-- Existing Firebase queue/snapshot/cloud synchronization logic was intentionally left out of Storage Phase 1 because it belongs under `services/cloud`.
-- Inline JavaScript syntax validation was run on the prepared HTML with no syntax errors found.
+- Prepared a full uploaded `index.html` variant that loads the storage module and migrates a small first group of local persistence callers.
+- Firebase queue/snapshot/cloud synchronization remains separate for later `services/cloud` extraction.
 - Existing migration notes: `src/services/storage/MIGRATION.md`.
 
-Important: the full prepared modular-storage HTML was not committed through the GitHub contents connector because the monolithic file is too large to safely round-trip through that path. Do not assume GitHub `index.html` already contains every prepared caller migration; verify before continuing.
+Important: the full prepared modular HTML is not committed through the GitHub contents connector because the monolithic file is too large to safely round-trip through that path. Always verify the exact full working HTML before a replacement.
 
 ### Core — Phase 1A: unified ledger foundation
 
 Commit: `61164ec3277107b9ca6f71d098e680a31e963b73`
 
-- Created `src/core/ledger.js` as a compatibility-first, pure financial core module.
-- Mirrored the current V44 unified-ledger kinds and mapping rules for ordinary income/expense, transfers, savings transfers, investment contributions, loan funding, loan payments, asset purchases/income and savings interest.
-- Added pure builders for transaction, transfer, loan-funding and loan-payment ledger entries.
-- Added `buildLedger()` for deriving ledger entries from the existing transaction/transfer/debt views.
-- Added ledger-derived account balance and total-account-money calculations.
-- Added ledger validation, expected-ID calculation and rebuild detection.
-- Deliberately excluded UI rendering, local persistence and Firebase calls from the core module.
-- Existing inline unified-ledger code remains authoritative for the live monolithic app until the new module is linked and tested. No legacy ledger code was deleted.
+- Created `src/core/ledger.js` as a compatibility-first pure financial core module.
+- Mirrored V44 unified-ledger kinds and mapping rules.
+- Added builders for transactions, transfers, loan funding and loan payments.
+- Added ledger construction, account-balance calculation, total-account-money calculation, validation, expected IDs and rebuild detection.
+- UI rendering, persistence and Firebase remain outside core.
+- Existing inline unified-ledger implementation remains authoritative until migration is proven stable.
 
-Source inspection confirmed that the current inline implementation derives every account balance from opening balance plus ledger inflows minus ledger outflows, and treats loan interest as a split of a single loan-payment ledger record rather than a duplicate transaction.
+### Core — Phase 1B: integration checkpoint
+
+Regression-test commit: `a64d312ce0c9a9c17f396bd52f282c35862bc0b1`
+
+- Prepared `index.modular-core-phase1b.html` from the exact uploaded modular-storage HTML by adding `<script src="src/core/ledger.js"></script>` immediately before the existing `mongo-v4411-unified-money-ledger` compatibility script.
+- Kept the existing inline unified-ledger code intact; no live caller has been deleted or replaced yet.
+- Re-ran syntax parsing over the prepared HTML inline scripts: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- Added `tests/core/ledger.test.js` for deterministic core invariants: income/expense account effects, Bank ↔ Cash transfer conservation, savings transfer classification, loan funding/payment effects, loan split equality, no duplicate ordinary expense for loan interest, validation and rebuild detection.
+- The GitHub regression test is ready to run with `node tests/core/ledger.test.js` in a checked-out repository. The current connector/runtime cannot execute the connected GitHub checkout directly, so do not record it as executed yet.
 
 ## Current state
 
-Storage foundation is ready. Core Phase 1A pure ledger API is now present on `development-modular`, but it is not yet wired into the monolithic app.
+Storage foundation is ready. `src/core/ledger.js` exists and a full prepared HTML now loads it before the legacy inline ledger implementation. Static JavaScript syntax validation passes. Core regression tests are stored in GitHub. Caller migration is intentionally not started until parity is confirmed in an executable checkout/browser test.
 
 ## NEXT STEP
 
-### Core — Phase 1B: link and parity-test `src/core/ledger.js`
+### Core — Phase 1C: execute parity tests, then migrate smallest callers
 
-Before changing callers:
-- Use the exact latest working full `index.html` / prepared modular HTML.
-- Load `src/core/ledger.js` before the existing V44.11 unified-ledger compatibility script.
-- Keep the inline ledger implementation in place initially.
-
-Parity tests:
-- Build the same ledger with the existing inline logic and `MongoLedgerCore.buildLedger()` and compare IDs, kinds, amounts, account directions and loan splits.
-- Compare `MongoLedgerCore.accountBalance()` against the current `accountBalance()` for every money account.
-- Confirm no duplicate loan-interest transaction is introduced.
-- Confirm transfer source/destination effects are equal and opposite.
-- Confirm total money is unchanged by an internal transfer.
-
-Only after parity succeeds:
-- Migrate the smallest safe ledger callers to `MongoLedgerCore`.
-- Run syntax/regression checks again.
-- Do not delete the inline implementation until the replacement has proven stable.
+1. Run `node tests/core/ledger.test.js` in an environment with the `development-modular` checkout.
+2. Open the prepared full app and compare `MongoLedgerCore.buildLedger()` output against the current inline `moneyLedger` for IDs, kinds, amounts, account directions and loan splits.
+3. Compare `MongoLedgerCore.accountBalance()` against current `accountBalance()` for every money account.
+4. Confirm internal transfer total-money conservation and no duplicate loan-interest expense.
+5. If parity succeeds, migrate only the smallest safe pure callers first (ledger kind mapping/build helpers and balance calculation), while retaining compatibility wrappers.
+6. Re-run syntax and financial regression checks.
+7. Only then proceed toward Accounts.
 
 ## Future order
 
