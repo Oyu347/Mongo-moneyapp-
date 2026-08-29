@@ -16,9 +16,8 @@ Modularization is based on the latest working V44-era monolithic `index.html`. W
 
 ### Storage — Phase 1
 
-- Created `src/services/storage/storage.js`.
-- Added a compatibility API for local storage access.
-- Prepared a full uploaded HTML variant that loads the storage module and migrates a small first group of local persistence callers.
+- Created `src/services/storage/storage.js` and a compatibility API for local persistence.
+- Prepared a full HTML variant with the first small persistence caller migration.
 - Firebase queue/snapshot/cloud synchronization remains separate for later `services/cloud` extraction.
 - Existing migration notes: `src/services/storage/MIGRATION.md`.
 
@@ -29,50 +28,54 @@ Important: prepared full modular HTML variants are not committed through the Git
 Commit: `61164ec3277107b9ca6f71d098e680a31e963b73`
 
 - Created `src/core/ledger.js` as a compatibility-first pure financial core module.
-- Mirrored V44 unified-ledger kinds and mapping rules.
-- Added builders for transactions, transfers, loan funding and loan payments.
-- Added ledger construction, account-balance calculation, total-account-money calculation, validation, expected IDs and rebuild detection.
-- UI rendering, persistence and Firebase remain outside core.
+- Added ledger mapping/builders, balance calculation, validation and rebuild detection.
+- UI, persistence and Firebase remain outside core.
 
 ### Core — Phase 1B: integration checkpoint
 
 Regression-test commit: `a64d312ce0c9a9c17f396bd52f282c35862bc0b1`
 
-- Prepared `index.modular-core-phase1b.html` with `src/core/ledger.js` loaded immediately before the existing unified-ledger compatibility script.
-- Kept existing inline unified-ledger code intact.
-- Static parsing: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Added `tests/core/ledger.test.js` for deterministic financial invariants.
+- Linked `src/core/ledger.js` before the existing unified-ledger compatibility script in the prepared full HTML.
+- Added deterministic `tests/core/ledger.test.js`.
+- Static parsing passed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
 
 ### Core — Phase 1C: parity harness + smallest caller migration
 
 Parity-test commit: `b954b26929ae18ed6b651898a16586586413a182`
 
-- Added `tests/core/ledger-parity.test.js` containing a frozen reference implementation of the current V44 inline ledger mapping/build/balance rules and assertions that `MongoLedgerCore` produces exactly the same ledger output and account balances for a representative state.
-- Parity fixture covers ordinary income/expense, asset income, savings interest, ordinary transfer, savings transfer, investment contribution, asset purchase, loan funding, loan payment and exclusion of legacy `loanPaymentId` expense rows.
-- Prepared `index.modular-core-phase1c.html` from Phase 1B.
-- Migrated only the smallest pure inline callers in the prepared HTML:
-  - `ledgerKindForTxn()` delegates to `MongoLedgerCore.ledgerKindForTransaction()`.
-  - `ledgerKindForTransfer()` delegates to `MongoLedgerCore.ledgerKindForTransfer()`.
-  - `ledgerBalance()` delegates to `MongoLedgerCore.accountBalance()`.
-- Existing inline entry builders, ledger synchronization, view projection, persistence hooks and loan UI/payment mutation code remain unchanged.
-- Re-ran static JavaScript syntax validation on the prepared Phase 1C HTML: 44 non-empty inline blocks, 0 syntax errors.
+- Added `tests/core/ledger-parity.test.js` with a frozen reference implementation of current V44 ledger rules.
+- Prepared Phase 1C HTML delegates ledger-kind mapping and account-balance calculation to `MongoLedgerCore`.
+- Legacy synchronization/build/view/persistence code remained intact.
+- Static parsing passed: 44 non-empty inline blocks, 0 syntax errors.
 
-Execution note: GitHub tests are committed but connected GitHub itself is not an executable checkout. Do not claim browser/runtime parity is complete until the Node tests and the prepared app have been run in an appropriate executable environment. Static syntax validation has been executed locally.
+### Core — Phase 1D: ledger entry builder migration
+
+- Prepared `index.modular-core-phase1d.html` from the exact Phase 1C file.
+- Preserved the legacy inline wrapper function names and synchronization flow, but changed the four entry builders to delegate to the extracted core:
+  - `makeTxnEntry()` → `MongoLedgerCore.makeTransactionEntry()`
+  - `makeTransferEntry()` → `MongoLedgerCore.makeTransferEntry()`
+  - `makeFundingEntry()` → `MongoLedgerCore.makeLoanFundingEntry()`
+  - `makePaymentEntry()` → `MongoLedgerCore.makeLoanPaymentEntry()`
+- Each wrapper passes the existing `now()` timestamp into core so one entry creation uses one consistent timestamp and preserves previous `createdAt` behavior.
+- `syncLedgerFromViews`, `projectViewsFromLedger`, `saveData` hook, persistence, Firebase and UI mutation code remain unchanged.
+- Re-ran static JavaScript syntax validation: 44 non-empty inline blocks, 0 syntax errors.
+
+Execution note: committed GitHub regression/parity tests still require an executable checkout/runtime. Do not record browser/runtime parity as complete until those tests and the prepared app are actually executed. Static syntax validation has been executed locally.
 
 ## Current state
 
-Core extraction is now partially wired in the prepared full HTML with a deliberately tiny compatibility surface. No legacy ledger synchronization/build code has been removed. This is the rollback-safe checkpoint before migrating entry builders/build synchronization.
+Core kind mapping, account-balance calculation and all four ledger-entry builders are now delegated to `src/core/ledger.js` in the prepared full HTML. The legacy synchronization orchestration is intentionally retained as a compatibility boundary.
 
 ## NEXT STEP
 
-### Core — Phase 1D: execute parity suite and migrate ledger entry builders
+### Core — Phase 1E: migrate ledger build/synchronization behind compatibility wrapper
 
-1. Run `node tests/core/ledger.test.js` and `node tests/core/ledger-parity.test.js` in a checkout/runtime containing the GitHub module files.
-2. If both pass, change the prepared HTML inline `makeTxnEntry`, `makeTransferEntry`, `makeFundingEntry`, and `makePaymentEntry` wrappers to delegate to `MongoLedgerCore` builders while preserving the existing function names and previous-entry timestamps.
-3. Compare resulting ledger IDs/kinds/amounts/directions/loan splits with the frozen reference.
-4. Keep `syncLedgerFromViews`, `projectViewsFromLedger`, `saveData` hook and UI mutation code intact during this phase.
-5. Re-run syntax and financial regression tests.
-6. Only after builder parity is proven, consider delegating `syncLedgerFromViews` to `MongoLedgerCore.buildLedger()`.
+1. Execute `tests/core/ledger.test.js` and `tests/core/ledger-parity.test.js` when an executable checkout is available.
+2. In the prepared full HTML, keep the public/local function name `syncLedgerFromViews()` but delegate its ledger construction to `MongoLedgerCore.buildLedger({txns, accountTransfers, debts}, moneyLedger)`.
+3. Preserve the current post-build cleanup that removes legacy `loanPaymentId` transaction rows.
+4. Keep `projectViewsFromLedger`, persistence hooks and UI mutation code unchanged.
+5. Re-run syntax checks and compare ledger IDs/kinds/amounts/account directions/loan splits.
+6. If stable, migrate validation/rebuild-detection helpers next; only after that close Core Phase 1 and proceed to Accounts.
 
 ## Future order
 
