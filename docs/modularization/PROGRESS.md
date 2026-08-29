@@ -15,31 +15,32 @@ Use the exact latest prepared V44 full HTML; never reconstruct the monolith from
 - Transactions Phase 1 COMPLETE through 1E.
 - Loans Phase 1 COMPLETE through 1E.
 
-### Savings — Phase 1A: pure goal calculation foundation
-Module: `ca69457a11561da57710f78fefa7b02dad713a83`
-Tests: `045a049e509541264dea00da3e8a81ff24c5691b`
+### Savings — Phase 1A
+Module `ca69457a11561da57710f78fefa7b02dad713a83`; tests `045a049e509541264dea00da3e8a81ff24c5691b`.
 
-- Created `src/features/savings/savings.js` with pure goal contribution/progress and calendar helpers.
-- Goal auto-saved value counts only `purpose:'savings'` transfers linked by targetId plus actual savings-interest income linked by goalId.
-- Ordinary/internal transfers, unrelated income and expense transactions do not contribute to goal savings.
-- Effective saved preserves existing manual `goal.saved` plus automatic contributions; progress remains rounded and capped at 100%.
-- Extracted safe month arithmetic, ceiling month count and calendar month/day difference with the same noon-local date behavior.
-- Prepared `index.modular-savings-phase1a.html` loads Savings after Loans and delegates `getGoalAutoSaved`, `getGoalEffectiveSaved`, `goalProgressPct`, `addMonthsSafe`, `monthsBetweenCeil` and `calendarMonthsDaysBetween` through `MongoSavings`.
-- Savings transfer mutation/migration, savings account creation/linking, interest recording, Budget integration, persistence and UI remain inline.
-- No savings contribution is reclassified as an expense.
+### Savings — Phase 1B: goal/account linkage + interest metadata boundary
+Module: `eb687fed9ee664f4862c531d0c2f3dc96682c7f9`
+Tests: `1004e7cb5390865151c8b09cab67046d751f0e7b`
+
+- Added pure savings-account interest metadata normalization for `compound`, `payout`, `maturity`, and `none` modes; rate, frequency, destination account, linked goal and maturity date are normalized without persistence/UI dependencies.
+- Added `interestDestination()`: payout uses the configured receiving account (or current default account fallback); compound/maturity credit the savings account; none has no interest destination.
+- Added `linkedGoalId()` with current `linkedGoalId` first and legacy `goalId` fallback.
+- Prepared `index.modular-savings-phase1b.html` delegates new/edit savings account interest metadata, interest modal destination and recorded-interest goal linkage to `MongoSavings`.
+- Actual interest remains recorded only when the user enters a bank-credited amount; the module does not forecast or auto-credit cash interest.
+- Account creation/edit persistence, actual interest transaction creation, Budget yield source integration and UI remain inline.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
 - Node savings regression suite and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Savings Phase 1 has a pure goal/progress calculation foundation. Actual account balances remain the source for Savings total/chart; goals remain planning/progress objects and do not inflate real savings.
+Savings owns pure goal/progress calculations plus savings interest/linkage metadata. Account balances remain the source of real savings value; transfer/interest mutation and persistence remain compatibility boundaries.
 
 ## NEXT STEP
-### Savings — Phase 1B: goal/account linkage + interest metadata boundary
-1. Inspect savings account `goalId/linkedGoalId`, interest mode/rate/frequency/destination and maturity metadata normalization.
-2. Extract pure linkage/metadata normalization only; do not move account creation or persistence yet.
-3. Preserve compound vs payout vs maturity/none semantics exactly.
-4. Preserve actual credited interest recording rather than forecasting it as received cash.
-5. Add regression tests and delegate only exact low-risk callers.
+### Savings — Phase 1C: actual interest transaction normalization
+1. Extract pure construction/validation of a user-confirmed savings-interest transaction without auto-generating interest.
+2. Preserve `type:'income'`, `incomePurpose:'savings_interest'`, savings account id, interest mode, goal link and receiving account semantics exactly.
+3. Keep Budget category/source lookup, transaction insertion, persistence, cloud and UI outside the module.
+4. Verify compound/maturity vs payout destination behavior remains exact.
+5. Add focused regression tests and delegate only the safe construction boundary.
 6. Re-run static syntax validation; runtime tests only if actually executed.
 
 ## Future order
