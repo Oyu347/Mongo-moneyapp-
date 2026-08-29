@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('assert');global.window=global;require('../../src/features/loans/loans.js');const L=global.MongoLoans;
+const d={total:120000,openingRemaining:100000,termMonths:12,rate:12,paymentType:'annuity',payments:[{total:11000,principal:9000,interest:2000,extraPrincipal:1000}]};
+assert.strictEqual(L.principalPaid(d),10000);assert.strictEqual(L.totalPaid(d),11000);assert.strictEqual(L.interestPaid(d),2000);assert.strictEqual(L.openingRemaining(d),100000);assert.strictEqual(L.remaining(d),90000);assert.strictEqual(L.remaining(d,5000),85000);
+const zero=L.buildSchedule(120000,0,12,'annuity',0,0);assert.strictEqual(zero.schedule.length,12);assert.strictEqual(zero.monthly,10000);assert.strictEqual(zero.totalInterest,0);assert(Math.abs(zero.schedule.at(-1).balance)<0.01);
+const diff=L.buildSchedule(120000,12,12,'diff',0,0);assert(diff.schedule[0].payment>diff.schedule.at(-1).payment,'equal-principal payment should decline');assert(Math.abs(diff.schedule[0].principal-10000)<0.01);
+const ann=L.buildSchedule(120000,12,12,'annuity',0,0);assert(ann.schedule.length>0);assert(ann.totalInterest>0);assert(Math.abs(ann.schedule.at(-1).balance)<0.01);
+const extra=L.buildSchedule(120000,12,12,'annuity',5000,12);assert(extra.schedule.length<ann.schedule.length||extra.totalInterest<ann.totalInterest,'extra principal should shorten term or reduce interest');
+const next=L.nextSplit({total:120000,termMonths:12,rate:12,paymentType:'diff',payments:[]},120000);assert(Math.abs(next.principal-10000)<0.01);assert(Math.abs(next.interest-1200)<0.01);assert(Math.abs(next.total-11200)<0.01);
+console.log('Möngö loans regression tests: PASS');
