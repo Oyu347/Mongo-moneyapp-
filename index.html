@@ -132,7 +132,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V44.13.1 Asset Income Link Migration</title>
+<title>Möngö — V44.13.2 Budget Link Preservation</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -13857,7 +13857,13 @@ select.fi,select.budget-select,select.calc-native-select-localized{min-height:44
     (txns||[]).filter(t=>t&&t.assetIncome).forEach(t=>{
       const name=assetNameForTxn(t);if(!name)return;
       const g=getInvestGroups().find(x=>String(x.key)===String(t.assetGroupKey));
-      const sourceId=t.assetSourceId||(g?('asset_'+stableAssetBudgetId(g)):null),y=ensureYieldBudgetSource(name,g?.color||'#1D9E75',sourceId,'asset_income');
+      const incomeParent=(bCatsInc||[]).find(c=>c&&c.key==='asset_income_cat');
+      const linkedSub=(incomeParent?.subs||[]).find(s=>
+        String(s.key||'')===String(t.subcatName||'') ||
+        (s.sourceKind==='asset_income'&&mongoNormName(cN(s))===mongoNormName(name))
+      );
+      const keySource=String(linkedSub?.key||'').match(/^yield_(asset_.+)$/)?.[1]||null;
+      const sourceId=t.assetSourceId||linkedSub?.sourceId||keySource||(g?('asset_'+stableAssetBudgetId(g)):null),y=ensureYieldBudgetSource(name,g?.color||linkedSub?.color||'#1D9E75',sourceId,'asset_income');
       const resolvedSourceId=sourceId||y?.sub?.sourceId||null;
       if(resolvedSourceId&&String(t.assetSourceId||'')!==String(resolvedSourceId)){t.assetSourceId=String(resolvedSourceId);changed=true;}
       if(t.catKey!==y.cat.key||t.catName!==cN(y.cat)||t.subcatName!==y.sub.key)changed=true;
@@ -14292,8 +14298,14 @@ select.fi{touch-action:pan-y;cursor:pointer}
   rBList=function(){
     ensurePlanningBudgetSources({seed:budgetType==='expense'});
     const parents=(budgetType==='expense'?[ensureParent('savings_cat'),ensureParent('loan_cat'),ensureParent('invest_cat')]:[]).filter(Boolean);
-    parents.forEach(p=>p.subs=(p.subs||[]).filter(sourceVisible));
-    return baseRBudgetList.apply(this,arguments);
+    const snapshots=parents.map(p=>{
+      const visible=(p.subs||[]).filter(sourceVisible),hidden=(p.subs||[]).filter(s=>!sourceVisible(s));
+      const full=visible.concat(hidden);
+      p.subs=visible;
+      return {parent:p,full};
+    });
+    try{return baseRBudgetList.apply(this,arguments);}
+    finally{snapshots.forEach(x=>x.parent.subs=x.full);}
   };
 
   // Exact-ID actuals keep two goals or loans with the same visible name separate.
@@ -14685,7 +14697,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 /* Möngö V44.03 — one durable source of truth for loan payments.
    Loan cards, Transactions, Accounts and Budget all derive from debts[].payments. */
 (()=>{
-  const BUILD='V44.13.1';
+  const BUILD='V44.13.2';
   const uid=()=>{try{return (typeof getCurrentUid==='function'&&getCurrentUid())||currentUserEmail?.()||'local';}catch(e){return 'local';}};
   const journalKey=()=>`mongo_loan_payment_journal_v4403_${uid()}`;
   const clone=v=>JSON.parse(JSON.stringify(v));
@@ -14849,7 +14861,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4411-unified-money-ledger">
 (()=>{
-  const BUILD='V44.13.1',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
+  const BUILD='V44.13.2',clone=v=>JSON.parse(JSON.stringify(v)),now=()=>new Date().toISOString();
   const LEDGER_KINDS=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']);
   const cleanId=v=>String(v??'');
   function ledgerKindForTxn(t){if(t.assetIncome)return'asset_income';if(t.savingsInterest)return'savings_interest';return t.type==='income'?'income':'expense';}
@@ -14917,7 +14929,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4412-edit-delete-cloud-guarantee">
 (()=>{
-  const BUILD='V44.13.1',clone=v=>JSON.parse(JSON.stringify(v)),iso=()=>new Date().toISOString(),id=v=>String(v??'');
+  const BUILD='V44.13.2',clone=v=>JSON.parse(JSON.stringify(v)),iso=()=>new Date().toISOString(),id=v=>String(v??'');
   let internalSave=false,cloudGuardInstalled=false;
   const snapshot=()=>new Map((moneyLedger||[]).map(e=>[id(e.id),JSON.stringify(e)]));
   let committed=snapshot();
@@ -15033,13 +15045,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
     (txns||[]).filter(t=>t&&t.assetIncome).forEach(t=>{if(!t.assetSourceId)issues.push(`Хөрөнгийн орлого тогтвортой холбоосгүй: ${t.id}`);});
     return issues;
   };
-  function boot(){try{if(typeof ensurePlanningBudgetSources==='function')ensurePlanningBudgetSources({seed:false,persist:false});}catch(e){}const b=document.getElementById('mongo-build-version');if(b)b.textContent='V44.13.1';}
+  function boot(){try{if(typeof ensurePlanningBudgetSources==='function')ensurePlanningBudgetSources({seed:false,persist:false});}catch(e){}const b=document.getElementById('mongo-build-version');if(b)b.textContent='V44.13.2';}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('pageshow',boot);[800,2200,5000].forEach(ms=>setTimeout(boot,ms));
 })();
 </script>
 <script id="mongo-v4410-financial-integrity-audit">
 (()=>{
-  const BUILD='V44.13.1';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
+  const BUILD='V44.13.2';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
   const TXT={
     mn:{title:'Санхүүгийн уялдааны шалгалт',ok:'Зөрүү илрээгүй',warn:'Анхаарах зөрүү',close:'Хаах',rerun:'Дахин шалгах',summary:'Шалгасан бүртгэл',txn:'Гүйлгээ',transfer:'Шилжүүлэг',loan:'Зээл',payment:'Зээлийн төлөлт',account:'Данс',budget:'Төсвийн холбоос'},
     en:{title:'Financial integrity check',ok:'No inconsistency found',warn:'Issues to review',close:'Close',rerun:'Run again',summary:'Records checked',txn:'Transactions',transfer:'Transfers',loan:'Loans',payment:'Loan payments',account:'Accounts',budget:'Budget links'},
