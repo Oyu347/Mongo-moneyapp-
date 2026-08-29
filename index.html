@@ -14968,7 +14968,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v4410-financial-integrity-audit">
 (()=>{
-  const BUILD='V44.12.4';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
+  const BUILD='V44.12.5';let auditTimer=null,lastAudit=null,pendingIssueSignature='',pendingIssueCount=0,pendingIssueFirstAt=0;
   const TXT={
     mn:{title:'Санхүүгийн уялдааны шалгалт',ok:'Зөрүү илрээгүй',warn:'Анхаарах зөрүү',close:'Хаах',rerun:'Дахин шалгах',summary:'Шалгасан бүртгэл',txn:'Гүйлгээ',transfer:'Шилжүүлэг',loan:'Зээл',payment:'Зээлийн төлөлт',account:'Данс',budget:'Төсвийн холбоос'},
     en:{title:'Financial integrity check',ok:'No inconsistency found',warn:'Issues to review',close:'Close',rerun:'Run again',summary:'Records checked',txn:'Transactions',transfer:'Transfers',loan:'Loans',payment:'Loan payments',account:'Accounts',budget:'Budget links'},
@@ -15073,7 +15073,35 @@ select.fi{touch-action:pan-y;cursor:pointer}
       emptyMemory();purgeLocalFinance();resetOverlay('Цэвэрлэгээ дууслаа. Аппыг дахин нээж байна…');await wait(900);window.MONGO_HARD_RESET_ACTIVE=false;location.reload();
     }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Бүрэн цэвэрлэгээ дууссангүй. Дахин оролдоно уу.');}
   };
-  const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.4 RESET';
+  const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.5 RESET';
+})();
+</script>
+<script id="mongo-v44125-live-savings-goal-link">
+(()=>{
+  const BUILD='V44.12.5';
+  function refreshGoalSelect(sel){
+    if(!sel)return;
+    const selected=String(sel.value||'');
+    const newOption=[...sel.options].find(o=>o.value==='__new__')||null;
+    [...sel.options].forEach(o=>{if(o.value!==''&&o.value!=='__new__')o.remove();});
+    (Array.isArray(goals)?goals:[]).forEach(g=>{
+      const o=document.createElement('option');o.value=String(g.id);o.textContent='🎯 '+String(g.name||'');
+      if(newOption)sel.insertBefore(o,newOption);else sel.appendChild(o);
+    });
+    if([...sel.options].some(o=>o.value===selected))sel.value=selected;
+  }
+  function isGoalSelect(el){return el&&['account-linked-goal','edit-linked-goal'].includes(el.id);}
+  document.addEventListener('pointerdown',e=>{if(isGoalSelect(e.target))refreshGoalSelect(e.target);},true);
+  document.addEventListener('focusin',e=>{if(isGoalSelect(e.target))refreshGoalSelect(e.target);},true);
+  window.refreshSavingsGoalLinks=()=>{
+    refreshGoalSelect(document.getElementById('account-linked-goal'));
+    refreshGoalSelect(document.getElementById('edit-linked-goal'));
+  };
+  const priorRGoals=rGoals;
+  rGoals=function(){const out=priorRGoals.apply(this,arguments);window.refreshSavingsGoalLinks();return out;};
+  function boot(){window.refreshSavingsGoalLinks();const badge=document.getElementById('mongo-build-version');if(badge&&/V44\.12\.[45]/.test(badge.textContent||''))badge.textContent=BUILD+' ✓';}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  window.addEventListener('pageshow',boot);
 })();
 </script>
 </body>
