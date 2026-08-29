@@ -1,4 +1,4 @@
-// Möngö Savings — Phase 1D
+// Möngö Savings — Phase 1 COMPLETE
 // Pure goal/savings calculations, linkage/metadata and user-confirmed interest construction.
 (function(global){
 'use strict';
