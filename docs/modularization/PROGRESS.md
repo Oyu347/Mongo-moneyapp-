@@ -23,48 +23,69 @@ Modularization is based on the latest working V44-era monolithic `index.html`. W
 
 Important: prepared full modular HTML variants are not committed through the GitHub contents connector because the monolithic file is too large to safely round-trip through that path. Always verify/use the exact full working HTML before replacement.
 
-### Core — Phase 1A–1D
+### Core — Phase 1: COMPLETE
 
+Core foundation and tests:
 - Created `src/core/ledger.js` as a pure compatibility-first financial core.
-- Added deterministic regression and parity harnesses under `tests/core/`.
-- Prepared full HTML variants progressively delegating ledger-kind mapping, account balance, and all four ledger entry builders to `MongoLedgerCore`.
-- Legacy public/local wrapper names and synchronization boundaries were preserved during migration.
-- UI, Firebase and persistence remain outside core.
+- Added deterministic regression and frozen-reference parity harnesses under `tests/core/`.
+- Core owns ledger kind mapping, entry construction, complete ledger building, account-balance calculation, validation, expected ledger IDs and rebuild detection.
+
+Progressive prepared-HTML migration:
+- Phase 1B linked `src/core/ledger.js` before the legacy unified-ledger script.
+- Phase 1C delegated kind mapping and account-balance calculation.
+- Phase 1D delegated all four ledger-entry builders.
+- Phase 1E delegated `syncLedgerFromViews()` construction to `MongoLedgerCore.buildLedger()` while preserving legacy loan-payment cleanup.
+- Phase 1F delegated `validateLedger()` to `MongoLedgerCore.validateLedger()`, `expectedLedgerIds()` to the core expected-ID helper, and `ensureUnifiedLedger()` rebuild detection to `MongoLedgerCore.needsRebuild()`.
+- Compatibility/public function names remain in the monolithic HTML for rollback safety.
+- `projectViewsFromLedger`, persistence, Firebase and UI mutation code remain outside Core and were intentionally not moved.
+- Prepared Phase 1F HTML static syntax validation: 44 non-empty inline JavaScript blocks, 0 syntax errors.
 
 Key commits:
 - Core foundation: `61164ec3277107b9ca6f71d098e680a31e963b73`
 - Regression test: `a64d312ce0c9a9c17f396bd52f282c35862bc0b1`
 - Parity harness: `b954b26929ae18ed6b651898a16586586413a182`
 
-### Core — Phase 1E: ledger synchronization migration
-
-- Prepared `index.modular-core-phase1e.html` from the exact Phase 1D prepared file.
-- Kept the compatibility function name `syncLedgerFromViews()` but replaced its inline ledger-construction loop with:
-  `MongoLedgerCore.buildLedger({txns, accountTransfers, debts}, moneyLedger)`.
-- Preserved the existing post-build cleanup that removes legacy `loanPaymentId` transaction rows, preventing loan-interest duplication.
-- Kept `projectViewsFromLedger`, save/persistence hooks, Firebase and UI mutation code unchanged.
-- Static syntax validation of the prepared Phase 1E HTML found 11 non-empty inline JavaScript blocks in this exact file and 0 syntax errors. External scripts are not counted by this inline-block check.
-
-Execution note: GitHub regression/parity tests still require an executable checkout/runtime. Do not record browser/runtime parity as complete until those tests and the prepared app are actually executed. Static syntax validation has been executed locally.
+Execution note: static syntax checks have been executed locally. The committed Node regression/parity tests and browser runtime parity still require an executable checkout/app environment before production/main integration. Do not treat static syntax success alone as runtime proof.
 
 ## Current state
 
-Core now owns ledger kind mapping, ledger entry construction, complete ledger building, and account-balance calculation in the prepared full HTML. Compatibility wrappers remain in the monolithic file, which keeps rollback simple. Validation/rebuild-detection helpers are still inline.
+Storage Phase 1 and Core Phase 1 modular foundations are complete on `development-modular`. The next dependency in the approved roadmap is Accounts. The monolithic prepared HTML retains compatibility wrappers, so the migration remains rollback-safe.
 
 ## NEXT STEP
 
-### Core — Phase 1F: migrate validation and rebuild detection, then close Core Phase 1
+### Accounts — Phase 1A: identify boundaries and create compatibility module
 
-1. Keep the existing public function names `validateLedger()`, `expectedLedgerIds()` and `ensureUnifiedLedger()`.
-2. Delegate validation to `MongoLedgerCore.validateLedger(moneyLedger)`.
-3. Delegate expected-ID/rebuild logic to `MongoLedgerCore.expectedLedgerIds({txns, accountTransfers, debts})` and `MongoLedgerCore.needsRebuild(...)` while preserving the existing `priorSave()` behavior when a rebuild occurs.
-4. Keep `projectViewsFromLedger`, persistence, Firebase and UI code unchanged.
-5. Re-run static syntax checks and the stored Node regression/parity tests when an executable checkout is available.
-6. If stable, mark Core Phase 1 complete and begin Accounts Phase 1 by identifying account/opening-balance/history boundaries without changing behavior.
+Target: `src/features/accounts/accounts.js`
+
+Inspect the exact latest prepared full HTML and identify account-owned behavior before extraction:
+- account creation/edit/deactivation,
+- opening balance and account start date,
+- account type (cash/checking/savings where represented),
+- account balance access through Core ledger,
+- account history and inter-account movement presentation,
+- account selection/source/destination helpers used by Transactions,
+- any refresh/re-login normalization that affects account metadata.
+
+Rules for Accounts Phase 1A:
+1. Do not duplicate ledger calculations inside Accounts; call `MongoLedgerCore` for balances.
+2. Keep Transfers as transaction/ledger movement; Accounts owns account metadata and account-facing views, not transfer financial semantics.
+3. Preserve opening-balance behavior and per-user persisted data format.
+4. Do not mix Firebase/cloud extraction into Accounts.
+5. Start with a compatibility API and migrate the smallest pure account helpers first.
+6. Keep current inline account UI/mutation code until parity is proven.
+7. Add focused account regression tests before migrating risky account mutations.
+
+Acceptance targets for later Accounts phases:
+- New account opening balance appears exactly once.
+- Later-created account does not rewrite earlier financial history.
+- Bank ↔ Cash remains an internal transfer.
+- Refresh/re-login preserves account type and opening balance.
+- Deactivation does not corrupt historical ledger entries.
+- Account history reflects the intended inter-account movements without changing totals.
 
 ## Future order
 
-Core → Accounts → Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
+Accounts → Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
 
 ## Handoff rule
 
