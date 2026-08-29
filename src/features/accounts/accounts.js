@@ -1,5 +1,5 @@
-// Möngö Accounts — Phase 1D
-// Pure compatibility helpers for account identity, metadata, totals and safe mutations.
+// Möngö Accounts — Phase 1E
+// Pure compatibility helpers for account identity, metadata, selection, totals and safe mutations.
 // Balance calculation stays owned by MongoLedgerCore; UI/persistence stay outside this module.
 
 (function (global) {
@@ -11,6 +11,24 @@
   function isSavings(account) { return isActive(account) && normalizeType(account.type) === 'savings'; }
   function cleanName(name) { return String(name == null ? '' : name).trim(); }
   function cleanDate(value, fallbackDate) { return value || fallbackDate || new Date().toISOString().slice(0, 10); }
+  function activeAccounts(accounts, options) {
+    const opts = options || {}, exclude = opts.excludeId == null ? null : String(opts.excludeId);
+    return (Array.isArray(accounts) ? accounts : []).filter(account => {
+      if (!isActive(account)) return false;
+      if (opts.excludeLegacy && account.legacy) return false;
+      if (exclude != null && String(account.id) === exclude) return false;
+      if (opts.type && normalizeType(account.type) !== normalizeType(opts.type)) return false;
+      return true;
+    });
+  }
+  function accountById(accounts, accountId) { return (Array.isArray(accounts) ? accounts : []).find(a => String(a?.id) === String(accountId)) || null; }
+  function validSelection(accounts, accountId, options) { return !!activeAccounts(accounts, options).find(a => String(a.id) === String(accountId)); }
+  function distinctDestinationId(accounts, fromId, preferredToId) {
+    const list = activeAccounts(accounts);
+    if (preferredToId != null && String(preferredToId) !== String(fromId) && validSelection(list, preferredToId)) return preferredToId;
+    const other = list.find(a => String(a.id) !== String(fromId));
+    return other ? other.id : null;
+  }
 
   function defaultAccountId(accounts) {
     const list = Array.isArray(accounts) ? accounts : [];
@@ -61,14 +79,7 @@
     const accountId = id || source.id;
     if (!accountId) return { ok:false, reason:'id_required' };
     const type = normalizeType(source.type);
-    const account = {
-      id: accountId,
-      name,
-      type,
-      startDate: cleanDate(source.startDate, fallbackDate),
-      openingBalance: Math.max(0, Number(source.openingBalance) || 0),
-      active: source.active !== false
-    };
+    const account = { id:accountId, name, type, startDate:cleanDate(source.startDate, fallbackDate), openingBalance:Math.max(0, Number(source.openingBalance) || 0), active:source.active !== false };
     if (type === 'savings') {
       const mode = source.interestMode || 'compound';
       account.interestMode = mode;
@@ -86,8 +97,7 @@
     const source = patch || {}, name = source.name == null ? cleanName(account.name) : cleanName(source.name);
     if (!name) return { ok:false, reason:'name_required' };
     const type = normalizeType(source.type == null ? account.type : source.type);
-    account.name = name;
-    account.type = type;
+    account.name = name; account.type = type;
     if (source.startDate != null) account.startDate = cleanDate(source.startDate, account.startDate);
     if (type === 'savings') {
       const mode = source.interestMode == null ? (account.interestMode || 'compound') : source.interestMode;
@@ -112,12 +122,12 @@
     (Array.isArray(transfers) ? transfers : []).forEach(transfer => {
       const amount = Number(transfer?.amount) || 0;
       if (String(transfer?.fromId ?? '') === id) {
-        const other = list.find(a => String(a?.id) === String(transfer?.toId));
+        const other = accountById(list, transfer?.toId);
         const assetName = transfer?.purpose === 'asset' && typeof assetNameForTarget === 'function' ? assetNameForTarget(transfer.targetId) : '';
         rows.push({date:transfer?.date,label:'→ '+(assetName||other?.name||'—'),amount:-amount,kind:'transfer'});
       }
       if (String(transfer?.toId ?? '') === id) {
-        const other = list.find(a => String(a?.id) === String(transfer?.fromId));
+        const other = accountById(list, transfer?.fromId);
         rows.push({date:transfer?.date,label:'← '+(other?.name||'—'),amount,kind:'transfer'});
       }
     });
@@ -126,11 +136,9 @@
 
   function openingBalanceChange(accountId, nextOpeningBalance, accounts, ledger) {
     if (!global.MongoLedgerCore) throw new Error('MongoLedgerCore is required before MongoAccounts');
-    const list = Array.isArray(accounts) ? accounts : [];
-    const account = list.find(a => String(a?.id) === String(accountId));
+    const list = Array.isArray(accounts) ? accounts : [], account = accountById(list, accountId);
     if (!account) return null;
-    const before = Math.max(0, Math.round(Number(account.openingBalance) || 0));
-    const after = Math.max(0, Math.round(Number(nextOpeningBalance) || 0));
+    const before = Math.max(0, Math.round(Number(account.openingBalance) || 0)), after = Math.max(0, Math.round(Number(nextOpeningBalance) || 0));
     const current = Math.round(global.MongoLedgerCore.accountBalance(account.id, list, ledger || []));
     return { before, after, delta:after-before, current, result:current+(after-before), changed:after!==before };
   }
@@ -141,13 +149,12 @@
   }
 
   function deactivateMetadata(accountId, accounts, ledger, tolerance = 0.001) {
-    const list = Array.isArray(accounts) ? accounts : [];
-    const account = list.find(a => String(a?.id) === String(accountId));
+    const list = Array.isArray(accounts) ? accounts : [], account = accountById(list, accountId);
     if (!account) return {ok:false, reason:'not_found'};
     if (!canDeactivate(accountId, list, ledger, tolerance)) return {ok:false, reason:'non_zero_balance'};
     account.active = false;
     return {ok:true, account};
   }
 
-  global.MongoAccounts = Object.freeze({ normalizeType,isActive,isSpendable,isSavings,cleanName,cleanDate,defaultAccountId,openingTotal,earliestTransactionDate,makeLegacyAccount,normalizeMetadata,ensureLegacyAccount,assignMissingTransactionAccounts,makeAccount,editMetadata,accountTotal,transferRows,openingBalanceChange,canDeactivate,deactivateMetadata });
+  global.MongoAccounts = Object.freeze({ normalizeType,isActive,isSpendable,isSavings,cleanName,cleanDate,activeAccounts,accountById,validSelection,distinctDestinationId,defaultAccountId,openingTotal,earliestTransactionDate,makeLegacyAccount,normalizeMetadata,ensureLegacyAccount,assignMissingTransactionAccounts,makeAccount,editMetadata,accountTotal,transferRows,openingBalanceChange,canDeactivate,deactivateMetadata });
 })(window);
