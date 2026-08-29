@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('assert');global.window=global;require('../../src/features/transactions/transactions.js');const T=global.MongoTransactions;
+const made=T.makeTransaction({type:'income',amount:'10000',catName:'Salary',date:'2026-08-30',accountId:'bank'},{uuid:'tx1',timestamp:'2026-08-30T00:00:00.000Z'});assert.strictEqual(made.ok,true);assert.strictEqual(made.txn.id,'tx1');assert.strictEqual(made.txn.amount,10000);assert.strictEqual(made.txn.type,'income');
+assert.deepStrictEqual(T.makeTransaction({type:'expense',amount:0,accountId:'bank'}),{ok:false,reason:'amount_required'});
+const edit=T.applyEdit(made.txn,{amount:12000,desc:'Updated'},{timestamp:'2026-08-30T01:00:00.000Z'});assert.strictEqual(edit.ok,true);assert.strictEqual(made.txn.id,'tx1');assert.strictEqual(made.txn.amount,12000);
+const tr=T.makeTransfer({fromId:'bank',toId:'cash',amount:25000,date:'2026-08-30',purpose:'internal'},{uuid:'tr1',timestamp:'2026-08-30T00:00:00.000Z'});assert.strictEqual(tr.ok,true);assert.strictEqual(tr.transfer.id,'tr1');assert.strictEqual(tr.transfer.amount,25000);
+assert.deepStrictEqual(T.makeTransfer({fromId:'bank',toId:'bank',amount:1,purpose:'internal'}),{ok:false,reason:'destination_required'});
+const asset=T.makeTransfer({fromId:'bank',amount:5000,purpose:'asset',targetId:'asset1'},{uuid:'tr2'});assert.strictEqual(asset.ok,true);assert.strictEqual(asset.transfer.toId,null);
+const items=[{id:'1',type:'income',amount:100,accountId:'bank'},{id:'2',type:'expense',amount:40,accountId:'bank'},{id:'3',type:'expense',amount:5,accountId:'cash'}];assert.strictEqual(T.filterByAccount(items,'bank').length,2);assert.deepStrictEqual(T.summarize(T.filterByAccount(items,'bank'),[{fromId:'bank',toId:'cash',amount:20}], 'bank'),{income:100,expense:40,transferIn:0,transferOut:20});
+assert.strictEqual(T.removeById(items,'2').length,2);assert.strictEqual(items.length,3,'removeById must not mutate source array');
+console.log('Möngö transactions regression tests: PASS');
