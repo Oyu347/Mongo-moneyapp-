@@ -26,10 +26,11 @@
   const schedule=MongoLoans.buildSchedule(150000000,6,13*12,'annuity',0,36);
   ok(schedule&&schedule.schedule&&schedule.schedule.length>0,'loan schedule missing');
   ok(Number.isFinite(schedule.monthly)&&schedule.monthly>0,'loan monthly invalid');
-  const day8=MongoSubscription.accessDecision({trialDay:8,paid:false,target:{text:'Loan Calculator',context:'loan'}});
-  ok(day8.allowed===true,'Day 8 loan calculator blocked');
-  const write=MongoSubscription.accessDecision({trialDay:8,paid:false,target:{text:'Write',writeAction:true}});
-  ok(write.allowed===false,'Day 8 write unexpectedly allowed');
+  // accessDecision signature is (state, target, overrideDay); keep fixture shape aligned with the extracted API.
+  const day8=MongoSubscription.accessDecision({trialDay:8},{text:'Loan Calculator',context:'loan'});
+  ok(day8.allowed===true&&day8.reason==='loan-free','Day 8 loan calculator blocked');
+  const write=MongoSubscription.accessDecision({trialDay:8},{text:'Write',writeAction:true});
+  ok(write.allowed===false&&write.reason==='write','Day 8 write unexpectedly allowed');
   marker.dataset.status='pass';marker.dataset.loan='pass';marker.dataset.day8='pass';marker.textContent='full-wiring-pass';
  }catch(e){if(marker.dataset.status!=='fail'){marker.dataset.status='fail';marker.textContent='FAIL: '+e.message;}}
 })();
