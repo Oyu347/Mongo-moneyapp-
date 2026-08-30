@@ -1,0 +1,46 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Möngö Loan calculator wiring regression</title>
+<div id="loan-calc-wiring" data-status="pending">pending</div>
+<script src="../../src/features/loans/loans.js"></script>
+<script src="../../src/features/subscription/access.js"></script>
+<script>
+(function(){
+'use strict';
+const out=document.getElementById('loan-calc-wiring');
+function assert(ok,msg){if(!ok)throw new Error(msg);}
+try{
+  assert(window.MongoLoans&&typeof window.MongoLoans.buildSchedule==='function','MongoLoans.buildSchedule missing');
+  assert(window.MongoSubscription&&typeof window.MongoSubscription.accessDecision==='function','MongoSubscription.accessDecision missing');
+
+  // Exact Android regression class: calculator language data must be safe even when
+  // language refresh runs before the dictionary assignment is reached.
+  var CALC_LANGS;
+  function CT(lang){const d=CALC_LANGS||{};return Object.assign({},d.en||{},d[lang]||d.mn||{});}
+  assert(Object.keys(CT('mn')).length===0,'early CT fallback must be safe');
+  CALC_LANGS={en:{run:'Calculate'},mn:{run:'Тооцоолох'}};
+  assert(CT('mn').run==='Тооцоолох','Mongolian calculator text');
+  assert(CT('de').run==='Calculate','calculator English fallback');
+
+  // Day 8: Loan calculation is free, but writes remain Premium-protected.
+  const state={trialDay:8};
+  const calcAccess=window.MongoSubscription.accessDecision(state,{text:'Loan Calculator',context:'loan'});
+  const writeAccess=window.MongoSubscription.accessDecision(state,{text:'Хадгалах',writeAction:true});
+  assert(calcAccess.allowed===true&&calcAccess.reason==='loan-free','Day8 loan calculator must stay free');
+  assert(writeAccess.allowed===false&&writeAccess.reason==='write','Day8 loan write must stay blocked');
+
+  // Wire the same pure engine path used by the UI Calculate action.
+  const result=window.MongoLoans.buildSchedule(150000000,6,13*12,'annuity',0,36);
+  assert(result&&Array.isArray(result.schedule)&&result.schedule.length>0,'schedule not produced');
+  assert(Number.isFinite(result.monthly)&&result.monthly>0,'monthly payment missing');
+  assert(Number.isFinite(result.totalInterest)&&result.totalInterest>0,'total interest missing');
+  assert(Number.isFinite(result.totalPay)&&result.totalPay>150000000,'total payment missing');
+  assert(Math.abs(result.totalPay-(150000000+result.totalInterest))<0.01,'total payment invariant');
+
+  out.dataset.status='pass';
+  out.dataset.rows=String(result.schedule.length);
+  out.dataset.monthly=String(Math.round(result.monthly));
+  out.textContent='loan-calculator-wiring-pass';
+}catch(err){out.dataset.status='fail';out.textContent='FAIL: '+err.message;console.error(err);}
+})();
+</script>
