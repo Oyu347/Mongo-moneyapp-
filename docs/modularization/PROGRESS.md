@@ -8,35 +8,28 @@ Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuin
 ## Completed
 Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions Phase 1 COMPLETE; Loans Phase 1 COMPLETE; Savings Phase 1 COMPLETE; Assets Phase 1 COMPLETE; Budget Phase 1 COMPLETE; Cloud Phase 1 COMPLETE; Audit Phase 1 COMPLETE; i18n Phase 1 COMPLETE.
 
-### i18n phases
-- 1A module `ad652928caea8b87ca488ef4c2953938aedb99d4`; tests `2dd4ccbd0917a3eca50b9d6dfe0d0b687a2fc509`.
-- 1B module `268c2946ca15f2ae0b559699e5656c388add6102`; tests `9a677020890563471f9ee9fc4151b4bc8188dce4`.
-- 1C module `16314de31cee773c29a9430f851af23b1c13d9cb`; tests `12c912b833726f731de459310aa56b37e1f20d61`.
-- 1D dictionary boundary `54491af0480a87a17dc0acc8aeb4fce3b1395a1d`; tests `97437f08560ddab149083617a0b1b509de140bcd`.
-- 1E exact physical dictionary extraction `6ce5530642cfe400073dfa0271c9fddf5627a407`.
+### Web — Phase 1A: browser/platform compatibility
+Module `de803b48cfc982be2230df5bef208bd966c97251`; tests `f07d889804efd38a26d93b6f9fd43da95393df4`.
 
-### i18n — Phase 1E closure
-- Physically moved the exact final seven-language `LANGS` payload into `src/i18n/dictionaries.js` from the trusted full local HTML.
-- The prepared HTML now references `const LANGS=window.MongoDictionaries.LANGS;`; the original large base dictionary declaration and all seven `Object.assign(LANGS.<locale>, ...)` extension patches were removed from the HTML copy.
-- Extraction evaluated the original base object plus all seven patches in source order before writing the external module, so duplicate-key JavaScript semantics are preserved exactly.
-- Final extracted dictionary payload remains: mn 102 keys, en 102, zh 102, ja 102, ko 102, ru 98, de 95. No translations were invented, corrected or silently filled.
-- Semantic parity was verified immediately before extraction: exact final dictionary JSON matched the Phase 1D source payload (23,438 characters).
-- Prepared `index.modular-i18n-phase1e.html`.
-- Static syntax validation executed after physical removal: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- HTML contains one module-owned `LANGS` reference and zero remaining `Object.assign(LANGS.<locale>, ...)` patches.
-- `CAT_LABELS`, currency compatibility constants outside the extracted payload, investment-type tables, DOM `applyLang()`, persistence and UI handlers remain in their existing boundaries; they were not expanded into this closure without separate parity proof.
-- Browser/runtime seven-language parity was not executed.
+- Inventoried browser-only APIs in the latest prepared full HTML. No service-worker, `beforeinstallprompt`, `navigator.share`, clipboard or `matchMedia` use is currently present.
+- Current relevant browser boundaries include backup download (`Blob`, `URL.createObjectURL`, anchor download), backup import (`FileReader`), reload/location, online/offline state, visibility/focus/page lifecycle hooks and DOM creation/event code.
+- Added `src/web/platform.js` with small compatibility helpers for capability detection, text download, text-file reading and reload. It contains no financial, Firebase, storage or UI-policy logic.
+- Migrated only backup export's direct Blob/object-URL/anchor construction to `MongoWeb.downloadText(...)`. Backup data selection, naming, messages and storage behavior remain inline.
+- Backup import remains inline in Phase 1A because its `FileReader` callback immediately crosses security parsing, local persistence, Cloud restore and reload boundaries; it needs a more careful callback-only migration.
+- Prepared `index.modular-web-phase1a.html` and loaded `src/web/platform.js` after i18n modules.
+- Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- After migration there are zero direct `new Blob(...)` calls in the prepared HTML and one direct `new FileReader(...)` call remaining for restore import.
+- Web Node regression test file was committed but is not recorded as executed. Browser/runtime download/import parity was not executed.
 
 ## Current state
-i18n Phase 1 is closed. The main seven-language dictionary payload is physically modularized, lookup compatibility is available through `MongoI18n`, and the trusted full HTML no longer owns that extracted payload.
+Web Phase 1A has a bounded browser-platform compatibility module and one safe real caller migration. Financial and Cloud behavior remain outside Web.
 
 ## NEXT STEP
-### Web — Phase 1A: browser/platform boundary inventory
-1. Inspect browser-only helpers and global event/bootstrap code in the latest prepared HTML.
-2. Separate pure web/platform capability checks from financial feature logic; do not move Firebase/cloud or financial calculations into Web.
-3. Inventory PWA/install/share/download/file APIs, DOM/browser globals, navigation/history and other web-only behavior before extraction.
-4. Create the first `src/web/` compatibility module only for a small parity-safe boundary.
-5. Add focused tests where practical and run static syntax validation.
+### Web — Phase 1B: file-read and navigation boundary
+1. Delegate only the raw browser `FileReader.readAsText` mechanics in `importData()` to `MongoWeb.readTextFile`, keeping security parsing, persistence, Cloud restore and UI messages inline.
+2. Inventory direct reload/location uses and migrate only generic reload mechanics where exact timing parity is clear.
+3. Do not move password-reset URL construction, Firebase auth redirects or Cloud online/offline policy into Web merely because they reference browser globals.
+4. Add focused tests and static syntax validation.
 
 ## Future order
 Web → Mobile.
