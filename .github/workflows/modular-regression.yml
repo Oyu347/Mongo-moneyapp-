@@ -111,3 +111,16 @@ jobs:
           grep -q 'data-status="pass"' "$dom"
           grep -q '>trial-paywall-pass<' "$dom"
           echo "Trial paywall browser regression: PASS"
+      - name: Run subscription wrapper parity browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-wrapper-parity-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-wrapper-parity.html" > "$dom"
+          chromium_status=$?
+          echo "Chromium exit code: $chromium_status"
+          grep -o '<div id="wrapper-parity"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>subscription-wrapper-parity-pass<' "$dom"
+          echo "Subscription wrapper parity browser regression: PASS"
