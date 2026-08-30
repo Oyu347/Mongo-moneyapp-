@@ -5,6 +5,14 @@ const state=day=>({uid:'u1',trialDay:day,subscriptionStatus:'trial',subscription
 assert.equal(S.TRIAL_DAYS,7);
 assert.deepEqual(JSON.parse(JSON.stringify(S.trialInfo(state(5)))),{day:5,remaining:2,isExpired:false,isPaid:false,status:'trial'});
 assert.equal(S.reminderDay(state(5)),5);assert.equal(S.reminderDay(state(6)),6);assert.equal(S.reminderDay(state(7)),7);assert.equal(S.reminderDay(state(4)),null);
+// Phase 1D reminder compatibility: only trial days 5/6/7 may remind.
+assert.equal(S.reminderDay(state(8)),null);
+assert.equal(S.reminderDay({trialDay:5,subscriptionStatus:'active'}),null);
+assert.equal(S.reminderDay({trialDay:6,subscriptionStatus:'trial',subscriptionStartDate:'2026-08-01'}),null);
+assert.equal(S.reminderDay(state(1),5),5);
+assert.equal(S.reminderDay(state(1),6),6);
+assert.equal(S.reminderDay(state(1),7),7);
+assert.equal(S.reminderDay(state(1),8),null);
 assert.equal(S.isReadOnly(state(7)),false);assert.equal(S.isReadOnly(state(8)),true);
 assert.equal(S.accessDecision(state(8),{text:'Зээл'}).allowed,true);
 assert.equal(S.accessDecision(state(8),{text:'Зээлийн тооцоолуур'}).allowed,true);
