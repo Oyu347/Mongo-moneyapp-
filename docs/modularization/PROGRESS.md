@@ -49,6 +49,9 @@ The following deterministic browser checkpoints are confirmed green on `developm
 - Subscription/Trial module commits: `e04c020fa0953c71b678f1e0d06184c780a08d9d` and test `7c0abe02257b4c1b2b6363ba706b484f55bd0317`; Node workflow run #23 (`33293563875`) succeeded.
 - Trial/Paywall browser test commit `60eec0ba16cf15cb3aa66be197c86dadc8420595`; workflow commit `d57a4bbbf6055d580602c41649821751b86777c4`; run #25 (`33293630403`) completed successfully. Covered Day 5/7 reminders, Day 8 expired/read-only state, view access, blocked write actions, Loan navigation/calculator remaining available, Savings/Investment calculators remaining premium, and paid-user access.
 - Expanded subscription wrapper parity run #32 (`33294728495`) succeeded at branch head `86d5ef9fcca0388e397f39406199765ad3c3b513`.
+- Full browser integration was isolated on `integration-full-browser`, including extracted-module wiring and Loan calculator wiring/initialization-order regression coverage. The integration branch reached a fully green checkpoint at `f0d35702d3a6d350b7da0e628653fdf1cde6c5c0`.
+- PR #1 (`test: promote full browser integration checkpoint`) was merged into `development-modular` as merge commit `3cd9ea48b1c58254283a30a985d7a3fe44c15e9b`.
+- Post-merge workflow run #42 (`33312265566`) completed successfully on `development-modular`: Node regression and every browser regression passed, including full browser wiring and Loan calculator wiring.
 
 These browser tests validate extracted modules and deterministic synthetic flows. They do NOT yet prove the exact full prepared ~1.48 MB application runtime, live Firebase behavior, payment/QPay behavior, complete UI event wiring, backup/restore UI, or Android/iOS Capacitor runtime.
 
@@ -70,12 +73,13 @@ Confirmed behavior:
 
 Important limitation: the full clean prepared HTML remains local and has NOT been written over repository `index.html`; `main` remains untouched. The repository contents connector should not be used to round-trip the full large index file.
 
-## NEXT MILESTONE — exact prepared HTML integration validation
-1. Treat `index.modular-clean-regression-checkpoint.html` as the current exact local runtime checkpoint.
-2. Update the prepared-HTML validator expectations for the current clean integration shape (53 non-empty inline JavaScript blocks and the required extracted-module dependency order) without mutating the prepared file.
-3. Run static validation against the exact clean checkpoint and add targeted regression coverage for the `CALC_LANGS` initialization-order case so it cannot regress.
-4. Continue full browser wiring validation, then live Firebase/Cloud, backup/restore, QPay/payment and Android/iOS runtime validation before any controlled merge/release.
-5. Do not modify `main` until the controlled merge is separately approved after these validations.
+## NEXT MILESTONE — live-service and exact-runtime validation
+1. Preserve merge commit `3cd9ea48b1c58254283a30a985d7a3fe44c15e9b` plus successful run #42 as the current repository modular checkpoint.
+2. Treat `index.modular-clean-regression-checkpoint.html` as the current exact local phone-runtime checkpoint; do not replace repository `index.html` through the contents connector.
+3. Continue controlled validation of live Firebase/Cloud behavior and backup/restore behavior without changing financial semantics.
+4. Validate QPay/payment behavior separately; synthetic subscription tests do not prove live payment activation.
+5. Validate Android/iOS/Capacitor runtime parity before any release merge.
+6. Do not modify `main` until a controlled release merge is separately approved after these validations.
 
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
