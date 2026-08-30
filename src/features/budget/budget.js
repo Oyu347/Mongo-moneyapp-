@@ -1,5 +1,5 @@
-// Möngö Budget — Phase 1B
-// Pure budget keys, legacy-compatible lookup, month matching and Transfer-backed actual progress.
+// Möngö Budget — Phase 1C
+// Pure budget keys, Transfer-backed actuals and planning-source normalization.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
@@ -13,5 +13,11 @@ function savingsGoalActual(transfers,txns,goalId,month,year){const moved=sumRows
 function investmentActual(transfers,keys,month,year){const eligible=new Set((keys||[]).map(String));return sumRows(transfers,t=>(t?.purpose==='investment'||t?.purpose==='asset')&&rowInMonth(t,month,year)&&(eligible.has(String(t.targetId))||eligible.has(String(t.assetId))));}
 function loanActual(payments,month,year){return (Array.isArray(payments)?payments:[]).filter(p=>rowInMonth(p,month,year)).reduce((s,p)=>s+num(p?.total),0);}
 function progress(plan,actual,isIncomePlan){const p=num(plan),a=num(actual),pct=p?a/p*100:0;let health='good';if(!isIncomePlan&&pct>100)health='bad';else if((isIncomePlan&&pct<80)||(!isIncomePlan&&pct>=80))health='warn';return {plan:p,actual:a,pct,health};}
-global.MongoBudget=Object.freeze({categoryKey,subcategoryKey,yearMonthKey,getValue,rowInMonth,sumRows,savingsGoalActual,investmentActual,loanActual,progress});
+function sourceKey(kind,id){return String(kind||'')+'_'+String(id);}
+function sourceNames(name){const v=String(name||'');return {mn:v,en:v,zh:v,ja:v,ko:v,ru:v,de:v};}
+function sourceDescriptor(kind,id,name,color,extra){return {key:sourceKey(kind,id),names:sourceNames(name),color,...(extra||{})};}
+function selectedPeriodIsCurrentOrFuture(year,month,now){const d=now instanceof Date?now:new Date(now||Date.now());return Number(year)>d.getFullYear()||(Number(year)===d.getFullYear()&&Number(month)>=d.getMonth()+1);}
+function canSeedBudget(budgets,key,value,year,month,now){return selectedPeriodIsCurrentOrFuture(year,month,now)&&num(value)>0&&!Object.prototype.hasOwnProperty.call(budgets||{},key);}
+function investmentSourceEligible(group,recurringTypes=['stock','bond','fund','crypto','gold']){if(!group||!new Set(recurringTypes.map(String)).has(String(group.typeKey||'')))return false;return !(group.items||[]).some(item=>item?.loanFunded===true||item?.linkedDebtId!=null);}
+global.MongoBudget=Object.freeze({categoryKey,subcategoryKey,yearMonthKey,getValue,rowInMonth,sumRows,savingsGoalActual,investmentActual,loanActual,progress,sourceKey,sourceNames,sourceDescriptor,selectedPeriodIsCurrentOrFuture,canSeedBudget,investmentSourceEligible});
 })(window);
