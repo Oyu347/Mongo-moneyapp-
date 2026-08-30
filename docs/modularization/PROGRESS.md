@@ -11,25 +11,26 @@ Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions 
 ### Mobile phases
 - 1A module `37f8eb300ac22dca69449533b261c3180ca1eb08`; tests `b8902d8b084c85f3e3214df9c3e1e7e7a19ca4c6`.
 - 1B requirements `91de64e88c301bd2f8d5288403a5a37c96190030`; module `863e606aa0c6db8742a605d41c7a6f4c24c39a4c`.
+- 1C module `040ee2e69f5bed4aca560cfbd69fe2e5d153e1e5`; tests `a1bb50c6dfc0f26f9cbb7b2b5b8427720edddab0`.
 
-### Mobile — Phase 1B: shell requirements + safe-area/touch review
-- Current viewport is `width=device-width, initial-scale=1.0`; `viewport-fit=cover` is not enabled. Existing CSS nevertheless has 5 safe-area inset uses. No global viewport change was made because edge-to-edge behavior must be tested across fixed headers, footers and bottom sheets before enabling it.
-- Existing custom select behavior deliberately handles touchstart/touchend plus pointer events, including Android-specific native-select suppression comments. No touch behavior was changed without a demonstrated WebView incompatibility.
-- Current HTML has no History API/popstate/native-back integration. Backup restore uses an HTML file input; backup export remains Web download behavior.
-- Added `src/mobile/README.md` documenting shell requirements for app lifecycle/resume, deep links, keyboard, status bar/safe area, Android native back and file/share handling. These are validation requirements, not assumed plugin implementations.
-- Extended `MongoMobile` with read-only plugin presence/capability detection for App, Keyboard, StatusBar, Filesystem and Share. It does not call plugins or change current behavior.
-- No HTML behavior change was required in Phase 1B; `index.modular-mobile-phase1a.html` remains the prepared runtime baseline.
-- Static syntax validation of the prepared baseline remains 44 non-empty inline JavaScript blocks, 0 syntax errors. Mobile/Capacitor runtime testing was not executed.
+### Mobile — Phase 1C: bounded lifecycle/deep-link contract
+- Added pure `normalizeAppState(event)` returning only normalized active/inactive state.
+- Added pure `normalizeDeepLink(event, env)` returning URL/protocol/host/path/search/hash plus validity. It performs no routing, payment, auth, Cloud or UI decision.
+- No Capacitor listener is registered and no native plugin is called. Current Web runtime behavior is unchanged.
+- Tests cover web/native platform detection, plugin presence, app-state normalization, valid custom-scheme deep link parsing and invalid/empty URL handling. Test file was committed but is not recorded as executed.
+- No HTML behavior change was required; `index.modular-mobile-phase1a.html` remains the runtime baseline with the mobile module load.
+- Static syntax validation executed on the prepared baseline: 44 non-empty inline JavaScript blocks, 0 syntax errors.
+- Android/iOS/Capacitor runtime parity was not executed.
 
 ## Current state
-Mobile Phase 1B has a documented shell contract and read-only capability boundary. Native behavior will only be added against an approved requirement and concrete caller.
+Mobile Phase 1C has a pure native-event normalization contract ready for future shell wiring without taking ownership of business routing.
 
 ## NEXT STEP
-### Mobile — Phase 1C: bounded native lifecycle/deep-link contract
-1. Define pure normalization helpers for native app-state and deep-link inputs without registering Capacitor listeners or changing Web behavior.
-2. Keep payment/auth routing decisions outside Mobile; Mobile may normalize URL/platform events only.
-3. Add focused tests for pure normalization helpers.
-4. Run static syntax validation; do not claim Android/iOS runtime parity until actually tested.
+### Mobile — Phase 1D: native-back/file boundary design
+1. Define pure normalization/decision-input helpers for native back and file/share capability without intercepting Android back or changing backup semantics.
+2. Keep modal/tab/exit precedence in UI policy, not Mobile platform plumbing.
+3. Keep backup payload/security/storage policy in existing Web/storage/Cloud owners; Mobile may expose native file/share capability only.
+4. Add focused tests and static syntax validation.
 
 ## Handoff rule
 At each phase end record exact commits, tests actually performed, unresolved risks and exact next step.
