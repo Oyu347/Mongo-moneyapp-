@@ -1,5 +1,5 @@
-// Möngö Budget — Phase 1A
-// Pure budget keys, legacy-compatible lookup, month matching and progress classification.
+// Möngö Budget — Phase 1B
+// Pure budget keys, legacy-compatible lookup, month matching and Transfer-backed actual progress.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
