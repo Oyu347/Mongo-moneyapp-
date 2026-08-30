@@ -12,28 +12,29 @@ Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions 
 - 1A module `ad652928caea8b87ca488ef4c2953938aedb99d4`; tests `2dd4ccbd0917a3eca50b9d6dfe0d0b687a2fc509`.
 - 1B module `268c2946ca15f2ae0b559699e5656c388add6102`; tests `9a677020890563471f9ee9fc4151b4bc8188dce4`.
 - 1C module `16314de31cee773c29a9430f851af23b1c13d9cb`; tests `12c912b833726f731de459310aa56b37e1f20d61`.
+- 1D dictionary boundary `54491af0480a87a17dc0acc8aeb4fce3b1395a1d`; tests `97437f08560ddab149083617a0b1b509de140bcd`.
 
-### i18n — Phase 1C: exact missing-key fallback handling
-- Inspected runtime uses of the seven known Russian/German dictionary gaps rather than inventing translations.
-- `investedAmt`, `currentVal`, and `investDate` are used in investment detail labels with explicit current-language fallbacks to `invested`, `curval`, and `deadline`. Migrated these three expressions to `MongoI18n.ownValue()` while preserving that exact fallback behavior; importantly, this does not switch missing German labels to Mongolian.
-- `dataLoaded` has two runtime toast uses with explicit Mongolian/Cloud fallback strings. Migrated both to `ownValue()` preserving the exact existing fallback strings.
-- `noBackup`, `backupOk`, and `fileErr` currently have no direct runtime `L.<key>` use found in the latest full HTML; they remain recorded gaps and were not filled.
-- Added pure `ownValue(dictionary,key,fallback)` specifically for exact current-language fallback semantics, distinct from cross-language `value()` fallback.
-- No translation strings were changed or added.
-- Prepared `index.modular-i18n-phase1c.html`.
+### i18n — Phase 1D: safe dictionary ownership boundary
+- Added `src/i18n/dictionaries.js` as the dedicated dictionary registry/ownership boundary, separate from lookup/fallback logic in `i18n.js`.
+- Latest full HTML now loads `dictionaries.js` before `i18n.js` and registers the exact existing `LANGS` object through `MongoDictionaries.register(...)`.
+- Translation text remains in the trusted full HTML for this bounded phase; it has not yet been physically deleted from the large HTML. This avoids a risky large-text move through the GitHub connector before the external payload is committed and verified.
+- All seven later `Object.assign(LANGS.<locale>, ...)` extension patches remain in their original order and operate on the same registered object.
+- Local semantic parity harness evaluated the complete base dictionary plus all seven extension patches before and after registration-boundary migration. Final JSON was exactly equal (23,438 characters).
+- Key counts remain: mn 102, en 102, zh 102, ja 102, ko 102, ru 98, de 95. No translations were invented or silently filled.
+- Prepared `index.modular-i18n-phase1d.html`.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- i18n Node regression test file was committed but is not recorded as executed. Browser/runtime seven-language parity was not executed.
+- Browser/runtime seven-language parity was not executed.
 
 ## Current state
-i18n now has explicit helpers for both cross-language compatibility lookup and exact current-language fallback, with known Russian/German gaps handled conservatively where they are actually used.
+i18n dictionary ownership is modularized and semantically parity-checked, while physical dictionary text extraction remains intentionally staged to protect the trusted full HTML.
 
 ## NEXT STEP
-### i18n — Phase 1D: dictionary extraction boundary
-1. Extract exact dictionary constants from the trusted full local HTML into a dedicated `src/i18n/dictionaries.js` only if byte/semantic parity can be validated locally.
-2. Include `LANGS`, `CAT_LABELS`, currency mapping and other clearly language-only lookup tables; keep financial/UI logic out.
-3. Preserve all later `Object.assign(LANGS.<locale>, ...)` patches in exact order or fold them only after semantic parity proof.
-4. Update HTML to consume the external dictionaries without changing translation text.
-5. Run seven-language key parity plus static syntax validation; do not claim browser parity unless actually run.
+### i18n — Phase 1E: physical dictionary extraction + closure
+1. Move the exact registered `LANGS` payload and extension patches into the dedicated dictionary module using the trusted local extraction result; remove only those exact source ranges from the prepared HTML after external payload availability is verified.
+2. Consider `CAT_LABELS`/currency/investment-type tables only if their extraction can be independently parity-proven; otherwise leave them for a later i18n phase rather than expanding closure risk.
+3. Execute semantic seven-language parity and static syntax validation again.
+4. Close i18n Phase 1 only when the prepared HTML no longer owns the extracted dictionary payload and the module load order is self-sufficient.
+5. Then begin Web Phase 1A.
 
 ## Future order
 i18n → Web → Mobile.
