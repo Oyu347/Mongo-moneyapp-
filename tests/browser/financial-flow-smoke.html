@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Möngö financial browser smoke</title></head>
+<body>
+<div id="financial-smoke" data-status="pending">pending</div>
+<script src="../../src/core/ledger.js"></script>
+<script src="../../src/features/accounts/accounts.js"></script>
+<script src="../../src/features/transactions/transactions.js"></script>
+<script>
+(function () {
+  var marker = document.getElementById('financial-smoke');
+  var failures = [];
+  function check(name, condition) { if (!condition) failures.push(name); }
+
+  var accounts = [
+    {id:'bank', name:'Bank', type:'checking', openingBalance:100000, active:true},
+    {id:'cash', name:'Cash', type:'cash', openingBalance:0, active:true},
+    {id:'save', name:'Savings', type:'savings', openingBalance:0, active:true}
+  ];
+  var txns = [];
+  var transfers = [];
+
+  var income = MongoTransactions.makeTransaction({id:'income1',type:'income',amount:50000,accountId:'bank',date:'2026-08-30',catKey:'income'});
+  var expense = MongoTransactions.makeTransaction({id:'expense1',type:'expense',amount:10000,accountId:'cash',date:'2026-08-30',catKey:'food'});
+  var cashMove = MongoTransactions.makeTransfer({id:'cashmove',fromId:'bank',toId:'cash',amount:20000,purpose:'internal',date:'2026-08-30'});
+  var savingMove = MongoTransactions.makeTransfer({id:'savingmove',fromId:'bank',toId:'save',amount:15000,purpose:'savings',targetId:'goal1',date:'2026-08-30'});
+
+  check('income-created', income.ok);
+  check('expense-created', expense.ok);
+  check('cash-transfer-created', cashMove.ok);
+  check('savings-transfer-created', savingMove.ok);
+  if (income.ok) txns.push(income.txn);
+  if (expense.ok) txns.push(expense.txn);
+  if (cashMove.ok) transfers.push(cashMove.transfer);
+  if (savingMove.ok) transfers.push(savingMove.transfer);
+
+  var ledger = MongoLedgerCore.buildLedger({txns:txns, accountTransfers:transfers, debts:[]}, [], '2026-08-30T00:00:00.000Z');
+  check('ledger-count', ledger.length === 4);
+  check('ledger-valid', MongoLedgerCore.validateLedger(ledger).length === 0);
+  check('bank-balance', MongoLedgerCore.accountBalance('bank', accounts, ledger) === 115000);
+  check('cash-balance', MongoLedgerCore.accountBalance('cash', accounts, ledger) === 10000);
+  check('savings-balance', MongoLedgerCore.accountBalance('save', accounts, ledger) === 15000);
+  check('total-money', MongoLedgerCore.totalAccountMoney(accounts, ledger) === 140000);
+
+  var summary = MongoTransactions.summarize(txns, transfers, 'all');
+  check('income-total', summary.income === 50000);
+  check('expense-total', summary.expense === 10000);
+  check('internal-transfer-neutral', summary.transferIn === 35000 && summary.transferOut === 35000);
+  check('account-total-parity', MongoAccounts.accountTotal(accounts, ledger) === 140000);
+  check('savings-kind', ledger.some(function(e){ return e.id === 'transfer:savingmove' && e.kind === 'savings_transfer'; }));
+  check('cash-kind', ledger.some(function(e){ return e.id === 'transfer:cashmove' && e.kind === 'transfer'; }));
+
+  marker.dataset.status = failures.length ? 'fail' : 'pass';
+  marker.textContent = failures.length ? ('fail:' + failures.join(',')) : 'financial-flow-pass';
+}());
+</script>
+</body>
+</html>
