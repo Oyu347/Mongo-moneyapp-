@@ -1,0 +1,27 @@
+name: Modular regression validation
+
+on:
+  push:
+    branches: [development-modular]
+  workflow_dispatch:
+
+jobs:
+  node-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run modular Node regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r testfile; do
+            echo "::group::$testfile"
+            node "$testfile"
+            echo "::endgroup::"
+            count=$((count+1))
+          done < <(find tests -type f -name '*.test.js' | sort)
+          echo "Executed $count regression test files."
