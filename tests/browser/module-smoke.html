@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Möngö browser module smoke</title>
+</head>
+<body>
+  <div id="browser-smoke" data-dom="pending" data-modules="pending">pending</div>
+  <script>
+    window.__MONGO_BROWSER_SMOKE__ = { domReady: false, modulesLoaded: false, missing: [] };
+    document.addEventListener('DOMContentLoaded', function () {
+      window.__MONGO_BROWSER_SMOKE__.domReady = true;
+      document.getElementById('browser-smoke').dataset.dom = 'ready';
+    });
+  </script>
+  <script src="../../src/services/storage/storage.js"></script>
+  <script src="../../src/core/ledger.js"></script>
+  <script src="../../src/features/accounts/accounts.js"></script>
+  <script src="../../src/features/transactions/transactions.js"></script>
+  <script src="../../src/features/loans/loans.js"></script>
+  <script src="../../src/features/savings/savings.js"></script>
+  <script src="../../src/features/assets/assets.js"></script>
+  <script src="../../src/features/budget/budget.js"></script>
+  <script src="../../src/services/cloud/cloud.js"></script>
+  <script src="../../src/audit/audit.js"></script>
+  <script src="../../src/i18n/dictionaries.js"></script>
+  <script src="../../src/i18n/i18n.js"></script>
+  <script src="../../src/web/platform.js"></script>
+  <script src="../../src/mobile/platform.js"></script>
+  <script>
+    (function () {
+      var required = [
+        'MongoStorage','MongoLedger','MongoAccounts','MongoTransactions','MongoLoans',
+        'MongoSavings','MongoAssets','MongoBudget','MongoCloud','MongoAudit',
+        'MongoDictionaries','MongoI18n','MongoWeb','MongoMobile'
+      ];
+      var missing = required.filter(function (name) { return !window[name]; });
+      window.__MONGO_BROWSER_SMOKE__.missing = missing;
+      window.__MONGO_BROWSER_SMOKE__.modulesLoaded = missing.length === 0;
+      var el = document.getElementById('browser-smoke');
+      el.dataset.modules = missing.length ? 'missing' : 'loaded';
+      el.textContent = missing.length ? ('missing:' + missing.join(',')) : 'modules-loaded';
+    }());
+  </script>
+</body>
+</html>
