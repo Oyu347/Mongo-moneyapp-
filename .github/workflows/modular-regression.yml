@@ -93,10 +93,21 @@ jobs:
           dom=/tmp/mongo-i18n-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/i18n-currency-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
-          echo "--- i18n/currency marker ---"
           grep -o '<div id="i18n-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>i18n-currency-pass<' "$dom"
-          echo "Seven locale currency browser regression: PASS"
+      - name: Run trial paywall browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-trial-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-trial-smoke.html" > "$dom"
+          chromium_status=$?
+          echo "Chromium exit code: $chromium_status"
+          echo "--- Trial/paywall marker ---"
+          grep -o '<div id="trial-smoke"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>trial-paywall-pass<' "$dom"
+          echo "Trial paywall browser regression: PASS"
