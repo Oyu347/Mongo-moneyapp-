@@ -8,29 +8,33 @@ Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuin
 ## Completed
 Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions Phase 1 COMPLETE; Loans Phase 1 COMPLETE; Savings Phase 1 COMPLETE; Assets Phase 1 COMPLETE; Budget Phase 1 COMPLETE; Cloud Phase 1 COMPLETE; Audit Phase 1 COMPLETE.
 
-### i18n — Phase 1A: seven-language compatibility foundation
-Module: `ad652928caea8b87ca488ef4c2953938aedb99d4`
-Tests: `2dd4ccbd0917a3eca50b9d6dfe0d0b687a2fc509`
+### i18n phases
+- 1A module `ad652928caea8b87ca488ef4c2953938aedb99d4`; tests `2dd4ccbd0917a3eca50b9d6dfe0d0b687a2fc509`.
+- 1B module `268c2946ca15f2ae0b559699e5656c388add6102`; tests `9a677020890563471f9ee9fc4151b4bc8188dce4`.
 
-- Exact current locale order/source inventory: `mn`, `en`, `zh`, `ja`, `ko`, `ru`, `de`; initial app state is `lang='mn'`, `L=LANGS.mn`, `CS='₮'`.
-- Exact currency map preserved: mn ₮, en $, zh ¥, ja ¥, ko ₩, ru ₽, de €.
-- Added `src/i18n/i18n.js` with pure locale normalization, dictionary selection, key lookup, category-label lookup, currency lookup and missing-key/key-parity diagnostics.
-- Default compatibility fallback in the module is Mongolian (`mn`); current inline `setLang` only receives supported dropdown locales, so no user-visible fallback behavior is changed by Phase 1A.
-- Main seven-language `LANGS`, category labels, investment-type translations and later `Object.assign(LANGS.<locale>, ...)` extension patches remain inline; no translation text was rewritten.
-- DOM `applyLang()`, language dropdown state, document language attribute, render refreshes and Cloud profile-settings save remain inline.
-- Prepared `index.modular-i18n-phase1a.html`; only runtime delegation made is currency symbol selection inside `setLang()` through `MongoI18n.currency(l)`.
+### i18n — Phase 1B: lookup compatibility + real key parity inventory
+- Direct inline language usage inventory: 229 `L.<key>` references across 140 unique keys. These remain mostly inline to keep this phase bounded.
+- Migrated the central category display-name helper `cN()` to `MongoI18n.categoryLabel()` for built-in category labels and `MongoI18n.namedLabel()` for multilingual user-added names.
+- `namedLabel()` preserves the existing fallback order for multilingual custom names: selected locale → mn → en → first available value → supplied fallback.
+- No translation strings were rewritten or silently filled.
+- Evaluated the actual current `LANGS` base object plus all seven later `Object.assign(LANGS.<locale>, ...)` extension patches in an isolated Node harness.
+- Actual key counts against Mongolian reference (102 keys): mn 102, en 102, zh 102, ja 102, ko 102, ru 98, de 95.
+- Actual missing Russian keys: `noBackup`, `backupOk`, `fileErr`, `dataLoaded`.
+- Actual missing German keys: `investedAmt`, `currentVal`, `investDate`, `noBackup`, `backupOk`, `fileErr`, `dataLoaded`.
+- These gaps are recorded only; Phase 1B does not invent translations. Existing inline fallback expressions remain responsible for current behavior where present.
+- Prepared `index.modular-i18n-phase1b.html`.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- i18n Node regression test file was committed but is not recorded as executed. Browser/runtime seven-language parity was not executed.
+- The isolated seven-language key-parity harness was executed successfully. The committed i18n Node regression test file itself is not recorded as executed. Browser/runtime seven-language parity was not executed.
 
 ## Current state
-i18n has a pure compatibility foundation while the exact existing dictionaries and DOM behavior remain in the latest full HTML.
+i18n lookup compatibility is active for central category naming, and the real seven-language dictionary gaps are now known without changing translations.
 
 ## NEXT STEP
-### i18n — Phase 1B: key lookup compatibility migration
-1. Inventory direct `L.<key>` and category-label lookup patterns that are safe to delegate without moving dictionaries.
-2. Migrate a small bounded set of pure lookup/fallback expressions to `MongoI18n.value()` / `categoryLabel()` while preserving exact current values.
-3. Do not migrate DOM rendering loops or rewrite translation strings yet.
-4. Run missing-key parity diagnostics across all seven current dictionary objects in a safe local extraction/evaluation harness if possible; record actual gaps rather than silently filling them.
+### i18n — Phase 1C: exact gap handling and safe dictionary extraction boundary
+1. Inspect every runtime use of the 7 known missing Russian/German keys and document its existing fallback behavior.
+2. Add compatibility fallback through `MongoI18n.value()` only where it reproduces the existing UI result; do not invent translations.
+3. Inventory the boundaries of the main `LANGS`, `CAT_LABELS`, currency and investment-type dictionaries for later extraction.
+4. Keep large dictionary text inline unless extraction can be proven exact from the full local file.
 5. Add focused tests and static syntax validation.
 
 ## Future order
