@@ -17,7 +17,8 @@
  check('investment-budget-actual',MongoBudget.investmentActual(transfers,[groups[0].key],8,2026)===5000);
  check('unrelated-not-counted',MongoBudget.investmentActual(transfers,['other'],8,2026)===0);
  check('source-key-stable',MongoBudget.sourceKey('invest',groups[0].key)==='invest_'+groups[0].key);
- var eligible=MongoBudget.investmentSourceEligible(groups);check('investment-source-eligible',eligible===true);
+ var recurringGroup={typeKey:'fund',items:groups[0].items};
+ check('investment-source-eligible',MongoBudget.investmentSourceEligible(recurringGroup)===true);
  var loanFunded={typeKey:'fund',items:[{loanFunded:true}]};check('loan-funded-excluded',MongoBudget.investmentSourceEligible(loanFunded)===false);
  marker.dataset.status=failures.length?'fail':'pass';marker.textContent=failures.length?'fail:'+failures.join(','):'assets-budget-pass';
 }());
