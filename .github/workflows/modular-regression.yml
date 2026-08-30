@@ -33,10 +33,23 @@ jobs:
       - name: Run deterministic browser module smoke test
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          dom=/tmp/mongo-smoke-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom \
-            "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > /tmp/mongo-smoke-dom.html
-          grep -q 'data-dom="ready"' /tmp/mongo-smoke-dom.html
-          grep -q 'data-modules="loaded"' /tmp/mongo-smoke-dom.html
-          grep -q '>modules-loaded<' /tmp/mongo-smoke-dom.html
+            "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > "$dom"
+          chromium_status=$?
+
+          echo "Chromium exit code: $chromium_status"
+          echo "--- Browser smoke marker ---"
+          grep -o '<div id="browser-smoke"[^>]*>[^<]*</div>' "$dom" || true
+          echo "--- Smoke status attributes ---"
+          grep -o 'data-dom="[^"]*"' "$dom" | head -1 || true
+          grep -o 'data-modules="[^"]*"' "$dom" | head -1 || true
+          echo "--- Missing module report ---"
+          grep -o 'missing:[^<]*' "$dom" | head -1 || true
+
+          test "$chromium_status" -eq 0
+          grep -q 'data-dom="ready"' "$dom"
+          grep -q 'data-modules="loaded"' "$dom"
+          grep -q '>modules-loaded<' "$dom"
           echo "Browser module smoke test: PASS"
