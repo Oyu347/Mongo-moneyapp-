@@ -1,5 +1,5 @@
-// Möngö Audit — Phase 1D
-// Pure cross-feature invariant findings only. Never mutates or auto-fixes financial data.
+// Möngö Audit — Phase 1 COMPLETE
+// Pure read-only cross-feature invariant findings and deterministic reports. Never mutates or auto-fixes financial data.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0, id=v=>String(v==null?'':v);
