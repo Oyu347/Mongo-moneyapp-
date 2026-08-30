@@ -37,13 +37,11 @@ jobs:
           dom=/tmp/mongo-smoke-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
           grep -o '<div id="browser-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-dom="ready"' "$dom"
           grep -q 'data-modules="loaded"' "$dom"
           grep -q '>modules-loaded<' "$dom"
-          echo "Browser module smoke test: PASS"
       - name: Run browser financial flow regression
         shell: bash
         run: |
@@ -84,10 +82,21 @@ jobs:
           dom=/tmp/mongo-cs-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/cloud-storage-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
-          echo "--- Cloud/storage marker ---"
           grep -o '<div id="cs-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>cloud-storage-pass<' "$dom"
-          echo "Cloud storage reset browser regression: PASS"
+      - name: Run seven locale currency browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-i18n-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/i18n-currency-smoke.html" > "$dom"
+          chromium_status=$?
+          echo "Chromium exit code: $chromium_status"
+          echo "--- i18n/currency marker ---"
+          grep -o '<div id="i18n-smoke"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>i18n-currency-pass<' "$dom"
+          echo "Seven locale currency browser regression: PASS"
