@@ -21,7 +21,7 @@ Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions 
 - Prepared closure HTML `index.modular-mobile-phase1e.html` is behavior-identical to the Phase 1A runtime baseline; only the loaded small module evolved on the branch.
 - Closure presence audit: exactly one `src/mobile/platform.js` load; zero direct Capacitor references in prepared HTML; zero Cordova references; no `viewport-fit=cover`; five existing safe-area CSS references remain unchanged.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Mobile Node regression tests were committed through the phases but are not recorded as executed. Android/iOS/Capacitor runtime parity was not executed.
+- Android/iOS/Capacitor runtime parity remains not executed.
 
 ## Modularization extraction milestone
 The planned Phase 1 extraction order is now complete:
@@ -29,12 +29,19 @@ Storage → Core → Accounts → Transactions → Loans → Savings → Assets 
 
 This does NOT mean production integration is automatically proven. The large prepared HTML chain remains local because the repository contents connector is not safe for round-tripping the full ~1.48 MB index file. `main` remains untouched.
 
-## NEXT MILESTONE — integration and regression validation
+## Integration validation — Node regression milestone
+- GitHub Actions workflow: `.github/workflows/modular-regression.yml`, Node 22, executes every `tests/**/*.test.js` file in sorted order on `development-modular` pushes.
+- Final boundary correction commit: `6f9b2306d53a0ac2240f9120229c08b9eee67080` (`test(loans): align principal tolerance boundary`).
+- GitHub Actions run #5 (`33290366351`) completed successfully for that exact commit.
+- The committed modular Node regression suite is therefore green at this checkpoint.
+- Earlier validation corrections were confined to regression expectations where tests did not match the extracted Phase 1 API/boundary behavior; no production financial logic was changed for those corrections.
+- This validates the committed Node-level module contracts only. It does NOT prove browser runtime integration, Firebase/Cloud live behavior, trial/paywall UI, backup/restore UI, or Android/iOS runtime behavior.
+
+## NEXT MILESTONE — browser integration and regression validation
 1. Establish a safe full-file integration mechanism for the exact prepared HTML plus extracted modules without truncating/reconstructing `index.html`.
-2. Execute committed Node regression suites and fix only verified failures.
-3. Run browser regression tests for financial invariants, seven-language UI, backup/restore, Cloud clear/sync and trial/paywall behavior.
-4. Run Android/iOS Capacitor smoke tests before enabling native listeners/plugins or edge-to-edge changes.
-5. Only after validation, prepare a controlled merge/release path; do not merge to `main` merely because extraction is complete.
+2. Run browser regression tests for financial invariants, seven-language UI, backup/restore, Cloud clear/sync and trial/paywall behavior.
+3. Run Android/iOS Capacitor smoke tests before enabling native listeners/plugins or edge-to-edge changes.
+4. Only after validation, prepare a controlled merge/release path; do not merge to `main` merely because extraction or Node tests are complete.
 
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
