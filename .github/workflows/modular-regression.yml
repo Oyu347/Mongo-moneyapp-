@@ -2,7 +2,7 @@ name: Modular regression validation
 
 on:
   push:
-    branches: [development-modular, integration-full-browser]
+    branches: [development-modular, integration-full-browser, integration-cloud-backup]
   workflow_dispatch:
 
 jobs:
