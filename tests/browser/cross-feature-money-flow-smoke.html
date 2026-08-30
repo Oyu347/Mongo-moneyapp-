@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Möngö cross feature money flow</title></head><body>
+<div id="cross-smoke" data-status="pending">pending</div>
+<script src="../../src/core/ledger.js"></script>
+<script src="../../src/features/transactions/transactions.js"></script>
+<script src="../../src/features/savings/savings.js"></script>
+<script src="../../src/features/loans/loans.js"></script>
+<script src="../../src/features/assets/assets.js"></script>
+<script src="../../src/features/budget/budget.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('cross-smoke'),fail=[];function ok(n,c){if(!c)fail.push(n);}
+ var txns=[],transfers=[];
+ var income=MongoTransactions.makeTransaction({type:'income',amount:100000,accountId:'bank',catName:'Ажил',subcatName:'Цалин',date:'2026-08-30'},{uuid:'income1'});ok('income',income.ok);if(income.ok)txns.push(income.txn);
+ var expense=MongoTransactions.makeTransaction({type:'expense',amount:20000,accountId:'bank',catName:'Хоол',subcatName:'Хүнс',date:'2026-08-30'},{uuid:'expense1'});ok('expense',expense.ok);if(expense.ok)txns.push(expense.txn);
+ var saving=MongoTransactions.makeTransfer({amount:15000,fromId:'bank',toId:'save',purpose:'savings',targetId:'goal1',date:'2026-08-30'},{uuid:'save1'});ok('saving-transfer',saving.ok);if(saving.ok)transfers.push(saving.transfer);
+ ok('saving-progress',MongoSavings.transferContribution({id:'goal1'},transfers)===15000);
+ ok('saving-budget',MongoBudget.savingsGoalActual(transfers,txns,'goal1',8,2026)===15000);
+ var debt={id:'loan1',total:50000,openingRemaining:50000,payments:[]};
+ var pay=MongoLoans.normalizeRepayment({id:'loanpay1',date:'2026-08-30',accountId:'bank',total:11000,principal:9000,interest:2000,extraPrincipal:0},50000);ok('loan-payment',pay.ok);if(pay.ok)debt.payments.push(pay.payment);
+ ok('loan-remaining',MongoLoans.remaining(debt)===41000);ok('loan-budget',MongoBudget.loanActual(debt.payments,8,2026)===11000);
+ var investment=MongoAssets.makeInvestment({id:'asset1',name:'ETF',typeKey:'fund',invested:30000,current:30000,date:'2026-08-30',incomeProducing:true});ok('asset',investment.ok);
+ var investTransfer=MongoTransactions.makeTransfer({amount:5000,fromId:'bank',toId:'broker',purpose:'investment',targetId:'fund:::etf',date:'2026-08-30'},{uuid:'invest1'});ok('investment-transfer',investTransfer.ok);if(investTransfer.ok)transfers.push(investTransfer.transfer);
+ ok('investment-budget',MongoBudget.investmentActual(transfers,['fund:::etf'],8,2026)===5000);
+ var assetIncome=MongoAssets.makeAssetIncomeTransaction({id:'assetincome1',assetGroupKey:'fund:::etf',amount:800,accountId:'bank',date:'2026-08-30',incomePlanIncluded:true});ok('asset-income',assetIncome.ok);if(assetIncome.ok)txns.push(assetIncome.transaction);
+ var totals=MongoTransactions.summarize(txns,transfers,'all');ok('income-total',totals.income===100800);ok('expense-total',totals.expense===20000);ok('transfers-neutral',totals.transferIn===20000&&totals.transferOut===20000);
+ var state={txns:txns,accountTransfers:transfers,debts:[debt],investments:investment.ok?[investment.investment]:[]};var ledger=MongoLedgerCore.buildLedger(state,[],'2026-08-30T00:00:00.000Z');ok('ledger-valid',MongoLedgerCore.validateLedger(ledger).length===0);
+ marker.dataset.status=fail.length?'fail':'pass';marker.textContent=fail.length?'fail:'+fail.join(','):'cross-feature-money-flow-pass';
+}());
+</script></body></html>
