@@ -53,6 +53,14 @@ The following deterministic browser checkpoints are confirmed green on `developm
 - PR #1 (`test: promote full browser integration checkpoint`) was merged into `development-modular` as merge commit `3cd9ea48b1c58254283a30a985d7a3fe44c15e9b`.
 - Post-merge workflow run #42 (`33312265566`) completed successfully on `development-modular`: Node regression and every browser regression passed, including full browser wiring and Loan calculator wiring.
 
+## Cloud backup / clear / restore checkpoint — 2026-08-30
+- Added deterministic backup/clear/restore/conflict regression on isolated branch `integration-cloud-backup` at commit `35304ead2f4d74fee146721c5145b868d887845b`.
+- The isolated branch workflow checkpoint `b9400b55fc784306a2dd0732474cfff3d7a24804` completed successfully in run #44 (`33312963087`).
+- PR #2 (`test: promote cloud backup restore checkpoint`) was merged into `development-modular` as merge commit `3b208a36f60a78dc6771b2799343ee513ac13e43`.
+- Post-merge run #45 (`33313209772`) completed successfully: both `node-regression` and `browser-module-smoke` were green, including the cloud storage/reset regression and all existing browser financial/subscription wiring checks.
+- This checkpoint validates deterministic Cloud ordering, backup/restore selection, clear tombstones/barriers and queue filtering. It does NOT prove a live Firebase backend session, live authentication, network failure/retry behavior, or the exact production `index.html` Firebase runtime wiring.
+- No production financial semantics were changed for this checkpoint; `main` remains untouched.
+
 These browser tests validate extracted modules and deterministic synthetic flows. They do NOT yet prove the exact full prepared ~1.48 MB application runtime, live Firebase behavior, payment/QPay behavior, complete UI event wiring, backup/restore UI, or Android/iOS Capacitor runtime.
 
 ## Phone runtime checkpoint — 2026-08-30
@@ -73,13 +81,14 @@ Confirmed behavior:
 
 Important limitation: the full clean prepared HTML remains local and has NOT been written over repository `index.html`; `main` remains untouched. The repository contents connector should not be used to round-trip the full large index file.
 
-## NEXT MILESTONE — live-service and exact-runtime validation
-1. Preserve merge commit `3cd9ea48b1c58254283a30a985d7a3fe44c15e9b` plus successful run #42 as the current repository modular checkpoint.
+## NEXT MILESTONE — exact Firebase runtime wiring, then live-service validation
+1. Preserve merge commit `3b208a36f60a78dc6771b2799343ee513ac13e43` plus successful run #45 as the current repository Cloud checkpoint.
 2. Treat `index.modular-clean-regression-checkpoint.html` as the current exact local phone-runtime checkpoint; do not replace repository `index.html` through the contents connector.
-3. Continue controlled validation of live Firebase/Cloud behavior and backup/restore behavior without changing financial semantics.
-4. Validate QPay/payment behavior separately; synthetic subscription tests do not prove live payment activation.
-5. Validate Android/iOS/Capacitor runtime parity before any release merge.
-6. Do not modify `main` until a controlled release merge is separately approved after these validations.
+3. Inspect the exact production Firebase/backup/restore runtime wiring without replacing the large `index.html`; prove the existing driver/function/document-path contract before adding any adapter wiring.
+4. After exact wiring is known, validate live Firebase/Cloud behavior separately. Deterministic tests alone do not prove live Firebase.
+5. Validate QPay/payment behavior separately; synthetic subscription tests do not prove live payment activation.
+6. Validate Android/iOS/Capacitor runtime parity before any release merge.
+7. Do not modify `main` until a controlled release merge is separately approved after these validations.
 
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
