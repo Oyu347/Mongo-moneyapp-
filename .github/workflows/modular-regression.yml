@@ -2,7 +2,7 @@ name: Modular regression validation
 
 on:
   push:
-    branches: [development-modular]
+    branches: [development-modular, integration-full-browser]
   workflow_dispatch:
 
 jobs:
@@ -37,7 +37,6 @@ jobs:
           dom=/tmp/mongo-smoke-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="browser-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-dom="ready"' "$dom"
           grep -q 'data-modules="loaded"' "$dom"
@@ -49,7 +48,6 @@ jobs:
           dom=/tmp/mongo-financial-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/financial-flow-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="financial-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>financial-flow-pass<' "$dom"
@@ -60,7 +58,6 @@ jobs:
           dom=/tmp/mongo-lsb-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/loan-savings-budget-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="lsb-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>loan-savings-budget-pass<' "$dom"
@@ -71,7 +68,6 @@ jobs:
           dom=/tmp/mongo-ab-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/assets-budget-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="ab-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>assets-budget-pass<' "$dom"
@@ -82,7 +78,6 @@ jobs:
           dom=/tmp/mongo-cs-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/cloud-storage-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="cs-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>cloud-storage-pass<' "$dom"
@@ -93,7 +88,6 @@ jobs:
           dom=/tmp/mongo-i18n-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/i18n-currency-smoke.html" > "$dom"
           chromium_status=$?
-          grep -o '<div id="i18n-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>i18n-currency-pass<' "$dom"
@@ -104,13 +98,9 @@ jobs:
           dom=/tmp/mongo-trial-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-trial-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
-          echo "--- Trial/paywall marker ---"
-          grep -o '<div id="trial-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>trial-paywall-pass<' "$dom"
-          echo "Trial paywall browser regression: PASS"
       - name: Run subscription wrapper parity browser regression
         shell: bash
         run: |
@@ -118,9 +108,30 @@ jobs:
           dom=/tmp/mongo-wrapper-parity-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-wrapper-parity.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
-          grep -o '<div id="wrapper-parity"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>subscription-wrapper-parity-pass<' "$dom"
-          echo "Subscription wrapper parity browser regression: PASS"
+      - name: Run full browser wiring smoke
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-full-wiring-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/full-wiring-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q 'data-loan="pass"' "$dom"
+          grep -q 'data-day8="pass"' "$dom"
+          grep -q '>full-wiring-pass<' "$dom"
+      - name: Run Loan calculator wiring regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-loan-calc-wiring-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/loan-calculator-wiring.html" > "$dom"
+          chromium_status=$?
+          grep -o '<div id="loan-calc-wiring"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q 'data-rows="156"' "$dom"
+          grep -q '>loan-calculator-wiring-pass<' "$dom"
