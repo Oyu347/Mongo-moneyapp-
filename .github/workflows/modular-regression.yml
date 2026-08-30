@@ -25,3 +25,18 @@ jobs:
             count=$((count+1))
           done < <(find tests -type f -name '*.test.js' | sort)
           echo "Executed $count regression test files."
+
+  browser-module-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run deterministic browser module smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          chromium --headless --no-sandbox --disable-gpu --dump-dom \
+            "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > /tmp/mongo-smoke-dom.html
+          grep -q 'data-dom="ready"' /tmp/mongo-smoke-dom.html
+          grep -q 'data-modules="loaded"' /tmp/mongo-smoke-dom.html
+          grep -q '>modules-loaded<' /tmp/mongo-smoke-dom.html
+          echo "Browser module smoke test: PASS"
