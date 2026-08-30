@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Möngö i18n currency smoke</title></head><body>
+<div id="i18n-smoke" data-status="pending">pending</div>
+<script src="../../src/i18n/dictionaries.js"></script>
+<script src="../../src/i18n/i18n.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('i18n-smoke'),failures=[];function check(n,c){if(!c)failures.push(n);}
+ var locales=['mn','en','zh','ja','ko','ru','de'];
+ check('seven-locales',MongoI18n.LOCALES.length===7&&locales.every(function(l){return MongoI18n.hasLocale(l);}));
+ check('currency-mn',MongoI18n.currency('mn')==='₮');check('currency-en',MongoI18n.currency('en')==='$');check('currency-zh',MongoI18n.currency('zh')==='¥');check('currency-ja',MongoI18n.currency('ja')==='¥');check('currency-ko',MongoI18n.currency('ko')==='₩');check('currency-ru',MongoI18n.currency('ru')==='₽');check('currency-de',MongoI18n.currency('de')==='€');
+ check('unsupported-locale-fallback',MongoI18n.normalizeLocale('fr')==='mn'&&MongoI18n.currency('fr')==='₮');
+ var D=MongoDictionaries.LANGS;check('dictionary-seven',locales.every(function(l){return D&&D[l]&&typeof D[l]==='object';}));
+ check('mn-reference-nonempty',Object.keys(D.mn||{}).length>0);
+ locales.forEach(function(l){check('language-'+l,MongoI18n.language(D,l)===D[l]);});
+ var fallbackKey=Object.keys(D.mn||{}).find(function(k){return locales.some(function(l){return !Object.prototype.hasOwnProperty.call(D[l]||{},k);});});
+ if(fallbackKey){var missingLocale=locales.find(function(l){return !Object.prototype.hasOwnProperty.call(D[l]||{},fallbackKey);});check('mn-key-fallback',MongoI18n.value(D,missingLocale,fallbackKey,'__missing__')===D.mn[fallbackKey]);}
+ check('unknown-key-explicit-fallback',MongoI18n.value(D,'de','__no_such_key__','fallback')==='fallback');
+ var parity=MongoI18n.keyParity(D);check('parity-seven',locales.every(function(l){return Array.isArray(parity[l]);}));
+ check('mn-parity-zero',parity.mn.length===0);
+ marker.dataset.status=failures.length?'fail':'pass';marker.textContent=failures.length?'fail:'+failures.join(','):'i18n-currency-pass';
+}());
+</script></body></html>
