@@ -8,33 +8,34 @@ Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuin
 ## Completed
 Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions Phase 1 COMPLETE; Loans Phase 1 COMPLETE; Savings Phase 1 COMPLETE; Assets Phase 1 COMPLETE.
 
-### Budget — Phase 1A: pure key and progress foundation
-Module: `fbe83463ee53f97fbed1e39eb44dc50b51da5558`
-Tests: `d3def27de72eeead47627d98fa7423af7a9af8c4`
+### Budget — Phase 1A
+Module `fbe83463ee53f97fbed1e39eb44dc50b51da5558`; tests `d3def27de72eeead47627d98fa7423af7a9af8c4`.
 
-- Added `src/features/budget/budget.js` with pure category/subcategory key construction and year-month key construction.
-- Added legacy-compatible pure Budget lookup helper: year+month key wins; legacy per-category month object is used only for the current Budget year.
-- Added pure month matching and amount summation helpers.
-- Added pure actual helpers for goal savings (Savings Transfer + credited savings interest), investment/asset Transfers and loan payment totals.
-- Added pure plan-vs-actual progress/health classification preserving existing thresholds: expense >100% bad, expense >=80% warn, income <80% warn.
-- Prepared `index.modular-budget-phase1a.html`: module loaded after Assets; `bKeyFor`, `bSubKey`, Budget year-month key helpers and Budget progress health classification delegate to `MongoBudget`.
-- Existing `gSpent()` compatibility patch remains inline for now because it resolves category/source identities and uses Loans/Savings/Assets state.
-- Auto-import source creation/mutation, Budget writes, persistence, UI and localization remain inline.
-- Asset Income Plan remains optional and separate from actual asset income.
+### Budget — Phase 1B: Transfer-backed actual progress
+Module: `7787ee7607c9c9f4943066c71186e94d1ebeac2f`
+Tests: `ca0e38835e0af5947b6887b1c48196d0cc032743`
+
+- Active `gSpent()` compatibility layer now delegates resolved Savings goal actuals to `MongoBudget.savingsGoalActual()`.
+- Savings goal actual remains Savings Transfers plus credited savings interest. Ordinary/legacy Savings Expense is not added again in the goal-source path.
+- Resolved loan source actual delegates to `MongoBudget.loanActual()` and remains total cash payment (`payment.total`) for Budget progress; principal/interest accounting elsewhere is unchanged.
+- Eligible investment parent and individual investment source actuals delegate to `MongoBudget.investmentActual()` after caller-side identity resolution.
+- Investment actual accepts only `purpose:'investment'` or `purpose:'asset'` rows matching eligible target/asset identities; internal transfers do not count.
+- Category/source discovery, eligibility rules, debt lookup and investment grouping remain inline compatibility boundaries.
+- Prepared `index.modular-budget-phase1b.html` with four bounded delegations.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Budget Node regression test file was committed but is not recorded as executed. Browser/runtime parity is not recorded as executed.
+- Budget regression test file was expanded for duplicate-prevention and purpose filtering, but Node test execution and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Budget Phase 1A establishes the pure key/month/progress boundary without changing Budget source mutation or financial classifications.
+Budget owns pure keys/month matching/progress classification and resolved Transfer-backed actual calculations. Source creation/mutation and UI remain inline.
 
 ## NEXT STEP
-### Budget — Phase 1B: Transfer-backed actual progress
-1. Delegate bounded goal savings, loan payment and investment/asset Transfer actual calculations from the active `gSpent()` compatibility layer to `MongoBudget`.
-2. Preserve category/source identity resolution inline; only pass resolved IDs/keys/payments into pure helpers.
-3. Confirm savings actual = savings Transfers + credited savings interest, not ordinary Expense duplication.
-4. Confirm loan Budget actual = total cash payment while principal/interest accounting remains unchanged elsewhere.
-5. Confirm investment actual accepts `investment` and `asset` purpose only for eligible investment source identities.
-6. Add focused regression cases and static syntax validation.
+### Budget — Phase 1C: planning-source normalization
+1. Inspect `ensurePlanningBudgetSources()`, `ensureAssetIncomeSource()` and related source-key helpers.
+2. Extract pure source identity/name/color/seed-decision helpers only; keep category/subcategory array mutation inline.
+3. Preserve user-edited monthly Budget values: source synchronization must never overwrite an existing user amount.
+4. Preserve auto-import semantics for Savings goals, Loans, eligible Investments and Asset Income.
+5. Keep persistence/UI/localization inline.
+6. Add focused regression tests and static syntax validation.
 
 ## Future order
 Budget → Cloud → Audit → i18n → Web → Mobile.
