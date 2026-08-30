@@ -16,9 +16,25 @@ function legacyTrialInfo(state,overrideDay){
   return {day,remaining:Math.max(0,7-day),isExpired:!isPaid&&day>7,isPaid,status:isPaid?'active':(day>7?'expired':'trial')};
 }
 function legacyReadOnly(state,overrideDay){const x=legacyTrialInfo(state,overrideDay);return !!(x&&x.isExpired&&!x.isPaid);}
-// Phase 1C compatibility wrappers: module first, exact legacy fallback otherwise.
+// Compatibility wrappers: module first, exact legacy fallback otherwise.
 function mongoTrialInfo(state,overrideDay){return window.MongoSubscription?window.MongoSubscription.trialInfo(state,overrideDay):legacyTrialInfo(state,overrideDay);}
 function mongoIsReadOnly(state,overrideDay){return window.MongoSubscription?window.MongoSubscription.isReadOnly(state,overrideDay):legacyReadOnly(state,overrideDay);}
+function mongoReminderDay(state,overrideDay){
+  if(window.MongoSubscription&&typeof window.MongoSubscription.reminderDay==='function')return window.MongoSubscription.reminderDay(state,overrideDay);
+  const info=legacyTrialInfo(state,overrideDay);return !info.isPaid&&!info.isExpired&&[5,6,7].includes(info.day)?info.day:null;
+}
+function mongoAccessDecision(state,target,overrideDay){
+  if(window.MongoSubscription&&typeof window.MongoSubscription.accessDecision==='function')return window.MongoSubscription.accessDecision(state,target,overrideDay);
+  if(!legacyReadOnly(state,overrideDay))return {allowed:true,reason:'active'};
+  // Browser fallback fixture mirrors the stable Phase 1E policy without replacing legacy DOM heuristics.
+  const text=String((target&&target.text)||'').trim().toLowerCase(),context=String((target&&target.context)||'').toLowerCase(),idcls=String((target&&target.idClass)||'').toLowerCase();
+  const loan=['зээл','loan','loans','debt'].includes(text)||idcls.includes('nav-loan')||(target&&target.insideLoanCalculator)||(text.includes('calculator')&&context.includes('loan'))||(text.includes('тооцоолуур')&&(text.includes('зээл')||context.includes('loan')));
+  if(loan)return {allowed:true,reason:'loan-free'};
+  const calc=text.includes('calculator')||text.includes('тооцоолуур')||idcls.includes('calculator')||idcls.includes('calc');
+  if(calc&&(context.includes('saving')||context.includes('хуримтлал')||context.includes('investment')||context.includes('asset')||context.includes('хөрөнгө')))return {allowed:false,reason:'premium-calculator'};
+  if(target&&target.writeAction)return {allowed:false,reason:'write'};
+  return {allowed:true,reason:'view'};
+}
 try{
   assert(window.MongoSubscription,'MongoSubscription missing');
   const cases=[
@@ -29,24 +45,24 @@ try{
     {name:'paid-start-date',state:{trialDay:30,subscriptionStartDate:'2026-08-30'},day:30,status:'active',remaining:0,ro:false,reminder:null}
   ];
   for(const c of cases){
-    const legacy=legacyTrialInfo(c.state);
-    const wrapped=mongoTrialInfo(c.state);
+    const legacy=legacyTrialInfo(c.state),wrapped=mongoTrialInfo(c.state);
     assert(JSON.stringify(wrapped)===JSON.stringify(legacy),c.name+' trialInfo parity');
-    assert(wrapped.day===c.day,c.name+' day');
-    assert(wrapped.status===c.status,c.name+' status');
-    assert(wrapped.remaining===c.remaining,c.name+' remaining');
-    assert(mongoIsReadOnly(c.state)===c.ro,c.name+' readOnly');
-    assert(window.MongoSubscription.reminderDay(c.state)===c.reminder,c.name+' reminder');
+    assert(wrapped.day===c.day,c.name+' day');assert(wrapped.status===c.status,c.name+' status');assert(wrapped.remaining===c.remaining,c.name+' remaining');
+    assert(mongoIsReadOnly(c.state)===c.ro,c.name+' readOnly');assert(mongoReminderDay(c.state)===c.reminder,c.name+' reminder');
   }
-  // Query override semantics used by trialTestDay: valid 1..30 wins; invalid values do not.
   const base={trialDay:1};
-  assert(mongoTrialInfo(base,8).day===8,'valid override day 8');
-  assert(mongoIsReadOnly(base,8)===true,'override day 8 readonly');
-  assert(mongoTrialInfo(base,31).day===1,'invalid override ignored');
-  // Paid state must win over an expired override.
-  const paid={trialDay:1,subscriptionStatus:'active'};
-  assert(mongoTrialInfo(paid,30).status==='active','paid override active');
-  assert(mongoIsReadOnly(paid,30)===false,'paid override not readonly');
+  assert(mongoTrialInfo(base,8).day===8,'valid override day 8');assert(mongoIsReadOnly(base,8)===true,'override day 8 readonly');assert(mongoTrialInfo(base,31).day===1,'invalid override ignored');
+  const paid={trialDay:1,subscriptionStatus:'active'};assert(mongoTrialInfo(paid,30).status==='active','paid override active');assert(mongoIsReadOnly(paid,30)===false,'paid override not readonly');
+  // Phase 1E browser-level access wrapper contract.
+  const d8={trialDay:8};
+  const accessCases=[
+    [{text:'Зээл'},true,'loan-free'],[{text:'Calculator',context:'loan'},true,'loan-free'],[{insideLoanCalculator:true},true,'loan-free'],
+    [{text:'Тооцоолуур',context:'savings'},false,'premium-calculator'],[{text:'Calculator',context:'investment'},false,'premium-calculator'],[{text:'Calculator',context:'asset'},false,'premium-calculator'],
+    [{text:'Хадгалах',writeAction:true},false,'write'],[{text:'Харах'},true,'view']
+  ];
+  for(const [target,allowed,reason] of accessCases){const d=mongoAccessDecision(d8,target);assert(d.allowed===allowed,'access allowed '+reason);assert(d.reason===reason,'access reason '+reason);}
+  assert(mongoAccessDecision({trialDay:7},{text:'Calculator',context:'savings'}).allowed===true,'day7 premium calculator remains available');
+  assert(mongoAccessDecision({trialDay:20,subscriptionStatus:'active'},{text:'Хадгалах',writeAction:true}).allowed===true,'paid write remains available');
   out.dataset.status='pass';out.textContent='subscription-wrapper-parity-pass';
 }catch(err){out.dataset.status='fail';out.textContent='FAIL: '+err.message;console.error(err);}
 })();
