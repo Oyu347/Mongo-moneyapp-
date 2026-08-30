@@ -1,0 +1,16 @@
+// Möngö Audit — Phase 1A
+// Pure cross-feature invariant findings only. Never mutates or auto-fixes financial data.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0, id=v=>String(v==null?'':v);
+function finding(code,severity,details){return {code,severity:severity||'error',...(details||{})};}
+function duplicateIds(rows){const seen=new Set(),dupes=new Set();(rows||[]).forEach(r=>{const k=id(r&&r.id);if(!k)return;if(seen.has(k))dupes.add(k);seen.add(k);});return [...dupes];}
+function ledgerIdFindings(ledger,expectedIds){const rows=Array.isArray(ledger)?ledger:[],actual=new Set(rows.map(r=>id(r&&r.id)).filter(Boolean)),out=[];duplicateIds(rows).forEach(x=>out.push(finding('duplicate-ledger-id','error',{id:x})));(expectedIds||[]).map(id).filter(Boolean).forEach(x=>{if(!actual.has(x))out.push(finding('missing-ledger-id','error',{id:x}));});return out;}
+function transferFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to)out.push(finding('transfer-missing-account','error',{id:tid,fromId:from,toId:to}));if(from&&to&&from===to)out.push(finding('transfer-same-account','error',{id:tid,accountId:from}));if(amount<=0)out.push(finding('transfer-nonpositive-amount','error',{id:tid,amount}));});return out;}
+function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]);if(aid&&!known.has(aid))out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
+function loanSplitFindings(ledger){const out=[];(ledger||[]).filter(e=>e&&e.kind==='loan_payment').forEach(e=>{const total=num(e.amount),split=num(e.principal)+num(e.interest)+num(e.extraPrincipal);if(Math.abs(total-split)>1)out.push(finding('loan-payment-split-mismatch','error',{ledgerId:id(e.id),total,split}));});return out;}
+function legacyLoanTxnFindings(txns){return (txns||[]).filter(t=>t&&t.loanPaymentId).map(t=>finding('loan-payment-duplicate-txn-signal','warn',{txnId:id(t.id),loanPaymentId:id(t.loanPaymentId)}));}
+function savingsDoubleCountFindings(txns,transfers){const moved=new Set((transfers||[]).filter(t=>t&&t.purpose==='savings').map(t=>id(t.targetId)).filter(Boolean));return (txns||[]).filter(t=>t&&t.type==='expense'&&moved.has(id(t.goalId||t.targetId))&&(t.purpose==='savings'||t.expensePurpose==='savings')).map(t=>finding('savings-transfer-expense-double-count-signal','warn',{txnId:id(t.id),goalId:id(t.goalId||t.targetId)}));}
+function run(input){const x=input||{},out=[];out.push(...ledgerIdFindings(x.ledger,x.expectedLedgerIds));out.push(...transferFindings(x.transfers));out.push(...accountReferenceFindings(x.accounts,x.ledger));out.push(...loanSplitFindings(x.ledger));out.push(...legacyLoanTxnFindings(x.txns));out.push(...savingsDoubleCountFindings(x.txns,x.transfers));return out;}
+global.MongoAudit=Object.freeze({finding,duplicateIds,ledgerIdFindings,transferFindings,accountReferenceFindings,loanSplitFindings,legacyLoanTxnFindings,savingsDoubleCountFindings,run});
+})(window);
