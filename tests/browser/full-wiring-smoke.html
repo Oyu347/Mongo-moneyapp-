@@ -21,16 +21,18 @@
  const fail=(m)=>{marker.dataset.status='fail';marker.textContent='FAIL: '+m;throw new Error(m)};
  const ok=(c,m)=>{if(!c)fail(m)};
  try{
-  const globals=['MongoStorage','MongoLedgerCore','MongoAccounts','MongoTransactions','MongoLoans','MongoSavings','MongoAssets','MongoBudget','MongoCloud','MongoAudit','MongoI18n','MongoSubscription','MongoWebPlatform','MongoMobilePlatform'];
+  // Export names below intentionally follow the current Phase-1 compatibility modules.
+  const globals=['MongoStorage','MongoLedgerCore','MongoAccounts','MongoTransactions','MongoLoans','MongoSavings','MongoAssets','MongoBudget','MongoCloud','MongoAudit','MongoI18n','MongoSubscription','MongoWeb','MongoMobile'];
   globals.forEach(n=>ok(window[n],n+' missing'));
   const schedule=MongoLoans.buildSchedule(150000000,6,13*12,'annuity',0,36);
   ok(schedule&&schedule.schedule&&schedule.schedule.length>0,'loan schedule missing');
   ok(Number.isFinite(schedule.monthly)&&schedule.monthly>0,'loan monthly invalid');
-  // accessDecision signature is (state, target, overrideDay); keep fixture shape aligned with the extracted API.
   const day8=MongoSubscription.accessDecision({trialDay:8},{text:'Loan Calculator',context:'loan'});
   ok(day8.allowed===true&&day8.reason==='loan-free','Day 8 loan calculator blocked');
   const write=MongoSubscription.accessDecision({trialDay:8},{text:'Write',writeAction:true});
   ok(write.allowed===false&&write.reason==='write','Day 8 write unexpectedly allowed');
+  ok(MongoWeb.capabilities().dom===true,'web DOM capability missing');
+  ok(MongoMobile.platform()==='web','mobile web fallback mismatch');
   marker.dataset.status='pass';marker.dataset.loan='pass';marker.dataset.day8='pass';marker.textContent='full-wiring-pass';
  }catch(e){if(marker.dataset.status!=='fail'){marker.dataset.status='fail';marker.textContent='FAIL: '+e.message;}}
 })();
