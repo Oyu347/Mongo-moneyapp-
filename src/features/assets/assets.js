@@ -1,4 +1,4 @@
-// Möngö Assets — Phase 1D
+// Möngö Assets — Phase 1 COMPLETE
 // Pure asset/investment identity, aggregation, object normalization and actual asset-income construction.
 (function(global){
 'use strict';
