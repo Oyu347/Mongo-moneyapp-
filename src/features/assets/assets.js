@@ -1,5 +1,5 @@
-// Möngö Assets — Phase 1C
-// Pure asset/investment identity, aggregation, portfolio calculations and object normalization.
+// Möngö Assets — Phase 1D
+// Pure asset/investment identity, aggregation, object normalization and actual asset-income construction.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
@@ -14,5 +14,6 @@ function makeGroupPurchase(group,input){if(!group)return {ok:false,reason:'group
 function makeAutoInvestment(txn,input={}){if(!txn)return {ok:false,reason:'transaction_required'};return makeInvestment({id:input.id,sourceTxnId:txn.id,name:txn.desc,typeKey:input.typeKey||txn.investTypeKey||'other',invested:txn.amount,current:txn.amount,date:txn.date,color:input.color,autoAdded:true,incomeProducing:!!input.incomeProducing});}
 function updateAutoInvestment(existing,txn,input={}){if(!existing||!txn)return {ok:false,reason:'input_required'};const next={...existing},newInvested=num(txn.amount);next.name=txn.desc;next.typeKey=input.typeKey||txn.investTypeKey||existing.typeKey||'other';next.invested=newInvested;if(!existing.current||num(existing.current)===newInvested||existing.autoAdded)next.current=newInvested;next.date=txn.date;next.color=input.color??existing.color;next.autoAdded=true;return {ok:true,investment:next};}
 function makeLoanFundedAsset(input){const x=input||{};return makeInvestment({id:x.id,name:x.name,typeKey:x.typeKey||'real',invested:x.value,current:x.value,date:x.date,color:x.color,autoAdded:false,linkedDebtId:x.debtId,loanFunded:true,incomeProducing:!!x.incomeProducing});}
-global.MongoAssets=Object.freeze({normalizeName,groupKey,groupInvestments,groupIncomeProducing,portfolioTotals,groupPerformance,makeInvestment,makeGroupPurchase,makeAutoInvestment,updateAutoInvestment,makeLoanFundedAsset});
+function makeAssetIncomeTransaction(input){const x=input||{},amount=Math.round(num(x.amount));if(!x.assetGroupKey)return {ok:false,reason:'asset_required'};if(!(amount>0))return {ok:false,reason:'amount_required'};if(!x.accountId)return {ok:false,reason:'account_required'};if(!x.date)return {ok:false,reason:'date_required'};return {ok:true,transaction:{id:x.id,type:'income',desc:x.desc||'',catKey:x.catKey||'asset_income_cat',catName:x.catName||'',subcatName:x.subcatName||'',amount,date:x.date,accountId:x.accountId,assetIncome:true,assetGroupKey:x.assetGroupKey,assetIncomeType:x.assetIncomeType||'other',incomePlanIncluded:!!x.incomePlanIncluded,createdAt:x.createdAt||new Date().toISOString()}};}
+global.MongoAssets=Object.freeze({normalizeName,groupKey,groupInvestments,groupIncomeProducing,portfolioTotals,groupPerformance,makeInvestment,makeGroupPurchase,makeAutoInvestment,updateAutoInvestment,makeLoanFundedAsset,makeAssetIncomeTransaction});
 })(window);
