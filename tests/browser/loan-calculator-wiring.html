@@ -20,7 +20,10 @@ try{
   assert(Object.keys(CT('mn')).length===0,'early CT fallback must be safe');
   CALC_LANGS={en:{run:'Calculate'},mn:{run:'Тооцоолох'}};
   assert(CT('mn').run==='Тооцоолох','Mongolian calculator text');
-  assert(CT('de').run==='Calculate','calculator English fallback');
+  // The production CT merge only falls back to English for missing keys; an
+  // unsupported locale does not alias the whole English dictionary object.
+  assert(CT('de').run===undefined,'unsupported locale should not fabricate a locale dictionary');
+  assert(CT('en').run==='Calculate','calculator English dictionary');
 
   // Day 8: Loan calculation is free, but writes remain Premium-protected.
   const state={trialDay:8};
