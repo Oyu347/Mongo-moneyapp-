@@ -8,36 +8,33 @@ Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuin
 ## Completed
 Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions Phase 1 COMPLETE; Loans Phase 1 COMPLETE; Savings Phase 1 COMPLETE; Assets Phase 1 COMPLETE.
 
-### Assets Phase 1 closure
-- 1A module `2a0037d0aa63c3c611937c3025b109588f0377cd`; tests `32ea67da08836eb7e3800986e66143230d5fb8d4`.
-- 1B module `34b6a68b4709145d3ac7d7b5e9fae6d147ac9b10`; tests `f8c82495afaa453d37ebd22f102f25f92d915fa0`.
-- 1C parity-aligned module `0c5e836e90304d51f5dc0dedc4bdd8c445ffbe48`; tests `a314920f062c3e75a3daf5db562dd3dc47cec572`.
-- 1D module `b5c11e94e454069f352967907ce2e0aa7d4fcc28`; tests `b840aded0a091a06aec59588d6b439779187d020`.
-- 1E closure marker `d22865aa12b6aa34802d5bd2305afaece65e2edf`.
+### Budget — Phase 1A: pure key and progress foundation
+Module: `fbe83463ee53f97fbed1e39eb44dc50b51da5558`
+Tests: `d3def27de72eeead47627d98fa7423af7a9af8c4`
 
-### Assets — Phase 1E closure audit
-- Prepared `index.modular-assets-phase1e.html` is audit-only and preserves Phase 1D behavior.
-- Type + normalized-name grouping remains the identity rule for same-name investment aggregation; a same name under a different type remains separate.
-- Manual investments, transfer-purchased assets, new auto-linked investments and loan-funded assets use pure object builders; application-state mutation remains inline.
-- Asset purchase remains acquisition/account movement metadata (`assetPurchase`) rather than ordinary income; no new income transaction is manufactured by asset construction.
-- Actual asset income is a distinct `type:'income'` transaction with one selected receiving `accountId`, `assetIncome:true`, group identity and income kind. The active V43.73 path inserts that transaction once.
-- Income Plan remains explicit optional planning state (`incomePlanIncluded`) and its Budget write occurs only after the actual income transaction has been constructed/inserted.
-- Loan-funded asset construction preserves asset value separately from the linked debt (`linkedDebtId`, `loanFunded:true`); debt principal/interest semantics were not changed.
-- Budget source/category/subcategory mutation remains inline and is deferred to Budget Phase 1.
+- Added `src/features/budget/budget.js` with pure category/subcategory key construction and year-month key construction.
+- Added legacy-compatible pure Budget lookup helper: year+month key wins; legacy per-category month object is used only for the current Budget year.
+- Added pure month matching and amount summation helpers.
+- Added pure actual helpers for goal savings (Savings Transfer + credited savings interest), investment/asset Transfers and loan payment totals.
+- Added pure plan-vs-actual progress/health classification preserving existing thresholds: expense >100% bad, expense >=80% warn, income <80% warn.
+- Prepared `index.modular-budget-phase1a.html`: module loaded after Assets; `bKeyFor`, `bSubKey`, Budget year-month key helpers and Budget progress health classification delegate to `MongoBudget`.
+- Existing `gSpent()` compatibility patch remains inline for now because it resolves category/source identities and uses Loans/Savings/Assets state.
+- Auto-import source creation/mutation, Budget writes, persistence, UI and localization remain inline.
+- Asset Income Plan remains optional and separate from actual asset income.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Node Assets regression suite and browser/runtime parity are not recorded as executed.
+- Budget Node regression test file was committed but is not recorded as executed. Browser/runtime parity is not recorded as executed.
 
 ## Current state
-Assets Phase 1 is closed. Pure identity/grouping/performance, investment/asset construction, linked-update normalization, loan-funded asset construction and actual asset-income transaction construction are modularized. State mutation, persistence, Budget integration and UI remain compatibility boundaries.
+Budget Phase 1A establishes the pure key/month/progress boundary without changing Budget source mutation or financial classifications.
 
 ## NEXT STEP
-### Budget — Phase 1A: pure budget key/range/progress foundation
-1. Inspect exact monthly/yearly Budget key construction and income/expense plan lookup in the latest prepared HTML.
-2. Inspect actual-vs-plan progress calculation, including savings/loan/investment Transfer-backed progress and asset-income plan behavior.
-3. Extract only pure key/range/progress calculations to `src/features/budget/budget.js`.
-4. Preserve auto-import source semantics from Loans, Savings goals, Investments and Asset Income exactly.
-5. Keep category mutation, plan writes, persistence, UI and localization inline initially.
-6. Add focused Budget regression tests and run static syntax validation.
+### Budget — Phase 1B: Transfer-backed actual progress
+1. Delegate bounded goal savings, loan payment and investment/asset Transfer actual calculations from the active `gSpent()` compatibility layer to `MongoBudget`.
+2. Preserve category/source identity resolution inline; only pass resolved IDs/keys/payments into pure helpers.
+3. Confirm savings actual = savings Transfers + credited savings interest, not ordinary Expense duplication.
+4. Confirm loan Budget actual = total cash payment while principal/interest accounting remains unchanged elsewhere.
+5. Confirm investment actual accepts `investment` and `asset` purpose only for eligible investment source identities.
+6. Add focused regression cases and static syntax validation.
 
 ## Future order
 Budget → Cloud → Audit → i18n → Web → Mobile.
