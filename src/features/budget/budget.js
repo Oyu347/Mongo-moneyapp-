@@ -1,4 +1,4 @@
-// Möngö Budget — Phase 1D
+// Möngö Budget — Phase 1 COMPLETE
 // Pure budget keys, Transfer-backed actuals, planning-source normalization and legacy source migration.
 (function(global){
 'use strict';
