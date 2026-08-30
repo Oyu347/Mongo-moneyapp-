@@ -11,26 +11,26 @@ Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions 
 ### Web phases
 - 1A module `de803b48cfc982be2230df5bef208bd966c97251`; tests `f07d889804efd38a26d93b6f9fd43da95393df4`.
 - 1B module `5805ada17a9c82e70ee66556bfdbb223f5ba8edf`; tests `72d458b1d7f53985676d6a4bf95d395e53d3f518`.
+- 1C module `ace8dc72b8e931dc0110b273d8c7a1169d3f07bf`; tests `0c4f4f12cf1d9a887e71e9e6e39dd3b08886e58b`.
 
-### Web — Phase 1B: file-read + bounded reload migration
-- Delegated only raw `FileReader.readAsText` mechanics in `importData()` to `MongoWeb.readTextFile(...)`.
-- Security parsing (`secParseBackup`), backup size limit, local persistence, Cloud restore/save, messages and input reset remain inline and unchanged in responsibility.
-- Restore's exact 350ms reload scheduling now delegates to `MongoWeb.reload(350)`; no timing policy was changed.
-- Two other direct reload calls remain inline: clear-data reload and hard-reset reload. They are coupled to destructive data-reset workflows and were intentionally not migrated in this bounded phase.
-- Password-reset URL construction and Firebase/auth browser-location usage remain outside Web.
-- Prepared `index.modular-web-phase1b.html`.
+### Web — Phase 1C: lifecycle compatibility
+- Inventory found 21 direct `pageshow` subscriptions, 10 visibility-change subscriptions, 2 focus-related browser subscriptions, 3 online subscriptions, 1 offline subscription and the Cloud beforeunload persistence hook in the Phase 1B HTML.
+- Added generic `MongoWeb.onPageShow`, `onVisible`, and `onFocus` event-subscription helpers plus event capability flags. These helpers contain no trial, billing, Cloud, auth or financial policy.
+- Migrated one cohesive trial-access enforcement lifecycle cluster to the generic helpers while preserving its exact delays: pageshow 150ms, focus 100ms, visible 100ms. The `enforce()` policy itself remains inline.
+- Remaining lifecycle listeners are intentionally not bulk-rewritten. Many are coupled to Cloud queueing, auth, transaction refresh, UI observers or feature-specific bootstrap behavior and require bounded parity review.
+- Prepared `index.modular-web-phase1c.html`.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Direct `new FileReader(...)` calls in prepared HTML: 0. Direct `location.reload()` calls remaining: 2. `MongoWeb.readTextFile` callers: 1; `MongoWeb.reload` callers: 1.
-- Web Node regression test file was committed but is not recorded as executed. Browser/runtime restore parity was not executed.
+- After the bounded migration: 20 direct pageshow subscriptions and 9 direct visibility-change subscriptions remain; 3 `MongoWeb` lifecycle callers were added.
+- Web Node regression test file was committed but is not recorded as executed. Browser/runtime lifecycle parity was not executed.
 
 ## Current state
-Web Phase 1B owns generic backup download/file-read mechanics and one parity-safe timed reload. Destructive reset workflows and auth/cloud policies remain in their proper feature/service boundaries.
+Web Phase 1C provides generic browser lifecycle plumbing while feature/service policy remains with its existing owners.
 
 ## NEXT STEP
-### Web — Phase 1C: lifecycle/capability boundary
-1. Inventory generic page lifecycle signals (`pageshow`, focus, visibility) separately from the feature/cloud actions they trigger.
-2. Add only generic event subscription/capability helpers if they reduce repeated browser plumbing without moving policy into Web.
-3. Keep Cloud online/offline queue policy, trial enforcement and billing/auth decisions in their existing modules/inline owners.
+### Web — Phase 1D: bounded lifecycle migration + reset reload review
+1. Migrate only simple UI refresh lifecycle pairs whose handlers are already self-contained and whose event semantics are exact.
+2. Review the two remaining direct destructive-workflow reload calls; delegate only the generic reload mechanic if doing so cannot change ordering or failure behavior.
+3. Do not migrate Cloud beforeunload/online/offline policy into Web.
 4. Run static syntax validation and focused tests.
 
 ## Future order
