@@ -1,5 +1,5 @@
-// Möngö Assets — Phase 1B
-// Pure asset/investment identity, aggregation, portfolio calculations and object construction.
+// Möngö Assets — Phase 1C
+// Pure asset/investment identity, aggregation, portfolio calculations and object normalization.
 (function(global){
 'use strict';
 const num=v=>Number(v)||0;
@@ -12,5 +12,7 @@ function groupPerformance(group){const invested=num(group?.invested),current=num
 function makeInvestment(input){const x=input||{},name=String(x.name||'').trim(),invested=num(x.invested);if(!name)return {ok:false,reason:'name_required'};if(!invested)return {ok:false,reason:'invested_required'};const current=num(x.current)||invested;return {ok:true,investment:{id:x.id,name,typeKey:x.typeKey||'other',invested,current,date:x.date||'',color:x.color,autoAdded:!!x.autoAdded,incomeProducing:!!x.incomeProducing,...(x.sourceTxnId!=null?{sourceTxnId:x.sourceTxnId}:{}),...(x.assetPurchase?{assetPurchase:true}:{}),...(x.linkedDebtId!=null?{linkedDebtId:x.linkedDebtId}:{}),...(x.loanFunded?{loanFunded:true}:{})}};}
 function makeGroupPurchase(group,input){if(!group)return {ok:false,reason:'group_required'};const x=input||{},amount=num(x.amount);if(!amount)return {ok:false,reason:'invested_required'};return makeInvestment({id:x.id,name:group.name,typeKey:group.typeKey,invested:amount,current:amount,date:x.date,color:group.color,autoAdded:false,assetPurchase:true,incomeProducing:groupIncomeProducing(group)});}
 function makeAutoInvestment(txn,input={}){if(!txn)return {ok:false,reason:'transaction_required'};return makeInvestment({id:input.id,sourceTxnId:txn.id,name:txn.desc,typeKey:input.typeKey||txn.investTypeKey||'other',invested:txn.amount,current:txn.amount,date:txn.date,color:input.color,autoAdded:true,incomeProducing:!!input.incomeProducing});}
-global.MongoAssets=Object.freeze({normalizeName,groupKey,groupInvestments,groupIncomeProducing,portfolioTotals,groupPerformance,makeInvestment,makeGroupPurchase,makeAutoInvestment});
+function updateAutoInvestment(existing,txn,input={}){if(!existing||!txn)return {ok:false,reason:'input_required'};const next={...existing},previousInvested=num(existing.invested);next.name=txn.desc;next.typeKey=input.typeKey||txn.investTypeKey||existing.typeKey||'other';next.invested=num(txn.amount);if(!existing.current||num(existing.current)===previousInvested||existing.autoAdded)next.current=num(txn.amount);next.date=txn.date;next.color=input.color??existing.color;next.autoAdded=true;return {ok:true,investment:next};}
+function makeLoanFundedAsset(input){const x=input||{};return makeInvestment({id:x.id,name:x.name,typeKey:x.typeKey||'real',invested:x.value,current:x.value,date:x.date,color:x.color,autoAdded:false,linkedDebtId:x.debtId,loanFunded:true,incomeProducing:!!x.incomeProducing});}
+global.MongoAssets=Object.freeze({normalizeName,groupKey,groupInvestments,groupIncomeProducing,portfolioTotals,groupPerformance,makeInvestment,makeGroupPurchase,makeAutoInvestment,updateAutoInvestment,makeLoanFundedAsset});
 })(window);
