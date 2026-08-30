@@ -1,0 +1,5 @@
+'use strict';
+const assert=require('assert');global.window=global;require('../../src/i18n/i18n.js');const I=global.MongoI18n;
+assert.deepStrictEqual(I.LOCALES,['mn','en','zh','ja','ko','ru','de']);assert.strictEqual(I.normalizeLocale('ko'),'ko');assert.strictEqual(I.normalizeLocale('xx'),'mn');assert.strictEqual(I.currency('mn'),'₮');assert.strictEqual(I.currency('de'),'€');assert.strictEqual(I.currency('xx'),'₮');
+const D={mn:{a:'А',b:'Б'},en:{a:'A'},zh:{a:'甲',b:'乙'},ja:{a:'A',b:'B'},ko:{a:'A',b:'B'},ru:{a:'A',b:'B'},de:{a:'A',b:'B'}};assert.strictEqual(I.value(D,'en','a'),'A');assert.strictEqual(I.value(D,'en','b'),'Б');assert.strictEqual(I.value(D,'en','missing','fallback'),'fallback');assert.deepStrictEqual(I.missingKeys(D,'en'),['b']);assert.deepStrictEqual(I.keyParity(D).en,['b']);
+const labels={food:{mn:'Хоол',en:'Food'}};assert.strictEqual(I.categoryLabel(labels,'food','en'),'Food');assert.strictEqual(I.categoryLabel(labels,'food','ko'),'Хоол');assert.strictEqual(I.categoryLabel(labels,'unknown','en'),'unknown');console.log('Möngö i18n regression tests: PASS');
