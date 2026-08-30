@@ -24,24 +24,39 @@ Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions 
 - Android/iOS/Capacitor runtime parity remains not executed.
 
 ## Modularization extraction milestone
-The planned Phase 1 extraction order is now complete:
+The planned Phase 1 extraction order is complete:
 Storage → Core → Accounts → Transactions → Loans → Savings → Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
+
+Subscription/Trial access policy was subsequently extracted as a compatibility module on `development-modular` so the existing Day 5/7/8 policy could be regression-tested without changing `main`.
 
 This does NOT mean production integration is automatically proven. The large prepared HTML chain remains local because the repository contents connector is not safe for round-tripping the full ~1.48 MB index file. `main` remains untouched.
 
 ## Integration validation — Node regression milestone
 - GitHub Actions workflow: `.github/workflows/modular-regression.yml`, Node 22, executes every `tests/**/*.test.js` file in sorted order on `development-modular` pushes.
-- Final boundary correction commit: `6f9b2306d53a0ac2240f9120229c08b9eee67080` (`test(loans): align principal tolerance boundary`).
+- Final early boundary correction commit: `6f9b2306d53a0ac2240f9120229c08b9eee67080` (`test(loans): align principal tolerance boundary`).
 - GitHub Actions run #5 (`33290366351`) completed successfully for that exact commit.
-- The committed modular Node regression suite is therefore green at this checkpoint.
-- Earlier validation corrections were confined to regression expectations where tests did not match the extracted Phase 1 API/boundary behavior; no production financial logic was changed for those corrections.
-- This validates the committed Node-level module contracts only. It does NOT prove browser runtime integration, Firebase/Cloud live behavior, trial/paywall UI, backup/restore UI, or Android/iOS runtime behavior.
+- Subsequent workflow runs continue to execute the Node suite together with browser regressions.
+- Validation corrections were confined to regression expectations/fixtures where tests did not match extracted Phase 1 API behavior; production financial logic was not changed merely to make those tests green.
 
-## NEXT MILESTONE — browser integration and regression validation
-1. Establish a safe full-file integration mechanism for the exact prepared HTML plus extracted modules without truncating/reconstructing `index.html`.
-2. Run browser regression tests for financial invariants, seven-language UI, backup/restore, Cloud clear/sync and trial/paywall behavior.
-3. Run Android/iOS Capacitor smoke tests before enabling native listeners/plugins or edge-to-edge changes.
-4. Only after validation, prepare a controlled merge/release path; do not merge to `main` merely because extraction or Node tests are complete.
+## Integration validation — browser regression milestones
+The following deterministic browser checkpoints are confirmed green on `development-modular`:
+- Run #10 (`33292750781`): isolated extracted-module loading smoke test, after correcting the expected global name to `MongoLedgerCore`.
+- Run #12 (`33292875349`): financial flow regression — income, expense, internal transfers, savings transfer, account totals and ledger validation.
+- Run #14 (`33293028747`): loan/savings/budget regression — loan principal/interest split, remaining balance, savings transfer + savings-interest budget actuals and progress.
+- Run #17 (`33293156751`): assets/budget regression. Run #16 exposed a test-fixture shape mismatch for `investmentSourceEligible`; the fixture was corrected without changing production logic.
+- Cloud/Storage reset regression: confirmed green after adding stale-local/cloud selection, clear barrier/tombstone, queue filtering and storage removal coverage.
+- Run #21: seven-locale/currency browser regression confirmed green for mn/en/zh/ja/ko/ru/de, supported currency symbols, dictionary fallback and locale normalization.
+- Subscription/Trial module commits: `e04c020fa0953c71b678f1e0d06184c780a08d9d` and test `7c0abe02257b4c1b2b6363ba706b484f55bd0317`; Node workflow run #23 (`33293563875`) succeeded.
+- Trial/Paywall browser test commit `60eec0ba16cf15cb3aa66be197c86dadc8420595`; workflow commit `d57a4bbbf6055d580602c41649821751b86777c4`; run #25 (`33293630403`) completed successfully. Covered Day 5/7 reminders, Day 8 expired/read-only state, view access, blocked write actions, Loan navigation/calculator remaining available, Savings/Investment calculators remaining premium, and paid-user access.
+
+These browser tests validate extracted modules and deterministic synthetic flows. They do NOT yet prove the exact full prepared ~1.48 MB application runtime, live Firebase behavior, payment/QPay behavior, complete UI event wiring, backup/restore UI, or Android/iOS Capacitor runtime.
+
+## NEXT MILESTONE — exact prepared HTML validation
+1. Add a safe validator that accepts an exact prepared HTML file as input instead of reconstructing or replacing the large repository `index.html`.
+2. Verify required extracted module script tags occur exactly once and in the required dependency order.
+3. Verify the expected 44 non-empty inline JavaScript blocks and syntax-check them without mutating the file.
+4. Use the validator on the exact prepared modular HTML locally; do not claim full browser/runtime parity from static validation alone.
+5. After that checkpoint, continue full browser wiring, live Firebase/Cloud, backup/restore, QPay/payment and Android/iOS runtime validation before any controlled merge/release.
 
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
