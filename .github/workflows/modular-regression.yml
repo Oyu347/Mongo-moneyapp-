@@ -44,7 +44,6 @@ jobs:
           grep -q 'data-modules="loaded"' "$dom"
           grep -q '>modules-loaded<' "$dom"
           echo "Browser module smoke test: PASS"
-
       - name: Run browser financial flow regression
         shell: bash
         run: |
@@ -52,13 +51,10 @@ jobs:
           dom=/tmp/mongo-financial-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/financial-flow-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
           grep -o '<div id="financial-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>financial-flow-pass<' "$dom"
-          echo "Browser financial flow regression: PASS"
-
       - name: Run loan savings budget browser regression
         shell: bash
         run: |
@@ -66,13 +62,10 @@ jobs:
           dom=/tmp/mongo-lsb-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/loan-savings-budget-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
           grep -o '<div id="lsb-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>loan-savings-budget-pass<' "$dom"
-          echo "Loan savings budget browser regression: PASS"
-
       - name: Run assets budget browser regression
         shell: bash
         run: |
@@ -80,10 +73,21 @@ jobs:
           dom=/tmp/mongo-ab-dom.html
           chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/assets-budget-smoke.html" > "$dom"
           chromium_status=$?
-          echo "Chromium exit code: $chromium_status"
-          echo "--- Assets/budget marker ---"
           grep -o '<div id="ab-smoke"[^>]*>[^<]*</div>' "$dom" || true
           test "$chromium_status" -eq 0
           grep -q 'data-status="pass"' "$dom"
           grep -q '>assets-budget-pass<' "$dom"
-          echo "Assets budget browser regression: PASS"
+      - name: Run cloud storage reset browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-cs-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/cloud-storage-smoke.html" > "$dom"
+          chromium_status=$?
+          echo "Chromium exit code: $chromium_status"
+          echo "--- Cloud/storage marker ---"
+          grep -o '<div id="cs-smoke"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>cloud-storage-pass<' "$dom"
+          echo "Cloud storage reset browser regression: PASS"
