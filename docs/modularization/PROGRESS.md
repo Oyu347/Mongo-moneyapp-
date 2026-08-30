@@ -5,46 +5,33 @@ Read `ARCHITECTURE.md`, `ROADMAP.md`, `RULES.md`, and this file before continuin
 ## Branch
 `development-modular` — never use `main` for modularization work.
 
-## Baseline
-Use the exact latest prepared V44 full HTML; never reconstruct the monolith from truncated GitHub contents.
-
 ## Completed
-- Storage Phase 1 compatibility foundation.
-- Core Phase 1 COMPLETE.
-- Accounts Phase 1 COMPLETE through 1E.
-- Transactions Phase 1 COMPLETE through 1E.
-- Loans Phase 1 COMPLETE through 1E.
-- Savings Phase 1 COMPLETE through 1E.
+Storage Phase 1; Core Phase 1 COMPLETE; Accounts Phase 1 COMPLETE; Transactions Phase 1 COMPLETE; Loans Phase 1 COMPLETE; Savings Phase 1 COMPLETE.
 
-### Savings Phase 1 closure
-- 1A module `ca69457a11561da57710f78fefa7b02dad713a83`; tests `045a049e509541264dea00da3e8a81ff24c5691b`.
-- 1B module `eb687fed9ee664f4862c531d0c2f3dc96682c7f9`; tests `1004e7cb5390865151c8b09cab67046d751f0e7b`.
-- 1C module `ee35ee12af291d01a9f297246e297c2f7db60969`; tests `417fb2eb5e50f354c85e941f7bf746acda82679a`.
-- 1D module `ed8b13c12524b79eca43912db9e9078998bb2ab6`; tests `341f6ee6fec6acdd31f9e687bbe758531926214f`.
-- 1E closure marker `277a74ed57f10c7b623793e49f6235aafa71b8a8`.
+### Assets — Phase 1A: pure aggregation foundation
+Module: `2a0037d0aa63c3c611937c3025b109588f0377cd`
+Tests: `32ea67da08836eb7e3800986e66143230d5fb8d4`
 
-### Savings — Phase 1E closure audit
-- Prepared `index.modular-savings-phase1e.html` preserves Phase 1D behavior; closure adds no speculative monolith mutation.
-- Confirmed Savings contribution/progress calls are delegated to `MongoSavings`; automatic contribution is restricted to savings-purpose transfers plus actual credited savings-interest income.
-- Confirmed account transfer infrastructure retains source/destination semantics through the transaction/core boundaries; savings-purpose transfers are not reclassified as ordinary expenses.
-- Confirmed goal progress is a planning/progress calculation and is not used to manufacture account balance. Savings account balance continues through account/ledger balance logic.
-- Opening balance remains goal initial `saved` only when a new linked goal is created from the savings account; transfer contributions are separately accumulated, avoiding conversion of opening balance into a transfer.
-- Confirmed actual savings interest construction is `type:'income'` with `incomePurpose:'savings_interest'` and one selected receiving account; destination selection is compound/maturity=self, payout=configured/default, none=no destination.
-- Budget savings subcategory/source mutation remains inline for the Budget phase.
+- Created `src/features/assets/assets.js` with pure investment name normalization, Type+Name identity, grouping, income-producing detection, group performance and portfolio totals.
+- Same normalized name aggregates only inside the same investment type. Example: Stock `Apple` purchases combine, while Bond `Apple` remains a separate group.
+- Aggregation preserves invested/current totals across purchase items; P/L and percent remain derived from grouped totals.
+- Prepared `index.modular-assets-phase1a.html` loads Assets after Savings and delegates `normInvestName`, `investGroupKey`, `getInvestGroups`, `assetGroupIncomeProducing`, portfolio totals and per-group performance to `MongoAssets`.
+- Existing color selection remains supplied by the UI compatibility caller, preserving current palette behavior without putting UI/color policy into the pure module.
+- Asset purchase transaction mutation, loan-funded asset linkage, asset-income transaction creation, Budget yield-source integration, persistence and UI remain inline.
 - Static syntax validation executed: 44 non-empty inline JavaScript blocks, 0 syntax errors.
-- Node savings regression suite and browser/runtime parity are not recorded as executed.
+- Node Assets regression suite and browser/runtime parity are not recorded as executed.
 
 ## Current state
-Savings Phase 1 is closed. Pure goal/progress math, savings account interest/linkage metadata, actual-interest transaction construction, and create/link goal normalization are modularized. Mutation/persistence/Budget integration remain compatibility boundaries.
+Assets Phase 1 now has a pure identity/aggregation/performance foundation. The financial distinction between asset value, asset purchase movement and asset income has not been changed.
 
 ## NEXT STEP
-### Assets — Phase 1A: pure asset/investment calculation foundation
-1. Inspect exact asset/investment aggregation, value, income/yield and same-name purchase logic in the latest prepared HTML.
-2. Extract only pure calculations/normalization to `src/features/assets/assets.js`.
-3. Preserve the distinction between asset purchase/account movement, asset income and ordinary expense/income.
-4. Preserve same-name investment aggregation behavior exactly.
-5. Keep transaction mutation, loan-funded asset linkage, Budget integration, persistence and UI inline initially.
-6. Add focused Assets regression tests and run static syntax validation.
+### Assets — Phase 1B: asset purchase normalization boundary
+1. Inspect exact manual asset add and transaction-driven asset purchase creation/update paths.
+2. Extract pure asset purchase object normalization only where both paths can preserve exact Type+Name identity.
+3. Preserve account movement/transfer semantics: acquiring an asset must not become ordinary income; do not invent expense behavior.
+4. Preserve source transaction linkage and loan-funded asset linkage fields exactly.
+5. Keep transaction insertion/removal, account balance checks, Budget mutation, persistence and UI inline.
+6. Add focused regression tests and static syntax validation.
 
 ## Future order
 Assets → Budget → Cloud → Audit → i18n → Web → Mobile.
