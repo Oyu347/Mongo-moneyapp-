@@ -1,4 +1,4 @@
-// Möngö Web — Phase 1C
+// Möngö Web — Phase 1D
 // Browser/platform compatibility only. No financial, Firebase, storage or UI policy logic.
 (function(global){
 'use strict';
