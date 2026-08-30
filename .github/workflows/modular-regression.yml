@@ -2,7 +2,7 @@ name: Modular regression validation
 
 on:
   push:
-    branches: [development-modular, integration-full-browser, integration-cloud-backup, integration-live-cloud-validation, integration-firebase-runtime-driver]
+    branches: [development-modular, integration-full-browser, integration-cloud-backup, integration-live-cloud-validation, integration-firebase-runtime-driver, fix-income-add-regression]
   workflow_dispatch:
 
 jobs:
