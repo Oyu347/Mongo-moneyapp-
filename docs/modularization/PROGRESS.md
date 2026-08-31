@@ -92,3 +92,16 @@ Important limitation: the full clean prepared HTML remains local and has NOT bee
 
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
+
+
+## Cloud Clear/Reset Phase 2 — 2026-08-31
+- Live Android phone validation exposed a production-path regression not covered by the earlier deterministic reset test: local financial state reached zero, then stale Cloud mirrors partially resurrected accounts and balances.
+- Observed sequence: the device showed all-zero local totals first; about one minute later old account metadata returned without its matching transaction/card graph. The reset verification also surfaced `EMPTY_VERIFY_WRITE_FAILED`.
+- Root cause in the runtime contract: compatibility writes treated any one successful Firebase mirror as overall success. That remains acceptable for ordinary best-effort saves, but is unsafe for destructive clear/reset because an unwritten mirror can later win candidate selection.
+- Cloud Phase 2 adds an authoritative active local clear barrier that blocks Cloud resurrection until verification releases it.
+- Firebase runtime clear now requires all five financial mirrors: `appState`, `financial`, `settings`, `profile`, and `user-root`.
+- Clear verification reads every mirror back and requires a current clear marker plus empty financial collections before returning `releaseBarrier: true`.
+- Partial reset writes fail with `PARTIAL_CLOUD_MIRROR_WRITE` and list missing paths; the barrier must remain active.
+- Commits: Cloud barrier policy `5ad1ad79e53b8d3a37421691df37794134d37e02`; strict runtime clear/verify `a3788eefd12ccd325010e1813e45cd14c82015fb`; regression coverage `a0e463ef4faa553a361115abfc1b27669e6d7ac7`.
+- Local Node regression passed: active barrier blocks stale data, verified five-mirror clear succeeds, partial clear rejects, and stale mirrors fail verification.
+- Remaining requirement: wait for GitHub Actions on the branch head, then wire the verified Phase 2 driver contract into a new phone checkpoint. Do not reuse the V44.12.8 reset checkpoint and do not modify `main`.
