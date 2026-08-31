@@ -12,6 +12,29 @@ function makeCandidate(raw,source){return raw&&raw.data?{raw,source}:null;}
 function unwrapFinancialState(container,source){return makeCandidate(container&&container.financialState,source);}
 function compactCandidates(items){return (Array.isArray(items)?items:[]).filter(Boolean);}
 function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
+const REQUIRED_STATE_ARRAYS=Object.freeze(['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones']);
+function stateCompleteness(data){
+  const d=data&&typeof data==='object'?data:{},missing=REQUIRED_STATE_ARRAYS.filter(k=>!Array.isArray(d[k]));
+  if(!d.budgets||typeof d.budgets!=='object'||Array.isArray(d.budgets))missing.push('budgets');
+  const complete=missing.length===0;
+  return {complete,missing};
+}
+function stateRevision(data){const n=Number(data&&data.moneyLedgerRevision);return Number.isFinite(n)&&n>=0?n:0;}
+function stateRichness(data){
+  const d=data&&typeof data==='object'?data:{};
+  return REQUIRED_STATE_ARRAYS.reduce((sum,k)=>sum+(Array.isArray(d[k])?d[k].length:0),0)+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;
+}
+function safeCandidateOrder(a,b){
+  const ad=a&&a.raw&&a.raw.data,bd=b&&b.raw&&b.raw.data;
+  return stateRevision(bd)-stateRevision(ad)||stateRichness(bd)-stateRichness(ad)||candidateTime(b)-candidateTime(a);
+}
+function selectSafeLoadCandidate(candidates){
+  const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;
+  if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};
+  const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);
+  const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);
+  return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};
+}
 function activeClearBarrier(barrier){return !!(barrier&&barrier.active!==false&&barrier.clearedAt&&barrier.data);}
 function selectLoadCandidateWithBarrier(candidates,isMeaningful,barrier){
   const cloudDecision=selectLoadCandidate(candidates,isMeaningful);
@@ -31,5 +54,5 @@ function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear
 function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite});
 })(window);
