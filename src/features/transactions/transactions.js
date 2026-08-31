@@ -24,8 +24,11 @@ function makeTransfer(input,options={}){
  const s=input||{}, amount=num(s.amount), purpose=s.purpose||'internal';
  if(!(amount>0))return {ok:false,reason:'amount_required'};
  if(!s.fromId)return {ok:false,reason:'source_required'};
- if(purpose!=='asset'&&(!s.toId||String(s.fromId)===String(s.toId)))return {ok:false,reason:'destination_required'};
- return {ok:true,transfer:{id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId:purpose==='asset'?null:s.toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()}};
+ if(purpose==='internal'&&(!s.toId||String(s.fromId)===String(s.toId)))return {ok:false,reason:'destination_required'};
+ if(purpose==='savings'&&(!s.toId||String(s.fromId)===String(s.toId)||!s.targetId))return {ok:false,reason:'savings_destination_required'};
+ if(purpose==='investment'&&!s.targetId)return {ok:false,reason:'investment_destination_required'};
+ const toId=(purpose==='asset'||purpose==='investment')?null:s.toId;
+ return {ok:true,transfer:{id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()}};
 }
 function makeInternalTransfer(input,options={}){return makeTransfer(Object.assign({},input,{purpose:'internal'}),options);}
 function removeById(items,id){return (Array.isArray(items)?items:[]).filter(x=>String(x?.id)!==String(id));}
