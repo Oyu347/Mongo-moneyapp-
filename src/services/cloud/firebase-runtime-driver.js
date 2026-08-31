@@ -16,9 +16,13 @@ function createRuntimeDriver(runtime,options){
   async function loadCanonical(uid,loadOptions){
     const read=await readMirrors(uid),candidates=[];
     read.rows.forEach(row=>{if(!row.raw)return;const source=row.path==='financial'?'legacy-financial':row.path==='settings'?'settings-fallback':row.path==='profile'?'profile-fallback':row.path==='user-root'?'user-root-fallback':'appState';const c=cloud&&typeof cloud.makeCandidate==='function'?cloud.makeCandidate(row.raw,source):{raw:row.raw,source};if(c)candidates.push(c);});
-    if(cloud&&typeof cloud.selectLoadCandidateWithBarrier==='function'){
+    if(loadOptions&&loadOptions.clearBarrier&&cloud&&typeof cloud.selectLoadCandidateWithBarrier==='function'){
       const decision=cloud.selectLoadCandidateWithBarrier(candidates,opt.hasMeaningfulFinancialData||(()=>true),loadOptions&&loadOptions.clearBarrier);
       return {candidate:decision.selected||null,decision,candidates,mirrors:read};
+    }
+    if(cloud&&typeof cloud.selectSafeLoadCandidate==='function'){
+      const decision=cloud.selectSafeLoadCandidate(candidates);
+      return {candidate:decision.selected||null,decision,candidates,mirrors:read,blocked:decision.blocked===true};
     }
     if(cloud&&typeof cloud.selectLoadCandidate==='function'){const decision=cloud.selectLoadCandidate(candidates,opt.hasMeaningfulFinancialData||(()=>true));return {candidate:decision.selected||null,decision,candidates,mirrors:read};}
     return {candidate:candidates[0]||null,candidates,mirrors:read};
@@ -29,13 +33,14 @@ function createRuntimeDriver(runtime,options){
     await Promise.all(attempts.map(async([path,run])=>{try{await run();savedPaths.push(path);}catch(error){errors.push({path,error});if(typeof opt.onWriteError==='function')opt.onWriteError(path,error);}}));
     if(!savedPaths.length){const err=new Error('ALL_CLOUD_WRITES_FAILED');err.code='ALL_CLOUD_WRITES_FAILED';err.errors=errors;throw err;}
     const completeness=cloud&&typeof cloud.completeMirrorWrite==='function'?cloud.completeMirrorWrite(savedPaths):{complete:savedPaths.length===5,missing:[]};
-    if(writeOptions&&writeOptions.requireAll&&!completeness.complete){const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');err.code='PARTIAL_CLOUD_MIRROR_WRITE';err.paths=savedPaths;err.missingPaths=completeness.missing;err.errors=errors;throw err;}
+    const requireAll=!(writeOptions&&writeOptions.allowPartialCompatibility===true);
+    if(requireAll&&!completeness.complete){const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');err.code='PARTIAL_CLOUD_MIRROR_WRITE';err.paths=savedPaths;err.missingPaths=completeness.missing;err.errors=errors;throw err;}
     return {ok:true,paths:savedPaths,errors,complete:completeness.complete,missingPaths:completeness.missing};
   }
   async function verifyCanonicalClear(uid,clearedAt,isEmpty){
     const expected=Date.parse(clearedAt||'')||0,read=await readMirrors(uid),issues=[];
     read.errors.forEach(x=>issues.push({path:x.path,reason:'read_failed'}));
-    read.rows.forEach(row=>{if(!row.exists)return;const raw=row.raw||{},actual=Date.parse(raw.clearedAt||'')||0;if(!actual||actual<expected)issues.push({path:row.path,reason:'missing_or_old_clear_marker'});else if(typeof isEmpty==='function'&&!isEmpty(raw.data))issues.push({path:row.path,reason:'data_not_empty'});});
+    read.rows.forEach(row=>{if(!row.exists){issues.push({path:row.path,reason:'missing_mirror'});return;}const raw=row.raw||{},actual=Date.parse(raw.clearedAt||'')||0;if(!actual||actual<expected)issues.push({path:row.path,reason:'missing_or_old_clear_marker'});else if(typeof isEmpty==='function'&&!isEmpty(raw.data))issues.push({path:row.path,reason:'data_not_empty'});});
     return {verified:issues.length===0,issues,mirrors:read.rows};
   }
   async function clearCanonical(uid,metadata,clearOptions){
