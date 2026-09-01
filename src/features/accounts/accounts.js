@@ -121,14 +121,15 @@
     const id = String(accountId ?? ''), list = Array.isArray(accounts) ? accounts : [], rows = [];
     (Array.isArray(transfers) ? transfers : []).forEach(transfer => {
       const amount = Number(transfer?.amount) || 0;
+      const metadata = { kind:'transfer', transferId:transfer?.id, purpose:transfer?.purpose||'internal', targetId:transfer?.targetId||transfer?.assetId||null };
       if (String(transfer?.fromId ?? '') === id) {
         const other = accountById(list, transfer?.toId);
-        const assetName = transfer?.purpose === 'asset' && typeof assetNameForTarget === 'function' ? assetNameForTarget(transfer.targetId) : '';
-        rows.push({date:transfer?.date,label:'→ '+(assetName||other?.name||'—'),amount:-amount,kind:'transfer'});
+        const assetName = ['asset','investment'].includes(transfer?.purpose) && typeof assetNameForTarget === 'function' ? assetNameForTarget(transfer.targetId||transfer.assetId) : '';
+        rows.push({date:transfer?.date,label:'→ '+(assetName||other?.name||'—'),amount:-amount,...metadata});
       }
       if (String(transfer?.toId ?? '') === id) {
         const other = accountById(list, transfer?.fromId);
-        rows.push({date:transfer?.date,label:'← '+(other?.name||'—'),amount,kind:'transfer'});
+        rows.push({date:transfer?.date,label:'← '+(other?.name||'—'),amount,...metadata});
       }
     });
     return rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));

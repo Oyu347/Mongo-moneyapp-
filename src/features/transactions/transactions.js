@@ -28,9 +28,18 @@ function makeTransfer(input,options={}){
  if(purpose==='savings'&&(!s.toId||String(s.fromId)===String(s.toId)||!s.targetId))return {ok:false,reason:'savings_destination_required'};
  if(purpose==='investment'&&!s.targetId)return {ok:false,reason:'investment_destination_required'};
  const toId=(purpose==='asset'||purpose==='investment')?null:s.toId;
- return {ok:true,transfer:{id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()}};
+ const transfer={id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()};
+ if(s.assetId!=null)transfer.assetId=s.assetId;
+ if(s.linkedAssetId!=null)transfer.linkedAssetId=s.linkedAssetId;
+ if(s.createdAt!=null)transfer.createdAt=s.createdAt;
+ return {ok:true,transfer};
 }
 function makeInternalTransfer(input,options={}){return makeTransfer(Object.assign({},input,{purpose:'internal'}),options);}
+function applyTransferEdit(transfer,patch,options={}){
+ if(!transfer)return {ok:false,reason:'not_found'};
+ const made=makeTransfer(Object.assign({},transfer,patch,{id:transfer.id}),options);if(!made.ok)return made;
+ const id=transfer.id,createdAt=transfer.createdAt;Object.assign(transfer,made.transfer,{id});if(createdAt!=null)transfer.createdAt=createdAt;return {ok:true,transfer};
+}
 function removeById(items,id){return (Array.isArray(items)?items:[]).filter(x=>String(x?.id)!==String(id));}
 function removalPreview(items,id){const list=Array.isArray(items)?items:[],item=list.find(x=>String(x?.id)===String(id));return item?{ok:true,item,items:removeById(list,id)}:{ok:false,reason:'not_found',items:list.slice()};}
 function periodRange(period,now){
@@ -47,5 +56,5 @@ function summarize(items,transfers,accountId){
  let transferIn=0,transferOut=0;trs.forEach(t=>{const a=num(t.amount);if(accountId==='all'||!accountId){transferIn+=a;transferOut+=a;}else{if(String(t.toId)===String(accountId))transferIn+=a;if(String(t.fromId)===String(accountId))transferOut+=a;}});
  return {income,expense,transferIn,transferOut};
 }
-global.MongoTransactions=Object.freeze({makeTransaction,applyEdit,makeTransfer,makeInternalTransfer,removeById,removalPreview,periodRange,inPeriod,filterByAccount,summarize});
+global.MongoTransactions=Object.freeze({makeTransaction,applyEdit,makeTransfer,makeInternalTransfer,applyTransferEdit,removeById,removalPreview,periodRange,inPeriod,filterByAccount,summarize});
 })(window);

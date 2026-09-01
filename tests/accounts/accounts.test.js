@@ -32,4 +32,5 @@ assert.strictEqual(accounts[0].openingBalance,100000,'preview must not mutate op
 assert.strictEqual(A.canDeactivate('bank',accounts,ledger),false); assert.deepStrictEqual(A.deactivateMetadata('bank',accounts,ledger),{ok:false,reason:'non_zero_balance'}); assert.strictEqual(accounts[0].active,true);
 const zeroResult=A.deactivateMetadata('zero',accounts,ledger); assert.strictEqual(zeroResult.ok,true); assert.strictEqual(accounts[5].active,false); assert.strictEqual(transfers.length,1,'deactivation must not delete historical transfers');
 const rows=A.transferRows('cash',accounts,transfers); assert.strictEqual(rows.length,1); assert.strictEqual(rows[0].amount,25000);
+const investmentRows=A.transferRows('bank',accounts,[{id:'inv-tr',amount:50000,fromId:'bank',toId:null,date:'2026-08-31',purpose:'investment',targetId:'stock:::apu'}],targetId=>targetId==='stock:::apu'?'АПУ':'');assert.strictEqual(investmentRows[0].label,'→ АПУ');assert.strictEqual(investmentRows[0].transferId,'inv-tr');assert.strictEqual(investmentRows[0].purpose,'investment');assert.strictEqual(investmentRows[0].targetId,'stock:::apu');
 console.log('Möngö accounts regression tests: PASS');
