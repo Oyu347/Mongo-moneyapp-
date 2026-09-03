@@ -4,7 +4,30 @@
 'use strict';
 function capabilities(env){const w=env||global,n=w&&w.navigator,d=w&&w.document,u=w&&w.URL;return Object.freeze({dom:!!(d&&typeof d.createElement==='function'),blob:typeof (w&&w.Blob)==='function',objectUrl:!!(u&&typeof u.createObjectURL==='function'),fileReader:typeof (w&&w.FileReader)==='function',reload:!!(w&&w.location&&typeof w.location.reload==='function'),online:!!(n&&typeof n.onLine==='boolean'),events:!!(w&&typeof w.addEventListener==='function'),documentEvents:!!(d&&typeof d.addEventListener==='function')});}
 function canDownload(env){const c=capabilities(env);return c.dom&&c.blob&&c.objectUrl;}
-function downloadText(text,filename,mime,env){const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;if(!canDownload(w))return false;const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'}),href=u.createObjectURL(blob),a=d.createElement('a');a.href=href;a.download=String(filename||'download.txt');a.click();if(typeof u.revokeObjectURL==='function')setTimeout(()=>u.revokeObjectURL(href),0);return true;}
+function downloadText(text,filename,mime,env){
+  const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;
+  if(!canDownload(w))return false;
+  let href='',a=null;
+  try{
+    const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'});
+    if(w.navigator&&typeof w.navigator.msSaveOrOpenBlob==='function'){
+      w.navigator.msSaveOrOpenBlob(blob,String(filename||'download.txt'));
+      return true;
+    }
+    href=u.createObjectURL(blob);a=d.createElement('a');
+    a.href=href;a.download=String(filename||'download.txt');a.rel='noopener';
+    if(a.style)a.style.display='none';
+    const parent=d.body||d.documentElement;
+    if(parent&&typeof parent.appendChild==='function')parent.appendChild(a);
+    a.click();
+    setTimeout(()=>{try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}},3000);
+    return true;
+  }catch(_){
+    try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}
+    try{if(href&&typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}
+    return false;
+  }
+}
 function readTextFile(file,handlers,env){const w=env||global,R=w&&w.FileReader,h=handlers||{};if(!file||typeof R!=='function')return false;const reader=new R();reader.onload=function(ev){if(typeof h.load==='function')h.load(ev&&ev.target?ev.target.result:reader.result,ev);};reader.onerror=function(ev){if(typeof h.error==='function')h.error(ev);};reader.readAsText(file);return true;}
 function reload(delay,env){const w=env||global;if(!(w&&w.location&&typeof w.location.reload==='function'))return false;if(Number(delay)>0)setTimeout(()=>w.location.reload(),Number(delay));else w.location.reload();return true;}
 function onPageShow(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('pageshow',handler);return true;}

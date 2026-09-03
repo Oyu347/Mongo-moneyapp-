@@ -132,7 +132,7 @@ body{visibility:visible;}
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
-<title>Möngö — V44.12.30 Guided App Help 7 Languages</title>
+<title>Möngö — V44.12.32 Cloud-Aware Backup Fix</title>
 <link rel="icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22teal%22%20x1%3D%2244%22%20y1%3D%2230%22%20x2%3D%22210%22%20y2%3D%22224%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%236FD7DA%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.52%22%20stop-color%3D%22%2349B0B6%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231F7F86%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22deep%22%20x1%3D%2268%22%20y1%3D%2268%22%20x2%3D%22192%22%20y2%3D%22196%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%235ECBD0%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23167179%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22gold%22%20x1%3D%2240%22%20y1%3D%2245%22%20x2%3D%22218%22%20y2%3D%22210%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23FFF08A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220.48%22%20stop-color%3D%22%23F7D24A%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D6A21D%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22shadow%22%20x%3D%22-20%25%22%20y%3D%22-20%25%22%20width%3D%22140%25%22%20height%3D%22140%25%22%3E%0A%20%20%20%20%20%20%3CfeDropShadow%20dx%3D%220%22%20dy%3D%2210%22%20stdDeviation%3D%228%22%20flood-color%3D%22%2312636A%22%20flood-opacity%3D%220.26%22%2F%3E%0A%20%20%20%20%3C%2Ffilter%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22102%22%20fill%3D%22url%28%23teal%29%22%20filter%3D%22url%28%23shadow%29%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2287%22%20fill%3D%22url%28%23deep%29%22%20opacity%3D%220.96%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2276%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C255%2C255%2C.42%29%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M54%2087a83%2083%200%200%201%20140-30%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M194%2037l6%2034-32-10z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M202%20169a83%2083%200%200%201-140%2030%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M62%20219l-6-34%2032%2010z%22%20fill%3D%22url%28%23gold%29%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M128%20128L168%2088%22%20fill%3D%22none%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2238%22%20fill%3D%22%2349B0B6%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%229%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22url%28%23gold%29%22%20stroke-width%3D%224%22%20opacity%3D%22.85%22%2F%3E%0A%20%20%3Ctext%20x%3D%22128%22%20y%3D%22143%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2238%22%20font-weight%3D%22800%22%20fill%3D%22url%28%23gold%29%22%3E%24%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2284%22%20cy%3D%2280%22%20r%3D%225%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.7%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2291%22%20cy%3D%22177%22%20r%3D%224%22%20fill%3D%22%23D8FBFB%22%20opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0" rel="stylesheet">
 <style>
@@ -3561,6 +3561,27 @@ global.MongoI18n=Object.freeze({LOCALES,DEFAULT_LOCALE,CURRENCY,hasLocale,normal
 })(window);
 </script>
 <script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/web/platform.js"></script>
+<script id="mongo-web-platform-inline-fallback">
+(function(global){
+'use strict';
+const prior=global.MongoWeb||{};
+function capabilities(env){const w=env||global,n=w&&w.navigator,d=w&&w.document,u=w&&w.URL;return Object.freeze({dom:!!(d&&typeof d.createElement==='function'),blob:typeof (w&&w.Blob)==='function',objectUrl:!!(u&&typeof u.createObjectURL==='function'),fileReader:typeof (w&&w.FileReader)==='function',reload:!!(w&&w.location&&typeof w.location.reload==='function'),online:!!(n&&typeof n.onLine==='boolean'),events:!!(w&&typeof w.addEventListener==='function'),documentEvents:!!(d&&typeof d.addEventListener==='function')});}
+function canDownload(env){const c=capabilities(env);return c.dom&&c.blob&&c.objectUrl;}
+function downloadText(text,filename,mime,env){
+  const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;if(!canDownload(w))return false;let href='',a=null;
+  try{
+    const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'});
+    if(w.navigator&&typeof w.navigator.msSaveOrOpenBlob==='function'){w.navigator.msSaveOrOpenBlob(blob,String(filename||'download.txt'));return true;}
+    href=u.createObjectURL(blob);a=d.createElement('a');a.href=href;a.download=String(filename||'download.txt');a.rel='noopener';if(a.style)a.style.display='none';
+    const parent=d.body||d.documentElement;if(parent&&typeof parent.appendChild==='function')parent.appendChild(a);a.click();
+    setTimeout(()=>{try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}},3000);return true;
+  }catch(e){try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(href&&typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}return false;}
+}
+function readTextFile(file,handlers,env){if(typeof prior.readTextFile==='function')return prior.readTextFile(file,handlers,env);const w=env||global,R=w&&w.FileReader,h=handlers||{};if(!file||typeof R!=='function')return false;const reader=new R();reader.onload=ev=>{if(typeof h.load==='function')h.load(ev&&ev.target?ev.target.result:reader.result,ev);};reader.onerror=ev=>{if(typeof h.error==='function')h.error(ev);};reader.readAsText(file);return true;}
+function reload(delay,env){if(typeof prior.reload==='function')return prior.reload(delay,env);const w=env||global;if(!(w&&w.location&&typeof w.location.reload==='function'))return false;if(Number(delay)>0)setTimeout(()=>w.location.reload(),Number(delay));else w.location.reload();return true;}
+global.MongoWeb=Object.freeze({...prior,capabilities,canDownload,downloadText,readTextFile,reload});
+})(window);
+</script>
 <script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/features/subscription/access.js"></script>
 <script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/mobile/platform.js"></script>
 <script>
@@ -9673,11 +9694,40 @@ async function clearData(){
   }catch(e){console.warn('Clear data failed',e);showToast(lang==='mn'?'Өгөгдөл бүрэн устгагдсангүй. Дахин оролдоно уу.':'Data was not fully cleared. Please try again.');}
 }
 
+function currentBackupRaw(){
+  const packCats=list=>(Array.isArray(list)?list:[]).map(c=>({
+    key:c.key||null,name:c.name||null,names:c.names||null,icon:c.icon,color:c.color,
+    subs:(c.subs||[]).map(s=>({key:s.key||null,name:s.name||null,names:s.names||null,color:s.color}))
+  }));
+  const data=secNormalizeData({
+    txns:Array.isArray(txns)?txns:[],goals:Array.isArray(goals)?goals:[],debts:Array.isArray(debts)?debts:[],invests:Array.isArray(invests)?invests:[],
+    budgets:budgets||{},openingBalance,moneyAccounts:Array.isArray(moneyAccounts)?moneyAccounts:[],accountTransfers:Array.isArray(accountTransfers)?accountTransfers:[],
+    moneyLedger:Array.isArray(moneyLedger)?moneyLedger:[],moneyLedgerRevision,moneyLedgerTombstones:Array.isArray(moneyLedgerTombstones)?moneyLedgerTombstones:[],
+    lang,budgetMonth,budgetYear,budgetType,lockedCats:Array.from(lockedCats||[]),
+    incCatsCustom:(incCats||[]).filter(c=>!c.key),expCatsCustom:(expCats||[]).filter(c=>!c.key),
+    bCatsExpSave:packCats(bCatsExp),bCatsIncSave:packCats(bCatsInc),paySettings,
+    netWorthSnapshots:window.netWorthSnapshots||[],clientUpdatedAt:window.MONGO_LOCAL_DATA_UPDATED_AT||new Date().toISOString()
+  });
+  return JSON.stringify(data);
+}
+
 function exportData(){
-  const raw=window.MongoStorage.get(getDBKey(),null);
-  if(!raw){showToast('Хадгалсан өгөгдөл байхгүй');return;}
-  window.MongoWeb.downloadText(raw,'mongo-backup-'+new Date().toISOString().split('T')[0]+'.json','application/json');
-  showToast('Backup ✓');
+  const msg={
+    mn:{empty:'Хадгалсан өгөгдөл байхгүй',start:'Backup файл татаж эхэллээ. Downloads хэсгээ шалгана уу ✓',fail:'Backup файл татаж чадсангүй. Browser-ийн татах зөвшөөрлийг шалгана уу.'},
+    en:{empty:'No saved data',start:'Backup download started. Check Downloads ✓',fail:'Could not download the backup. Check the browser download permission.'},
+    zh:{empty:'没有已保存的数据',start:'备份已开始下载，请查看“下载”文件夹 ✓',fail:'无法下载备份，请检查浏览器的下载权限。'},
+    ja:{empty:'保存されたデータがありません',start:'バックアップのダウンロードを開始しました。ダウンロードを確認してください ✓',fail:'バックアップをダウンロードできません。ブラウザのダウンロード権限を確認してください。'},
+    ko:{empty:'저장된 데이터가 없습니다',start:'백업 다운로드를 시작했습니다. 다운로드 폴더를 확인하세요 ✓',fail:'백업을 다운로드할 수 없습니다. 브라우저 다운로드 권한을 확인하세요.'},
+    ru:{empty:'Нет сохранённых данных',start:'Загрузка backup началась. Проверьте папку «Загрузки» ✓',fail:'Не удалось скачать backup. Проверьте разрешение браузера на загрузку.'},
+    de:{empty:'Keine gespeicherten Daten',start:'Backup-Download gestartet. Prüfe den Download-Ordner ✓',fail:'Backup konnte nicht geladen werden. Prüfe die Download-Berechtigung des Browsers.'}
+  },q=msg[lang]||msg.en;
+  try{
+    const raw=currentBackupRaw();
+    if(!raw){showToast(q.empty);return false;}
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19),name='mongo-backup-'+stamp+'.json';
+    const ok=!!(window.MongoWeb&&typeof window.MongoWeb.downloadText==='function'&&window.MongoWeb.downloadText(raw,name,'application/json'));
+    showToast(ok?q.start:q.fail);return ok;
+  }catch(e){console.warn('Backup download failed:',e);showToast(q.fail);return false;}
 }
 
 function importData(e){
@@ -15235,7 +15285,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
 </script>
 <script id="mongo-v441220-raw-investment-targets">
 (()=>{
-  const BUILD='V44.12.30';let repairing=false,maskTimer=0;
+  const BUILD='V44.12.32';let repairing=false,maskTimer=0;
   function ensureLoginMask(){
     let el=document.getElementById('mongo-login-cloud-mask');if(el)return el;
     el=document.createElement('div');el.id='mongo-login-cloud-mask';el.style.cssText='display:none;position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 18% 8%,rgba(255,204,51,.26),transparent 32%),radial-gradient(circle at 82% 20%,rgba(73,176,182,.30),transparent 35%),linear-gradient(145deg,#f8ffff,#eafbfb 56%,#fffdf3);align-items:center;justify-content:center;';
