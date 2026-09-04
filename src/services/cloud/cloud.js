@@ -58,7 +58,8 @@ async function runSafeHardReset(ops){
   const x=ops||{};
   if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');
   x.emptyMemory();x.purgeLocal();
-  await x.clearFinancialData();
+  const cloudCleared=await x.clearFinancialData();
+  if(cloudCleared===false)throw new Error('reset-cloud-clear-failed');
   x.emptyMemory();x.purgeLocal();
   if(typeof x.reload==='function')x.reload();
   return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
