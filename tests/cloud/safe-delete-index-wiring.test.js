@@ -11,5 +11,7 @@ const resetScript=match[1];
 assert(resetScript.includes('runSafeHardReset'),'Delete All Data must use the safe reset orchestrator');
 assert(!resetScript.includes('loadFinancialData({force:true})'),'Delete All Data must not force-load deleted cloud data');
 assert.strictEqual((resetScript.match(/svc\.clearFinancialData\(\)/g)||[]).length,1,'Delete All Data must invoke the cloud clear operation exactly once');
+assert(!resetScript.includes('/^mongo_sync_queue_/'),'post-clear cleanup must preserve a queued clear tombstone');
+assert(resetScript.includes('clear-barrier-missing'),'Delete All Data must verify its anti-resurrection barrier before reload');
 
 console.log('Möngö safe-delete index wiring test: PASS');
