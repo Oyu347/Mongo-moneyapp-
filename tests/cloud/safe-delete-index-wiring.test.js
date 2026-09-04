@@ -15,5 +15,7 @@ assert(!resetScript.includes('/^mongo_sync_queue_/'),'post-clear cleanup must pr
 assert(resetScript.includes('clear-barrier-missing'),'Delete All Data must verify its anti-resurrection barrier before reload');
 assert(html.includes('return cloudClearSynced;'),'Cloud clear must not report success while its tombstone is only queued');
 assert.strictEqual((html.match(/if\(resetBarrierActive\(\)\)\{write(?:Journal|Ledger)\(\[\]\);return false;\}/g)||[]).length,2,'transaction recovery stores must not resurrect rows after a clear barrier');
+assert(html.includes("if(!mirrorCheck.complete && reason!=='clear-tombstone')"),'only a clear tombstone may succeed through a writable subset of mirrors');
+assert(html.includes("return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};"),'partial clear mirror coverage must stay observable');
 
 console.log('Möngö safe-delete index wiring test: PASS');
