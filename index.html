@@ -14418,6 +14418,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   if(document.getElementById('mongo-v4399-core-marker'))return;
   const PENDING_MAX_AGE=7*24*60*60*1000,COMMITTED_KEEP=5*60*1000;
   const journalKey=()=>`mongo_txn_commit_journal_${window._authUid||'guest'}`;
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{return !!window.MONGO_HARD_RESET_ACTIVE||!!localStorage.getItem(`mongo_clear_barrier_${uid}`);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const readJournal=()=>{try{return (JSON.parse(localStorage.getItem(journalKey())||'[]')||[]).filter(Boolean);}catch(e){return [];}};
   const writeJournal=rows=>{try{localStorage.setItem(journalKey(),JSON.stringify((rows||[]).slice(-300)));}catch(e){}};
   function cleanJournal(){
@@ -14434,6 +14435,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   };
   function forgetTransaction(id){writeJournal(readJournal().filter(x=>String(x?.txn?.id)!==String(id)));}
   function mergeJournal(){
+    if(resetBarrierActive()){writeJournal([]);return false;}
     const journal=cleanJournal();if(!journal.length)return false;let changed=false;const byId=new Map((txns||[]).map(t=>[String(t.id),t]));
     journal.forEach(x=>{if(!byId.has(String(x.txn.id))){txns.unshift(JSON.parse(JSON.stringify(x.txn)));changed=true;}});
     if(changed){try{saveData();rAll();rTxns();uDash();renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('Transaction journal merge failed',e);}}
@@ -14554,6 +14556,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   'use strict';
   const BUILD='V44.02',MAX_ROWS=5000;
   const ledgerKey=()=>`mongo_transaction_ledger_v4398_${window._authUid||'guest'}`;
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{return !!window.MONGO_HARD_RESET_ACTIVE||!!localStorage.getItem(`mongo_clear_barrier_${uid}`);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const clone=v=>JSON.parse(JSON.stringify(v));
   const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&t.id!=null;
   function readLedger(){
@@ -14576,6 +14579,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     },180);
   }
   function mergeLedger(){
+    if(resetBarrierActive()){writeLedger([]);return false;}
     const stored=readLedger();if(!stored.length)return false;
     const current=new Map((txns||[]).filter(isMoneyTxn).map(t=>[String(t.id),t]));let changed=false;
     stored.forEach(t=>{const id=String(t.id),old=current.get(id);if(!old||rowTime(t)>rowTime(old)){current.set(id,clone(t));changed=true;}});
