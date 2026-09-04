@@ -15125,7 +15125,6 @@ select.fi{touch-action:pan-y;cursor:pointer}
         const k=localStorage.key(i);
         if(k&&(
           /^mongo_v4(?:_|$)/.test(k)||
-          /^mongo_sync_queue_/.test(k)||
           /^mongo_cloud_snapshot_/.test(k)||
           /^mongo_sync_meta_/.test(k)||
           /^mongo_local_updated_/.test(k)||
@@ -15155,13 +15154,20 @@ select.fi{touch-action:pan-y;cursor:pointer}
         purgeLocal:purgeLocalFinance,
         clearFinancialData:async()=>{
           resetOverlay('Үүлэн хадгалалтын бүх хуулбарыг хоосолж байна…');
-          if(svc&&typeof svc.clearFinancialData==='function')return svc.clearFinancialData();
+          if(!svc||typeof svc.clearFinancialData!=='function')throw new Error('cloud-clear-unavailable');
+          const cleared=await svc.clearFinancialData();
+          if(cleared===false)throw new Error('cloud-clear-failed');
+          const uid=window._authUid||(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid);
+          if(uid&&!localStorage.getItem('mongo_clear_barrier_'+uid))throw new Error('clear-barrier-missing');
           return true;
         },
         reload:()=>{
           resetOverlay('Цэвэрлэгээ дууслаа. Аппыг дахин нээж байна…');
           window.MONGO_HARD_RESET_ACTIVE=false;
-          setTimeout(()=>window.MongoWeb.reload(0),900);
+          setTimeout(()=>{
+            if(window.MongoWeb&&typeof window.MongoWeb.reload==='function')window.MongoWeb.reload(0);
+            else window.location.reload();
+          },900);
         }
       });
     }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Бүрэн цэвэрлэгээ дууссангүй. Дахин оролдоно уу.');}
