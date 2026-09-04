@@ -12486,7 +12486,9 @@ auth.onAuthStateChanged(async user=>{
     window.MONGO_LOCAL_DATA_UPDATED_AT='';
     resetDefaultFinanceShell();
     updateSyncStatus(cloudClearSynced?'synced':'pending');
-    return true;
+    // Never report success or restart while any Cloud mirror rejected the
+    // tombstone. The queued tombstone must remain available for retry.
+    return cloudClearSynced;
   }
 
   window.CloudDataService={
@@ -15170,7 +15172,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
           },900);
         }
       });
-    }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Бүрэн цэвэрлэгээ дууссангүй. Дахин оролдоно уу.');}
+    }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.');}
   };
   const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.5 RESET';
 })();
