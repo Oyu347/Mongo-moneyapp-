@@ -12185,7 +12185,8 @@ auth.onAuthStateChanged(async user=>{
   async function writeCloud(data,reason,expectedUid){
     if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
-    if(!uid || !accountReadyForCloud() || currentUid()!==uid) throw new Error('ACCOUNT_NOT_READY');
+    const isClearTombstone=reason==='clear-tombstone';
+    if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
     const clean=pruneUndefinedDeep(sanitizeFinancialData(data));
     if(!clean.clientUpdatedAt) clean.clientUpdatedAt=markLocalUpdated();
@@ -12195,7 +12196,7 @@ auth.onAuthStateChanged(async user=>{
     // writes must still run so users such as older accounts get financial/main
     // and the other compatible mirrors created automatically.
     if(window.MongoCloud.shouldSkipFingerprint(fp,lastCloudFingerprint,reason)) return {skipped:true};
-    if(!accountReadyForCloud() || currentUid()!==uid || window._authUid!==uid) throw new Error('AUTH_SWITCHED');
+    if(currentUid()!==uid || window._authUid!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('AUTH_SWITCHED');
 
     const updatedAtClient=nowIso();
     const payload=window.MongoCloud.writeMetadata({
