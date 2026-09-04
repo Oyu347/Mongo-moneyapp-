@@ -12261,7 +12261,7 @@ auth.onAuthStateChanged(async user=>{
     await Promise.all(attempts);
     if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
     const mirrorCheck=window.MongoCloud.completeMirrorWrite(savedPaths);
-    if(!mirrorCheck.complete){
+    if(!mirrorCheck.complete && reason!=='clear-tombstone'){
       const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');
       err.code='PARTIAL_CLOUD_MIRROR_WRITE';err.paths=savedPaths;err.missingPaths=mirrorCheck.missing;
       throw err;
@@ -12273,7 +12273,7 @@ auth.onAuthStateChanged(async user=>{
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
     saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
     saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
-    return {ok:true,paths:savedPaths};
+    return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};
   }
 
   async function processQueue(){
@@ -14418,7 +14418,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   if(document.getElementById('mongo-v4399-core-marker'))return;
   const PENDING_MAX_AGE=7*24*60*60*1000,COMMITTED_KEEP=5*60*1000;
   const journalKey=()=>`mongo_txn_commit_journal_${window._authUid||'guest'}`;
-  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{return !!window.MONGO_HARD_RESET_ACTIVE||!!localStorage.getItem(`mongo_clear_barrier_${uid}`);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{if(window.MONGO_HARD_RESET_ACTIVE)return true;const barrier=localStorage.getItem(`mongo_clear_barrier_${uid}`);if(!barrier)return false;const data=JSON.parse(localStorage.getItem(getDBKey())||'{}');return !((data.txns||[]).length||(data.accountTransfers||[]).length||(data.moneyLedger||[]).length||(data.debts||[]).length||(data.goals||[]).length||(data.invests||[]).length);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const readJournal=()=>{try{return (JSON.parse(localStorage.getItem(journalKey())||'[]')||[]).filter(Boolean);}catch(e){return [];}};
   const writeJournal=rows=>{try{localStorage.setItem(journalKey(),JSON.stringify((rows||[]).slice(-300)));}catch(e){}};
   function cleanJournal(){
@@ -14556,7 +14556,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   'use strict';
   const BUILD='V44.02',MAX_ROWS=5000;
   const ledgerKey=()=>`mongo_transaction_ledger_v4398_${window._authUid||'guest'}`;
-  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{return !!window.MONGO_HARD_RESET_ACTIVE||!!localStorage.getItem(`mongo_clear_barrier_${uid}`);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{if(window.MONGO_HARD_RESET_ACTIVE)return true;const barrier=localStorage.getItem(`mongo_clear_barrier_${uid}`);if(!barrier)return false;const data=JSON.parse(localStorage.getItem(getDBKey())||'{}');return !((data.txns||[]).length||(data.accountTransfers||[]).length||(data.moneyLedger||[]).length||(data.debts||[]).length||(data.goals||[]).length||(data.invests||[]).length);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const clone=v=>JSON.parse(JSON.stringify(v));
   const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&t.id!=null;
   function readLedger(){
