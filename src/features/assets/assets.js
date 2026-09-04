@@ -1,0 +1,32 @@
+// Möngö Assets — Phase 1 COMPLETE
+// Pure asset/investment identity, aggregation, object normalization and actual asset-income construction.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0;
+function normalizeName(v){return String(v||'').trim().toLocaleLowerCase();}
+function groupKey(inv){return `${inv?.typeKey||'other'}:::${normalizeName(inv?.name)}`;}
+function groupInvestments(items,options={}){const list=Array.isArray(items)?items:[],map=new Map();list.forEach((inv,i)=>{const key=groupKey(inv);if(!map.has(key))map.set(key,{key,name:inv?.name||'',typeKey:inv?.typeKey||'other',color:options.colorFor?options.colorFor(inv,i):inv?.color,items:[]});map.get(key).items.push(inv);});return [...map.values()].map(g=>({...g,invested:g.items.reduce((s,x)=>s+num(x?.invested),0),current:g.items.reduce((s,x)=>s+num(x?.current),0)}));}
+function groupIncomeProducing(group){return !!(group&&Array.isArray(group.items)&&group.items.some(x=>!!x?.incomeProducing));}
+function portfolioTotals(groups){const list=Array.isArray(groups)?groups:[],invested=list.reduce((s,g)=>s+num(g?.invested),0),current=list.reduce((s,g)=>s+num(g?.current),0),pnl=current-invested,pct=invested>0?pnl/invested*100:0;return {invested,current,pnl,pct};}
+function groupPerformance(group){const invested=num(group?.invested),current=num(group?.current),pnl=current-invested,pct=invested>0?pnl/invested*100:0;return {invested,current,pnl,pct};}
+function makeInvestment(input){const x=input||{},name=String(x.name||'').trim(),invested=num(x.invested);if(!name)return {ok:false,reason:'name_required'};if(!invested)return {ok:false,reason:'invested_required'};const current=num(x.current)||invested;return {ok:true,investment:{id:x.id,name,typeKey:x.typeKey||'other',invested,current,date:x.date||'',color:x.color,autoAdded:!!x.autoAdded,incomeProducing:!!x.incomeProducing,...(x.sourceTxnId!=null?{sourceTxnId:x.sourceTxnId}:{}),...(x.sourceTransferId!=null?{sourceTransferId:x.sourceTransferId}:{}),...(x.assetPurchase?{assetPurchase:true}:{}),...(x.linkedDebtId!=null?{linkedDebtId:x.linkedDebtId}:{}),...(x.loanFunded?{loanFunded:true}:{})}};}
+function makeGroupPurchase(group,input){if(!group)return {ok:false,reason:'group_required'};const x=input||{},amount=num(x.amount);if(!amount)return {ok:false,reason:'invested_required'};return makeInvestment({id:x.id,sourceTransferId:x.sourceTransferId,name:group.name,typeKey:group.typeKey,invested:amount,current:amount,date:x.date,color:group.color,autoAdded:false,assetPurchase:true,incomeProducing:groupIncomeProducing(group)});}
+function makeAutoInvestment(txn,input={}){if(!txn)return {ok:false,reason:'transaction_required'};return makeInvestment({id:input.id,sourceTxnId:txn.id,name:txn.desc,typeKey:input.typeKey||txn.investTypeKey||'other',invested:txn.amount,current:txn.amount,date:txn.date,color:input.color,autoAdded:true,incomeProducing:!!input.incomeProducing});}
+function updateAutoInvestment(existing,txn,input={}){if(!existing||!txn)return {ok:false,reason:'input_required'};const next={...existing},newInvested=num(txn.amount);next.name=txn.desc;next.typeKey=input.typeKey||txn.investTypeKey||existing.typeKey||'other';next.invested=newInvested;if(!existing.current||num(existing.current)===newInvested||existing.autoAdded)next.current=newInvested;next.date=txn.date;next.color=input.color??existing.color;next.autoAdded=true;return {ok:true,investment:next};}
+function makeLoanFundedAsset(input){const x=input||{};return makeInvestment({id:x.id,name:x.name,typeKey:x.typeKey||'real',invested:x.value,current:x.value,date:x.date,color:x.color,autoAdded:false,linkedDebtId:x.debtId,loanFunded:true,incomeProducing:!!x.incomeProducing});}
+function findTransferInvestment(items,transfer){
+ const list=Array.isArray(items)?items:[];if(!transfer||!['asset','investment'].includes(transfer.purpose))return null;
+ const linkedId=transfer.linkedAssetId??transfer.assetId;
+ if(linkedId!=null){const exact=list.find(x=>String(x?.id)===String(linkedId));if(exact)return exact;}
+ const direct=list.find(x=>String(x?.sourceTransferId||'')===String(transfer.id||''));if(direct)return direct;
+ const key=String(transfer.targetId||''),amount=num(transfer.amount),date=String(transfer.date||'');
+ return list.find(x=>groupKey(x)===key&&String(x?.date||'')===date&&Math.abs(num(x?.invested)-amount)<.001&&(transfer.purpose!=='asset'||!!x?.assetPurchase))||null;
+}
+function updateTransferInvestment(investment,beforeTransfer,afterTransfer){
+ if(!investment||!beforeTransfer||!afterTransfer)return {ok:false,reason:'input_required'};
+ const delta=num(afterTransfer.amount)-num(beforeTransfer.amount),next={...investment};next.invested=Math.max(0,num(next.invested)+delta);next.current=Math.max(0,num(next.current)+delta);next.date=afterTransfer.date||next.date;return {ok:true,investment:next};
+}
+function removeTransferInvestment(items,transfer){const list=Array.isArray(items)?items:[],item=findTransferInvestment(list,transfer);return item?{ok:true,item,items:list.filter(x=>String(x?.id)!==String(item.id))}:{ok:false,reason:'not_found',items:list.slice()};}
+function makeAssetIncomeTransaction(input){const x=input||{},amount=Math.round(num(x.amount));if(!x.assetGroupKey)return {ok:false,reason:'asset_required'};if(!(amount>0))return {ok:false,reason:'amount_required'};if(!x.accountId)return {ok:false,reason:'account_required'};if(!x.date)return {ok:false,reason:'date_required'};return {ok:true,transaction:{id:x.id,type:'income',desc:x.desc||'',catKey:x.catKey||'asset_income_cat',catName:x.catName||'',subcatName:x.subcatName||'',amount,date:x.date,accountId:x.accountId,assetIncome:true,assetGroupKey:x.assetGroupKey,assetIncomeType:x.assetIncomeType||'other',incomePlanIncluded:!!x.incomePlanIncluded,createdAt:x.createdAt||new Date().toISOString()}};}
+global.MongoAssets=Object.freeze({normalizeName,groupKey,groupInvestments,groupIncomeProducing,portfolioTotals,groupPerformance,makeInvestment,makeGroupPurchase,makeAutoInvestment,updateAutoInvestment,makeLoanFundedAsset,findTransferInvestment,updateTransferInvestment,removeTransferInvestment,makeAssetIncomeTransaction});
+})(window);

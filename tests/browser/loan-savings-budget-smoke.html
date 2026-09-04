@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Möngö loan savings budget smoke</title></head><body>
+<div id="lsb-smoke" data-status="pending">pending</div>
+<script src="../../src/core/ledger.js"></script>
+<script src="../../src/features/loans/loans.js"></script>
+<script src="../../src/features/budget/budget.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('lsb-smoke'), failures=[];
+ function check(name,condition){if(!condition)failures.push(name);}
+ var debt={id:'home',total:100000,openingRemaining:100000,payments:[]};
+ var normalized=MongoLoans.normalizeRepayment({id:'p1',date:'2026-08-30',accountId:'bank',total:11000,principal:9000,interest:2000,extraPrincipal:0},100000,{timestamp:'2026-08-30T00:00:00.000Z'});
+ check('loan-payment-normalized',normalized.ok);
+ if(normalized.ok)debt.payments.push(normalized.payment);
+ check('loan-principal-paid',MongoLoans.principalPaid(debt)===9000);
+ check('loan-interest-paid',MongoLoans.interestPaid(debt)===2000);
+ check('loan-total-paid',MongoLoans.totalPaid(debt)===11000);
+ check('loan-remaining',MongoLoans.remaining(debt)===91000);
+ check('loan-budget-actual',MongoBudget.loanActual(debt.payments,8,2026)===11000);
+
+ var savingsTransfers=[{id:'s1',fromId:'bank',toId:'save',amount:15000,date:'2026-08-30',purpose:'savings',targetId:'goal1'}];
+ var savingsInterest=[{id:'i1',type:'income',amount:500,date:'2026-08-30',incomePurpose:'savings_interest',goalId:'goal1'}];
+ check('savings-budget-actual',MongoBudget.savingsGoalActual(savingsTransfers,savingsInterest,'goal1',8,2026)===15500);
+ check('savings-not-expense',savingsInterest.every(function(t){return t.type!=='expense';}));
+
+ var state={txns:savingsInterest,accountTransfers:savingsTransfers,debts:[debt]};
+ var ledger=MongoLedgerCore.buildLedger(state,[],'2026-08-30T00:00:00.000Z');
+ var loanEntry=ledger.find(function(e){return e.id==='loan-payment:p1';});
+ var savingsEntry=ledger.find(function(e){return e.id==='transfer:s1';});
+ check('loan-ledger-entry',!!loanEntry&&loanEntry.amount===11000&&loanEntry.principal===9000&&loanEntry.interest===2000);
+ check('savings-ledger-entry',!!savingsEntry&&savingsEntry.kind==='savings_transfer'&&savingsEntry.amount===15000);
+ check('ledger-valid',MongoLedgerCore.validateLedger(ledger).length===0);
+
+ var loanProgress=MongoBudget.progress(11000,MongoBudget.loanActual(debt.payments,8,2026),false);
+ var savingsProgress=MongoBudget.progress(20000,MongoBudget.savingsGoalActual(savingsTransfers,savingsInterest,'goal1',8,2026),false);
+ check('loan-progress',loanProgress.actual===11000&&loanProgress.pct===100);
+ check('savings-progress',savingsProgress.actual===15500&&savingsProgress.pct===77.5);
+ marker.dataset.status=failures.length?'fail':'pass';
+ marker.textContent=failures.length?'fail:'+failures.join(','):'loan-savings-budget-pass';
+}());
+</script></body></html>

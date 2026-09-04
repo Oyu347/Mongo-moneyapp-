@@ -1,0 +1,40 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const code=fs.readFileSync('src/features/subscription/access.js','utf8');
+const window={};vm.runInNewContext(code,{window});const S=window.MongoSubscription;
+const state=day=>({uid:'u1',trialDay:day,subscriptionStatus:'trial',subscriptionStartDate:null});
+assert.equal(S.TRIAL_DAYS,7);
+assert.deepEqual(JSON.parse(JSON.stringify(S.trialInfo(state(5)))),{day:5,remaining:2,isExpired:false,isPaid:false,status:'trial'});
+assert.equal(S.reminderDay(state(5)),5);assert.equal(S.reminderDay(state(6)),6);assert.equal(S.reminderDay(state(7)),7);assert.equal(S.reminderDay(state(4)),null);
+// Phase 1D reminder compatibility: only trial days 5/6/7 may remind.
+assert.equal(S.reminderDay(state(8)),null);
+assert.equal(S.reminderDay({trialDay:5,subscriptionStatus:'active'}),null);
+assert.equal(S.reminderDay({trialDay:6,subscriptionStatus:'trial',subscriptionStartDate:'2026-08-01'}),null);
+assert.equal(S.reminderDay(state(1),5),5);
+assert.equal(S.reminderDay(state(1),6),6);
+assert.equal(S.reminderDay(state(1),7),7);
+assert.equal(S.reminderDay(state(1),8),null);
+assert.equal(S.isReadOnly(state(7)),false);assert.equal(S.isReadOnly(state(8)),true);
+// Phase 1E Day-8 access classification contract.
+const day8=state(8);
+const classify=(target,kind,allowed)=>{assert.equal(S.classifyTarget(target),kind);const d=S.accessDecision(day8,target);assert.equal(d.allowed,allowed);assert.equal(d.reason,kind);};
+classify({text:'Зээл'},'loan-free',true);
+classify({text:'Loan'},'loan-free',true);
+classify({text:'Loans'},'loan-free',true);
+classify({text:'Debt'},'loan-free',true);
+classify({idClass:'nav-loan'},'loan-free',true);
+classify({text:'Зээлийн тооцоолуур'},'loan-free',true);
+classify({text:'Calculator',context:'loan'},'loan-free',true);
+classify({insideLoanCalculator:true},'loan-free',true);
+classify({text:'Тооцоолуур',context:'savings'},'premium-calculator',false);
+classify({text:'Calculator',context:'investment'},'premium-calculator',false);
+classify({text:'Calculator',context:'asset'},'premium-calculator',false);
+classify({text:'Зээл нэмэх',writeAction:true},'write',false);
+classify({text:'Хадгалах',writeAction:true},'write',false);
+classify({text:'Харах'},'view',true);
+// Before expiry all target kinds remain available; paid state also bypasses read-only gating.
+assert.deepEqual(JSON.parse(JSON.stringify(S.accessDecision(state(7),{text:'Calculator',context:'savings'}))),{allowed:true,reason:'active'});
+assert.deepEqual(JSON.parse(JSON.stringify(S.accessDecision({trialDay:20,subscriptionStatus:'active'},{text:'Хадгалах',writeAction:true}))),{allowed:true,reason:'active'});
+assert.equal(S.isReadOnly({trialDay:20,subscriptionStatus:'active'}),false);
+assert.equal(S.isReadOnly({trialDay:20,subscriptionStatus:'trial',subscriptionStartDate:'2026-08-01'}),false);
+assert.equal(S.isReadOnly(state(1),8),true);
+console.log('Möngö subscription trial access regression tests: PASS');

@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Möngö trial paywall smoke</title></head><body>
+<div id="trial-smoke" data-status="pending">pending</div>
+<script src="../../src/features/subscription/access.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('trial-smoke'),failures=[];function check(n,c){if(!c)failures.push(n);}
+ var trial={subscriptionStatus:'trial',trialDay:1};
+ check('day5-reminder',MongoSubscription.reminderDay(trial,5)===5&&MongoSubscription.isReadOnly(trial,5)===false);
+ check('day7-reminder',MongoSubscription.reminderDay(trial,7)===7&&MongoSubscription.isReadOnly(trial,7)===false);
+ var d8=MongoSubscription.trialInfo(trial,8);check('day8-expired',d8.day===8&&d8.isExpired===true&&d8.status==='expired'&&MongoSubscription.isReadOnly(trial,8)===true);
+ check('day8-view-allowed',MongoSubscription.accessDecision(trial,{text:'Тайлан'},8).allowed===true);
+ check('day8-write-blocked',MongoSubscription.accessDecision(trial,{writeAction:true,text:'Орлого нэмэх'},8).allowed===false);
+ check('day8-loan-nav-free',MongoSubscription.accessDecision(trial,{text:'Зээл'},8).allowed===true);
+ check('day8-loan-calculator-free',MongoSubscription.accessDecision(trial,{text:'Тооцоолуур',context:'loan'},8).allowed===true);
+ check('day8-savings-calculator-premium',MongoSubscription.accessDecision(trial,{text:'Тооцоолуур',context:'savings'},8).allowed===false);
+ check('day8-investment-calculator-premium',MongoSubscription.accessDecision(trial,{text:'Calculator',context:'investment'},8).allowed===false);
+ var paid={subscriptionStatus:'active',trialDay:30};check('paid-not-readonly',MongoSubscription.isReadOnly(paid,30)===false);check('paid-write-allowed',MongoSubscription.accessDecision(paid,{writeAction:true},30).allowed===true);
+ marker.dataset.status=failures.length?'fail':'pass';marker.textContent=failures.length?'fail:'+failures.join(','):'trial-paywall-pass';
+}());
+</script></body></html>

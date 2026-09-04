@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Möngö assets budget smoke</title></head><body>
+<div id="ab-smoke" data-status="pending">pending</div>
+<script src="../../src/features/assets/assets.js"></script>
+<script src="../../src/features/budget/budget.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('ab-smoke'),failures=[];function check(n,c){if(!c)failures.push(n);}
+ var a=MongoAssets.makeInvestment({id:'a1',name:'ETF',typeKey:'fund',invested:10000,current:11000,date:'2026-08-01'});
+ var b=MongoAssets.makeInvestment({id:'a2',name:' etf ',typeKey:'fund',invested:5000,current:5200,date:'2026-08-15'});
+ check('investments-created',a.ok&&b.ok);
+ var groups=MongoAssets.groupInvestments([a.investment,b.investment]);
+ check('same-name-grouped',groups.length===1&&groups[0].invested===15000&&groups[0].current===16200);
+ var totals=MongoAssets.portfolioTotals(groups);check('portfolio-totals',totals.invested===15000&&totals.current===16200&&totals.pnl===1200&&totals.pct===8);
+ var income=MongoAssets.makeAssetIncomeTransaction({id:'ai1',assetGroupKey:groups[0].key,amount:800,accountId:'bank',date:'2026-08-30',incomePlanIncluded:true});
+ check('asset-income-created',income.ok&&income.transaction.type==='income'&&income.transaction.assetIncome===true&&income.transaction.amount===800);
+ var transfers=[{id:'iv1',fromId:'bank',toId:'broker',amount:5000,date:'2026-08-30',purpose:'investment',targetId:groups[0].key}];
+ check('investment-budget-actual',MongoBudget.investmentActual(transfers,[groups[0].key],8,2026)===5000);
+ check('unrelated-not-counted',MongoBudget.investmentActual(transfers,['other'],8,2026)===0);
+ check('source-key-stable',MongoBudget.sourceKey('invest',groups[0].key)==='invest_'+groups[0].key);
+ var recurringGroup={typeKey:'fund',items:groups[0].items};
+ check('investment-source-eligible',MongoBudget.investmentSourceEligible(recurringGroup)===true);
+ var loanFunded={typeKey:'fund',items:[{loanFunded:true}]};check('loan-funded-excluded',MongoBudget.investmentSourceEligible(loanFunded)===false);
+ marker.dataset.status=failures.length?'fail':'pass';marker.textContent=failures.length?'fail:'+failures.join(','):'assets-budget-pass';
+}());
+</script></body></html>

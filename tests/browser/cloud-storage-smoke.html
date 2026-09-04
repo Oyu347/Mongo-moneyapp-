@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Möngö cloud storage smoke</title></head><body>
+<div id="cs-smoke" data-status="pending">pending</div>
+<script src="../../src/services/storage/storage.js"></script>
+<script src="../../src/services/cloud/cloud.js"></script>
+<script>
+(function(){
+ var marker=document.getElementById('cs-smoke'),failures=[];function check(n,c){if(!c)failures.push(n);}
+ var key='mongo_browser_cloud_storage_smoke';MongoStorage.remove(key);
+ check('storage-empty',MongoStorage.has(key)===false);
+ check('storage-write',MongoStorage.setJSON(key,{balance:123,clientUpdatedAt:'2026-08-30T04:00:00.000Z'})===true);
+ var stored=MongoStorage.getJSON(key,null);check('storage-read',stored&&stored.balance===123);
+ check('local-newer-wins',MongoCloud.chooseCloudOrLocal({localHas:true,cloudHas:true,local:{clientUpdatedAt:'2026-08-30T05:00:00.000Z'},cloud:{clientUpdatedAt:'2026-08-30T04:00:00.000Z'}}).winner==='local');
+ check('cloud-newer-wins',MongoCloud.chooseCloudOrLocal({localHas:true,cloudHas:true,local:{clientUpdatedAt:'2026-08-30T04:00:00.000Z'},cloud:{clientUpdatedAt:'2026-08-30T05:00:00.000Z'}}).winner==='cloud');
+ var barrier={data:{},clearedAt:'2026-08-30T06:00:00.000Z'};
+ var decision=MongoCloud.chooseClearBarrier({barrier:barrier,localUpdatedAt:'2026-08-30T05:00:00.000Z',newestCloudUpdatedAt:'2026-08-30T05:30:00.000Z'});check('clear-barrier-wins',decision.useBarrier===true);
+ var queue=[{id:'old',reason:'normal',createdAt:'2026-08-30T05:00:00.000Z'},{id:'tomb',reason:'clear-tombstone',createdAt:'2026-08-30T05:00:00.000Z'},{id:'new',reason:'normal',createdAt:'2026-08-30T07:00:00.000Z'}];
+ var filtered=MongoCloud.filterQueueAfterClear(queue,barrier);check('old-queue-removed',filtered.some(function(x){return x.id==='old';})===false);check('tombstone-kept',filtered.some(function(x){return x.id==='tomb';}));check('new-queue-kept',filtered.some(function(x){return x.id==='new';}));
+ var candidates=[{source:'old-cloud',raw:{updatedAtClient:'2026-08-30T05:00:00.000Z',data:{balance:999}}},{source:'clear',raw:{updatedAtClient:'2026-08-30T06:00:00.000Z',clearedAt:'2026-08-30T06:00:00.000Z',data:{}}}];
+ var selected=MongoCloud.selectLoadCandidate(candidates,function(d){return !!(d&&d.balance);});check('clear-marker-selected',selected.clearMarker===true&&selected.selected.source==='clear');
+ var meta=MongoCloud.writeMetadata({uid:'u1',version:'v1',updatedAtClient:'2026-08-30T06:00:00.000Z',clientId:'c1',lastOperationId:'op1',data:{clientUpdatedAt:'2026-08-30T06:00:00.000Z'},reason:'clear-tombstone'});check('tombstone-metadata',meta.clearedAt==='2026-08-30T06:00:00.000Z');
+ check('storage-clear',MongoStorage.remove(key)===true&&MongoStorage.has(key)===false);
+ marker.dataset.status=failures.length?'fail':'pass';marker.textContent=failures.length?'fail:'+failures.join(','):'cloud-storage-pass';
+}());
+</script></body></html>

@@ -1,0 +1,137 @@
+name: Modular regression validation
+
+on:
+  push:
+    branches: [development-modular, integration-full-browser, integration-cloud-backup, integration-live-cloud-validation, integration-firebase-runtime-driver]
+  workflow_dispatch:
+
+jobs:
+  node-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run modular Node regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r testfile; do
+            echo "::group::$testfile"
+            node "$testfile"
+            echo "::endgroup::"
+            count=$((count+1))
+          done < <(find tests -type f -name '*.test.js' | sort)
+          echo "Executed $count regression test files."
+
+  browser-module-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run deterministic browser module smoke test
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-smoke-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/module-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-dom="ready"' "$dom"
+          grep -q 'data-modules="loaded"' "$dom"
+          grep -q '>modules-loaded<' "$dom"
+      - name: Run browser financial flow regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-financial-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/financial-flow-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>financial-flow-pass<' "$dom"
+      - name: Run loan savings budget browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-lsb-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/loan-savings-budget-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>loan-savings-budget-pass<' "$dom"
+      - name: Run assets budget browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-ab-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/assets-budget-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>assets-budget-pass<' "$dom"
+      - name: Run cloud storage reset browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-cs-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/cloud-storage-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>cloud-storage-pass<' "$dom"
+      - name: Run seven locale currency browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-i18n-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/i18n-currency-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>i18n-currency-pass<' "$dom"
+      - name: Run trial paywall browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-trial-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-trial-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>trial-paywall-pass<' "$dom"
+      - name: Run subscription wrapper parity browser regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-wrapper-parity-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/subscription-wrapper-parity.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q '>subscription-wrapper-parity-pass<' "$dom"
+      - name: Run full browser wiring smoke
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-full-wiring-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/full-wiring-smoke.html" > "$dom"
+          chromium_status=$?
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q 'data-loan="pass"' "$dom"
+          grep -q 'data-day8="pass"' "$dom"
+          grep -q '>full-wiring-pass<' "$dom"
+      - name: Run Loan calculator wiring regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          dom=/tmp/mongo-loan-calc-wiring-dom.html
+          chromium --headless --no-sandbox --disable-gpu --dump-dom "file://${GITHUB_WORKSPACE}/tests/browser/loan-calculator-wiring.html" > "$dom"
+          chromium_status=$?
+          grep -o '<div id="loan-calc-wiring"[^>]*>[^<]*</div>' "$dom" || true
+          test "$chromium_status" -eq 0
+          grep -q 'data-status="pass"' "$dom"
+          grep -q 'data-rows="156"' "$dom"
+          grep -q '>loan-calculator-wiring-pass<' "$dom"

@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><title>Möngö full wiring smoke</title>
+<div id="full-wiring" data-status="running">running</div>
+<script src="../../src/services/storage/storage.js"></script>
+<script src="../../src/core/ledger.js"></script>
+<script src="../../src/features/accounts/accounts.js"></script>
+<script src="../../src/features/transactions/transactions.js"></script>
+<script src="../../src/features/loans/loans.js"></script>
+<script src="../../src/features/savings/savings.js"></script>
+<script src="../../src/features/assets/assets.js"></script>
+<script src="../../src/features/budget/budget.js"></script>
+<script src="../../src/services/cloud/cloud.js"></script>
+<script src="../../src/audit/audit.js"></script>
+<script src="../../src/i18n/dictionaries.js"></script>
+<script src="../../src/i18n/i18n.js"></script>
+<script src="../../src/features/subscription/access.js"></script>
+<script src="../../src/web/platform.js"></script>
+<script src="../../src/mobile/platform.js"></script>
+<script>
+(function(){
+ const marker=document.getElementById('full-wiring');
+ const fail=(m)=>{marker.dataset.status='fail';marker.textContent='FAIL: '+m;throw new Error(m)};
+ const ok=(c,m)=>{if(!c)fail(m)};
+ try{
+  // Export names below intentionally follow the current Phase-1 compatibility modules.
+  const globals=['MongoStorage','MongoLedgerCore','MongoAccounts','MongoTransactions','MongoLoans','MongoSavings','MongoAssets','MongoBudget','MongoCloud','MongoAudit','MongoI18n','MongoSubscription','MongoWeb','MongoMobile'];
+  globals.forEach(n=>ok(window[n],n+' missing'));
+  const schedule=MongoLoans.buildSchedule(150000000,6,13*12,'annuity',0,36);
+  ok(schedule&&schedule.schedule&&schedule.schedule.length>0,'loan schedule missing');
+  ok(Number.isFinite(schedule.monthly)&&schedule.monthly>0,'loan monthly invalid');
+  const day8=MongoSubscription.accessDecision({trialDay:8},{text:'Loan Calculator',context:'loan'});
+  ok(day8.allowed===true&&day8.reason==='loan-free','Day 8 loan calculator blocked');
+  const write=MongoSubscription.accessDecision({trialDay:8},{text:'Write',writeAction:true});
+  ok(write.allowed===false&&write.reason==='write','Day 8 write unexpectedly allowed');
+  ok(MongoWeb.capabilities().dom===true,'web DOM capability missing');
+  ok(MongoMobile.platform()==='web','mobile web fallback mismatch');
+  marker.dataset.status='pass';marker.dataset.loan='pass';marker.dataset.day8='pass';marker.textContent='full-wiring-pass';
+ }catch(e){if(marker.dataset.status!=='fail'){marker.dataset.status='fail';marker.textContent='FAIL: '+e.message;}}
+})();
+</script>

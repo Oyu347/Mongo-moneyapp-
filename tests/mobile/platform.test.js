@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('assert');global.window=global;require('../../src/mobile/platform.js');const M=global.MongoMobile;
+assert.strictEqual(M.platform({}),'web');assert.strictEqual(M.isNative({}),false);
+const android={Capacitor:{getPlatform:()=> 'android',isNativePlatform:()=>true,Plugins:{App:{},Filesystem:{},Share:{}}},navigator:{maxTouchPoints:5},URL:URL};
+assert.strictEqual(M.platform(android),'android');assert.strictEqual(M.isNative(android),true);assert.strictEqual(M.capabilities(android).touch,true);assert.strictEqual(M.capabilities(android).appPlugin,true);
+const ios={Capacitor:{getPlatform:()=> 'ios'}};assert.strictEqual(M.platform(ios),'ios');assert.strictEqual(M.isNative(ios),true);
+const web={Capacitor:{getPlatform:()=> 'web',isNativePlatform:()=>false}};assert.strictEqual(M.isNative(web),false);
+assert.deepStrictEqual(M.normalizeAppState({isActive:true}),{active:true});assert.deepStrictEqual(M.normalizeAppState({isActive:false}),{active:false});
+const link=M.normalizeDeepLink({url:'mongo://payment/complete?status=ok#done'},android);assert.strictEqual(link.valid,true);assert.strictEqual(link.protocol,'mongo:');assert.strictEqual(link.host,'payment');assert.strictEqual(link.pathname,'/complete');assert.strictEqual(link.search,'?status=ok');assert.strictEqual(link.hash,'#done');
+assert.strictEqual(M.normalizeDeepLink({url:'not a url'},android).valid,false);assert.strictEqual(M.normalizeDeepLink(null,android).valid,false);
+assert.deepStrictEqual(M.normalizeBackEvent({canGoBack:true}),{canGoBack:true});assert.deepStrictEqual(M.normalizeBackEvent(null),{canGoBack:false});
+assert.deepStrictEqual(M.fileCapabilities(android),{filesystem:true,share:true});assert.deepStrictEqual(M.fileCapabilities(web),{filesystem:false,share:false});
+console.log('Möngö mobile platform regression tests: PASS');
