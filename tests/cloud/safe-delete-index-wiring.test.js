@@ -17,5 +17,7 @@ assert(html.includes('return cloudClearSynced;'),'Cloud clear must not report su
 assert.strictEqual((html.match(/if\(resetBarrierActive\(\)\)\{write(?:Journal|Ledger)\(\[\]\);return false;\}/g)||[]).length,2,'transaction recovery stores must not resurrect rows after a clear barrier');
 assert(html.includes("if(!mirrorCheck.complete && reason!=='clear-tombstone')"),'only a clear tombstone may succeed through a writable subset of mirrors');
 assert(html.includes("return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};"),'partial clear mirror coverage must stay observable');
+assert(html.includes("const isClearTombstone=reason==='clear-tombstone';"),'Cloud writer must identify the destructive tombstone explicitly');
+assert(html.includes('(!isClearTombstone&&!accountReadyForCloud())'),'only a clear tombstone may bypass transient sync readiness');
 
 console.log('Möngö safe-delete index wiring test: PASS');
