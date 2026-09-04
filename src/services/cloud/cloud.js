@@ -54,5 +54,14 @@ function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear
 function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite});
+async function runSafeHardReset(ops){
+  const x=ops||{};
+  if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');
+  x.emptyMemory();x.purgeLocal();
+  await x.clearFinancialData();
+  x.emptyMemory();x.purgeLocal();
+  if(typeof x.reload==='function')x.reload();
+  return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
+}
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,runSafeHardReset});
 })(window);
