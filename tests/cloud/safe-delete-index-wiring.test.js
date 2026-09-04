@@ -13,5 +13,6 @@ assert(!resetScript.includes('loadFinancialData({force:true})'),'Delete All Data
 assert.strictEqual((resetScript.match(/svc\.clearFinancialData\(\)/g)||[]).length,1,'Delete All Data must invoke the cloud clear operation exactly once');
 assert(!resetScript.includes('/^mongo_sync_queue_/'),'post-clear cleanup must preserve a queued clear tombstone');
 assert(resetScript.includes('clear-barrier-missing'),'Delete All Data must verify its anti-resurrection barrier before reload');
+assert(html.includes('return cloudClearSynced;'),'Cloud clear must not report success while its tombstone is only queued');
 
 console.log('Möngö safe-delete index wiring test: PASS');
