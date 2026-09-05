@@ -19,5 +19,7 @@ assert(html.includes("if(!mirrorCheck.complete && reason!=='clear-tombstone')"),
 assert(html.includes("return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};"),'partial clear mirror coverage must stay observable');
 assert(html.includes("const isClearTombstone=reason==='clear-tombstone';"),'Cloud writer must identify the destructive tombstone explicitly');
 assert(html.includes('(!isClearTombstone&&!accountReadyForCloud())'),'only a clear tombstone may bypass transient sync readiness');
+assert(html.includes('MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone'),'partial-state quarantine must not block an explicit delete tombstone');
+assert(html.includes("(!isClearTombstone&&(window._authUid!==uid||!accountReadyForCloud()))"),'transient app readiness must remain strict for normal saves but not block an authenticated delete');
 
 console.log('Möngö safe-delete index wiring test: PASS');
