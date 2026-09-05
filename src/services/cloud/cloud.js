@@ -56,7 +56,7 @@ function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(Strin
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
 function diagValue(v){if(v==null||['string','number','boolean'].includes(typeof v))return v;if(v instanceof Error)return {name:v.name,message:v.message,code:v.code||''};if(Array.isArray(v))return v.slice(0,10).map(diagValue);if(typeof v==='object'){const o={};Object.keys(v).slice(0,20).forEach(k=>{try{o[k]=diagValue(v[k]);}catch(e){o[k]='[unreadable]';}});return o;}return String(v);}
 function diagnosticGlobals(){const out={};Object.keys(global).filter(k=>/^MONGO_/.test(k)||k==='_authUid'||(/cloud/i.test(k)&&/(state|status|error|sync|pending|ready)/i.test(k))).slice(0,80).forEach(k=>{try{out[k]=diagValue(global[k]);}catch(e){out[k]='[unreadable]';}});return out;}
-function diagnosticCloudDom(){return [...document.querySelectorAll('[id*="cloud" i],[class*="cloud" i],[title*="cloud" i],[aria-label*="cloud" i]')].slice(0,30).map(el=>({tag:el.tagName,id:el.id||'',className:String(el.className||'').slice(0,180),title:el.getAttribute('title')||'',ariaLabel:el.getAttribute('aria-label')||'',text:String(el.textContent||'').trim().slice(0,120)}));}
+function diagnosticCloudDom(){return [...document.querySelectorAll('[id*="cloud" i],[class*="cloud" i],[title*="cloud" i],[aria-label*="cloud" i]')].filter(el=>!el.closest('#mongo-cloud-diagnostic-panel')).slice(0,30).map(el=>({tag:el.tagName,id:el.id||'',className:String(el.className||'').slice(0,180),title:el.getAttribute('title')||'',ariaLabel:el.getAttribute('aria-label')||'',text:String(el.textContent||'').trim().slice(0,120)}));}
 function diagnosticSnapshot(){
   let lastFinancialWriteError='';
   try{lastFinancialWriteError=global.MONGO_LAST_FINANCIAL_WRITE_ERROR||'';}catch(e){}
@@ -71,13 +71,22 @@ function showDiagnosticPanel(){
   panel.style.cssText='position:fixed;z-index:2147483647;left:12px;right:12px;top:12px;max-height:82vh;overflow:auto;background:#fff;color:#111;border:2px solid #b91c1c;border-radius:14px;padding:14px;font:13px/1.45 monospace;box-shadow:0 8px 30px rgba(0,0,0,.28);white-space:pre-wrap;word-break:break-word';
   const close=document.createElement('button');close.textContent='Хаах';close.type='button';close.style.cssText='float:right;padding:7px 12px;margin:0 0 8px 10px';close.onclick=()=>panel.remove();panel.appendChild(close);
   const title=document.createElement('strong');title.textContent='Möngö Cloud diagnostic LIVE (READ ONLY)';panel.appendChild(title);
-  const note=document.createElement('div');note.style.cssText='clear:both;margin-top:8px;font-family:sans-serif;font-size:12px';note.textContent='Cloud UI + runtime төлөвийг 1 секунд тутам зөвхөн уншина. Firebase-д бичихгүй.';panel.appendChild(note);
+  const note=document.createElement('div');note.style.cssText='clear:both;margin-top:8px;font-family:sans-serif;font-size:12px';note.textContent='Апп бүрэн ачаалсны дараа Cloud UI + runtime төлөвийг зөвхөн уншина. Firebase-д бичихгүй.';panel.appendChild(note);
   const pre=document.createElement('pre');pre.setAttribute('data-mongo-cloud-diag','1');pre.style.cssText='margin:12px 0 0;white-space:pre-wrap;word-break:break-word';panel.appendChild(pre);document.body.appendChild(panel);renderDiagnosticPanel(panel);
   const timer=setInterval(()=>{if(!renderDiagnosticPanel(panel))clearInterval(timer);},1000);return diagnosticSnapshot();
 }
+function diagnosticAppReady(){
+  if(document.readyState!=='complete')return false;
+  const bodyText=String(document.body&&document.body.innerText||'');
+  const hasAppUi=!!document.querySelector('#app-root,#main,.app-root,.main')||/Санхүү|Гүйлгээ|Төсөв|Хуримтлал/.test(bodyText);
+  const hasRuntime=Object.keys(global).some(k=>/^MONGO_/.test(k)||k==='_authUid');
+  return hasAppUi&&hasRuntime;
+}
 function installDiagnosticTrigger(){
   if(!global.location||!/(?:[?&])cloudDiag=1(?:&|$)/.test(global.location.search||''))return;
-  const ready=()=>{if(!document.body)return setTimeout(ready,50);showDiagnosticPanel();};ready();
+  const started=Date.now();
+  const wait=()=>{if(!document.body||!diagnosticAppReady()){if(Date.now()-started<120000)return setTimeout(wait,1000);return;}setTimeout(showDiagnosticPanel,1500);};
+  if(document.readyState==='complete')wait();else global.addEventListener('load',wait,{once:true});
 }
 async function runSafeHardReset(ops){
   const x=ops||{};
