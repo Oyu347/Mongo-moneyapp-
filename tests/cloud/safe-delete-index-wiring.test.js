@@ -15,8 +15,11 @@ assert(!resetScript.includes('/^mongo_sync_queue_/'),'post-clear cleanup must pr
 assert(resetScript.includes('clear-barrier-missing'),'Delete All Data must verify its anti-resurrection barrier before reload');
 assert(html.includes('return cloudClearSynced;'),'Cloud clear must not report success while its tombstone is only queued');
 assert.strictEqual((html.match(/if\(resetBarrierActive\(\)\)\{write(?:Journal|Ledger)\(\[\]\);return false;\}/g)||[]).length,2,'transaction recovery stores must not resurrect rows after a clear barrier');
-assert(html.includes("if(!mirrorCheck.complete && reason!=='clear-tombstone')"),'only a clear tombstone may succeed through a writable subset of mirrors');
-assert(html.includes("return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};"),'partial clear mirror coverage must stay observable');
+assert(html.includes('if(!mirrorCheck.complete){'),'every Cloud write, including a clear tombstone, must cover all five mirrors');
+assert(!html.includes("reason!=='clear-tombstone'"),'a destructive clear must never accept partial mirror coverage');
+assert(html.includes('verifyCloudFinancialClear(uid,clearedAt)'),'Delete All Data must read all mirrors back after writing the tombstone');
+assert(html.includes("new Error('CLEAR_VERIFICATION_FAILED')"),'Delete All Data must fail closed when read-back verification is incomplete');
+assert(html.includes("['user-root',rootCloudDocRef(uid),true]"),'clear verification must include the fifth user-root mirror');
 assert(html.includes("const isClearTombstone=reason==='clear-tombstone';"),'Cloud writer must identify the destructive tombstone explicitly');
 assert(html.includes('(!isClearTombstone&&!accountReadyForCloud())'),'only a clear tombstone may bypass transient sync readiness');
 assert(html.includes('MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone'),'partial-state quarantine must not block an explicit delete tombstone');

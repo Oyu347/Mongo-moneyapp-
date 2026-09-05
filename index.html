@@ -11994,6 +11994,41 @@ auth.onAuthStateChanged(async user=>{
     try{localStorage.setItem(uidKey(CLEAR_BARRIER_KEY_PREFIX),JSON.stringify({clearedAt,data}));}catch(e){}
   }
 
+  function clearPayloadIsEmpty(data){
+    const d=safeObj(data);
+    return !hasMeaningfulFinancialData(d) &&
+      safeArray(d.txns).length===0 && safeArray(d.goals).length===0 &&
+      safeArray(d.debts).length===0 && safeArray(d.invests).length===0 &&
+      safeArray(d.moneyAccounts).length===0 && safeArray(d.accountTransfers).length===0 &&
+      safeArray(d.moneyLedger).length===0 && safeArray(d.moneyLedgerTombstones).length===0 &&
+      Object.keys(safeObj(d.budgets)).length===0;
+  }
+
+  async function verifyCloudFinancialClear(uid,clearedAt){
+    const expected=Date.parse(clearedAt||'')||0;
+    const refs=[
+      ['appState',cloudDocRef(uid),false],
+      ['financial',legacyCloudDocRef(uid),false],
+      ['settings',settingsCloudDocRef(uid),true],
+      ['profile',profileCloudDocRef(uid),true],
+      ['user-root',rootCloudDocRef(uid),true]
+    ];
+    const issues=[];
+    await Promise.all(refs.map(async([path,ref,wrapped])=>{
+      if(!ref){issues.push({path,reason:'missing_ref'});return;}
+      try{
+        const snap=await ref.get();
+        if(!snap.exists){issues.push({path,reason:'missing_mirror'});return;}
+        const container=snap.data()||{};
+        const raw=wrapped?container.financialState:container;
+        const actual=Date.parse(raw&&raw.clearedAt||'')||0;
+        if(!raw||!actual||actual<expected)issues.push({path,reason:'missing_or_old_clear_marker'});
+        else if(!clearPayloadIsEmpty(raw.data))issues.push({path,reason:'data_not_empty'});
+      }catch(e){issues.push({path,reason:'read_failed',error:e});}
+    }));
+    return {verified:issues.length===0,issues};
+  }
+
   function getQueue(){
     try{
       const raw=JSON.parse(localStorage.getItem(uidKey(QUEUE_KEY_PREFIX))||'[]').filter(Boolean);
@@ -12262,7 +12297,7 @@ auth.onAuthStateChanged(async user=>{
     await Promise.all(attempts);
     if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
     const mirrorCheck=window.MongoCloud.completeMirrorWrite(savedPaths);
-    if(!mirrorCheck.complete && reason!=='clear-tombstone'){
+    if(!mirrorCheck.complete){
       const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');
       err.code='PARTIAL_CLOUD_MIRROR_WRITE';err.paths=savedPaths;err.missingPaths=mirrorCheck.missing;
       throw err;
@@ -12274,7 +12309,7 @@ auth.onAuthStateChanged(async user=>{
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
     saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
     saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
-    return {ok:true,paths:savedPaths,partial:!mirrorCheck.complete};
+    return {ok:true,paths:savedPaths,partial:false};
   }
 
   async function processQueue(){
@@ -12474,7 +12509,16 @@ auth.onAuthStateChanged(async user=>{
        or telling the user that nothing was cleared. */
     saveClearBarrier(clearedAt,emptyData);
     let cloudClearSynced=false;
-    try{await writeCloud(emptyData,'clear-tombstone',uid);cloudClearSynced=true;}
+    try{
+      await writeCloud(emptyData,'clear-tombstone',uid);
+      const verification=await verifyCloudFinancialClear(uid,clearedAt);
+      if(!verification.verified){
+        const err=new Error('CLEAR_VERIFICATION_FAILED');
+        err.code='CLEAR_VERIFICATION_FAILED';err.verification=verification;
+        throw err;
+      }
+      cloudClearSynced=true;
+    }
     catch(e){console.warn('Cloud clear queued for retry',e);clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;}
     try{
       if(cloudClearSynced)localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
