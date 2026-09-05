@@ -12509,17 +12509,47 @@ auth.onAuthStateChanged(async user=>{
        or telling the user that nothing was cleared. */
     saveClearBarrier(clearedAt,emptyData);
     let cloudClearSynced=false;
+    window.MONGO_LAST_CLEAR_FAILURE=null;
     try{
+      let firstPassError=null;
+      try{
+        await writeCloud(emptyData,'clear-tombstone',uid);
+        const firstVerification=await verifyCloudFinancialClear(uid,clearedAt);
+        if(!firstVerification.verified){
+          const err=new Error('CLEAR_VERIFICATION_FAILED');
+          err.code='CLEAR_VERIFICATION_FAILED';err.verification=firstVerification;
+          throw err;
+        }
+      }catch(e){
+        firstPassError=e;
+      }
+
+      /* V44.12.11 Early State Quarantine: an autosave already in flight can
+         finish after the first tombstone write. Keep the clear barrier active,
+         wait for that stale write to settle, then overwrite and verify every
+         Cloud mirror a second time before reporting success. */
+      await new Promise(resolve=>setTimeout(resolve,4500));
+      resetDefaultFinanceShell();
+      saveClearBarrier(clearedAt,emptyData);
+      lastCloudFingerprint='';
       await writeCloud(emptyData,'clear-tombstone',uid);
-      const verification=await verifyCloudFinancialClear(uid,clearedAt);
-      if(!verification.verified){
+      const finalVerification=await verifyCloudFinancialClear(uid,clearedAt);
+      if(!finalVerification.verified){
         const err=new Error('CLEAR_VERIFICATION_FAILED');
-        err.code='CLEAR_VERIFICATION_FAILED';err.verification=verification;
+        err.code='CLEAR_VERIFICATION_FAILED';err.verification=finalVerification;err.firstPassError=firstPassError;
         throw err;
       }
       cloudClearSynced=true;
     }
-    catch(e){console.warn('Cloud clear queued for retry',e);clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;}
+    catch(e){
+      console.warn('Cloud clear queued for retry',e);
+      window.MONGO_LAST_CLEAR_FAILURE={
+        code:e&&e.code||e&&e.message||'CLOUD_CLEAR_FAILED',
+        missingPaths:safeArray(e&&e.missingPaths),
+        issues:safeArray(e&&e.verification&&e.verification.issues).map(x=>({path:safeStr(x&&x.path,40),reason:safeStr(x&&x.reason,80)}))
+      };
+      clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;
+    }
     try{
       if(cloudClearSynced)localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
@@ -15221,7 +15251,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
           },900);
         }
       });
-    }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.');}
+    }catch(e){
+      console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();
+      const failure=window.MONGO_LAST_CLEAR_FAILURE||{};
+      const paths=[...(failure.missingPaths||[]),...(failure.issues||[]).map(x=>x.path)].filter(Boolean);
+      const detail=[...new Set(paths)].join(', ');
+      showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.'+(detail?' Асуудалтай байрлал: '+detail:''));
+    }
   };
   const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.5 RESET';
 })();
