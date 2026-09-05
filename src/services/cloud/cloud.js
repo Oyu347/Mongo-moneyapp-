@@ -59,13 +59,18 @@ function diagnosticSnapshot(){
   try{lastFinancialWriteError=global.MONGO_LAST_FINANCIAL_WRITE_ERROR||'';}catch(e){}
   return Object.freeze({mongoCloudLoaded:true,requiredMirrors:[...REQUIRED_MIRRORS],lastFinancialWriteError,capturedAt:new Date().toISOString()});
 }
+function renderDiagnosticPanel(panel){
+  if(!panel||!panel.isConnected)return false;const pre=panel.querySelector('pre[data-mongo-cloud-diag]');if(!pre)return false;pre.textContent=JSON.stringify(diagnosticSnapshot(),null,2);return true;
+}
 function showDiagnosticPanel(){
   const old=document.getElementById('mongo-cloud-diagnostic-panel');if(old)old.remove();
-  const snap=diagnosticSnapshot(),panel=document.createElement('div');panel.id='mongo-cloud-diagnostic-panel';
+  const panel=document.createElement('div');panel.id='mongo-cloud-diagnostic-panel';
   panel.style.cssText='position:fixed;z-index:2147483647;left:12px;right:12px;top:12px;max-height:82vh;overflow:auto;background:#fff;color:#111;border:2px solid #b91c1c;border-radius:14px;padding:14px;font:13px/1.45 monospace;box-shadow:0 8px 30px rgba(0,0,0,.28);white-space:pre-wrap;word-break:break-word';
   const close=document.createElement('button');close.textContent='Хаах';close.type='button';close.style.cssText='float:right;padding:7px 12px;margin:0 0 8px 10px';close.onclick=()=>panel.remove();panel.appendChild(close);
-  const title=document.createElement('strong');title.textContent='Möngö Cloud diagnostic (READ ONLY)';panel.appendChild(title);
-  const pre=document.createElement('pre');pre.style.cssText='clear:both;margin:12px 0 0;white-space:pre-wrap;word-break:break-word';pre.textContent=JSON.stringify(snap,null,2);panel.appendChild(pre);document.body.appendChild(panel);return snap;
+  const title=document.createElement('strong');title.textContent='Möngö Cloud diagnostic LIVE (READ ONLY)';panel.appendChild(title);
+  const note=document.createElement('div');note.style.cssText='clear:both;margin-top:8px;font-family:sans-serif;font-size:12px';note.textContent='Автоматаар 1 секунд тутам шинэчилнэ. Firebase-д бичихгүй.';panel.appendChild(note);
+  const pre=document.createElement('pre');pre.setAttribute('data-mongo-cloud-diag','1');pre.style.cssText='margin:12px 0 0;white-space:pre-wrap;word-break:break-word';panel.appendChild(pre);document.body.appendChild(panel);renderDiagnosticPanel(panel);
+  const timer=setInterval(()=>{if(!renderDiagnosticPanel(panel))clearInterval(timer);},1000);return diagnosticSnapshot();
 }
 function installDiagnosticTrigger(){
   if(!global.location||!/(?:[?&])cloudDiag=1(?:&|$)/.test(global.location.search||''))return;
@@ -81,6 +86,6 @@ async function runSafeHardReset(ops){
   if(typeof x.reload==='function')x.reload();
   return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
 }
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,diagnosticSnapshot,showDiagnosticPanel,runSafeHardReset});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,diagnosticSnapshot,renderDiagnosticPanel,showDiagnosticPanel,runSafeHardReset});
 installDiagnosticTrigger();
 })(window);
