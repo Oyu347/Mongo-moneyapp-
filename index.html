@@ -12545,6 +12545,7 @@ auth.onAuthStateChanged(async user=>{
       console.warn('Cloud clear queued for retry',e);
       window.MONGO_LAST_CLEAR_FAILURE={
         code:e&&e.code||e&&e.message||'CLOUD_CLEAR_FAILED',
+        detail:safeStr(e&&e.detail||e&&e.message,180),
         missingPaths:safeArray(e&&e.missingPaths),
         issues:safeArray(e&&e.verification&&e.verification.issues).map(x=>({path:safeStr(x&&x.path,40),reason:safeStr(x&&x.reason,80)}))
       };
@@ -15256,7 +15257,8 @@ select.fi{touch-action:pan-y;cursor:pointer}
       const failure=window.MONGO_LAST_CLEAR_FAILURE||{};
       const paths=[...(failure.missingPaths||[]),...(failure.issues||[]).map(x=>x.path)].filter(Boolean);
       const detail=[...new Set(paths)].join(', ');
-      showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.'+(detail?' Асуудалтай байрлал: '+detail:''));
+      const reason=detail||failure.detail||failure.code||'';
+      showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.'+(reason?' Шалтгаан: '+reason:''));
     }
   };
   const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.5 RESET';
