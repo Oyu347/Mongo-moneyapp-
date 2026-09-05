@@ -57,12 +57,19 @@ function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);
 function diagnosticSnapshot(){
   let lastFinancialWriteError='';
   try{lastFinancialWriteError=global.MONGO_LAST_FINANCIAL_WRITE_ERROR||'';}catch(e){}
-  return Object.freeze({
-    mongoCloudLoaded:true,
-    requiredMirrors:[...REQUIRED_MIRRORS],
-    lastFinancialWriteError,
-    capturedAt:new Date().toISOString()
-  });
+  return Object.freeze({mongoCloudLoaded:true,requiredMirrors:[...REQUIRED_MIRRORS],lastFinancialWriteError,capturedAt:new Date().toISOString()});
+}
+function showDiagnosticPanel(){
+  const old=document.getElementById('mongo-cloud-diagnostic-panel');if(old)old.remove();
+  const snap=diagnosticSnapshot(),panel=document.createElement('div');panel.id='mongo-cloud-diagnostic-panel';
+  panel.style.cssText='position:fixed;z-index:2147483647;left:12px;right:12px;top:12px;max-height:82vh;overflow:auto;background:#fff;color:#111;border:2px solid #b91c1c;border-radius:14px;padding:14px;font:13px/1.45 monospace;box-shadow:0 8px 30px rgba(0,0,0,.28);white-space:pre-wrap;word-break:break-word';
+  const close=document.createElement('button');close.textContent='Хаах';close.type='button';close.style.cssText='float:right;padding:7px 12px;margin:0 0 8px 10px';close.onclick=()=>panel.remove();panel.appendChild(close);
+  const title=document.createElement('strong');title.textContent='Möngö Cloud diagnostic (READ ONLY)';panel.appendChild(title);
+  const pre=document.createElement('pre');pre.style.cssText='clear:both;margin:12px 0 0;white-space:pre-wrap;word-break:break-word';pre.textContent=JSON.stringify(snap,null,2);panel.appendChild(pre);document.body.appendChild(panel);return snap;
+}
+function installDiagnosticTrigger(){
+  if(!global.location||!/(?:[?&])cloudDiag=1(?:&|$)/.test(global.location.search||''))return;
+  const ready=()=>{if(!document.body)return setTimeout(ready,50);showDiagnosticPanel();};ready();
 }
 async function runSafeHardReset(ops){
   const x=ops||{};
@@ -74,5 +81,6 @@ async function runSafeHardReset(ops){
   if(typeof x.reload==='function')x.reload();
   return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
 }
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,diagnosticSnapshot,runSafeHardReset});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,diagnosticSnapshot,showDiagnosticPanel,runSafeHardReset});
+installDiagnosticTrigger();
 })(window);
