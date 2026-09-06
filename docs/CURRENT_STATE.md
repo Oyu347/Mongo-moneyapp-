@@ -25,86 +25,70 @@
 - Verified baseline commit: `7ea64684074f6f5f33ee3b65d4abddcc70bbc53d`
 - Workbook normal working branch: `development-modular`
 - Current experimental/debug branch: `fix/safe-delete-all-data`
+- Current tested safe-delete commit: `07bb506cf98d75e2bb22065f503072526a68ad4f`
 - Experimental branch must NOT silently replace the verified baseline.
-- Do NOT modify `main` or production as part of this investigation.
+- Do NOT modify `main` or production without separate approval.
 
 ## Current status
 
-**Status:** 🔴 BLOCKED / INVESTIGATING
+**Status:** 🟢 USER-VERIFIED ON SAFE VERCEL PREVIEW / NOT YET PROMOTED
 
-### Current problem
-Delete All Data / Cloud clear work exposed a startup/data-persistence regression on the safe branch.
+### Root cause and correction
 
-Observed user-facing result:
-- A disposable test account previously contained about ₮448,000 of data.
-- On a fresh Vercel Preview, BEFORE pressing Delete All Data, the account opened with zero/empty financial state.
-- Cloud indicator appeared green.
-- Therefore Delete All Data must NOT be considered verified and Delete testing must not continue until startup persistence is understood.
+The earlier timeline is now corrected:
+- The disposable account previously contained about ₮448,000.
+- A Delete All Data attempt occurred BEFORE the `getClientId()` fix. The hard-reset sequence had already cleared local state before Cloud clear failed with `getClientId is not defined`; therefore the later empty dashboard was not evidence that commit `613b9cc` itself lost the data.
+- Commit `613b9cc41cbcc981e751555df2b7e6d165b7c2c4` restored the stable Cloud client-ID helper in `src/services/cloud/cloud.js`.
+- Full runtime inspection then identified a second legacy Cloud path: the V43.37 guaranteed financial sync directly read/wrote only `users/{uid}/financial/main` (plus a root fallback write), bypassing the modern five-mirror candidate/quarantine/clear-barrier/tombstone protections. It could race the canonical CloudDataService and resurrect stale state after a clear.
+- Commit `07bb506cf98d75e2bb22065f503072526a68ad4f` (`Fix legacy V43.37 direct cloud sync`) disables that legacy direct single-mirror sync in `index.html` and leaves canonical CloudDataService authoritative.
 
-### Last targeted change
-- Commit under investigation: `613b9cc` — `Restore stable Cloud client ID helper`.
-- Intended scope was only restoring the missing Cloud client-ID helper on `fix/safe-delete-all-data`.
-- This change is NOT a verified baseline.
+## Protected behavior retained
 
-## Protected state — DO NOT DO during current investigation
+The safe-delete fix did NOT intentionally change:
+- five required Firebase financial mirrors: `appState`, `financial`, `settings`, `profile`, `user-root`;
+- active local clear barrier;
+- clear tombstone behavior;
+- strict read-back verification;
+- 4.5-second quarantine for in-flight autosaves;
+- two-pass clear/final verification;
+- financial formulas, Accounts/Transfers/Budget/Savings/Loans/Investments;
+- seven-language behavior or branding.
 
-- Do NOT press Delete All Data on the current disposable account.
-- Do NOT add new test data to that account yet.
-- Do NOT treat the empty dashboard as proof that Delete succeeded.
-- Do NOT modify `main` or production.
-- Do NOT promote/merge the safe branch into `development-modular`.
-- Do NOT change financial formulas, seven-language behavior, branding, Accounts/Transfers/Budget/Savings/Loans/Investments while diagnosing this startup issue.
-- Do NOT replace the verified V44.12.30 baseline.
+## User validation — 2026-09-06
+
+Validated on Android phone and safe Vercel Preview for `fix/safe-delete-all-data`:
+
+1. Patched local HTML opened normally; core UI/navigation rendered normally — PASS.
+2. Fresh safe Vercel Preview opened the disposable account at the expected current empty state — PASS.
+3. Refresh + waiting did not resurrect the old stale data — PASS.
+4. Logout/login did not resurrect the old stale data — PASS.
+5. New controlled test state was created: opening balance ₮100,000, income ₮50,000, expense ₮10,000, resulting current balance ₮140,000 — PASS.
+6. Delete All Data cleared the test state to ₮0 and removed account/transaction data — PASS.
+7. Subsequent refresh did not resurrect the deleted test data — PASS.
+8. Subsequent logout/login did not resurrect the deleted test data — PASS.
+
+Result: the previously observed stale-Cloud resurrection was NOT reproduced after the V43.37 direct-sync fix. The safe Vercel Preview Delete All Data flow is user-verified for this controlled test.
 
 ## Relevant prior checkpoint
 
-`docs/modularization/PROGRESS.md` contains the earlier Cloud Clear/Reset Phase 2 solution and must be consulted before changing reset logic. It records:
+`docs/modularization/PROGRESS.md` contains Cloud Clear/Reset Phase 2:
 - authoritative active local clear barrier;
-- five Firebase financial mirrors: `appState`, `financial`, `settings`, `profile`, `user-root`;
+- five Firebase financial mirrors;
 - strict clear verification before barrier release;
 - `PARTIAL_CLOUD_MIRROR_WRITE` handling;
 - commits `5ad1ad79e53b8d3a37421691df37794134d37e02`, `a3788eefd12ccd325010e1813e45cd14c82015fb`, `a0e463ef4faa553a361115abfc1b27669e6d7ac7`.
 
-Do not reinvent or bypass this design without evidence that it is the root cause.
-
-## Investigation hypotheses
-
-Determine which of these actually occurred; do not guess:
-
-1. Empty local startup state was saved to Cloud before the first Cloud load and overwrote existing data.
-2. A previous clear barrier/tombstone/quarantine state was applied on startup and suppressed/cleared the old data.
-3. `getClientId()` produced or selected a different client/device identity, causing the app to read/write a different Cloud namespace or record.
-4. Another startup ordering or candidate-selection regression exists.
-
-Important: a Vercel Preview has its own origin. If client ID is stored in origin-scoped browser storage, a new Preview URL may create a new ID. This is only a hypothesis until the actual Cloud document/key contract is inspected.
+Do not weaken or bypass this design.
 
 ## Next exact action
 
-**INSPECT ONLY — no code change yet.**
+**DO NOT promote automatically.**
 
-1. Fetch commit `613b9cc` and its parent in `Oyu347/Mongo-moneyapp-`.
-2. Compare the exact diff and identify the actual `cloud.js` path/functions changed.
-3. Trace the safe-branch startup sequence in order:
-   - authentication/user resolution;
-   - client/device ID resolution;
-   - local-state initialization;
-   - clear barrier/tombstone/quarantine checks;
-   - first Cloud read/load;
-   - candidate/conflict selection;
-   - first save and queued-save flush.
-4. Determine whether data is actually deleted/overwritten in Firebase, hidden behind another namespace/client ID, or blocked by clear-state logic.
-5. Report evidence and the smallest safe fix scope BEFORE editing code.
-
-## Completion rule for current issue
-
-This issue may move out of BLOCKED only after:
-- root cause is evidenced;
-- minimal safe fix is applied on the experimental branch only;
-- relevant automated/static checks pass;
-- fresh Preview opens without losing existing data;
-- refresh/re-login preserves data;
-- only then may Delete All Data testing resume;
-- Delete All Data becomes VERIFIED only after user-facing test confirms all intended data stays deleted and no stale Cloud mirror resurrects it.
+1. Preserve `07bb506cf98d75e2bb22065f503072526a68ad4f` as the safe-branch user-tested checkpoint.
+2. Run/inspect relevant automated regression checks for the safe-delete branch and confirm no regression in Cloud reset wiring.
+3. If checks are green, prepare a controlled comparison/integration plan from `fix/safe-delete-all-data` to `development-modular`.
+4. Obtain user approval before merging/promoting the experimental fix.
+5. Keep `main`/production untouched until a separately approved release step.
 
 ## Session handoff rule
 
@@ -121,4 +105,4 @@ If a result becomes a durable verified checkpoint, also append it to `docs/modul
 ---
 
 Last updated: 2026-09-06
-Status: BLOCKED / INVESTIGATING — startup/data persistence regression before Delete test
+Status: USER-VERIFIED ON SAFE VERCEL PREVIEW — safe-delete stale-data resurrection not reproduced; promotion pending automated checks and explicit approval
