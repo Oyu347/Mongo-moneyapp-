@@ -3345,6 +3345,46 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 </div><!-- /main -->
 </div><!-- /app-root -->
 
+<script id="mongo-cloud-runtime-phone-inline">
+// Möngö Cloud — Phase 2 reset safety
+(function(global){
+'use strict';
+const MIRROR_REASONS=Object.freeze(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
+const LEGACY_SOURCES=Object.freeze(['legacy-financial','settings-fallback','profile-fallback','user-root-fallback']);
+const REQUIRED_MIRRORS=Object.freeze(['appState','financial','settings','profile','user-root']);
+function stamp(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
+function chooseCloudOrLocal(input){const x=input||{},local=x.local||{},cloud=x.cloud||{},localHas=!!x.localHas,cloudHas=!!x.cloudHas;if(cloudHas&&!localHas)return {winner:'cloud',source:'cloud'};if(localHas&&!cloudHas)return {winner:'local',source:'local-migrate'};if(!localHas&&!cloudHas)return {winner:'cloud',source:'cloud-empty'};const localTime=stamp(local.clientUpdatedAt||x.localUpdatedAt),cloudTime=stamp(cloud.clientUpdatedAt||x.cloudUpdatedAt);if(localTime&&cloudTime&&localTime>cloudTime)return {winner:'local',source:'local-newer'};return {winner:'cloud',source:'cloud'};}
+function candidateTime(candidate){const raw=candidate&&candidate.raw||{};return stamp(raw.updatedAtClient||(raw.data&&raw.data.clientUpdatedAt));}
+function sortNewestCandidates(candidates){return [...(Array.isArray(candidates)?candidates:[])].sort((a,b)=>candidateTime(b)-candidateTime(a));}
+function makeCandidate(raw,source){return raw&&raw.data?{raw,source}:null;}
+function unwrapFinancialState(container,source){return makeCandidate(container&&container.financialState,source);}
+function compactCandidates(items){return (Array.isArray(items)?items:[]).filter(Boolean);}
+function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
+const REQUIRED_STATE_ARRAYS=Object.freeze(['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones']);
+function stateCompleteness(data){const d=data&&typeof data==='object'?data:{},missing=REQUIRED_STATE_ARRAYS.filter(k=>!Array.isArray(d[k]));if(!d.budgets||typeof d.budgets!=='object'||Array.isArray(d.budgets))missing.push('budgets');return {complete:missing.length===0,missing};}
+function stateRevision(data){const n=Number(data&&data.moneyLedgerRevision);return Number.isFinite(n)&&n>=0?n:0;}
+function stateRichness(data){const d=data&&typeof data==='object'?data:{};return REQUIRED_STATE_ARRAYS.reduce((sum,k)=>sum+(Array.isArray(d[k])?d[k].length:0),0)+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;}
+function safeCandidateOrder(a,b){const ad=a&&a.raw&&a.raw.data,bd=b&&b.raw&&b.raw.data;return stateRevision(bd)-stateRevision(ad)||stateRichness(bd)-stateRichness(ad)||candidateTime(b)-candidateTime(a);}
+function selectSafeLoadCandidate(candidates){const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};}
+function activeClearBarrier(barrier){return !!(barrier&&barrier.active!==false&&barrier.clearedAt&&barrier.data);}
+function selectLoadCandidateWithBarrier(candidates,isMeaningful,barrier){const cloudDecision=selectLoadCandidate(candidates,isMeaningful);if(!activeClearBarrier(barrier))return Object.assign({},cloudDecision,{barrierActive:false,cloudDecision});const raw={clearedAt:barrier.clearedAt,updatedAtClient:barrier.clearedAt,data:barrier.data};const selected={raw,source:'local-clear-barrier'};return {selected,newest:cloudDecision.newest,ordered:cloudDecision.ordered,clearMarker:true,barrierActive:true,cloudDecision};}
+function requiresCanonicalMigration(source){return LEGACY_SOURCES.includes(String(source||''));}
+function chooseClearBarrier(input){const x=input||{},barrier=x.barrier||null;if(!barrier||!barrier.data)return {useBarrier:false};const barrierTime=stamp(barrier.clearedAt),localTime=stamp(x.localUpdatedAt),cloudTime=stamp(x.newestCloudUpdatedAt);return {useBarrier:!!barrierTime&&barrierTime>=localTime&&barrierTime>=cloudTime,barrierTime,localTime,cloudTime};}
+function queueItemAllowedAfterClear(item,barrier){if(!barrier||!barrier.clearedAt)return true;if(item&&item.reason==='clear-tombstone')return true;return stamp(item&&item.createdAt)>stamp(barrier.clearedAt);}
+function filterQueueAfterClear(queue,barrier){return (Array.isArray(queue)?queue:[]).filter(item=>queueItemAllowedAfterClear(item,barrier));}
+function queueChangedByBarrier(queue,barrier){const before=Array.isArray(queue)?queue:[],after=filterQueueAfterClear(before,barrier);return {queue:after,removed:before.length-after.length,changed:after.length!==before.length};}
+function mirrorRequired(reason){return MIRROR_REASONS.includes(String(reason||''));}
+function shouldSkipFingerprint(fp,lastFp,reason){return fp===lastFp&&!mirrorRequired(reason);}
+function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear-tombstone'?((clean&&clean.clientUpdatedAt)||updatedAtClient):null;}
+function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
+function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
+function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
+function getClientId(){const key='mongo_cloud_client_id_v1';try{let id=global.localStorage&&global.localStorage.getItem(key);if(!id){id='mongo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);if(global.localStorage)global.localStorage.setItem(key,id);}return id;}catch(e){return 'mongo-session-'+Math.random().toString(36).slice(2,10);}}
+async function runSafeHardReset(ops){const x=ops||{};if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');x.emptyMemory();x.purgeLocal();const cloudCleared=await x.clearFinancialData();if(cloudCleared===false)throw new Error('reset-cloud-clear-failed');x.emptyMemory();x.purgeLocal();if(typeof x.reload==='function')x.reload();return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};}
+global.getClientId=getClientId;
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
+})(window);
+</script>
 <script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/storage/storage.js"></script>
 <script>
 /* Phase 1L phone-inline: exact-compatible Core subset required by current app callers. */
@@ -11696,20 +11736,6 @@ auth.onAuthStateChanged(async user=>{
       renderMongoTrialCard();
       refreshMongoTrialAccess();
     }catch(e){console.warn('Billing refresh after auth bootstrap failed',e);}
-    try{
-      if(window.CloudDataService && typeof window.CloudDataService.loadFinancialData==='function'){
-        setTimeout(async ()=>{
-          try{
-            await window.CloudDataService.loadFinancialData({silent:true});
-            // Seed/mirror the resolved state so a different device can read it
-            // even when its Firestore rules expose a different compatible path.
-            if(typeof window.CloudDataService.saveFinancialData==='function'){
-              await window.CloudDataService.saveFinancialData('bootstrap-mirror');
-            }
-          }catch(e){console.warn('Login cloud mirror failed',e);}
-        },120);
-      }
-    }catch(e){}
   } else {
     appRoot.style.display='none';
     loginPage.classList.add('show');
@@ -11994,6 +12020,41 @@ auth.onAuthStateChanged(async user=>{
     try{localStorage.setItem(uidKey(CLEAR_BARRIER_KEY_PREFIX),JSON.stringify({clearedAt,data}));}catch(e){}
   }
 
+  function clearPayloadIsEmpty(data){
+    const d=safeObj(data);
+    return !hasMeaningfulFinancialData(d) &&
+      safeArray(d.txns).length===0 && safeArray(d.goals).length===0 &&
+      safeArray(d.debts).length===0 && safeArray(d.invests).length===0 &&
+      safeArray(d.moneyAccounts).length===0 && safeArray(d.accountTransfers).length===0 &&
+      safeArray(d.moneyLedger).length===0 && safeArray(d.moneyLedgerTombstones).length===0 &&
+      Object.keys(safeObj(d.budgets)).length===0;
+  }
+
+  async function verifyCloudFinancialClear(uid,clearedAt){
+    const expected=Date.parse(clearedAt||'')||0;
+    const refs=[
+      ['appState',cloudDocRef(uid),false],
+      ['financial',legacyCloudDocRef(uid),false],
+      ['settings',settingsCloudDocRef(uid),true],
+      ['profile',profileCloudDocRef(uid),true],
+      ['user-root',rootCloudDocRef(uid),true]
+    ];
+    const issues=[];
+    await Promise.all(refs.map(async([path,ref,wrapped])=>{
+      if(!ref){issues.push({path,reason:'missing_ref'});return;}
+      try{
+        const snap=await ref.get();
+        if(!snap.exists){issues.push({path,reason:'missing_mirror'});return;}
+        const container=snap.data()||{};
+        const raw=wrapped?container.financialState:container;
+        const actual=Date.parse(raw&&raw.clearedAt||'')||0;
+        if(!raw||!actual||actual<expected)issues.push({path,reason:'missing_or_old_clear_marker'});
+        else if(!clearPayloadIsEmpty(raw.data))issues.push({path,reason:'data_not_empty'});
+      }catch(e){issues.push({path,reason:'read_failed',error:e});}
+    }));
+    return {verified:issues.length===0,issues};
+  }
+
   function getQueue(){
     try{
       const raw=JSON.parse(localStorage.getItem(uidKey(QUEUE_KEY_PREFIX))||'[]').filter(Boolean);
@@ -12183,9 +12244,10 @@ auth.onAuthStateChanged(async user=>{
   }
 
   async function writeCloud(data,reason,expectedUid){
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    const isClearTombstone=reason==='clear-tombstone';
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
-    if(!uid || !accountReadyForCloud() || currentUid()!==uid) throw new Error('ACCOUNT_NOT_READY');
+    if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
     const clean=pruneUndefinedDeep(sanitizeFinancialData(data));
     if(!clean.clientUpdatedAt) clean.clientUpdatedAt=markLocalUpdated();
@@ -12195,7 +12257,7 @@ auth.onAuthStateChanged(async user=>{
     // writes must still run so users such as older accounts get financial/main
     // and the other compatible mirrors created automatically.
     if(window.MongoCloud.shouldSkipFingerprint(fp,lastCloudFingerprint,reason)) return {skipped:true};
-    if(!accountReadyForCloud() || currentUid()!==uid || window._authUid!==uid) throw new Error('AUTH_SWITCHED');
+    if(currentUid()!==uid || (!isClearTombstone&&(window._authUid!==uid||!accountReadyForCloud()))) throw new Error('AUTH_SWITCHED');
 
     const updatedAtClient=nowIso();
     const payload=window.MongoCloud.writeMetadata({
@@ -12273,7 +12335,7 @@ auth.onAuthStateChanged(async user=>{
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
     saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
     saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
-    return {ok:true,paths:savedPaths};
+    return {ok:true,paths:savedPaths,partial:false};
   }
 
   async function processQueue(){
@@ -12473,8 +12535,48 @@ auth.onAuthStateChanged(async user=>{
        or telling the user that nothing was cleared. */
     saveClearBarrier(clearedAt,emptyData);
     let cloudClearSynced=false;
-    try{await writeCloud(emptyData,'clear-tombstone',uid);cloudClearSynced=true;}
-    catch(e){console.warn('Cloud clear queued for retry',e);clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;}
+    window.MONGO_LAST_CLEAR_FAILURE=null;
+    try{
+      let firstPassError=null;
+      try{
+        await writeCloud(emptyData,'clear-tombstone',uid);
+        const firstVerification=await verifyCloudFinancialClear(uid,clearedAt);
+        if(!firstVerification.verified){
+          const err=new Error('CLEAR_VERIFICATION_FAILED');
+          err.code='CLEAR_VERIFICATION_FAILED';err.verification=firstVerification;
+          throw err;
+        }
+      }catch(e){
+        firstPassError=e;
+      }
+
+      /* V44.12.11 Early State Quarantine: an autosave already in flight can
+         finish after the first tombstone write. Keep the clear barrier active,
+         wait for that stale write to settle, then overwrite and verify every
+         Cloud mirror a second time before reporting success. */
+      await new Promise(resolve=>setTimeout(resolve,4500));
+      resetDefaultFinanceShell();
+      saveClearBarrier(clearedAt,emptyData);
+      lastCloudFingerprint='';
+      await writeCloud(emptyData,'clear-tombstone',uid);
+      const finalVerification=await verifyCloudFinancialClear(uid,clearedAt);
+      if(!finalVerification.verified){
+        const err=new Error('CLEAR_VERIFICATION_FAILED');
+        err.code='CLEAR_VERIFICATION_FAILED';err.verification=finalVerification;err.firstPassError=firstPassError;
+        throw err;
+      }
+      cloudClearSynced=true;
+    }
+    catch(e){
+      console.warn('Cloud clear queued for retry',e);
+      window.MONGO_LAST_CLEAR_FAILURE={
+        code:e&&e.code||e&&e.message||'CLOUD_CLEAR_FAILED',
+        detail:safeStr(e&&e.detail||e&&e.message,180),
+        missingPaths:safeArray(e&&e.missingPaths),
+        issues:safeArray(e&&e.verification&&e.verification.issues).map(x=>({path:safeStr(x&&x.path,40),reason:safeStr(x&&x.reason,80)}))
+      };
+      clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;
+    }
     try{
       if(cloudClearSynced)localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
@@ -12486,7 +12588,9 @@ auth.onAuthStateChanged(async user=>{
     window.MONGO_LOCAL_DATA_UPDATED_AT='';
     resetDefaultFinanceShell();
     updateSyncStatus(cloudClearSynced?'synced':'pending');
-    return true;
+    // Never report success or restart while any Cloud mirror rejected the
+    // tombstone. The queued tombstone must remain available for retry.
+    return cloudClearSynced;
   }
 
   window.CloudDataService={
@@ -13341,115 +13445,11 @@ body:not(.mongo-readonly) .calc-tab-btn.mongo-premium-tab::after{content:'💎';
 
 
 
-<script id="mongo-v437-guaranteed-financial-sync">
-/* Möngö V43.37 — Guaranteed cross-device financial bootstrap.
-   This runs independently of the older account-ready/queue timing so an
-   authenticated user's users/{uid}/financial/main document is always seeded
-   from meaningful local data, or meaningful cloud data is restored locally. */
-(function(){
-  if(window.MONGO_V437_GUARANTEED_SYNC) return;
-  window.MONGO_V437_GUARANTEED_SYNC=true;
-
-  function meaningful(d){
-    d=d&&typeof d==='object'?d:{};
-    const a=k=>Array.isArray(d[k])?d[k].length:0;
-    return a('txns')||a('goals')||a('debts')||a('invests')||(d.budgets&&typeof d.budgets==='object'&&Object.keys(d.budgets).length);
-  }
-  function clean(v){
-    try{return JSON.parse(JSON.stringify(v));}catch(e){return v;}
-  }
-  function ts(v){
-    const n=Date.parse(v||''); return Number.isFinite(n)?n:0;
-  }
-  function localState(){
-    try{
-      if(window.CloudDataService&&typeof window.CloudDataService.collectFinancialState==='function')
-        return clean(window.CloudDataService.collectFinancialState());
-    }catch(e){}
-    return null;
-  }
-  function applyCloud(d){
-    try{
-      if(window.CloudDataService&&typeof window.CloudDataService.applyFinancialState==='function')
-        return window.CloudDataService.applyFinancialState(clean(d),'v43.37-financial-direct');
-    }catch(e){console.warn('V43.37 direct cloud apply failed',e);}
-    return false;
-  }
-  async function syncOnce(user){
-    if(!user || !window.MONGO_FIREBASE || !window.MONGO_FIREBASE.db) return false;
-    const uid=user.uid;
-    if(!uid || !window.MONGO_FIREBASE.auth || !window.MONGO_FIREBASE.auth.currentUser || window.MONGO_FIREBASE.auth.currentUser.uid!==uid) return false;
-    const ref=window.MONGO_FIREBASE.db.collection('users').doc(uid).collection('financial').doc('main');
-    let snap=null, raw=null, cloudData=null;
-    try{ snap=await ref.get(); raw=snap.exists?snap.data():null; cloudData=raw&&raw.data?raw.data:null; }
-    catch(e){ window.MONGO_V437_LAST_ERROR='read: '+((e&&e.message)||e); console.warn('V43.37 financial read failed',e); return false; }
-
-    const local=localState();
-    const cloudHas=meaningful(cloudData), localHas=meaningful(local);
-    if(cloudHas){
-      const cloudTime=ts((raw&&raw.updatedAtClient)||(cloudData&&cloudData.clientUpdatedAt));
-      const localTime=ts(local&&local.clientUpdatedAt);
-      if(!localHas || cloudTime>=localTime){
-        applyCloud(cloudData);
-        window.MONGO_V437_LAST_ACTION='loaded-financial';
-        return true;
-      }
-    }
-    if(localHas){
-      const state=clean(local);
-      if(!state.clientUpdatedAt) state.clientUpdatedAt=new Date().toISOString();
-      const payload={
-        ownerUid:uid,
-        version:'v43.37-guaranteed-financial',
-        updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAtClient:new Date().toISOString(),
-        clientId:'v437-'+Math.random().toString(36).slice(2,10),
-        data:state,
-        backup:{updatedAtClient:new Date().toISOString(),data:state}
-      };
-      try{
-        await ref.set(payload,{merge:true});
-        // Keep root fallback too, so even a future path migration has a copy.
-        try{await window.MONGO_FIREBASE.db.collection('users').doc(uid).set({uid:uid,financialState:payload,financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),financialStateUpdatedAtClient:payload.updatedAtClient},{merge:true});}catch(_e){}
-        window.MONGO_V437_LAST_ACTION='saved-financial';
-        window.MONGO_V437_LAST_ERROR='';
-        return true;
-      }catch(e){
-        window.MONGO_V437_LAST_ERROR='write: '+((e&&e.message)||e);
-        console.warn('V43.37 financial write failed',e);
-        return false;
-      }
-    }
-    window.MONGO_V437_LAST_ACTION='no-meaningful-data-yet';
-    return false;
-  }
-
-  function start(user){
-    if(!user) return;
-    let tries=0;
-    const tick=async()=>{
-      if(!window.MONGO_FIREBASE||!window.MONGO_FIREBASE.auth||!window.MONGO_FIREBASE.auth.currentUser||window.MONGO_FIREBASE.auth.currentUser.uid!==user.uid) return;
-      tries++;
-      const ok=await syncOnce(user);
-      if(!ok && tries<30) setTimeout(tick,700);
-    };
-    setTimeout(tick,350);
-  }
-
-  const boot=()=>{
-    if(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth){
-      window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{ if(user) start(user); });
-      if(window.MONGO_FIREBASE.auth.currentUser) start(window.MONGO_FIREBASE.auth.currentUser);
-      return true;
-    }
-    return false;
-  };
-  if(!boot()){
-    let n=0; const iv=setInterval(()=>{ if(boot()||++n>80) clearInterval(iv); },100);
-  }
-  window.addEventListener('online',()=>{ try{ const u=window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser; if(u) start(u); }catch(e){} });
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ try{ const u=window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser; if(u) start(u); }catch(e){} } });
-})();
+<script id="mongo-v437-guaranteed-financial-sync-disabled">
+/* Möngö safe-delete fix: V43.37 direct single-mirror sync disabled.
+   Canonical CloudDataService is authoritative because it enforces the five-mirror
+   candidate, quarantine, clear-barrier and tombstone protections. */
+window.MONGO_V437_GUARANTEED_SYNC_DISABLED=true;
 </script>
 <!-- Möngö V43.58: unified loan activity, protected system flows, savings-account interest rules -->
 <style>
@@ -14416,6 +14416,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   if(document.getElementById('mongo-v4399-core-marker'))return;
   const PENDING_MAX_AGE=7*24*60*60*1000,COMMITTED_KEEP=5*60*1000;
   const journalKey=()=>`mongo_txn_commit_journal_${window._authUid||'guest'}`;
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{if(window.MONGO_HARD_RESET_ACTIVE)return true;const barrier=localStorage.getItem(`mongo_clear_barrier_${uid}`);if(!barrier)return false;const data=JSON.parse(localStorage.getItem(getDBKey())||'{}');return !((data.txns||[]).length||(data.accountTransfers||[]).length||(data.moneyLedger||[]).length||(data.debts||[]).length||(data.goals||[]).length||(data.invests||[]).length);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const readJournal=()=>{try{return (JSON.parse(localStorage.getItem(journalKey())||'[]')||[]).filter(Boolean);}catch(e){return [];}};
   const writeJournal=rows=>{try{localStorage.setItem(journalKey(),JSON.stringify((rows||[]).slice(-300)));}catch(e){}};
   function cleanJournal(){
@@ -14432,6 +14433,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   };
   function forgetTransaction(id){writeJournal(readJournal().filter(x=>String(x?.txn?.id)!==String(id)));}
   function mergeJournal(){
+    if(resetBarrierActive()){writeJournal([]);return false;}
     const journal=cleanJournal();if(!journal.length)return false;let changed=false;const byId=new Map((txns||[]).map(t=>[String(t.id),t]));
     journal.forEach(x=>{if(!byId.has(String(x.txn.id))){txns.unshift(JSON.parse(JSON.stringify(x.txn)));changed=true;}});
     if(changed){try{saveData();rAll();rTxns();uDash();renderOpeningBalance();renderMoneyAccounts();}catch(e){console.error('Transaction journal merge failed',e);}}
@@ -14552,6 +14554,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   'use strict';
   const BUILD='V44.02',MAX_ROWS=5000;
   const ledgerKey=()=>`mongo_transaction_ledger_v4398_${window._authUid||'guest'}`;
+  const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{if(window.MONGO_HARD_RESET_ACTIVE)return true;const barrier=localStorage.getItem(`mongo_clear_barrier_${uid}`);if(!barrier)return false;const data=JSON.parse(localStorage.getItem(getDBKey())||'{}');return !((data.txns||[]).length||(data.accountTransfers||[]).length||(data.moneyLedger||[]).length||(data.debts||[]).length||(data.goals||[]).length||(data.invests||[]).length);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const clone=v=>JSON.parse(JSON.stringify(v));
   const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&t.id!=null;
   function readLedger(){
@@ -14574,6 +14577,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     },180);
   }
   function mergeLedger(){
+    if(resetBarrierActive()){writeLedger([]);return false;}
     const stored=readLedger();if(!stored.length)return false;
     const current=new Map((txns||[]).filter(isMoneyTxn).map(t=>[String(t.id),t]));let changed=false;
     stored.forEach(t=>{const id=String(t.id),old=current.get(id);if(!old||rowTime(t)>rowTime(old)){current.set(id,clone(t));changed=true;}});
@@ -15125,7 +15129,6 @@ select.fi{touch-action:pan-y;cursor:pointer}
         const k=localStorage.key(i);
         if(k&&(
           /^mongo_v4(?:_|$)/.test(k)||
-          /^mongo_sync_queue_/.test(k)||
           /^mongo_cloud_snapshot_/.test(k)||
           /^mongo_sync_meta_/.test(k)||
           /^mongo_local_updated_/.test(k)||
@@ -15146,12 +15149,39 @@ select.fi{touch-action:pan-y;cursor:pointer}
     const svc=window.CloudDataService,originalApply=svc&&typeof svc.applyFinancialState==='function'?svc.applyFinancialState.bind(svc):null;
     if(svc&&originalApply)svc.applyFinancialState=function(raw,source){const has=(raw?.txns||[]).length+(raw?.accountTransfers||[]).length+(raw?.debts||[]).length+(raw?.goals||[]).length;if(window.MONGO_HARD_RESET_ACTIVE&&has>0)return false;return originalApply(raw,source);};
     try{
-      emptyMemory();purgeLocalFinance();resetOverlay('Дотоод бүртгэл болон үндсэн мөнгөний бүртгэлийг цэвэрлэж байна…');await wait(300);
-      if(svc&&typeof svc.clearFinancialData==='function'){resetOverlay('Үүлэн хадгалалтын бүх хуулбарыг хоосолж байна…');await svc.clearFinancialData();emptyMemory();await wait(900);await svc.clearFinancialData();}
-      emptyMemory();purgeLocalFinance();
-      if(svc&&typeof svc.loadFinancialData==='function'){resetOverlay('Хоосон төлөв хадгалагдсан эсэхийг шалгаж байна…');await wait(1000);await svc.loadFinancialData({force:true});}
-      emptyMemory();purgeLocalFinance();resetOverlay('Цэвэрлэгээ дууслаа. Аппыг дахин нээж байна…');await wait(900);window.MONGO_HARD_RESET_ACTIVE=false;window.MongoWeb.reload(0);
-    }catch(e){console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();showToast('Бүрэн цэвэрлэгээ дууссангүй. Дахин оролдоно уу.');}
+      const runReset=window.MongoCloud&&typeof window.MongoCloud.runSafeHardReset==='function'
+        ? window.MongoCloud.runSafeHardReset
+        : async ops=>{ops.emptyMemory();ops.purgeLocal();await ops.clearFinancialData();ops.emptyMemory();ops.purgeLocal();if(ops.reload)ops.reload();};
+      resetOverlay('Дотоод бүртгэл болон үндсэн мөнгөний бүртгэлийг цэвэрлэж байна…');await wait(300);
+      await runReset({
+        emptyMemory,
+        purgeLocal:purgeLocalFinance,
+        clearFinancialData:async()=>{
+          resetOverlay('Үүлэн хадгалалтын бүх хуулбарыг хоосолж байна…');
+          if(!svc||typeof svc.clearFinancialData!=='function')throw new Error('cloud-clear-unavailable');
+          const cleared=await svc.clearFinancialData();
+          if(cleared===false)throw new Error('cloud-clear-failed');
+          const uid=window._authUid||(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid);
+          if(uid&&!localStorage.getItem('mongo_clear_barrier_'+uid))throw new Error('clear-barrier-missing');
+          return true;
+        },
+        reload:()=>{
+          resetOverlay('Цэвэрлэгээ дууслаа. Аппыг дахин нээж байна…');
+          window.MONGO_HARD_RESET_ACTIVE=false;
+          setTimeout(()=>{
+            if(window.MongoWeb&&typeof window.MongoWeb.reload==='function')window.MongoWeb.reload(0);
+            else window.location.reload();
+          },900);
+        }
+      });
+    }catch(e){
+      console.warn('Hard reset failed',e);window.MONGO_HARD_RESET_ACTIVE=false;hardResetRunning=false;document.getElementById('mongo-hard-reset-overlay')?.remove();
+      const failure=window.MONGO_LAST_CLEAR_FAILURE||{};
+      const paths=[...(failure.missingPaths||[]),...(failure.issues||[]).map(x=>x.path)].filter(Boolean);
+      const detail=[...new Set(paths)].join(', ');
+      const reason=detail||failure.detail||failure.code||'';
+      showToast('Cloud-ийн бүх хуулбар цэвэрлэгдээгүй. Устгал хүлээгдэж байна — аппыг дахин нээхгүй байна.'+(reason?' Шалтгаан: '+reason:''));
+    }
   };
   const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent='V44.12.5 RESET';
 })();
