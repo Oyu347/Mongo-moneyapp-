@@ -1,0 +1,44 @@
+name: Wire Cloud runtime safely
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.ref == 'refs/heads/fix/safe-delete-all-data'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/safe-delete-all-data
+          fetch-depth: 0
+
+      - name: Guard branch and clean tree
+        run: |
+          test "$(git branch --show-current)" = "fix/safe-delete-all-data"
+          test -z "$(git status --porcelain)"
+
+      - name: Wire Cloud runtime
+        run: node scripts/wire-cloud-runtime.mjs index.html
+
+      - name: Verify exact minimal index change
+        run: |
+          git diff --check
+          git diff --exit-code -- src/services/cloud/cloud.js src/services/cloud/delete-all-data-runtime.js || true
+          test "$(git diff --numstat -- index.html | awk '{print $1":"$2}')" = "1:0"
+          test "$(grep -Foc '<script src=\"src/services/cloud/cloud.js\"></script>' index.html)" = "1"
+          git diff -- index.html
+
+      - name: Commit wiring only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          test "$(git diff --cached --name-only | wc -l)" = "1"
+          test "$(git diff --cached --name-only)" = "index.html"
+          git commit -m "Wire Cloud runtime before cloud writer"
+          git push origin HEAD:fix/safe-delete-all-data

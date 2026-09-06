@@ -54,14 +54,24 @@ function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear
 function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
+function getClientId(){
+  const key='mongo_cloud_client_id_v1';
+  try{
+    let id=global.localStorage&&global.localStorage.getItem(key);
+    if(!id){id='mongo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);if(global.localStorage)global.localStorage.setItem(key,id);}
+    return id;
+  }catch(e){return 'mongo-session-'+Math.random().toString(36).slice(2,10);}
+}
 async function runSafeHardReset(ops){
   const x=ops||{};
   if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');
   x.emptyMemory();x.purgeLocal();
-  await x.clearFinancialData();
+  const cloudCleared=await x.clearFinancialData();
+  if(cloudCleared===false)throw new Error('reset-cloud-clear-failed');
   x.emptyMemory();x.purgeLocal();
   if(typeof x.reload==='function')x.reload();
   return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
 }
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,runSafeHardReset});
+global.getClientId=getClientId;
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
 })(window);

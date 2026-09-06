@@ -93,7 +93,6 @@ Important limitation: the full clean prepared HTML remains local and has NOT bee
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
 
-
 ## Cloud Clear/Reset Phase 2 — 2026-08-31
 - Live Android phone validation exposed a production-path regression not covered by the earlier deterministic reset test: local financial state reached zero, then stale Cloud mirrors partially resurrected accounts and balances.
 - Observed sequence: the device showed all-zero local totals first; about one minute later old account metadata returned without its matching transaction/card graph. The reset verification also surfaced `EMPTY_VERIFY_WRITE_FAILED`.
@@ -105,3 +104,17 @@ Record exact commits, tests actually performed, unresolved risks and exact next 
 - Commits: Cloud barrier policy `5ad1ad79e53b8d3a37421691df37794134d37e02`; strict runtime clear/verify `a3788eefd12ccd325010e1813e45cd14c82015fb`; regression coverage `a0e463ef4faa553a361115abfc1b27669e6d7ac7`.
 - Local Node regression passed: active barrier blocks stale data, verified five-mirror clear succeeds, partial clear rejects, and stale mirrors fail verification.
 - Remaining requirement: wait for GitHub Actions on the branch head, then wire the verified Phase 2 driver contract into a new phone checkpoint. Do not reuse the V44.12.8 reset checkpoint and do not modify `main`.
+
+## Safe Delete live Vercel checkpoint — 2026-09-06
+- Investigation branch: `fix/safe-delete-all-data`; protected verified lineage remains V44.12.30 and `main` remains untouched.
+- Earlier failed Delete timeline was corrected: local data had already been cleared by the hard-reset sequence before Cloud clear failed on missing `getClientId`; the later empty dashboard was therefore not attributed to the helper fix.
+- Commit `613b9cc41cbcc981e751555df2b7e6d165b7c2c4` restored stable `getClientId()` in `src/services/cloud/cloud.js`.
+- Full runtime inspection identified legacy V43.37 guaranteed financial sync as a bypass: it directly read/wrote `users/{uid}/financial/main` and root fallback independently of the canonical five-mirror/barrier/tombstone path, creating a stale-data resurrection race.
+- Commit `07bb506cf98d75e2bb22065f503072526a68ad4f` (`Fix legacy V43.37 direct cloud sync`) disabled the legacy direct single-mirror sync while retaining canonical CloudDataService protections.
+- Android local-file smoke test passed: patched runtime opened normally and core UI/navigation rendered normally.
+- Safe Vercel Preview startup test passed: refresh + wait did not resurrect old stale data; logout/login also remained empty.
+- Controlled live test state: opening balance ₮100,000 + income ₮50,000 - expense ₮10,000 = ₮140,000 current balance.
+- User executed Delete All Data; dashboard returned to ₮0 and account/transaction state was removed.
+- Subsequent refresh and logout/login remained ₮0; deleted test state did not resurrect.
+- User-facing result: **PASS — stale Cloud resurrection was not reproduced after the V43.37 direct-sync fix.**
+- This is a user-verified safe-branch/live-Preview checkpoint, not an automatic production promotion. Relevant automated regressions must be confirmed before controlled integration to `development-modular`, and user approval is required before promotion/merge. `main`/production remain untouched.
