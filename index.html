@@ -11697,20 +11697,6 @@ auth.onAuthStateChanged(async user=>{
       renderMongoTrialCard();
       refreshMongoTrialAccess();
     }catch(e){console.warn('Billing refresh after auth bootstrap failed',e);}
-    try{
-      if(window.CloudDataService && typeof window.CloudDataService.loadFinancialData==='function'){
-        setTimeout(async ()=>{
-          try{
-            await window.CloudDataService.loadFinancialData({silent:true});
-            // Seed/mirror the resolved state so a different device can read it
-            // even when its Firestore rules expose a different compatible path.
-            if(typeof window.CloudDataService.saveFinancialData==='function'){
-              await window.CloudDataService.saveFinancialData('bootstrap-mirror');
-            }
-          }catch(e){console.warn('Login cloud mirror failed',e);}
-        },120);
-      }
-    }catch(e){}
   } else {
     appRoot.style.display='none';
     loginPage.classList.add('show');
