@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+vm.runInThisContext(fs.readFileSync('src/features/archive/archive.js','utf8'));
+assert.equal(MongoArchive.goalCompleted({target:100,saved:99},99),false);
+assert.equal(MongoArchive.goalCompleted({target:100,saved:100},100),true);
+assert.equal(MongoArchive.goalCompleted({target:100,saved:20},125),true);
+assert.equal(MongoArchive.debtCompleted({total:100,remaining:0},0),true);
+assert.equal(MongoArchive.debtCompleted({total:100,remaining:1},1),false);
+assert.equal(MongoArchive.assetGroupArchived({items:[{archivedAt:'x'},{archivedAt:'y'}]}),true);
+assert.equal(MongoArchive.assetGroupArchived({items:[{archivedAt:'x'},{}]}),false);
+console.log('completed archive classification pass');
