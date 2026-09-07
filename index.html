@@ -15867,6 +15867,83 @@ window.MongoGoalRelinkV5={archiveOldGoal,accountSaved};
 })();
 </script>
 
+
+<script id="mongo-goal-relink-fix-v6">
+(function(){
+'use strict';
+const eff=g=>typeof getGoalEffectiveSaved==='function'?Math.max(0,Number(getGoalEffectiveSaved(g))||0):Math.max(0,Number(g?.saved)||0);
+const done=g=>!!window.MongoArchive?.goalCompleted(g,eff(g));
+if(window.MongoArchive){
+  window.MongoArchive.goalArchived=(g,saved)=>!!g?.archivedAt||window.MongoArchive.goalCompleted(g,saved);
+}
+function bal(a){
+  try{if(typeof accountBalance==='function')return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){}
+  return Math.max(0,Number(a?.balance)||Number(a?.openingBalance)||0);
+}
+function pct(g){const t=Math.max(0,Number(g?.target)||0);return t?Math.min(100,Math.round(eff(g)/t*100)):0;}
+function stripArchived(sel){
+  if(!sel)return;
+  [...sel.options].forEach(o=>{
+    if(!o.value||o.value==='__new__')return;
+    const g=(goals||[]).find(x=>String(x.id)===String(o.value));
+    if(g&&window.MongoArchive?.goalArchived(g,eff(g)))o.remove();
+  });
+}
+document.addEventListener('pointerdown',e=>{
+  if(e.target?.id==='account-linked-goal'||e.target?.id==='edit-linked-goal')setTimeout(()=>stripArchived(e.target),0);
+},true);
+document.addEventListener('focusin',e=>{
+  if(e.target?.id==='account-linked-goal'||e.target?.id==='edit-linked-goal')setTimeout(()=>stripArchived(e.target),0);
+},true);
+
+const base=window.editMoneyAccount;
+if(typeof base==='function'&&!base.__v6){
+ const wrapped=async function(id){
+   await base(id);
+   setTimeout(()=>{
+     const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+     const btn=document.getElementById('account-edit-save'),sel=document.getElementById('edit-linked-goal');
+     if(!a||!btn||!sel)return;
+     stripArchived(sel);
+     const inherited=btn.onclick;
+     btn.onclick=async function(ev){
+       const oldId=String(a.linkedGoalId||a.goalId||'');
+       const oldG=(goals||[]).find(g=>String(g.id)===oldId);
+       const creating=sel.value==='__new__';
+       if(creating&&oldG&&!done(oldG)){
+         const nm=(document.getElementById('account-edit-name')?.value||'').trim();
+         const msg={
+           mn:`“${oldG.name}” зорилго ${pct(oldG)}% биелсэн байна. Дуусгалгүй архивлаад “${nm}” шинэ зорилго руу шилжүүлэх үү?`,
+           en:`“${oldG.name}” is ${pct(oldG)}% complete. Archive it unfinished and move to the new goal “${nm}”?`
+         }[lang]||`Archive “${oldG.name}” unfinished and move to the new goal?`;
+         if(typeof showConfirm==='function'&&!(await showConfirm(msg)))return;
+         oldG.archivedAt=new Date().toISOString();
+         oldG.archiveReason='goal_switched';
+         oldG.lifecycleHistory=Array.isArray(oldG.lifecycleHistory)?oldG.lifecycleHistory:[];
+         oldG.lifecycleHistory.push({type:'switched_unfinished',toGoalName:nm,savedAtSwitch:eff(oldG),progressAtSwitch:pct(oldG),amount:bal(a),date:new Date().toISOString().slice(0,10),createdAt:new Date().toISOString()});
+       }
+       const beforeIds=new Set((goals||[]).map(g=>String(g.id)));
+       const result=typeof inherited==='function'?await inherited.call(this,ev):undefined;
+       if(creating){
+         const newG=(goals||[]).find(g=>String(g.id)===String(a.linkedGoalId))||(goals||[]).find(g=>!beforeIds.has(String(g.id)));
+         if(newG){
+           newG.saved=bal(a);
+           if(oldG&&oldG.lifecycleHistory?.length){
+             const h=oldG.lifecycleHistory[oldG.lifecycleHistory.length-1];
+             if(h&&!h.toGoalId){h.toGoalId=newG.id;h.toGoalName=newG.name;}
+           }
+           try{saveData();rGoals();rBList();renderMoneyAccounts();}catch(_){}
+         }
+       }
+       return result;
+     };
+   },0);
+ };
+ wrapped.__v6=true;window.editMoneyAccount=wrapped;
+}
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
