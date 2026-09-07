@@ -15779,6 +15779,65 @@ if(typeof oldDecorate==='function'&&!oldDecorate.__switchHistoryDecorated){
 })();
 </script>
 
+
+<style id="mongo-account-edit-mobile-v4">
+/* Keep account editor usable on short/mobile screens. */
+#account-edit-modal .modal-card,
+#accountEditModal .modal-card,
+.account-edit-modal .modal-card{
+  max-height:92dvh !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+#account-edit-modal .modal-body,
+#accountEditModal .modal-body,
+.account-edit-modal .modal-body{
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  min-height:0;
+  padding-bottom:110px !important;
+}
+#account-edit-modal .modal-actions,
+#accountEditModal .modal-actions,
+.account-edit-modal .modal-actions{
+  position:sticky !important;
+  bottom:0;
+  z-index:20;
+  background:var(--card,#fff);
+  padding-top:10px;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));
+}
+</style>
+<script id="mongo-account-goal-name-dedupe-v4">
+(function(){
+'use strict';
+function syncNewGoalName(){
+ const select=document.getElementById('edit-linked-goal');
+ if(!select||select.value!=='__new__')return;
+ const accountName=(document.getElementById('account-edit-name')?.value||'').trim();
+ const goalName=document.getElementById('edit-new-goal-name');
+ if(goalName&&accountName){
+   goalName.value=accountName;
+   const wrap=goalName.closest('.field,.form-field,.input-group')||goalName.parentElement;
+   if(wrap)wrap.style.display='none';
+ }
+}
+document.addEventListener('click',e=>{
+ if(e.target.closest('#edit-linked-goal,[data-goal-option],.goal-option')) setTimeout(syncNewGoalName,0);
+});
+document.addEventListener('change',e=>{
+ if(e.target?.id==='edit-linked-goal')setTimeout(syncNewGoalName,0);
+});
+document.addEventListener('input',e=>{
+ if(e.target?.id==='account-edit-name')syncNewGoalName();
+});
+const mo=new MutationObserver(()=>syncNewGoalName());
+mo.observe(document.documentElement,{subtree:true,childList:true});
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
