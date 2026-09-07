@@ -15775,6 +15775,76 @@ window.delGoal=async function(id){
 })();
 </script>
 
+
+<style id="mongo-goal-archive-timeline-v9">
+.mongo-archive-month{margin:14px 0 7px;padding:8px 12px;border-radius:14px;background:rgba(73,176,182,.09);font-size:12px;font-weight:900;color:var(--text,#374151)}
+.mongo-goal-move-note{margin:8px 14px 2px;padding:8px 11px;border-radius:12px;background:rgba(73,176,182,.08);font-size:11px;font-weight:800;color:var(--text2,#5f6b7a)}
+</style>
+<script id="mongo-goal-archive-timeline-v9">
+(function(){
+'use strict';
+const tx={
+ mn:{move:n=>`→ “${n}” зорилго руу шилжсэн`,months:['1 сар','2 сар','3 сар','4 сар','5 сар','6 сар','7 сар','8 сар','9 сар','10 сар','11 сар','12 сар']},
+ en:{move:n=>`→ Moved to “${n}” goal`},
+ zh:{move:n=>`→ 已转至“${n}”目标`},
+ ja:{move:n=>`→ 「${n}」目標へ移行`},
+ ko:{move:n=>`→ “${n}” 목표로 이동`},
+ ru:{move:n=>`→ Перенесено в цель «${n}»`},
+ de:{move:n=>`→ Zum Ziel „${n}“ gewechselt`}
+};
+function L(){return tx[window.lang]||tx.mn}
+function hist(g){const a=Array.isArray(g?.lifecycleHistory)?g.lifecycleHistory:[];return a[a.length-1]||null}
+function dateOf(g){
+ const h=hist(g);
+ return h?.date||String(g?.archivedAt||g?.completedAt||g?.updatedAt||g?.createdAt||'').slice(0,10);
+}
+function monthLabel(ds){
+ const d=/^(\d{4})-(\d{2})/.exec(ds||''); if(!d)return '';
+ const y=d[1],m=Number(d[2]);
+ if(window.lang==='mn')return `${y} оны ${m} сар`;
+ try{return new Intl.DateTimeFormat(window.lang||'en',{year:'numeric',month:'long'}).format(new Date(Number(y),m-1,1))}catch(_){return `${y}-${String(m).padStart(2,'0')}`}
+}
+function decorate(){
+ const roots=[...document.querySelectorAll('.mongo-archive-list')];
+ roots.forEach(root=>{
+   [...root.querySelectorAll('.mongo-archive-month,.mongo-goal-move-note')].forEach(x=>x.remove());
+   const cards=[...root.children].filter(x=>x.classList?.contains('inv-card')||x.classList?.contains('goal-card'));
+   const rows=[];
+   cards.forEach(card=>{
+     const text=card.textContent||'';
+     const g=(goals||[]).find(x=>x?.name&&text.includes(x.name));
+     if(!g)return;
+     const h=hist(g),ds=dateOf(g);
+     rows.push({card,g,h,ds,key:(ds||'0000-00').slice(0,7)});
+   });
+   rows.sort((a,b)=>(b.ds||'').localeCompare(a.ds||''));
+   let last='';
+   rows.forEach(r=>{
+     if(r.key!==last){
+       const head=document.createElement('div');head.className='mongo-archive-month';head.textContent=monthLabel(r.ds);
+       root.appendChild(head);last=r.key;
+     }
+     root.appendChild(r.card);
+     if(r.g.archiveReason==='goal_switched'&&r.h?.toGoalName){
+       const note=document.createElement('div');note.className='mongo-goal-move-note';
+       note.textContent=`${L().move(r.h.toGoalName)}${r.ds?' · '+r.ds:''}`;
+       r.card.appendChild(note);
+     }
+   });
+ });
+}
+document.addEventListener('click',e=>{
+ if(e.target.closest('.mongo-archive-box,summary'))setTimeout(decorate,30);
+},true);
+const old=window.rGoals;
+if(typeof old==='function'&&!old.__archiveTimelineV9){
+ const w=function(){const r=old.apply(this,arguments);setTimeout(decorate,20);return r};
+ w.__archiveTimelineV9=true;window.rGoals=w;
+}
+setTimeout(decorate,80);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
