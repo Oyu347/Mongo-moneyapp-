@@ -12468,7 +12468,10 @@ auth.onAuthStateChanged(async user=>{
         }else if(chosen.source==='local-newer' || chosen.source==='local-migrate'){
           enqueueSave(chosen.source==='local-migrate'?'first-cloud-migration':'conflict-local-newer',chosen.data);
         }
-        await processQueue();
+        /* Startup performance: the selected financial state is already applied.
+           Flush any pending Cloud writes in the background so login UI is not
+           blocked by network retries; queue safety and clear barriers remain active. */
+        scheduleQueueProcess();
         if(ok && !(options&&options.silent) && typeof showToast==='function') showToast(window.MongoI18n.ownValue(L,'dataLoaded','Cloud өгөгдөл ачааллагдлаа ✓'));
         updateSyncStatus(getQueue().length?'pending':'synced');
         return ok;
