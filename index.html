@@ -15944,6 +15944,53 @@ if(typeof base==='function'&&!base.__v6){
 })();
 </script>
 
+
+<script id="mongo-savings-goal-delete-undo-v7">
+(function(){
+'use strict';
+const same=(a,b)=>String(a??'')===String(b??'');
+const isSavingsTransfer=(t,gid)=>t&&t.purpose==='savings'&&same(t.targetId,gid);
+function refresh(){
+  try{saveData();}catch(_){}
+  try{rAll();}catch(_){}
+  try{rGoals();}catch(_){}
+  try{rBList();}catch(_){}
+  try{rBProg();}catch(_){}
+  try{uDash();}catch(_){}
+  try{renderMoneyAccounts();}catch(_){}
+}
+window.delGoal=async function(id){
+  const g=(goals||[]).find(x=>same(x.id,id)); if(!g)return;
+  if(!await showConfirm(L.confirmDel))return;
+
+  // Goal deletion is a true undo for savings funding:
+  // removing the original internal transfers restores each source account
+  // and removes those transfer-history rows without creating income/expense.
+  const removed=(accountTransfers||[]).filter(t=>isSavingsTransfer(t,id));
+  accountTransfers=(accountTransfers||[]).filter(t=>!isSavingsTransfer(t,id));
+
+  // Keep savings accounts themselves. Only detach the deleted goal.
+  (moneyAccounts||[]).forEach(a=>{
+    if(same(a.linkedGoalId,id))a.linkedGoalId=null;
+    if(same(a.goalId,id))a.goalId=null;
+  });
+
+  // Remove only the goal object/history. No bank account is deleted.
+  goals=(goals||[]).filter(x=>!same(x.id,id));
+
+  // If a derived ledger exists, discard entries for the removed transfers.
+  // saveData/reconciliation can rebuild the canonical ledger from source arrays.
+  if(Array.isArray(window.moneyLedger)&&removed.length){
+    const ids=new Set(removed.map(t=>'transfer:'+String(t.id)));
+    window.moneyLedger=moneyLedger.filter(e=>!ids.has(String(e?.id)));
+    try{moneyLedger=window.moneyLedger;}catch(_){}
+  }
+
+  refresh();
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
