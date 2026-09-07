@@ -12468,7 +12468,10 @@ auth.onAuthStateChanged(async user=>{
         }else if(chosen.source==='local-newer' || chosen.source==='local-migrate'){
           enqueueSave(chosen.source==='local-migrate'?'first-cloud-migration':'conflict-local-newer',chosen.data);
         }
-        await processQueue();
+        /* Startup performance: the selected financial state is already applied.
+           Flush any pending Cloud writes in the background so login UI is not
+           blocked by network retries; queue safety and clear barriers remain active. */
+        scheduleQueueProcess();
         if(ok && !(options&&options.silent) && typeof showToast==='function') showToast(window.MongoI18n.ownValue(L,'dataLoaded','Cloud өгөгдөл ачааллагдлаа ✓'));
         updateSyncStatus(getQueue().length?'pending':'synced');
         return ok;
@@ -12624,7 +12627,7 @@ auth.onAuthStateChanged(async user=>{
         let tries=0;
         const waitReady=()=>{
           if(currentUid()!==uid) return;
-          if(accountReadyForCloud()){ loadCloudFinancialData({silent:false}); return; }
+          if(accountReadyForCloud()){ Promise.resolve(loadCloudFinancialData({silent:false})).finally(()=>window.dispatchEvent(new Event('mongo:cloud-load-complete'))); return; }
           if(++tries<80) setTimeout(waitReady,100);
         };
         setTimeout(waitReady,60);
@@ -15292,7 +15295,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     svc.loadFinancialData=async function(){showLoginMask();try{return await load(...arguments);}finally{setTimeout(hideLoginMask,120);}};
     svc.__v441217LoginMask=true;return true;
   }
-  function bindAuthMask(){if(typeof auth==='undefined'||!auth||auth.__v441217MaskBound)return;auth.__v441217MaskBound=true;auth.onAuthStateChanged(user=>{if(user)showLoginMask();else hideLoginMask();});}
+  function bindAuthMask(){if(typeof auth==='undefined'||!auth||auth.__v441217MaskBound)return;auth.__v441217MaskBound=true;window.addEventListener('mongo:cloud-load-complete',hideLoginMask);auth.onAuthStateChanged(user=>{if(user)showLoginMask();else hideLoginMask();});}
   function boot(){install();installLoginMask();bindAuthMask();const badge=document.getElementById('mongo-build-version');if(badge)badge.textContent=BUILD+' SAFE';}
   window.repairSavingsTransferLinks=repairSavingsLinks;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();window.addEventListener('pageshow',boot);[500,1500,3500,7000].forEach(ms=>setTimeout(boot,ms));
