@@ -3,7 +3,9 @@ vm.runInThisContext(fs.readFileSync('src/features/archive/archive.js','utf8'));
 assert.equal(MongoArchive.goalCompleted({target:100,saved:99},99),false);
 assert.equal(MongoArchive.goalCompleted({target:100,saved:100},100),true);
 assert.equal(MongoArchive.goalCompleted({target:100,saved:20},125),true);
+assert.equal(MongoArchive.goalArchived({target:100,saved:50,archivedAt:'x'},50),true);
 assert.equal(MongoArchive.goalActive({target:100,saved:99},99),true);
+assert.equal(MongoArchive.goalActive({target:100,saved:99,archivedAt:'x'},99),false);
 assert.equal(MongoArchive.goalActive({target:100,saved:100},100),false);
 assert.equal(MongoArchive.debtCompleted({total:100,remaining:0},0),true);
 assert.equal(MongoArchive.debtCompleted({total:100,remaining:1},1),false);
@@ -12,4 +14,6 @@ assert.equal(MongoArchive.assetGroupArchived({items:[{archivedAt:'x'},{}]}),fals
 assert.equal(MongoArchive.assetGroupSold({items:[{soldAt:'x'},{soldAt:'y'}]}),true);
 assert.deepEqual(MongoArchive.assetSaleBreakdown(1000000,1300000),{costBasis:1000000,saleProceeds:1300000,pnl:300000,gain:300000,loss:0});
 assert.deepEqual(MongoArchive.assetSaleBreakdown(1000000,800000),{costBasis:1000000,saleProceeds:800000,pnl:-200000,gain:0,loss:200000});
+const undo=MongoArchive.savingsUndoPlan([{id:'a',goalId:'g',fromAccountId:'khan',toAccountId:'save',amount:300000},{id:'b',goalId:'g',fromAccountId:'cash',toAccountId:'save',amount:200000},{id:'c',goalId:'other',fromAccountId:'khan',toAccountId:'save',amount:900000}], 'g','save');
+assert.deepEqual(undo,{transferIds:['a','b'],bySource:{khan:300000,cash:200000},total:500000});
 console.log('completed archive lifecycle pass');
