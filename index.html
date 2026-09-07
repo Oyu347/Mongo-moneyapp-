@@ -15838,6 +15838,35 @@ mo.observe(document.documentElement,{subtree:true,childList:true});
 })();
 </script>
 
+
+<style id="mongo-account-edit-mobile-v5">
+#account-edit-modal .modal-card,#accountEditModal .modal-card,.account-edit-modal .modal-card{max-height:90dvh!important;margin-top:3dvh!important;margin-bottom:7dvh!important}
+#account-edit-modal .modal-body,#accountEditModal .modal-body,.account-edit-modal .modal-body{overflow-y:auto!important;-webkit-overflow-scrolling:touch;min-height:0!important;padding-bottom:150px!important}
+#account-edit-modal .modal-actions,#accountEditModal .modal-actions,.account-edit-modal .modal-actions{position:sticky!important;bottom:0!important;z-index:50!important;background:#fff!important;padding:12px 0 max(20px,env(safe-area-inset-bottom))!important}
+</style>
+<script id="mongo-goal-relink-v5">
+(function(){
+'use strict';
+const effective=g=>typeof getGoalEffectiveSaved==='function'?Math.max(0,Number(getGoalEffectiveSaved(g))||0):Math.max(0,Number(g?.saved)||0);
+const complete=g=>!!(window.MongoArchive&&window.MongoArchive.goalCompleted(g,effective(g)));
+function accountSaved(a){try{if(typeof accountBalance==='function')return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){}return Math.max(0,Number(a?.balance)||Number(a?.openingBalance)||0)}
+function archiveOldGoal(oldG,newG,a){
+ if(!oldG||!newG||String(oldG.id)===String(newG.id))return;
+ const wasComplete=complete(oldG),amount=accountSaved(a),now=new Date();
+ oldG.lifecycleHistory=Array.isArray(oldG.lifecycleHistory)?oldG.lifecycleHistory:[];
+ oldG.lifecycleHistory.push({type:wasComplete?'relinked':'switched_unfinished',toGoalId:newG.id,toGoalName:newG.name,amount,savedAtSwitch:effective(oldG),progressAtSwitch:oldG.target?Math.min(100,Math.round(effective(oldG)/(Number(oldG.target)||1)*100)):0,date:now.toISOString().slice(0,10),createdAt:now.toISOString()});
+ oldG.archivedAt=oldG.archivedAt||now.toISOString();oldG.archiveReason=wasComplete?'goal_relinked':'goal_switched';
+ newG.saved=amount;a.linkedGoalId=newG.id;a.goalId=newG.id;a.name=newG.name;
+}
+const originalRGoals=window.rGoals;
+if(typeof originalRGoals==='function'&&!originalRGoals.__v5){
+ const wrapped=function(){originalRGoals();setTimeout(()=>{document.querySelectorAll('#goal-list .goal-card').forEach(card=>{if(card.closest('.mongo-archive-list'))return;const text=card.textContent||'';const g=(goals||[]).find(x=>text.includes(x.name));if(!g||!g.archivedAt)return;const box=document.querySelector('#goal-list .mongo-archive-box');const list=box&&box.querySelector('.mongo-archive-list');if(list)list.appendChild(card)})},0)};
+ wrapped.__v5=true;window.rGoals=wrapped;
+}
+window.MongoGoalRelinkV5={archiveOldGoal,accountSaved};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
