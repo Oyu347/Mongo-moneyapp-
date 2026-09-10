@@ -16050,6 +16050,87 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+
+<script id="mongo-travel-link-diagnostic-v26">
+(function(){
+'use strict';
+
+function safe(v){ try{return String(v??'');}catch(_){return '';} }
+function n(v){ var x=Number(v); return Number.isFinite(x)?x:0; }
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function collect(){
+  var goalName='Аялал';
+  var goalId='1788767359713';
+  var rows=[];
+  var transfers=[];
+  var accounts=[];
+
+  try{
+    if(Array.isArray(window.goals)){
+      rows=window.goals.filter(g=>safe(g.id)===goalId || safe(g.name)===goalName)
+        .map(g=>({id:safe(g.id),name:safe(g.name),archivedAt:g.archivedAt||null,openingBalance:n(g.openingBalance)}));
+    }
+  }catch(_){}
+
+  try{
+    if(Array.isArray(window.accountTransfers)){
+      transfers=window.accountTransfers.filter(t=>
+        safe(t.date)==='2026-09-10' &&
+        (n(t.amount)===100000 || safe(t.targetId)===goalId)
+      ).map(t=>({
+        id:safe(t.id),date:safe(t.date),amount:n(t.amount),
+        purpose:safe(t.purpose),targetId:t.targetId==null?null:safe(t.targetId),
+        fromId:t.fromId==null?null:safe(t.fromId),toId:t.toId==null?null:safe(t.toId)
+      }));
+    }
+  }catch(_){}
+
+  try{
+    if(Array.isArray(window.moneyAccounts)){
+      accounts=window.moneyAccounts.filter(a=>
+        safe(a.linkedGoalId)===goalId || safe(a.goalId)===goalId || safe(a.name)===goalName
+      ).map(a=>({
+        id:safe(a.id),name:safe(a.name),type:safe(a.type),
+        linkedGoalId:a.linkedGoalId==null?null:safe(a.linkedGoalId),
+        goalId:a.goalId==null?null:safe(a.goalId)
+      }));
+    }
+  }catch(_){}
+
+  var gspent=null;
+  try{
+    if(typeof window.gSpent==='function'){
+      gspent=window.gSpent('Хуримтлал','Аялал',9,{key:'goal_'+goalId,names:{mn:'Аялал'}});
+    }
+  }catch(e){gspent='ERR:'+e.message;}
+
+  return {
+    expected:{goalId:goalId,name:goalName,date:'2026-09-10',newSavings:100000},
+    directRuntime:{goals:rows,accounts:accounts,transfers:transfers,gSpentSeptember:gspent},
+    note:"Хэрэв directRuntime хоосон байвал V24 шиг хадгалсан өгөгдлийн оношилгоог ашиглана. Энэ оношилгоо өгөгдөл өөрчлөхгүй."
+  };
+}
+
+function show(){
+  var d=collect();
+  var old=document.getElementById('mongo-v26-box');if(old)old.remove();
+  var b=document.createElement('div');b.id='mongo-v26-box';
+  b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
+  b.innerHTML='<button id="mongo-v26-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V26 — Аялал холбоосын оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
+  document.body.appendChild(b);
+  document.getElementById('mongo-v26-close').onclick=()=>b.remove();
+}
+function button(){
+  if(document.getElementById('mongo-v26-btn'))return;
+  var b=document.createElement('button');b.id='mongo-v26-btn';b.textContent='Аялал ₮100,000 оношлох V26';
+  b.style.cssText='position:fixed;right:12px;bottom:58px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
+  b.onclick=show;document.body.appendChild(b);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',button);else button();
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
