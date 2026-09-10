@@ -15963,6 +15963,37 @@ window.MongoSavingsBudgetLifecycle.isGoalActiveForFuture=function(g){
 <script id="mongo-savings-canonical-target-v19-marker">
 /* V19: savings transfers are canonicalized to the real goal id at creation time. */
 </script>
+
+<script id="mongo-v21-savings-link-normal">
+(()=>{
+'use strict';
+let repairing=false;
+function repairSavingsTransferLinks(persist=true){
+  if(repairing||!Array.isArray(accountTransfers)||!Array.isArray(moneyAccounts)||!Array.isArray(goals))return false;
+  const goalIds=new Set(goals.map(g=>String(g.id)));
+  const accounts=new Map(moneyAccounts.map(a=>[String(a.id),a]));
+  let changed=false;
+  accountTransfers.forEach(t=>{
+    if(!t||t.purpose==='savings')return;
+    const target=String(t.targetId??''),to=accounts.get(String(t.toId??''));
+    const linked=String(to?.linkedGoalId??to?.goalId??'');
+    if(normalizeAccountType(to?.type)==='savings'&&target&&goalIds.has(target)&&linked===target){
+      t.purpose='savings';t.updatedAt=t.updatedAt||new Date().toISOString();changed=true;
+    }
+  });
+  if(changed&&persist){
+    repairing=true;
+    try{saveData();}finally{repairing=false;}
+    try{rGoals();rBList();rBProg();uDash();renderMoneyAccounts();}catch(_){}
+  }
+  return changed;
+}
+window.repairSavingsTransferLinks=repairSavingsTransferLinks;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>repairSavingsTransferLinks(true));
+else repairSavingsTransferLinks(true);
+window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
