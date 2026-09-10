@@ -7665,7 +7665,13 @@ function renderTransferTarget(){
   }else if(purpose==='savings'){
     if(to){to.innerHTML='';to.style.display='none';}
     tar.style.removeProperty('display');
-    const linkedGoals=goals.filter(g=>active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id)));
+    const linkedGoals=goals.filter(g=>{
+      const saved=typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):(Number(g.saved)||0);
+      const goalIsActive=window.MongoArchive?.goalActive
+        ?!!window.MongoArchive.goalActive(g,saved)
+        :!(g.archivedAt||g.completedAt);
+      return goalIsActive&&active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id));
+    });
     tar.innerHTML=linkedGoals.map(g=>`<option value="${g.id}">🎯 ${g.name} · ${fmt(getGoalEffectiveSaved(g))}</option>`).join('');
     if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Холбогдсон хуримтлал эхлээд үүсгэнэ үү':'Create a linked savings goal first'}</option>`;
   }else if(purpose==='investment'){
@@ -15388,13 +15394,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
 (()=>{
   'use strict';
   const TXT={
-    mn:{search:'Шилжүүлэг шүүх',placeholder:'Нэр эсвэл огноогоор хайх',edit:'Шилжүүлгийн дүн, огноо засах',editAccount:'Засах',deactivate:'Идэвхгүй болгох',amount:'Дүн',date:'Огноо',cancel:'Болих',save:'Хадгалах',remove:'Энэ шилжүүлгийг устгах уу?',linked:'Холбогдсон хуримтлал/хөрөнгө оруулалтын дүн мөн шинэчлэгдэнэ.',notFound:'Шилжүүлэг олдсонгүй'},
-    en:{search:'Filter transfers',placeholder:'Search by name or date',edit:'Edit transfer amount and date',editAccount:'Edit',deactivate:'Deactivate',amount:'Amount',date:'Date',cancel:'Cancel',save:'Save',remove:'Delete this transfer?',linked:'The linked savings/investment amount will also update.',notFound:'No matching transfer'},
-    zh:{search:'筛选转账',placeholder:'按名称或日期搜索',edit:'修改转账金额和日期',editAccount:'编辑',deactivate:'停用',amount:'金额',date:'日期',cancel:'取消',save:'保存',remove:'删除此笔转账？',linked:'关联的储蓄/投资金额也会同步更新。',notFound:'未找到匹配的转账'},
-    ja:{search:'振替を絞り込む',placeholder:'名前または日付で検索',edit:'振替金額と日付を編集',editAccount:'編集',deactivate:'無効化',amount:'金額',date:'日付',cancel:'キャンセル',save:'保存',remove:'この振替を削除しますか？',linked:'連携する貯蓄・投資額も更新されます。',notFound:'該当する振替はありません'},
-    ko:{search:'이체 필터',placeholder:'이름 또는 날짜로 검색',edit:'이체 금액 및 날짜 수정',editAccount:'수정',deactivate:'비활성화',amount:'금액',date:'날짜',cancel:'취소',save:'저장',remove:'이 이체를 삭제할까요?',linked:'연결된 저축/투자 금액도 함께 업데이트됩니다.',notFound:'일치하는 이체가 없습니다'},
-    ru:{search:'Фильтр переводов',placeholder:'Поиск по названию или дате',edit:'Изменить сумму и дату перевода',editAccount:'Изменить',deactivate:'Деактивировать',amount:'Сумма',date:'Дата',cancel:'Отмена',save:'Сохранить',remove:'Удалить этот перевод?',linked:'Связанная сумма сбережений/инвестиций также обновится.',notFound:'Переводы не найдены'},
-    de:{search:'Überweisungen filtern',placeholder:'Nach Name oder Datum suchen',edit:'Betrag und Datum bearbeiten',editAccount:'Bearbeiten',deactivate:'Deaktivieren',amount:'Betrag',date:'Datum',cancel:'Abbrechen',save:'Speichern',remove:'Diese Überweisung löschen?',linked:'Der verknüpfte Spar-/Investitionsbetrag wird ebenfalls aktualisiert.',notFound:'Keine passenden Überweisungen'}
+    mn:{search:'Шилжүүлэг шүүх',placeholder:'Нэр эсвэл огноогоор хайх',edit:'Шилжүүлгийн дүн, огноо засах',editAccount:'Засах',deactivate:'Идэвхгүй болгох',amount:'Дүн',date:'Огноо',cancel:'Болих',save:'Хадгалах',remove:'Энэ шилжүүлгийг устгах уу?',linked:'Холбогдсон хуримтлал/хөрөнгө оруулалтын дүн мөн шинэчлэгдэнэ.',deleteBtn:'Устгах',returnTo:'буцаан нэмэгдэнэ',deductFrom:'хасагдана',totalSame:'Нийт мөнгө өөрчлөгдөхгүй.',notFound:'Шилжүүлэг олдсонгүй'},
+    en:{search:'Filter transfers',placeholder:'Search by name or date',edit:'Edit transfer amount and date',editAccount:'Edit',deactivate:'Deactivate',amount:'Amount',date:'Date',cancel:'Cancel',save:'Save',remove:'Delete this transfer?',linked:'The linked savings/investment amount will also update.',deleteBtn:'Delete',returnTo:'will be returned to',deductFrom:'will be deducted from',totalSame:'Total money will not change.',notFound:'No matching transfer'},
+    zh:{search:'筛选转账',placeholder:'按名称或日期搜索',edit:'修改转账金额和日期',editAccount:'编辑',deactivate:'停用',amount:'金额',date:'日期',cancel:'取消',save:'保存',remove:'删除此笔转账？',linked:'关联的储蓄/投资金额也会同步更新。',deleteBtn:'删除',returnTo:'将退回至',deductFrom:'将从中扣除',totalSame:'总资金不会改变。',notFound:'未找到匹配的转账'},
+    ja:{search:'振替を絞り込む',placeholder:'名前または日付で検索',edit:'振替金額と日付を編集',editAccount:'編集',deactivate:'無効化',amount:'金額',date:'日付',cancel:'キャンセル',save:'保存',remove:'この振替を削除しますか？',linked:'連携する貯蓄・投資額も更新されます。',deleteBtn:'削除',returnTo:'に戻ります',deductFrom:'から差し引かれます',totalSame:'合計資金は変わりません。',notFound:'該当する振替はありません'},
+    ko:{search:'이체 필터',placeholder:'이름 또는 날짜로 검색',edit:'이체 금액 및 날짜 수정',editAccount:'수정',deactivate:'비활성화',amount:'금액',date:'날짜',cancel:'취소',save:'저장',remove:'이 이체를 삭제할까요?',linked:'연결된 저축/투자 금액도 함께 업데이트됩니다.',deleteBtn:'삭제',returnTo:'계좌로 반환됩니다',deductFrom:'에서 차감됩니다',totalSame:'총 자금은 변하지 않습니다.',notFound:'일치하는 이체가 없습니다'},
+    ru:{search:'Фильтр переводов',placeholder:'Поиск по названию или дате',edit:'Изменить сумму и дату перевода',editAccount:'Изменить',deactivate:'Деактивировать',amount:'Сумма',date:'Дата',cancel:'Отмена',save:'Сохранить',remove:'Удалить этот перевод?',linked:'Связанная сумма сбережений/инвестиций также обновится.',deleteBtn:'Удалить',returnTo:'будет возвращено на счёт',deductFrom:'будет вычтено из',totalSame:'Общая сумма денег не изменится.',notFound:'Переводы не найдены'},
+    de:{search:'Überweisungen filtern',placeholder:'Nach Name oder Datum suchen',edit:'Betrag und Datum bearbeiten',editAccount:'Bearbeiten',deactivate:'Deaktivieren',amount:'Betrag',date:'Datum',cancel:'Abbrechen',save:'Speichern',remove:'Diese Überweisung löschen?',linked:'Der verknüpfte Spar-/Investitionsbetrag wird ebenfalls aktualisiert.',deleteBtn:'Löschen',returnTo:'wird zurückgebucht auf',deductFrom:'wird abgezogen von',totalSame:'Der Gesamtbetrag bleibt unverändert.',notFound:'Keine passenden Überweisungen'}
   };
   const tx=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
   const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -15423,8 +15429,25 @@ select.fi{touch-action:pan-y;cursor:pointer}
     document.body.appendChild(modal);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.getElementById('account-transfer-edit-cancel').onclick=()=>modal.remove();
     document.getElementById('account-transfer-edit-save').onclick=()=>{const next=parseAmt(document.getElementById('account-transfer-edit-amount').value),date=document.getElementById('account-transfer-edit-date').value;if(!(next>0)||!date)return;if(rejectInsufficientBalance(t.fromId,next,Number(t.amount)||0))return;const old=Number(t.amount)||0,inv=linkedInvestment(t);t.amount=next;t.date=date;t.updatedAt=new Date().toISOString();if(inv){const delta=next-old;inv.invested=Math.max(0,(Number(inv.invested)||0)+delta);inv.current=Math.max(0,(Number(inv.current)||0)+delta);inv.date=date;}modal.remove();refreshAfterTransferMutation();};
   };
-  window.deleteAccountTransfer=function(id){
-    const t=transferById(id);if(!t)return;const q=tx();if(!confirm(q.remove+'\n'+q.linked))return;
+  function accountNameById(id){const a=(moneyAccounts||[]).find(x=>String(x?.id)===String(id));return a?(typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):(a.name||'')):'';}
+  function askDeleteTransfer(t){
+    const q=tx(),from=accountNameById(t.fromId),to=accountNameById(t.toId),amount=fmt(Number(t.amount)||0);
+    document.getElementById('account-transfer-delete-modal')?.remove();
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.id='account-transfer-delete-modal';
+      modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:18px';
+      let detail=q.linked;
+      if(t.purpose==='savings'&&to&&from)detail=`${amount} ${to} ${q.deductFrom}; ${from} ${q.returnTo}. ${q.totalSame}`;
+      else if(t.purpose==='internal'&&to&&from)detail=`${amount} ${to} ${q.deductFrom}; ${from} ${q.returnTo}. ${q.totalSame}`;
+      modal.innerHTML=`<div class="account-transfer-edit-card"><div style="font-size:19px;font-weight:900;margin-bottom:10px">${q.remove}</div><div style="font-size:14px;line-height:1.55;color:#5b6472;margin-bottom:18px">${esc(detail)}</div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-sm" id="account-transfer-delete-cancel">${q.cancel}</button><button class="btn btn-p" id="account-transfer-delete-ok">${q.deleteBtn}</button></div></div>`;
+      const finish=v=>{modal.remove();resolve(v);};document.body.appendChild(modal);
+      modal.onclick=e=>{if(e.target===modal)finish(false);};
+      document.getElementById('account-transfer-delete-cancel').onclick=()=>finish(false);
+      document.getElementById('account-transfer-delete-ok').onclick=()=>finish(true);
+    });
+  }
+  window.deleteAccountTransfer=async function(id){
+    const t=transferById(id);if(!t)return;if(!await askDeleteTransfer(t))return;
     const inv=linkedInvestment(t);if(inv){const ix=(invests||[]).findIndex(x=>String(x?.id)===String(inv.id));if(ix>=0)invests.splice(ix,1);}
     const ix=(accountTransfers||[]).findIndex(x=>String(x?.id)===String(id));if(ix>=0)accountTransfers.splice(ix,1);refreshAfterTransferMutation();
   };
@@ -16014,7 +16037,7 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
 
-<!-- V29: purpose-safe transfer account choices + 7-language empty-state text. -->
+<!-- V30: app-owned 7-language transfer deletion confirmation + active-only savings targets. -->
 <script id="mongo-v28-travel-transfer-repair">
 (function(){
   function same(a,b){return String(a??'')===String(b??'');}
