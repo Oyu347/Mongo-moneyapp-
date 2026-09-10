@@ -93,7 +93,6 @@ Important limitation: the full clean prepared HTML remains local and has NOT bee
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
 
-
 ## Cloud Clear/Reset Phase 2 — 2026-08-31
 - Live Android phone validation exposed a production-path regression not covered by the earlier deterministic reset test: local financial state reached zero, then stale Cloud mirrors partially resurrected accounts and balances.
 - Observed sequence: the device showed all-zero local totals first; about one minute later old account metadata returned without its matching transaction/card graph. The reset verification also surfaced `EMPTY_VERIFY_WRITE_FAILED`.
@@ -105,3 +104,46 @@ Record exact commits, tests actually performed, unresolved risks and exact next 
 - Commits: Cloud barrier policy `5ad1ad79e53b8d3a37421691df37794134d37e02`; strict runtime clear/verify `a3788eefd12ccd325010e1813e45cd14c82015fb`; regression coverage `a0e463ef4faa553a361115abfc1b27669e6d7ac7`.
 - Local Node regression passed: active barrier blocks stale data, verified five-mirror clear succeeds, partial clear rejects, and stale mirrors fail verification.
 - Remaining requirement: wait for GitHub Actions on the branch head, then wire the verified Phase 2 driver contract into a new phone checkpoint. Do not reuse the V44.12.8 reset checkpoint and do not modify `main`.
+
+## Completed Cards Archive / Savings ↔ Budget feature work — 2026-09-10
+Branch: `feature/completed-cards-archive`. This is isolated feature work; it is NOT the verified baseline and is not approved for `main`.
+
+### Confirmed phone checkpoints
+- `PHONE PASS` Completed savings goal card moves to `Дууссан / Архив` while preserving data/history.
+- `PHONE PASS` Fully paid loan moves to archive while preserving payment history.
+- `PHONE PASS` Asset manual archive/restore basic flow preserves purchase history. Asset-sale financial flow remains unverified.
+- `PHONE PASS` Savings account goal switch (`Компьютер → Аялал`) keeps the stable savings account/history, carries the existing account balance into the new goal display, archives the unfinished old goal with switch history, and persists after refresh/logout-login.
+- `PHONE PASS` Savings goal deletion undo removes its linked savings transfers and restores the source-account effect while retaining/detaching the savings account. This behavior is protected during later Budget fixes.
+- `PHONE PASS` V13 bounded account-modal localization fixed the V12 UI freeze; Russian/Korean/Chinese Cancel/Save translations were visually confirmed.
+
+### Automated/static checkpoints
+- `AUTOMATED PASS` Run #99 on initial archive branch checkpoint (`a2c5e9c...`): browser-module-smoke and node-regression.
+- `AUTOMATED PASS` Run #100 on later lifecycle checkpoint with short SHA `498021e`: browser-module-smoke and node-regression. This does not prove later V13–V22 phone paths.
+- Helper commits include archive/lifecycle tests through `7a603eeab114855d6665686f1e47402485d3ce88`.
+
+### Failed Budget/Savings approaches that must not be repeated blindly
+- `PHONE FAIL` V14: zero/orphan Budget duplicate cleanup heuristic did not remove the existing duplicate Savings rows.
+- `PHONE FAIL` V15: stricter lifecycle-aware cleanup still did not remove the existing zero duplicate rows.
+- `NEEDS TEST` V16: goal deletion was changed to remove only the exact Budget subcategory `goal_<id>` and exact stored budget values. No clear phone confirmation of the Budget-cleanup portion is recorded; do not label it PASS. V7 transfer undo behavior must remain preserved.
+- V18/V19 changed/normalized Savings transfer linkage. V19 directly canonicalized new Savings transfer creation to real goal `targetId` and linked savings-account `toId`; observed goal/account balance increases are consistent with this path, but this alone did not fix Budget Progress.
+- `PHONE FAIL` V20 (`28429d3655634cfafc1dd5de137a9842c945952f`): Budget Progress remained ₮0 after changing `gSpent()` to use exact `goal_<id>` with `MongoBudget.savingsGoalActual`.
+- `PHONE FAIL` V21 (`b79d7db9cf5fa17bf51087e25fe19bdeab64d12c`): prior V44.12.12-style Savings-link repair plus canonical Budget path still left Savings Budget Progress at ₮0.
+
+### Current root-cause investigation
+Direct comparison against prior `Mongo-V44.12.12-SAVINGS-LINK-NORMAL.html` found:
+- `rBProg`, `getBudgetVal`, and `bSubKey` are unchanged between the prior working file and V21.
+- `MongoTransactions.makeTransfer` preserves `fromId`, `toId`, `amount`, `date`, `purpose`, and `targetId`.
+- V21 differs materially in `gSpent`: it trusts the Budget subcategory key `goal_<id>` and calculates actuals for that exact ID, while the older path could match Savings transfers through the goal/display name.
+- Strong current hypothesis: repeated goal create/delete/recreate testing left stale/orphan Savings Budget subcategory IDs. A visible row such as `Газар` may carry an old `goal_<oldId>` while the active `Газар` goal and new Savings transfer use a new goal ID. This exactly explains a Savings card/account increasing while Budget Progress stays ₮0.
+- This stale-ID diagnosis is HIGH-CONFIDENCE but NOT YET RUNTIME-PROVEN. Do not migrate Budget IDs until runtime evidence confirms it.
+
+### V22 diagnostic result
+- `PHONE FAIL` diagnostic only: `index-completed-lifecycle-v22-diagnostic.html` displayed `budgetMonth: 0`, `budgetYear: 0`, `budgetRows: []`, `savingsTransfers: []` while the actual Budget UI behind it contained data.
+- Cause: V22 attempted to inspect lexical runtime state through `window.goals`, `window.accountTransfers`, `window.bCatsExp`, etc.; those variables are not exposed there in this runtime. This does NOT disprove the stale-ID hypothesis and does NOT mean user data is empty.
+- V22 made no financial mutation and preserved the V7 deletion-undo and V16 exact Budget deletion code paths.
+
+### Exact next diagnostic
+Instrument the authoritative lexical-scope Budget calculation path itself rather than reading guessed `window.*` state. Capture, at the moment `rBProg()` calls `gSpent(nm,snm,month,sb)`, the Savings Budget row display name, `sb.key`, extracted goal ID, returned actual, and the matching Savings transfer/goal linkage available in the same lexical scope. The diagnostic must be read-only. If stale Budget ID ↔ active goal ID mismatch is proven, repair the Budget subcategory linkage in one controlled migration rather than adding another permanent name-based `gSpent()` fallback.
+
+### Protected behavior for the next fix
+Do not regress goal deletion undo, source-account restoration, savings-account retention/detachment, historical current-month Budget plans/actuals, manual Budget overrides, internal-transfer accounting, or total-money invariants. Do not touch `main` or change the verified V44.12.30 baseline.
