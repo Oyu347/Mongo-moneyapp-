@@ -15864,36 +15864,36 @@ setTimeout(decorate,80);
 })();
 </script>
 
-
-<script id="mongo-lifecycle-actions-i18n-v11">
+<script id="mongo-account-actions-i18n-v13">
 (function(){
 'use strict';
 const A={
- mn:{cancel:'Болих',save:'Хадгалах'},
- en:{cancel:'Cancel',save:'Save'},
- zh:{cancel:'取消',save:'保存'},
- ja:{cancel:'キャンセル',save:'保存'},
- ko:{cancel:'취소',save:'저장'},
- ru:{cancel:'Отмена',save:'Сохранить'},
+ mn:{cancel:'Болих',save:'Хадгалах'}, en:{cancel:'Cancel',save:'Save'},
+ zh:{cancel:'取消',save:'保存'}, ja:{cancel:'キャンセル',save:'保存'},
+ ko:{cancel:'취소',save:'저장'}, ru:{cancel:'Отмена',save:'Сохранить'},
  de:{cancel:'Abbrechen',save:'Speichern'}
 };
-function lang(){
- const vals=[document.querySelector('#lang')?.value,document.querySelector('#language')?.value,document.documentElement.lang,window.currentLang,window.lang,localStorage.getItem('lang'),localStorage.getItem('language')].filter(Boolean).map(v=>String(v).toLowerCase());
+function code(){
+ const vals=[document.querySelector('#lang')?.value,document.querySelector('#language')?.value,
+ document.documentElement.lang,window.currentLang,window.lang,
+ localStorage.getItem('lang'),localStorage.getItem('language')].filter(Boolean).map(v=>String(v).toLowerCase());
  for(const v of vals){if(v.startsWith('mn'))return'mn';if(v.startsWith('en'))return'en';if(v.startsWith('zh')||v==='cn')return'zh';if(v.startsWith('ja')||v==='jp')return'ja';if(v.startsWith('ko')||v==='kr')return'ko';if(v.startsWith('ru'))return'ru';if(v.startsWith('de'))return'de'}
- const f=(document.querySelector('[id*="lang"]')?.textContent||document.querySelector('[class*="lang"]')?.textContent||'');
+ const f=(document.querySelector('[id*="lang"]')?.textContent||'');
  return f.includes('🇯🇵')?'ja':f.includes('🇰🇷')?'ko':f.includes('🇨🇳')?'zh':f.includes('🇷🇺')?'ru':f.includes('🇩🇪')?'de':f.includes('🇬🇧')||f.includes('🇺🇸')?'en':'mn';
 }
 function apply(){
- const t=A[lang()]||A.en;
- document.querySelectorAll('#account-edit-modal button').forEach(b=>{
-   const v=(b.textContent||'').trim();
-   if(['Cancel','Болих','取消','キャンセル','취소','Отмена','Abbrechen'].includes(v)) b.textContent=t.cancel;
-   if(['Save','Хадгалах','保存','저장','Сохранить','Speichern'].includes(v)) b.textContent=t.save;
- });
+ const m=document.getElementById('account-edit-modal'); if(!m)return;
+ const t=A[code()]||A.mn;
+ const cands=[...m.querySelectorAll('button')];
+ const cancel=cands.find(b=>['Cancel','Болих','取消','キャンセル','취소','Отмена','Abbrechen'].includes((b.textContent||'').trim()));
+ const save=document.getElementById('account-edit-save')||cands.find(b=>['Save','Хадгалах','保存','저장','Сохранить','Speichern'].includes((b.textContent||'').trim()));
+ if(cancel && cancel.textContent!==t.cancel) cancel.textContent=t.cancel;
+ if(save && save.textContent!==t.save) save.textContent=t.save;
 }
-new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
-document.addEventListener('click',()=>setTimeout(apply,0),true);
-setTimeout(apply,50);
+document.addEventListener('click',e=>{
+ if(e.target.closest('[onclick*="editMoneyAccount"],button,[data-language],[id*="lang"]')) setTimeout(apply,40);
+},true);
+document.addEventListener('change',()=>setTimeout(apply,20),true);
 })();
 </script>
 
