@@ -15808,7 +15808,28 @@ const I18N={
  ru:{changed:'Цель изменена',move:n=>`→ Перенесено в цель «${n}»`,month:(y,m)=>new Date(y,m-1,1).toLocaleString('ru',{month:'long',year:'numeric'}),confirm:(o,p,n)=>`Цель «${o}» выполнена на ${p}%. Архивировать её незавершённой и перейти к новой цели «${n}»?`},
  de:{changed:'Ziel gewechselt',move:n=>`→ Zum Ziel „${n}“ gewechselt`,month:(y,m)=>new Date(y,m-1,1).toLocaleString('de',{month:'long',year:'numeric'}),confirm:(o,p,n)=>`Das Ziel „${o}“ ist zu ${p}% erreicht. Unvollständig archivieren und zum neuen Ziel „${n}“ wechseln?`}
 };
-function T(){return I18N[window.lang]||I18N.en}
+function mongoUiLang(){
+ const vals=[
+   document.querySelector('#lang')?.value,
+   document.querySelector('#language')?.value,
+   document.querySelector('[data-language].active')?.getAttribute('data-language'),
+   document.documentElement.lang,
+   window.currentLang, window.lang,
+   localStorage.getItem('lang'), localStorage.getItem('language')
+ ].filter(Boolean).map(v=>String(v).toLowerCase());
+ for(const v of vals){
+   if(v.startsWith('mn'))return 'mn'; if(v.startsWith('en'))return 'en';
+   if(v.startsWith('zh')||v==='cn')return 'zh'; if(v.startsWith('ja')||v==='jp')return 'ja';
+   if(v.startsWith('ko')||v==='kr')return 'ko'; if(v.startsWith('ru'))return 'ru';
+   if(v.startsWith('de'))return 'de';
+ }
+ const flag=(document.querySelector('[id*="lang"]')?.textContent||document.querySelector('[class*="lang"]')?.textContent||'');
+ if(flag.includes('🇲🇳'))return 'mn'; if(flag.includes('🇬🇧')||flag.includes('🇺🇸'))return 'en';
+ if(flag.includes('🇨🇳'))return 'zh'; if(flag.includes('🇯🇵'))return 'ja'; if(flag.includes('🇰🇷'))return 'ko';
+ if(flag.includes('🇷🇺'))return 'ru'; if(flag.includes('🇩🇪'))return 'de';
+ return 'mn';
+}
+function T(){return I18N[mongoUiLang()]||I18N.mn}
 function hist(g){const a=Array.isArray(g?.lifecycleHistory)?g.lifecycleHistory:[];return a[a.length-1]||null}
 function dateOf(g){const h=hist(g);return h?.date||String(g?.archivedAt||g?.completedAt||g?.updatedAt||g?.createdAt||'').slice(0,10)}
 function monthLabel(ds){const m=/^(\d{4})-(\d{2})/.exec(ds||'');return m?T().month(Number(m[1]),Number(m[2])):''}
@@ -15834,8 +15855,45 @@ function decorate(){
 }
 const old=window.rGoals;
 if(typeof old==='function'&&!old.__archiveTimelineV10){const w=function(){const r=old.apply(this,arguments);setTimeout(decorate,20);return r};w.__archiveTimelineV10=true;window.rGoals=w}
-document.addEventListener('click',e=>{if(e.target.closest('.mongo-archive-box>summary'))setTimeout(decorate,25)},true);
+document.addEventListener('click',e=>{
+ if(e.target.closest('.mongo-archive-box>summary'))setTimeout(decorate,25);
+ if(e.target.closest('[id*="lang"],[class*="lang"],[data-language]'))setTimeout(decorate,120);
+},true);
+document.addEventListener('change',e=>{if(e.target.matches('#lang,#language,[data-language]'))setTimeout(decorate,50)},true);
 setTimeout(decorate,80);
+})();
+</script>
+
+
+<script id="mongo-lifecycle-actions-i18n-v11">
+(function(){
+'use strict';
+const A={
+ mn:{cancel:'Болих',save:'Хадгалах'},
+ en:{cancel:'Cancel',save:'Save'},
+ zh:{cancel:'取消',save:'保存'},
+ ja:{cancel:'キャンセル',save:'保存'},
+ ko:{cancel:'취소',save:'저장'},
+ ru:{cancel:'Отмена',save:'Сохранить'},
+ de:{cancel:'Abbrechen',save:'Speichern'}
+};
+function lang(){
+ const vals=[document.querySelector('#lang')?.value,document.querySelector('#language')?.value,document.documentElement.lang,window.currentLang,window.lang,localStorage.getItem('lang'),localStorage.getItem('language')].filter(Boolean).map(v=>String(v).toLowerCase());
+ for(const v of vals){if(v.startsWith('mn'))return'mn';if(v.startsWith('en'))return'en';if(v.startsWith('zh')||v==='cn')return'zh';if(v.startsWith('ja')||v==='jp')return'ja';if(v.startsWith('ko')||v==='kr')return'ko';if(v.startsWith('ru'))return'ru';if(v.startsWith('de'))return'de'}
+ const f=(document.querySelector('[id*="lang"]')?.textContent||document.querySelector('[class*="lang"]')?.textContent||'');
+ return f.includes('🇯🇵')?'ja':f.includes('🇰🇷')?'ko':f.includes('🇨🇳')?'zh':f.includes('🇷🇺')?'ru':f.includes('🇩🇪')?'de':f.includes('🇬🇧')||f.includes('🇺🇸')?'en':'mn';
+}
+function apply(){
+ const t=A[lang()]||A.en;
+ document.querySelectorAll('#account-edit-modal button').forEach(b=>{
+   const v=(b.textContent||'').trim();
+   if(['Cancel','Болих','取消','キャンセル','취소','Отмена','Abbrechen'].includes(v)) b.textContent=t.cancel;
+   if(['Save','Хадгалах','保存','저장','Сохранить','Speichern'].includes(v)) b.textContent=t.save;
+ });
+}
+new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',()=>setTimeout(apply,0),true);
+setTimeout(apply,50);
 })();
 </script>
 
