@@ -15995,63 +15995,58 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
 
-<script id="mongo-savings-budget-diagnostic-v24">
+<script id="mongo-budget-calc-diagnostic-v25">
 (function(){
 'use strict';
-function parse(v){try{return JSON.parse(v)}catch(_){return null}}
-function walk(x,path,out,seen){
-  if(!x||typeof x!=='object'||seen.has(x))return;
-  seen.add(x);
-  if(Array.isArray(x)){
-    if(x.length && x.some(v=>v&&typeof v==='object')){
-      const sample=x.slice(0,8);
-      const score={
-        goals:sample.filter(v=>v&&('target' in v||'targetAmount' in v||'archivedAt' in v)).length,
-        transfers:sample.filter(v=>v&&('purpose' in v||'targetId' in v||'fromId' in v||'toId' in v)).length,
-        budgetSubs:sample.filter(v=>v&&String(v.key||'').startsWith('goal_')).length
-      };
-      if(score.goals||score.transfers||score.budgetSubs)out.push({path:path,length:x.length,score:score,items:x});
-    }
-    x.forEach((v,i)=>walk(v,path+'['+i+']',out,seen));
-  }else{
-    Object.keys(x).forEach(k=>walk(x[k],path?path+'.'+k:k,out,seen));
-  }
+var installed=false, original=null;
+
+function install(){
+  if(installed || typeof window.gSpent!=='function') return false;
+  original=window.gSpent;
+  window.gSpent=function(catNm,subNm,month,subObj){
+    var result=original.apply(this,arguments);
+    try{
+      if(String(catNm||'').toLowerCase().includes('хуримт') ||
+         String(subObj?.key||'').startsWith('goal_')){
+        window.__mongoV25=window.__mongoV25||[];
+        var row={
+          at:new Date().toISOString(),
+          cat:String(catNm||''),
+          sub:String(subNm||''),
+          month:Number(month),
+          key:String(subObj?.key||''),
+          result:Number(result)||0
+        };
+        window.__mongoV25.push(row);
+        if(window.__mongoV25.length>100) window.__mongoV25.shift();
+      }
+    }catch(_){}
+    return result;
+  };
+  installed=true;
+  return true;
 }
-function snapshot(){
-  const found=[];
-  const keys=[];
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i), raw=localStorage.getItem(k), obj=parse(raw);
-    keys.push({key:k,bytes:raw?raw.length:0,json:!!obj});
-    if(obj)walk(obj,'localStorage.'+k,found,new WeakSet());
-  }
-  const candidates=found.map(c=>({
-    path:c.path,length:c.length,score:c.score,
-    items:c.items.slice(0,40).map(v=>({
-      id:v&&v.id, key:v&&v.key, name:v&&(v.name||(v.names&&v.names.mn)),
-      purpose:v&&v.purpose,targetId:v&&v.targetId,fromId:v&&v.fromId,toId:v&&v.toId,
-      amount:v&&v.amount,date:v&&v.date,linkedGoalId:v&&v.linkedGoalId,goalId:v&&v.goalId,
-      archivedAt:v&&v.archivedAt
-    }))
-  }));
-  return {storageKeys:keys,candidates:candidates};
-}
+
 function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function show(){
-  const d=snapshot(); window.__mongoV24Snapshot=d;
-  let old=document.getElementById('mongo-v24-box');if(old)old.remove();
-  let b=document.createElement('div');b.id='mongo-v24-box';
-  b.style.cssText='position:fixed;inset:4% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.4 monospace';
-  b.innerHTML='<button id="mongo-v24-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V24 — хадгалсан өгөгдлийн оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
-  document.body.appendChild(b);document.getElementById('mongo-v24-close').onclick=()=>b.remove();
+  install();
+  try{ if(typeof window.rBProg==='function') window.rBProg(); }catch(e){}
+  setTimeout(function(){
+    var d={installed:installed, calls:(window.__mongoV25||[]).slice(-50)};
+    var old=document.getElementById('mongo-v25-box');if(old)old.remove();
+    var b=document.createElement('div');b.id='mongo-v25-box';
+    b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
+    b.innerHTML='<button id="mongo-v25-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V25 — Budget бодолтын оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
+    document.body.appendChild(b);document.getElementById('mongo-v25-close').onclick=()=>b.remove();
+  },100);
 }
-function install(){
-  if(document.getElementById('mongo-v24-btn'))return;
-  let b=document.createElement('button');b.id='mongo-v24-btn';b.textContent='Өгөгдөл оношлох V24';
+function button(){
+  if(document.getElementById('mongo-v25-btn'))return;
+  var b=document.createElement('button');b.id='mongo-v25-btn';b.textContent='Budget бодолт оношлох V25';
   b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
   b.onclick=show;document.body.appendChild(b);
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',button);else button();
 })();
 </script>
 
