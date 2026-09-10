@@ -15937,6 +15937,70 @@ window.MongoSavingsBudgetLifecycle.isGoalActiveForFuture=function(g){
 })();
 </script>
 
+
+<script id="mongo-savings-target-link-v17">
+(function(){
+'use strict';
+
+function mongoV17GoalId(v){ return v==null ? '' : String(v); }
+
+function mongoV17RepairSavingsTransfer(t){
+  if(!t || t.purpose!=='savings') return false;
+  let changed=false;
+
+  // Canonical target is always the linked savings goal ID.
+  const toAccount=(moneyAccounts||[]).find(a=>mongoV17GoalId(a?.id)===mongoV17GoalId(t.toId));
+  const linkedId=toAccount ? (toAccount.linkedGoalId ?? toAccount.goalId ?? null) : null;
+
+  const targetExists=(goals||[]).some(g=>mongoV17GoalId(g?.id)===mongoV17GoalId(t.targetId));
+  if(!targetExists && linkedId && (goals||[]).some(g=>mongoV17GoalId(g?.id)===mongoV17GoalId(linkedId))){
+    t.targetId=linkedId;
+    changed=true;
+  }
+
+  // If target is valid but destination was lost, restore the linked savings account.
+  if(t.targetId && !toAccount){
+    const linkedAccount=(moneyAccounts||[]).find(a=>
+      a?.active!==false &&
+      normalizeAccountType(a?.type)==='savings' &&
+      mongoV17GoalId(a?.linkedGoalId ?? a?.goalId ?? '')===mongoV17GoalId(t.targetId)
+    );
+    if(linkedAccount){
+      t.toId=linkedAccount.id;
+      changed=true;
+    }
+  }
+  return changed;
+}
+
+function mongoV17RepairSavingsLinks(){
+  let changed=false;
+  (accountTransfers||[]).forEach(t=>{ if(mongoV17RepairSavingsTransfer(t)) changed=true; });
+  if(changed && typeof rebuildMoneyLedger==='function') rebuildMoneyLedger();
+  return changed;
+}
+
+// Repair already-created rows (such as the current ₮200,000 test transfer) after data is loaded/rendered.
+const baseRAll=window.rAll;
+if(typeof baseRAll==='function'){
+  window.rAll=function(){
+    mongoV17RepairSavingsLinks();
+    return baseRAll.apply(this,arguments);
+  };
+}
+
+// Also repair before persistence, so a new savings transfer cannot remain detached.
+const baseSave=window.saveData;
+if(typeof baseSave==='function'){
+  window.saveData=function(){
+    mongoV17RepairSavingsLinks();
+    return baseSave.apply(this,arguments);
+  };
+}
+
+window.mongoV17RepairSavingsLinks=mongoV17RepairSavingsLinks;
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
