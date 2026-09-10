@@ -20,15 +20,17 @@ Never silently replace this baseline with V44.12.40, V44.12.5, an older upload, 
 Before every development task:
 
 1. Confirm repository is `Oyu347/Mongo-moneyapp-`.
-2. Confirm working branch is `development-modular`.
+2. Confirm working branch is `development-modular` or the explicitly approved isolated feature/integration branch for the current task.
 3. Read this workbook.
-4. Inspect the latest relevant commits and compare them with the verified lineage.
-5. Identify exactly one requested task/fix.
-6. Determine which files/functions are affected before editing.
-7. Preserve all unrelated working behavior.
-8. Make the smallest safe change.
-9. Run available tests/checks.
-10. Report what changed, what was tested, and what still needs user testing.
+4. Read `docs/modularization/PROGRESS.md`, `ROADMAP.md`, `RULES.md`, and `ARCHITECTURE.md` when relevant.
+5. Inspect the latest relevant commits and compare them with the verified lineage.
+6. Identify exactly one requested task/fix.
+7. Determine which files/functions are affected before editing.
+8. Preserve all unrelated working behavior.
+9. Make the smallest safe change.
+10. Run available tests/checks.
+11. Record the result in the correct project journal before moving to the next development cycle.
+12. Report what changed, what was tested, and what still needs user testing.
 
 If repository, branch, baseline, or requested scope is ambiguous: STOP and ask before modifying code.
 
@@ -146,7 +148,7 @@ A task is DONE only when:
 2. Relevant regression checks pass.
 3. Existing protected behavior remains intact.
 4. User-facing test is completed when device/browser behavior is involved.
-5. The workbook is updated with the result when the change becomes a new verified state.
+5. The workbook and/or project journals are updated with the result when the change becomes a new verified state or yields an important diagnostic result.
 
 Commit ≠ verified. Deploy ≠ verified. User-tested working state = candidate for verified baseline.
 
@@ -167,7 +169,45 @@ At the end of each development cycle report briefly:
 
 The future Möngö Project Manager Agent should use this workbook to prioritize work. It may recommend the next task but must not silently redefine the verified baseline or override the safety/approval rules above.
 
+## 13. Development journal discipline — REQUIRED
+
+This project must keep its development memory in GitHub, not only in chat history. Before starting a new development cycle and again after obtaining a meaningful result, update the appropriate document.
+
+### Where each kind of information belongs
+- `docs/modularization/PROGRESS.md` — work actually attempted or completed: exact branch/commit when known, PHONE PASS/FAIL, automated checks, failed approaches, regressions, discovered root causes, rollback points, and unresolved risks. A failed attempt must remain recorded so it is not repeated later.
+- `docs/modularization/ROADMAP.md` — next work and future work that is not yet verified/implemented. Do not mark roadmap ideas as completed merely because they were discussed or prototyped.
+- `docs/modularization/ARCHITECTURE.md` — stable system boundaries and structural decisions only.
+- `docs/modularization/RULES.md` — permanent safety rules and financial invariants that future changes must preserve.
+- `docs/MONGO_AGENT_WORKBOOK.md` — source-of-truth control, verified lineage, active branch rules, startup/handoff protocol, and cross-document journal rules.
+
+### Mandatory status labels
+Use explicit evidence labels in development notes:
+- `PHONE PASS` — user confirmed the exact behavior on the phone/device.
+- `PHONE FAIL` — user tested and the requested behavior did not work.
+- `AUTOMATED PASS` — the named automated test/workflow passed; this does not imply phone verification.
+- `STATIC PASS` — syntax/static checks only.
+- `NEEDS TEST` — implemented/prepared but not yet user-verified.
+- `BLOCKED` — cannot safely proceed until the stated dependency is resolved.
+
+Never convert `PHONE FAIL`, `NEEDS TEST`, or an automated-only result into `VERIFIED`/`PHONE PASS` without actual evidence. Do not erase failed approaches after a later fix; retain a concise note explaining why they failed.
+
+### Continuity gate before the next code change
+Before editing code, answer from the repository notes:
+1. What is the last verified working point for this behavior?
+2. What was the last attempted change and its result?
+3. What root cause is proven versus still a hypothesis?
+4. Which protected behavior must not regress?
+5. Which document will receive this cycle's result?
+
+If these cannot be answered from GitHub notes, update the notes first. This gate is intended to prevent loss of context across chats, devices, or future agents.
+
+### Current isolated feature-work reminder — 2026-09-10
+Completed-card/archive and Savings ↔ Budget work is being tested on `feature/completed-cards-archive`; it is not a replacement for the verified V44.12.30 baseline and must not be promoted to `development-modular` or `main` without the normal testing and user approval gates.
+
+For this feature work specifically, preserve the already working savings-goal deletion undo contract while diagnosing Budget actuals: deleting a goal must undo its linked savings transfers as designed, restore the source-account effect, detach rather than delete the savings account, remove only the exact goal-linked Budget subcategory/value, and must not create income/expense or change total money merely because of the undo.
+
 ---
 
 Last initialized: 2026-09-04
-Status: ACTIVE — initial agent control workbook created.
+Journal discipline strengthened: 2026-09-10
+Status: ACTIVE — agent control workbook and GitHub journal continuity required.
