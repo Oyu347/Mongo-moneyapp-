@@ -15994,6 +15994,106 @@ else repairSavingsTransferLinks(true);
 window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
+
+<script id="mongo-savings-budget-diagnostic-v22">
+(function(){
+  'use strict';
+
+  function n(v){ return Number(v)||0; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });}
+  function goalName(g){
+    return String(g?.name || g?.names?.mn || g?.names?.en || '');
+  }
+  function subName(s){
+    try { if(typeof cN==='function') return String(cN(s)||''); } catch(_){}
+    return String(s?.name || s?.names?.mn || s?.names?.en || '');
+  }
+  function monthMatch(date,month,year){
+    var p=String(date||'').split('-');
+    return Number(p[0])===Number(year) && Number(p[1])===Number(month);
+  }
+
+  window.mongoSavingsBudgetDiagnosticV22=function(){
+    var month=Number(window.budgetMonth||0);
+    var year=Number(window.budgetYear||0);
+    var gs=Array.isArray(window.goals)?window.goals:[];
+    var accts=Array.isArray(window.moneyAccounts)?window.moneyAccounts:[];
+    var trs=Array.isArray(window.accountTransfers)?window.accountTransfers:[];
+    var cats=Array.isArray(window.bCatsExp)?window.bCatsExp:[];
+    var parent=cats.find(function(c){return c&&c.key==='savings_cat';});
+    var subs=(parent&&Array.isArray(parent.subs))?parent.subs:[];
+
+    var rows=subs.map(function(s){
+      var key=String(s?.key||'');
+      var id=key.indexOf('goal_')===0?key.slice(5):'';
+      var gById=gs.find(function(g){return String(g?.id)===id;});
+      var name=subName(s);
+      var sameName=gs.filter(function(g){return goalName(g)===name;});
+      var transfers=trs.filter(function(t){
+        return t?.purpose==='savings' &&
+          String(t?.targetId)===id &&
+          monthMatch(t?.date,month,year);
+      });
+      return {
+        budgetName:name, budgetKey:key, goalId:id,
+        goalById:gById?goalName(gById):null,
+        sameNameGoalIds:sameName.map(function(g){return String(g.id);}),
+        periodTransferCount:transfers.length,
+        periodTransferTotal:transfers.reduce(function(a,t){return a+n(t.amount);},0)
+      };
+    });
+
+    var savingsTransfers=trs.filter(function(t){return t?.purpose==='savings';}).map(function(t){
+      var g=gs.find(function(x){return String(x?.id)===String(t?.targetId);});
+      var a=accts.find(function(x){return String(x?.id)===String(t?.toId);});
+      return {
+        date:t.date, amount:n(t.amount), targetId:String(t?.targetId||''),
+        targetGoal:g?goalName(g):null, toId:String(t?.toId||''),
+        toAccount:a?String(a.name||''):null,
+        accountLinkedGoalId:a?String(a.linkedGoalId||a.goalId||''):null
+      };
+    });
+
+    var result={budgetMonth:month,budgetYear:year,budgetRows:rows,savingsTransfers:savingsTransfers};
+    console.log('[MONGO V22 SAVINGS/BUDGET DIAGNOSTIC]',result);
+    return result;
+  };
+
+  function show(){
+    var d=window.mongoSavingsBudgetDiagnosticV22();
+    var old=document.getElementById('mongo-v22-diagnostic-box');
+    if(old)old.remove();
+    var box=document.createElement('div');
+    box.id='mongo-v22-diagnostic-box';
+    box.style.cssText='position:fixed;inset:8% 4%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:12px/1.45 monospace;';
+    box.innerHTML='<button id="mongo-v22-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button>'+
+      '<h3 style="font-family:sans-serif">Savings ↔ Budget оношилгоо V22</h3>'+
+      '<pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
+    document.body.appendChild(box);
+    document.getElementById('mongo-v22-close').onclick=function(){box.remove();};
+  }
+
+  document.addEventListener('click',function(e){
+    var el=e.target && e.target.closest ? e.target.closest('[data-v22-diag]') : null;
+    if(el){ e.preventDefault(); show(); }
+  });
+
+  function install(){
+    if(document.getElementById('mongo-v22-diag-btn')) return;
+    var b=document.createElement('button');
+    b.id='mongo-v22-diag-btn';
+    b.setAttribute('data-v22-diag','1');
+    b.textContent='Төсөв ↔ Хуримтлал оношлох';
+    b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:white;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
+    document.body.appendChild(b);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
+  else install();
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
