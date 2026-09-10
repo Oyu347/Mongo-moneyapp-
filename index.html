@@ -7676,10 +7676,24 @@ function addTransaction(){
     let toId=(document.getElementById('t-to-account')||{}).value;
     const date=document.getElementById('t-date').value;
     const purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
-    const targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
+    let targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
     if(purpose==='savings'){
-      const linked=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(targetId));
-      toId=linked?.id||null;
+      // Canonical savings link: every new savings transfer is stored against the real goal id.
+      // The selected value may be a goal id (current UI) or, for compatibility, a savings account id.
+      let goal=goals.find(g=>String(g?.id)===String(targetId));
+      if(!goal){
+        const selectedAccount=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.id)===String(targetId));
+        const gid=selectedAccount?.linkedGoalId??selectedAccount?.goalId??null;
+        if(gid!=null) goal=goals.find(g=>String(g?.id)===String(gid));
+      }
+      if(goal){
+        targetId=goal.id;
+        const linked=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(goal.id));
+        toId=linked?.id||null;
+      }else{
+        targetId=null;
+        toId=null;
+      }
     }else if(purpose==='investment')toId=null;
     if(purpose==='asset'){
       if(!amount||amount<=0||!fromId){showToast(AFT().sourceErr);return;}
@@ -15940,118 +15954,10 @@ window.MongoSavingsBudgetLifecycle.isGoalActiveForFuture=function(g){
 
 
 
-<script id="mongo-savings-target-link-v18">
-(function(){
-'use strict';
-const sid=v=>v==null?'':String(v);
-const norm=v=>String(v||'').trim().toLocaleLowerCase();
 
-function resolveGoalForSavingsTransfer(t){
-  if(!t || t.purpose!=='savings') return null;
-  const gs=Array.isArray(goals)?goals:[];
-  const accts=Array.isArray(moneyAccounts)?moneyAccounts:[];
 
-  // 1. Canonical goal id.
-  let g=gs.find(x=>sid(x?.id)===sid(t.targetId));
-  if(g) return g;
-
-  // 2. Some historical/new rows may carry the savings account id as target.
-  const targetAccount=accts.find(a=>sid(a?.id)===sid(t.targetId));
-  if(targetAccount){
-    const gid=targetAccount.linkedGoalId ?? targetAccount.goalId ?? null;
-    g=gs.find(x=>sid(x?.id)===sid(gid));
-    if(g) return g;
-  }
-
-  // 3. Destination savings account is authoritative when present.
-  const toAccount=accts.find(a=>sid(a?.id)===sid(t.toId));
-  if(toAccount){
-    const gid=toAccount.linkedGoalId ?? toAccount.goalId ?? null;
-    g=gs.find(x=>sid(x?.id)===sid(gid));
-    if(g) return g;
-
-    // Last compatibility path: account/goal names match.
-    g=gs.find(x=>norm(x?.name)===norm(toAccount?.name));
-    if(g) return g;
-  }
-
-  // 4. Compatibility for target saved as a goal name.
-  g=gs.find(x=>norm(x?.name)===norm(t.targetId));
-  return g||null;
-}
-
-function repairSavingsTransfers(){
-  let changed=false;
-  (Array.isArray(accountTransfers)?accountTransfers:[]).forEach(t=>{
-    if(t?.purpose!=='savings') return;
-    const g=resolveGoalForSavingsTransfer(t);
-    if(!g) return;
-    if(sid(t.targetId)!==sid(g.id)){ t.targetId=g.id; changed=true; }
-
-    const linked=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(a=>
-      a?.active!==false &&
-      normalizeAccountType(a?.type)==='savings' &&
-      sid(a?.linkedGoalId ?? a?.goalId ?? '')===sid(g.id)
-    );
-    if(linked && sid(t.toId)!==sid(linked.id)){ t.toId=linked.id; changed=true; }
-  });
-  return changed;
-}
-
-// Make progress calculation resilient immediately, including rows already stored in cloud.
-const oldEffective=window.getGoalEffectiveSaved;
-if(typeof oldEffective==='function'){
-  window.getGoalEffectiveSaved=function(goal){
-    repairSavingsTransfers();
-    return window.MongoSavings.effectiveSaved(goal,accountTransfers,txns);
-  };
-}
-const oldAuto=window.getGoalAutoSaved;
-if(typeof oldAuto==='function'){
-  window.getGoalAutoSaved=function(goal){
-    repairSavingsTransfers();
-    return window.MongoSavings.autoSaved(goal,accountTransfers,txns);
-  };
-}
-
-// Budget actual must use the same canonical resolution.
-const mb=window.MongoBudget;
-if(mb && typeof mb.savingsGoalActual==='function'){
-  const original=mb.savingsGoalActual;
-  const wrapped=function(transfers,txnsArg,goalId,month,year){
-    repairSavingsTransfers();
-    return original(accountTransfers,txnsArg,goalId,month,year);
-  };
-  // MongoBudget is frozen, so expose a bridge consumed by gSpent below.
-  window.mongoV18SavingsGoalActual=wrapped;
-}
-
-// gSpent is the Budget Progress gateway. Replace only savings-goal actuals.
-const oldGSpent=window.gSpent;
-if(typeof oldGSpent==='function'){
-  window.gSpent=function(catNm,subNm,month){
-    const subObj=(typeof findBudgetSubByName==='function')?findBudgetSubByName(catNm,subNm):null;
-    const key=String(subObj?.key||'');
-    if(key.startsWith('goal_')){
-      const gid=key.slice(5);
-      repairSavingsTransfers();
-      return window.MongoBudget.savingsGoalActual(accountTransfers,txns,gid,month,budgetYear);
-    }
-    return oldGSpent.apply(this,arguments);
-  };
-}
-
-const oldSave=window.saveData;
-if(typeof oldSave==='function'){
-  window.saveData=function(){
-    repairSavingsTransfers();
-    return oldSave.apply(this,arguments);
-  };
-}
-
-repairSavingsTransfers();
-window.mongoV18RepairSavingsTransfers=repairSavingsTransfers;
-})();
+<script id="mongo-savings-canonical-target-v19-marker">
+/* V19: savings transfers are canonicalized to the real goal id at creation time. */
 </script>
 </body>
 </html>
