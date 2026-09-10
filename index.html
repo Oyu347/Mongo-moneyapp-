@@ -8971,34 +8971,7 @@ function rBProg(){
       ${hasSubs&&isOpen?`<div class="bbody" style="padding:8px 12px">
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
           const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&(t.catKey===cat.key||t.catName===nm)&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):(function(){
-  const __sp=gSpent(nm,snm,mo,sb);
-  try{
-    if(cat && cat.key==='savings_cat'){
-      window.__mongoV23Diag=window.__mongoV23Diag||{rows:[],transfers:[],goals:[],period:null};
-      const __key=String(sb?.key||'');
-      const __gid=__key.startsWith('goal_')?__key.slice(5):'';
-      const __goalName=(g)=>String(g?.name||g?.names?.mn||g?.names?.en||'');
-      const __same=(goals||[]).filter(g=>__goalName(g)===String(snm||''));
-      const __byId=(goals||[]).find(g=>String(g?.id)===__gid);
-      const __pt=(accountTransfers||[]).filter(t=>{
-        const p=String(t?.date||'').split('-');
-        return t?.purpose==='savings'&&Number(p[0])===Number(budgetYear)&&Number(p[1])===Number(mo);
-      });
-      const __matched=__pt.filter(t=>String(t?.targetId)===__gid);
-      window.__mongoV23Diag.period={month:Number(mo),year:Number(budgetYear)};
-      window.__mongoV23Diag.rows=window.__mongoV23Diag.rows.filter(r=>r.key!==__key);
-      window.__mongoV23Diag.rows.push({name:String(snm||''),key:__key,extractedGoalId:__gid,
-        goalById:__byId?__goalName(__byId):null,sameNameGoalIds:__same.map(g=>String(g?.id||'')),
-        actual:Number(__sp)||0,matchingTransferCount:__matched.length,
-        matchingTransferTotal:__matched.reduce((a,t)=>a+(Number(t?.amount)||0),0)});
-      window.__mongoV23Diag.transfers=__pt.map(t=>({date:String(t?.date||''),amount:Number(t?.amount)||0,
-        purpose:String(t?.purpose||''),targetId:String(t?.targetId||''),toId:String(t?.toId||'')}));
-      window.__mongoV23Diag.goals=(goals||[]).map(g=>({id:String(g?.id||''),name:__goalName(g),archivedAt:g?.archivedAt||null}));
-    }
-  }catch(e){console.warn('[MONGO V23 DIAG]',e);}
-  return __sp;
-})());
+          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&(t.catKey===cat.key||t.catName===nm)&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo,sb);
           const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
           const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
           return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
@@ -16021,11 +15994,63 @@ else repairSavingsTransferLinks(true);
 window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
-<script id="mongo-savings-budget-diagnostic-v23-ui">
+
+<script id="mongo-savings-budget-diagnostic-v24">
 (function(){
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function show(){var d=window.__mongoV23Diag||{message:'Төсөв → Төсвийн явц дэлгэцийг эхлээд нээгээд дараа нь энэ товчийг дараарай.'};var o=document.getElementById('mongo-v23-box');if(o)o.remove();var b=document.createElement('div');b.id='mongo-v23-box';b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:12px/1.45 monospace';b.innerHTML='<button id="mongo-v23-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">Savings ↔ Budget оношилгоо V23</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';document.body.appendChild(b);document.getElementById('mongo-v23-close').onclick=()=>b.remove();}
-function install(){if(document.getElementById('mongo-v23-btn'))return;var b=document.createElement('button');b.id='mongo-v23-btn';b.textContent='Төсөв ↔ Хуримтлал оношлох V23';b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:white;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';b.onclick=show;document.body.appendChild(b);}
+'use strict';
+function parse(v){try{return JSON.parse(v)}catch(_){return null}}
+function walk(x,path,out,seen){
+  if(!x||typeof x!=='object'||seen.has(x))return;
+  seen.add(x);
+  if(Array.isArray(x)){
+    if(x.length && x.some(v=>v&&typeof v==='object')){
+      const sample=x.slice(0,8);
+      const score={
+        goals:sample.filter(v=>v&&('target' in v||'targetAmount' in v||'archivedAt' in v)).length,
+        transfers:sample.filter(v=>v&&('purpose' in v||'targetId' in v||'fromId' in v||'toId' in v)).length,
+        budgetSubs:sample.filter(v=>v&&String(v.key||'').startsWith('goal_')).length
+      };
+      if(score.goals||score.transfers||score.budgetSubs)out.push({path:path,length:x.length,score:score,items:x});
+    }
+    x.forEach((v,i)=>walk(v,path+'['+i+']',out,seen));
+  }else{
+    Object.keys(x).forEach(k=>walk(x[k],path?path+'.'+k:k,out,seen));
+  }
+}
+function snapshot(){
+  const found=[];
+  const keys=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i), raw=localStorage.getItem(k), obj=parse(raw);
+    keys.push({key:k,bytes:raw?raw.length:0,json:!!obj});
+    if(obj)walk(obj,'localStorage.'+k,found,new WeakSet());
+  }
+  const candidates=found.map(c=>({
+    path:c.path,length:c.length,score:c.score,
+    items:c.items.slice(0,40).map(v=>({
+      id:v&&v.id, key:v&&v.key, name:v&&(v.name||(v.names&&v.names.mn)),
+      purpose:v&&v.purpose,targetId:v&&v.targetId,fromId:v&&v.fromId,toId:v&&v.toId,
+      amount:v&&v.amount,date:v&&v.date,linkedGoalId:v&&v.linkedGoalId,goalId:v&&v.goalId,
+      archivedAt:v&&v.archivedAt
+    }))
+  }));
+  return {storageKeys:keys,candidates:candidates};
+}
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function show(){
+  const d=snapshot(); window.__mongoV24Snapshot=d;
+  let old=document.getElementById('mongo-v24-box');if(old)old.remove();
+  let b=document.createElement('div');b.id='mongo-v24-box';
+  b.style.cssText='position:fixed;inset:4% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.4 monospace';
+  b.innerHTML='<button id="mongo-v24-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V24 — хадгалсан өгөгдлийн оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
+  document.body.appendChild(b);document.getElementById('mongo-v24-close').onclick=()=>b.remove();
+}
+function install(){
+  if(document.getElementById('mongo-v24-btn'))return;
+  let b=document.createElement('button');b.id='mongo-v24-btn';b.textContent='Өгөгдөл оношлох V24';
+  b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
+  b.onclick=show;document.body.appendChild(b);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
