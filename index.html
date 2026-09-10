@@ -7631,8 +7631,19 @@ function renderTransferTarget(){
   const p=document.getElementById('t-transfer-purpose'),tar=document.getElementById('t-transfer-target');
   const to=document.getElementById('t-to-account');
   if(!p||!tar)return;
-  const purpose=p.value,fromId=document.getElementById('t-from-account')?.value||'';
+  const purpose=p.value;
   const active=window.MongoAccounts.activeAccounts(moneyAccounts,{excludeLegacy:true});
+  const everyday=active.filter(a=>normalizeAccountType(a.type)!=='savings');
+  const from=document.getElementById('t-from-account');
+  // V29: savings accounts are purpose-specific. They are never offered in Simple transfer.
+  // Savings contributions use the dedicated Savings flow, which stores purpose + goalId canonically.
+  const sourcePool=(purpose==='internal'||purpose==='savings')?everyday:active;
+  if(from){
+    const oldFrom=from.value;
+    from.innerHTML=sourcePool.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');
+    if(sourcePool.some(a=>String(a.id)===String(oldFrom)))from.value=oldFrom;
+  }
+  const fromId=from?.value||'';
 
   if(purpose==='asset'){
     // Asset / Expense decision is the only secondary choice here.
@@ -7643,7 +7654,14 @@ function renderTransferTarget(){
   }else if(purpose==='internal'){
     tar.innerHTML='';
     tar.style.setProperty('display','none','important');
-    if(to){const old=to.value;to.innerHTML=active.filter(a=>String(a.id)!==String(fromId)).map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');to.style.display='';if([...to.options].some(o=>o.value===old))to.value=old;}
+    if(to){
+      const old=to.value;
+      const destinations=everyday.filter(a=>String(a.id)!==String(fromId));
+      const emptyText={mn:'Энгийн шилжүүлэгт өөр өдөр тутмын данс алга',en:'No other everyday account for a simple transfer',zh:'没有可用于普通转账的其他日常账户',ja:'通常の振替に使える別の日常口座がありません',ko:'일반 이체에 사용할 다른 생활 계좌가 없습니다',ru:'Нет другого повседневного счёта для обычного перевода',de:'Kein weiteres Alltagskonto für eine normale Überweisung'}[lang]||'No other everyday account for a simple transfer';
+      to.innerHTML=destinations.length?destinations.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join(''):`<option value="">${emptyText}</option>`;
+      to.style.display='';
+      if(destinations.some(a=>String(a.id)===String(old)))to.value=old;
+    }
   }else if(purpose==='savings'){
     if(to){to.innerHTML='';to.style.display='none';}
     tar.style.removeProperty('display');
@@ -7675,8 +7693,9 @@ function addTransaction(){
     const fromId=(document.getElementById('t-from-account')||{}).value;
     let toId=(document.getElementById('t-to-account')||{}).value;
     const date=document.getElementById('t-date').value;
-    const purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
+    let purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
     let targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
+    // V29: Simple transfer cannot target savings accounts; savings uses the dedicated flow.
     if(purpose==='savings'){
       // Canonical savings link: every new savings transfer is stored against the real goal id.
       // The selected value may be a goal id (current UI) or, for compatibility, a savings account id.
@@ -15995,63 +16014,29 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
 
-<script id="mongo-travel-storage-diagnostic-v27">
+<!-- V29: purpose-safe transfer account choices + 7-language empty-state text. -->
+<script id="mongo-v28-travel-transfer-repair">
 (function(){
-'use strict';
-const WANT={goalId:'1788767359713',name:'Аялал',date:'2026-09-10',amount:100000};
-function p(v){try{return JSON.parse(v)}catch(_){return null}}
-function s(v){return v==null?'':String(v)}
-function nm(v){return s(v?.name||(v?.names&&v.names.mn)||(v?.names&&v.names.en))}
-function walk(x,path,out,seen){
- if(!x||typeof x!=='object'||seen.has(x))return; seen.add(x);
- if(Array.isArray(x)){
-   for(const v of x){
-     if(!v||typeof v!=='object')continue;
-     const name=nm(v), id=s(v.id), key=s(v.key), target=s(v.targetId);
-     if(id===WANT.goalId || name===WANT.name || key==='goal_'+WANT.goalId ||
-        target===WANT.goalId || (s(v.date)===WANT.date && Number(v.amount)===WANT.amount)){
-       out.push({path, value:{
-         id:v.id??null,key:v.key??null,name:name||null,date:v.date??null,amount:v.amount??null,
-         purpose:v.purpose??null,targetId:v.targetId??null,fromId:v.fromId??null,toId:v.toId??null,
-         linkedGoalId:v.linkedGoalId??null,goalId:v.goalId??null,archivedAt:v.archivedAt??null
-       }});
-     }
-   }
-   x.forEach((v,i)=>walk(v,path+'['+i+']',out,seen));
- }else Object.keys(x).forEach(k=>walk(x[k],path?path+'.'+k:k,out,seen));
-}
-function snap(){
- const hits=[];
- for(let i=0;i<localStorage.length;i++){
-   const k=localStorage.key(i), obj=p(localStorage.getItem(k));
-   if(obj)walk(obj,'localStorage.'+k,hits,new WeakSet());
- }
- // Deduplicate identical findings from local/cloud mirrors for readability.
- const seen=new Set(), uniq=[];
- for(const h of hits){
-   const v=h.value, sig=[v.id,v.key,v.name,v.date,v.amount,v.purpose,v.targetId,v.fromId,v.toId,v.linkedGoalId,v.goalId,v.archivedAt].join('|');
-   if(!seen.has(sig)){seen.add(sig);uniq.push(h);}
- }
- return {expected:WANT,hits:uniq};
-}
-function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function show(){
- const d=snap(); let old=document.getElementById('mongo-v27-box');if(old)old.remove();
- let b=document.createElement('div');b.id='mongo-v27-box';
- b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
- b.innerHTML='<button id="mongo-v27-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V27 — Аялал хадгалсан холбоос</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
- document.body.appendChild(b);document.getElementById('mongo-v27-close').onclick=()=>b.remove();
-}
-function install(){
- if(document.getElementById('mongo-v27-btn'))return;
- let b=document.createElement('button');b.id='mongo-v27-btn';b.textContent='Аялал холбоос V27';
- b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
- b.onclick=show;document.body.appendChild(b);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  function same(a,b){return String(a??'')===String(b??'');}
+  function repair(){
+    try{
+      if(!Array.isArray(window.accountTransfers)||!Array.isArray(window.moneyAccounts)||!Array.isArray(window.goals))return false;
+      const transfer=window.accountTransfers.find(t=>same(t?.id,'b8de2713-8db2-4293-bcc3-e7652251ddac'));
+      if(!transfer||transfer.purpose!=='internal'||Number(transfer.amount)!==100000||String(transfer.date)!=='2026-09-10'||transfer.targetId!=null)return false;
+      const account=window.moneyAccounts.find(a=>same(a?.id,transfer.toId));
+      const gid=account?.linkedGoalId??account?.goalId??null;
+      const goal=gid!=null?window.goals.find(g=>same(g?.id,gid)&&!g?.archivedAt):null;
+      if(!goal||String(goal.name||'').trim()!=='Аялал')return false;
+      transfer.purpose='savings'; transfer.targetId=goal.id; transfer.updatedAt=new Date().toISOString();
+      if(typeof window.saveData==='function')window.saveData();
+      ['rGoals','rBList','rBProg','uDash','renderMoneyAccounts'].forEach(fn=>{try{if(typeof window[fn]==='function')window[fn]();}catch(_){}});
+      return true;
+    }catch(_){return false;}
+  }
+  window.addEventListener('load',()=>setTimeout(repair,900),{once:true});
+  setTimeout(repair,1800);
 })();
 </script>
-
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
