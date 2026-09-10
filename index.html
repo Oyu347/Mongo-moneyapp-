@@ -15898,41 +15898,82 @@ document.addEventListener('change',()=>setTimeout(apply,20),true);
 </script>
 
 
-<script id="mongo-savings-budget-lifecycle-v14">
+<script id="mongo-savings-budget-lifecycle-v15">
 (function(){
 'use strict';
-function savingsParent(){return (bCatsExp||[]).find(c=>c.key==='savings_cat')}
-function goalIdFromSub(sb){const m=/^goal_(.+)$/.exec(String(sb?.key||''));return m?String(m[1]):''}
-function hasAnyBudgetValue(sb,parent){
- try{
-   const bk=bSubKey(parent,sb);
-   if(budgets[bk]&&typeof budgets[bk]==='object'&&Object.values(budgets[bk]).some(v=>Number(v)>0))return true;
-   return Object.keys(budgets||{}).some(k=>k.startsWith(bk+'__')&&Number(budgets[k])>0);
- }catch(_){return true}
+
+function parent(){ return (bCatsExp||[]).find(c=>c.key==='savings_cat'); }
+function gid(sb){
+  const m=/^goal_(.+)$/.exec(String(sb?.key||''));
+  return m ? String(m[1]) : '';
 }
-function hasActual(gid){
- return (accountTransfers||[]).some(t=>t?.purpose==='savings'&&String(t.targetId||'')===String(gid)&&(Number(t.amount)||0)!==0);
+function goalById(id){ return (goals||[]).find(g=>String(g.id)===String(id)); }
+
+function budgetValues(sb,p){
+  const vals=[];
+  try{
+    const bk=bSubKey(p,sb);
+    const legacy=budgets?.[bk];
+    if(legacy && typeof legacy==='object') Object.values(legacy).forEach(v=>vals.push(Number(v)||0));
+    Object.keys(budgets||{}).forEach(k=>{
+      if(k.startsWith(bk+'__')) vals.push(Number(budgets[k])||0);
+    });
+  }catch(_){}
+  return vals;
 }
+function hasPlan(sb,p){ return budgetValues(sb,p).some(v=>Math.abs(v)>0.000001); }
+
+function hasActual(id){
+  return (accountTransfers||[]).some(t =>
+    t?.purpose==='savings' &&
+    String(t.targetId||'')===String(id) &&
+    Math.abs(Number(t.amount)||0)>0.000001
+  );
+}
+function isActiveGoal(g){
+  if(!g) return false;
+  const saved=typeof getGoalEffectiveSaved==='function'
+    ? Math.max(0,Number(getGoalEffectiveSaved(g))||0)
+    : Math.max(0,Number(g.saved)||0);
+  if(window.MongoArchive?.goalActive) return !!window.MongoArchive.goalActive(g,saved);
+  return !g.archivedAt && !(Number(g.target)>0 && saved>=Number(g.target));
+}
+function isLinked(id){
+  return (moneyAccounts||[]).some(a =>
+    String(a.linkedGoalId||a.goalId||'')===String(id) && a.active!==false
+  );
+}
+
+/* Remove only rows that are:
+   - goal-backed,
+   - zero across stored budget months,
+   - zero actual savings transfers,
+   - and not the currently active/linked goal.
+   Historical non-zero rows are never removed. */
+function clean(){
+  const p=parent(); if(!p||!Array.isArray(p.subs)) return 0;
+  let removed=0;
+  p.subs=p.subs.filter(sb=>{
+    const id=gid(sb); if(!id) return true;
+    const g=goalById(id);
+    if(hasPlan(sb,p) || hasActual(id)) return true;
+    if(g && isActiveGoal(g) && isLinked(id)) return true;
+    removed++;
+    return false;
+  });
+  if(removed){
+    try{ saveData(); }catch(_){}
+    try{ if(typeof rBList==='function') rBList(); }catch(_){}
+  }
+  return removed;
+}
+
 window.MongoSavingsBudgetLifecycle={
- cleanZeroOrphans(){
-   const p=savingsParent();if(!p||!Array.isArray(p.subs))return 0;
-   const live=new Set((goals||[]).map(g=>String(g.id)));
-   let removed=0;
-   p.subs=p.subs.filter(sb=>{
-     const gid=goalIdFromSub(sb);if(!gid||live.has(gid))return true;
-     if(hasAnyBudgetValue(sb,p)||hasActual(gid))return true;
-     removed++;return false;
-   });
-   if(removed){try{saveData()}catch(_){}}
-   return removed;
- },
- isGoalActiveForFuture(g){
-   if(!g)return false;
-   const saved=typeof getGoalEffectiveSaved==='function'?Math.max(0,Number(getGoalEffectiveSaved(g))||0):Math.max(0,Number(g.saved)||0);
-   return window.MongoArchive?.goalActive?window.MongoArchive.goalActive(g,saved):!g.archivedAt;
- }
+  cleanZeroInactiveRows:clean,
+  isGoalActiveForFuture:isActiveGoal
 };
-setTimeout(()=>window.MongoSavingsBudgetLifecycle.cleanZeroOrphans(),120);
+
+setTimeout(clean,180);
 })();
 </script>
 
