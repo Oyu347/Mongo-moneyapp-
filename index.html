@@ -15772,6 +15772,30 @@ window.delGoal=async function(id){
   // Remove only the goal object/history. No bank account is deleted.
   goals=(goals||[]).filter(x=>!same(x.id,id));
 
+  // Delete the Budget subcategory that belongs to THIS deleted goal.
+  // Goal deletion is a true undo, so its generated budget linkage must not
+  // remain as an orphan row. Other goals (including archived/switched goals)
+  // are untouched.
+  try{
+    const parent=(bCatsExp||[]).find(c=>c.key==='savings_cat');
+    if(parent&&Array.isArray(parent.subs)){
+      const doomedKey='goal_'+String(id);
+      parent.subs=parent.subs.filter(sb=>String(sb?.key||'')!==doomedKey);
+
+      // Remove stored monthly/year-month budget values only for this exact
+      // deleted goal key. This does not touch similarly named goals.
+      const baseKeys=[];
+      try{
+        const fake={key:doomedKey};
+        baseKeys.push(String(bSubKey(parent,fake)));
+      }catch(_){}
+      baseKeys.push('savings_cat__'+doomedKey, 'savings_cat_'+doomedKey, doomedKey);
+      Object.keys(budgets||{}).forEach(k=>{
+        if(baseKeys.some(b=>k===b||k.startsWith(b+'__'))) delete budgets[k];
+      });
+    }
+  }catch(_){}
+
   // If a derived ledger exists, discard entries for the removed transfers.
   // saveData/reconciliation can rebuild the canonical ledger from source arrays.
   if(Array.isArray(window.moneyLedger)&&removed.length){
@@ -15897,83 +15921,19 @@ document.addEventListener('change',()=>setTimeout(apply,20),true);
 })();
 </script>
 
-
-<script id="mongo-savings-budget-lifecycle-v15">
+<script id="mongo-savings-budget-lifecycle-v16">
 (function(){
 'use strict';
-
-function parent(){ return (bCatsExp||[]).find(c=>c.key==='savings_cat'); }
-function gid(sb){
-  const m=/^goal_(.+)$/.exec(String(sb?.key||''));
-  return m ? String(m[1]) : '';
-}
-function goalById(id){ return (goals||[]).find(g=>String(g.id)===String(id)); }
-
-function budgetValues(sb,p){
-  const vals=[];
-  try{
-    const bk=bSubKey(p,sb);
-    const legacy=budgets?.[bk];
-    if(legacy && typeof legacy==='object') Object.values(legacy).forEach(v=>vals.push(Number(v)||0));
-    Object.keys(budgets||{}).forEach(k=>{
-      if(k.startsWith(bk+'__')) vals.push(Number(budgets[k])||0);
-    });
-  }catch(_){}
-  return vals;
-}
-function hasPlan(sb,p){ return budgetValues(sb,p).some(v=>Math.abs(v)>0.000001); }
-
-function hasActual(id){
-  return (accountTransfers||[]).some(t =>
-    t?.purpose==='savings' &&
-    String(t.targetId||'')===String(id) &&
-    Math.abs(Number(t.amount)||0)>0.000001
-  );
-}
-function isActiveGoal(g){
-  if(!g) return false;
-  const saved=typeof getGoalEffectiveSaved==='function'
-    ? Math.max(0,Number(getGoalEffectiveSaved(g))||0)
-    : Math.max(0,Number(g.saved)||0);
-  if(window.MongoArchive?.goalActive) return !!window.MongoArchive.goalActive(g,saved);
-  return !g.archivedAt && !(Number(g.target)>0 && saved>=Number(g.target));
-}
-function isLinked(id){
-  return (moneyAccounts||[]).some(a =>
-    String(a.linkedGoalId||a.goalId||'')===String(id) && a.active!==false
-  );
-}
-
-/* Remove only rows that are:
-   - goal-backed,
-   - zero across stored budget months,
-   - zero actual savings transfers,
-   - and not the currently active/linked goal.
-   Historical non-zero rows are never removed. */
-function clean(){
-  const p=parent(); if(!p||!Array.isArray(p.subs)) return 0;
-  let removed=0;
-  p.subs=p.subs.filter(sb=>{
-    const id=gid(sb); if(!id) return true;
-    const g=goalById(id);
-    if(hasPlan(sb,p) || hasActual(id)) return true;
-    if(g && isActiveGoal(g) && isLinked(id)) return true;
-    removed++;
-    return false;
-  });
-  if(removed){
-    try{ saveData(); }catch(_){}
-    try{ if(typeof rBList==='function') rBList(); }catch(_){}
-  }
-  return removed;
-}
-
-window.MongoSavingsBudgetLifecycle={
-  cleanZeroInactiveRows:clean,
-  isGoalActiveForFuture:isActiveGoal
+window.MongoSavingsBudgetLifecycle=window.MongoSavingsBudgetLifecycle||{};
+window.MongoSavingsBudgetLifecycle.isGoalActiveForFuture=function(g){
+ if(!g)return false;
+ const saved=typeof getGoalEffectiveSaved==='function'
+   ?Math.max(0,Number(getGoalEffectiveSaved(g))||0)
+   :Math.max(0,Number(g.saved)||0);
+ return window.MongoArchive?.goalActive
+   ?!!window.MongoArchive.goalActive(g,saved)
+   :!g.archivedAt;
 };
-
-setTimeout(clean,180);
 })();
 </script>
 
