@@ -8971,7 +8971,34 @@ function rBProg(){
       ${hasSubs&&isOpen?`<div class="bbody" style="padding:8px 12px">
         ${subs.filter(sb=>getBudgetVal(bSubKey(cat,sb),mo)>0).map(sb=>{
           const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
-          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&(t.catKey===cat.key||t.catName===nm)&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):gSpent(nm,snm,mo,sb);
+          const actualSS=isIncomePlan?txns.filter(t=>{const ymd=(t.date||'').split('-');const subKey=sb.key||sb.name||snm;return t.type==='income'&&(t.catKey===cat.key||t.catName===nm)&&(t.subcatName===subKey||t.subcatName===snm||(!t.subcatName&&t.desc===snm))&&parseInt(ymd[1])===mo&&parseInt(ymd[0])===budgetYear;}).reduce((a,t)=>a+t.amount,0):(function(){
+  const __sp=gSpent(nm,snm,mo,sb);
+  try{
+    if(cat && cat.key==='savings_cat'){
+      window.__mongoV23Diag=window.__mongoV23Diag||{rows:[],transfers:[],goals:[],period:null};
+      const __key=String(sb?.key||'');
+      const __gid=__key.startsWith('goal_')?__key.slice(5):'';
+      const __goalName=(g)=>String(g?.name||g?.names?.mn||g?.names?.en||'');
+      const __same=(goals||[]).filter(g=>__goalName(g)===String(snm||''));
+      const __byId=(goals||[]).find(g=>String(g?.id)===__gid);
+      const __pt=(accountTransfers||[]).filter(t=>{
+        const p=String(t?.date||'').split('-');
+        return t?.purpose==='savings'&&Number(p[0])===Number(budgetYear)&&Number(p[1])===Number(mo);
+      });
+      const __matched=__pt.filter(t=>String(t?.targetId)===__gid);
+      window.__mongoV23Diag.period={month:Number(mo),year:Number(budgetYear)};
+      window.__mongoV23Diag.rows=window.__mongoV23Diag.rows.filter(r=>r.key!==__key);
+      window.__mongoV23Diag.rows.push({name:String(snm||''),key:__key,extractedGoalId:__gid,
+        goalById:__byId?__goalName(__byId):null,sameNameGoalIds:__same.map(g=>String(g?.id||'')),
+        actual:Number(__sp)||0,matchingTransferCount:__matched.length,
+        matchingTransferTotal:__matched.reduce((a,t)=>a+(Number(t?.amount)||0),0)});
+      window.__mongoV23Diag.transfers=__pt.map(t=>({date:String(t?.date||''),amount:Number(t?.amount)||0,
+        purpose:String(t?.purpose||''),targetId:String(t?.targetId||''),toId:String(t?.toId||'')}));
+      window.__mongoV23Diag.goals=(goals||[]).map(g=>({id:String(g?.id||''),name:__goalName(g),archivedAt:g?.archivedAt||null}));
+    }
+  }catch(e){console.warn('[MONGO V23 DIAG]',e);}
+  return __sp;
+})());
           const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
           const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
           return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
@@ -15994,103 +16021,12 @@ else repairSavingsTransferLinks(true);
 window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
-
-<script id="mongo-savings-budget-diagnostic-v22">
+<script id="mongo-savings-budget-diagnostic-v23-ui">
 (function(){
-  'use strict';
-
-  function n(v){ return Number(v)||0; }
-  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });}
-  function goalName(g){
-    return String(g?.name || g?.names?.mn || g?.names?.en || '');
-  }
-  function subName(s){
-    try { if(typeof cN==='function') return String(cN(s)||''); } catch(_){}
-    return String(s?.name || s?.names?.mn || s?.names?.en || '');
-  }
-  function monthMatch(date,month,year){
-    var p=String(date||'').split('-');
-    return Number(p[0])===Number(year) && Number(p[1])===Number(month);
-  }
-
-  window.mongoSavingsBudgetDiagnosticV22=function(){
-    var month=Number(window.budgetMonth||0);
-    var year=Number(window.budgetYear||0);
-    var gs=Array.isArray(window.goals)?window.goals:[];
-    var accts=Array.isArray(window.moneyAccounts)?window.moneyAccounts:[];
-    var trs=Array.isArray(window.accountTransfers)?window.accountTransfers:[];
-    var cats=Array.isArray(window.bCatsExp)?window.bCatsExp:[];
-    var parent=cats.find(function(c){return c&&c.key==='savings_cat';});
-    var subs=(parent&&Array.isArray(parent.subs))?parent.subs:[];
-
-    var rows=subs.map(function(s){
-      var key=String(s?.key||'');
-      var id=key.indexOf('goal_')===0?key.slice(5):'';
-      var gById=gs.find(function(g){return String(g?.id)===id;});
-      var name=subName(s);
-      var sameName=gs.filter(function(g){return goalName(g)===name;});
-      var transfers=trs.filter(function(t){
-        return t?.purpose==='savings' &&
-          String(t?.targetId)===id &&
-          monthMatch(t?.date,month,year);
-      });
-      return {
-        budgetName:name, budgetKey:key, goalId:id,
-        goalById:gById?goalName(gById):null,
-        sameNameGoalIds:sameName.map(function(g){return String(g.id);}),
-        periodTransferCount:transfers.length,
-        periodTransferTotal:transfers.reduce(function(a,t){return a+n(t.amount);},0)
-      };
-    });
-
-    var savingsTransfers=trs.filter(function(t){return t?.purpose==='savings';}).map(function(t){
-      var g=gs.find(function(x){return String(x?.id)===String(t?.targetId);});
-      var a=accts.find(function(x){return String(x?.id)===String(t?.toId);});
-      return {
-        date:t.date, amount:n(t.amount), targetId:String(t?.targetId||''),
-        targetGoal:g?goalName(g):null, toId:String(t?.toId||''),
-        toAccount:a?String(a.name||''):null,
-        accountLinkedGoalId:a?String(a.linkedGoalId||a.goalId||''):null
-      };
-    });
-
-    var result={budgetMonth:month,budgetYear:year,budgetRows:rows,savingsTransfers:savingsTransfers};
-    console.log('[MONGO V22 SAVINGS/BUDGET DIAGNOSTIC]',result);
-    return result;
-  };
-
-  function show(){
-    var d=window.mongoSavingsBudgetDiagnosticV22();
-    var old=document.getElementById('mongo-v22-diagnostic-box');
-    if(old)old.remove();
-    var box=document.createElement('div');
-    box.id='mongo-v22-diagnostic-box';
-    box.style.cssText='position:fixed;inset:8% 4%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:12px/1.45 monospace;';
-    box.innerHTML='<button id="mongo-v22-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button>'+
-      '<h3 style="font-family:sans-serif">Savings ↔ Budget оношилгоо V22</h3>'+
-      '<pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
-    document.body.appendChild(box);
-    document.getElementById('mongo-v22-close').onclick=function(){box.remove();};
-  }
-
-  document.addEventListener('click',function(e){
-    var el=e.target && e.target.closest ? e.target.closest('[data-v22-diag]') : null;
-    if(el){ e.preventDefault(); show(); }
-  });
-
-  function install(){
-    if(document.getElementById('mongo-v22-diag-btn')) return;
-    var b=document.createElement('button');
-    b.id='mongo-v22-diag-btn';
-    b.setAttribute('data-v22-diag','1');
-    b.textContent='Төсөв ↔ Хуримтлал оношлох';
-    b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:white;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
-    document.body.appendChild(b);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
-  else install();
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function show(){var d=window.__mongoV23Diag||{message:'Төсөв → Төсвийн явц дэлгэцийг эхлээд нээгээд дараа нь энэ товчийг дараарай.'};var o=document.getElementById('mongo-v23-box');if(o)o.remove();var b=document.createElement('div');b.id='mongo-v23-box';b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:12px/1.45 monospace';b.innerHTML='<button id="mongo-v23-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">Savings ↔ Budget оношилгоо V23</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';document.body.appendChild(b);document.getElementById('mongo-v23-close').onclick=()=>b.remove();}
+function install(){if(document.getElementById('mongo-v23-btn'))return;var b=document.createElement('button');b.id='mongo-v23-btn';b.textContent='Төсөв ↔ Хуримтлал оношлох V23';b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:white;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';b.onclick=show;document.body.appendChild(b);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
 
