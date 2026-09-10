@@ -13652,7 +13652,7 @@ function v59Enhance(prefix){
 function v59CreateGoal(prefix,name,opening,maturity){
   const selected=document.getElementById(prefix+'-linked-goal')?.value||'',target=parseAmt(document.getElementById(prefix+'-new-goal-target')?.value),dead=document.getElementById(prefix+'-new-goal-deadline')?.value||maturity||'',id=Date.now()+Math.floor(Math.random()*500),color=mongoNextColor(goals.length,'goal'),made=window.MongoSavings.makeLinkedGoal({selectedGoalId:selected,id,name,target,openingBalance:opening,deadline:dead,maturityDate:maturity,color});
   if(!made.ok){showToast(T59().needTarget);return {error:true};}
-  if(made.goal){goals.push(made.goal);const parent=(bCatsExp||[]).find(c=>c.key==='savings_cat');if(parent){parent.subs=parent.subs||[];if(!parent.subs.some(s=>cN(s)===name))parent.subs.push({key:'goal_'+made.id,names:{mn:name,en:name,zh:name,ja:name,ko:name,ru:name,de:name},color});}}
+  if(made.goal){goals.push(made.goal);const parent=(bCatsExp||[]).find(c=>c.key==='savings_cat');if(parent){parent.subs=parent.subs||[];if(!parent.subs.some(s=>String(s.key||'')==='goal_'+String(made.id)))parent.subs.push({key:'goal_'+made.id,names:{mn:name,en:name,zh:name,ja:name,ko:name,ru:name,de:name},color});}}
   return {id:made.id};
 }
 
@@ -15894,6 +15894,45 @@ document.addEventListener('click',e=>{
  if(e.target.closest('[onclick*="editMoneyAccount"],button,[data-language],[id*="lang"]')) setTimeout(apply,40);
 },true);
 document.addEventListener('change',()=>setTimeout(apply,20),true);
+})();
+</script>
+
+
+<script id="mongo-savings-budget-lifecycle-v14">
+(function(){
+'use strict';
+function savingsParent(){return (bCatsExp||[]).find(c=>c.key==='savings_cat')}
+function goalIdFromSub(sb){const m=/^goal_(.+)$/.exec(String(sb?.key||''));return m?String(m[1]):''}
+function hasAnyBudgetValue(sb,parent){
+ try{
+   const bk=bSubKey(parent,sb);
+   if(budgets[bk]&&typeof budgets[bk]==='object'&&Object.values(budgets[bk]).some(v=>Number(v)>0))return true;
+   return Object.keys(budgets||{}).some(k=>k.startsWith(bk+'__')&&Number(budgets[k])>0);
+ }catch(_){return true}
+}
+function hasActual(gid){
+ return (accountTransfers||[]).some(t=>t?.purpose==='savings'&&String(t.targetId||'')===String(gid)&&(Number(t.amount)||0)!==0);
+}
+window.MongoSavingsBudgetLifecycle={
+ cleanZeroOrphans(){
+   const p=savingsParent();if(!p||!Array.isArray(p.subs))return 0;
+   const live=new Set((goals||[]).map(g=>String(g.id)));
+   let removed=0;
+   p.subs=p.subs.filter(sb=>{
+     const gid=goalIdFromSub(sb);if(!gid||live.has(gid))return true;
+     if(hasAnyBudgetValue(sb,p)||hasActual(gid))return true;
+     removed++;return false;
+   });
+   if(removed){try{saveData()}catch(_){}}
+   return removed;
+ },
+ isGoalActiveForFuture(g){
+   if(!g)return false;
+   const saved=typeof getGoalEffectiveSaved==='function'?Math.max(0,Number(getGoalEffectiveSaved(g))||0):Math.max(0,Number(g.saved)||0);
+   return window.MongoArchive?.goalActive?window.MongoArchive.goalActive(g,saved):!g.archivedAt;
+ }
+};
+setTimeout(()=>window.MongoSavingsBudgetLifecycle.cleanZeroOrphans(),120);
 })();
 </script>
 
