@@ -15995,139 +15995,60 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
 
-<script id="mongo-budget-calc-diagnostic-v25">
+<script id="mongo-travel-storage-diagnostic-v27">
 (function(){
 'use strict';
-var installed=false, original=null;
-
+const WANT={goalId:'1788767359713',name:'Аялал',date:'2026-09-10',amount:100000};
+function p(v){try{return JSON.parse(v)}catch(_){return null}}
+function s(v){return v==null?'':String(v)}
+function nm(v){return s(v?.name||(v?.names&&v.names.mn)||(v?.names&&v.names.en))}
+function walk(x,path,out,seen){
+ if(!x||typeof x!=='object'||seen.has(x))return; seen.add(x);
+ if(Array.isArray(x)){
+   for(const v of x){
+     if(!v||typeof v!=='object')continue;
+     const name=nm(v), id=s(v.id), key=s(v.key), target=s(v.targetId);
+     if(id===WANT.goalId || name===WANT.name || key==='goal_'+WANT.goalId ||
+        target===WANT.goalId || (s(v.date)===WANT.date && Number(v.amount)===WANT.amount)){
+       out.push({path, value:{
+         id:v.id??null,key:v.key??null,name:name||null,date:v.date??null,amount:v.amount??null,
+         purpose:v.purpose??null,targetId:v.targetId??null,fromId:v.fromId??null,toId:v.toId??null,
+         linkedGoalId:v.linkedGoalId??null,goalId:v.goalId??null,archivedAt:v.archivedAt??null
+       }});
+     }
+   }
+   x.forEach((v,i)=>walk(v,path+'['+i+']',out,seen));
+ }else Object.keys(x).forEach(k=>walk(x[k],path?path+'.'+k:k,out,seen));
+}
+function snap(){
+ const hits=[];
+ for(let i=0;i<localStorage.length;i++){
+   const k=localStorage.key(i), obj=p(localStorage.getItem(k));
+   if(obj)walk(obj,'localStorage.'+k,hits,new WeakSet());
+ }
+ // Deduplicate identical findings from local/cloud mirrors for readability.
+ const seen=new Set(), uniq=[];
+ for(const h of hits){
+   const v=h.value, sig=[v.id,v.key,v.name,v.date,v.amount,v.purpose,v.targetId,v.fromId,v.toId,v.linkedGoalId,v.goalId,v.archivedAt].join('|');
+   if(!seen.has(sig)){seen.add(sig);uniq.push(h);}
+ }
+ return {expected:WANT,hits:uniq};
+}
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function show(){
+ const d=snap(); let old=document.getElementById('mongo-v27-box');if(old)old.remove();
+ let b=document.createElement('div');b.id='mongo-v27-box';
+ b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
+ b.innerHTML='<button id="mongo-v27-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V27 — Аялал хадгалсан холбоос</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
+ document.body.appendChild(b);document.getElementById('mongo-v27-close').onclick=()=>b.remove();
+}
 function install(){
-  if(installed || typeof window.gSpent!=='function') return false;
-  original=window.gSpent;
-  window.gSpent=function(catNm,subNm,month,subObj){
-    var result=original.apply(this,arguments);
-    try{
-      if(String(catNm||'').toLowerCase().includes('хуримт') ||
-         String(subObj?.key||'').startsWith('goal_')){
-        window.__mongoV25=window.__mongoV25||[];
-        var row={
-          at:new Date().toISOString(),
-          cat:String(catNm||''),
-          sub:String(subNm||''),
-          month:Number(month),
-          key:String(subObj?.key||''),
-          result:Number(result)||0
-        };
-        window.__mongoV25.push(row);
-        if(window.__mongoV25.length>100) window.__mongoV25.shift();
-      }
-    }catch(_){}
-    return result;
-  };
-  installed=true;
-  return true;
+ if(document.getElementById('mongo-v27-btn'))return;
+ let b=document.createElement('button');b.id='mongo-v27-btn';b.textContent='Аялал холбоос V27';
+ b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
+ b.onclick=show;document.body.appendChild(b);
 }
-
-function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function show(){
-  install();
-  try{ if(typeof window.rBProg==='function') window.rBProg(); }catch(e){}
-  setTimeout(function(){
-    var d={installed:installed, calls:(window.__mongoV25||[]).slice(-50)};
-    var old=document.getElementById('mongo-v25-box');if(old)old.remove();
-    var b=document.createElement('div');b.id='mongo-v25-box';
-    b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
-    b.innerHTML='<button id="mongo-v25-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V25 — Budget бодолтын оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
-    document.body.appendChild(b);document.getElementById('mongo-v25-close').onclick=()=>b.remove();
-  },100);
-}
-function button(){
-  if(document.getElementById('mongo-v25-btn'))return;
-  var b=document.createElement('button');b.id='mongo-v25-btn';b.textContent='Budget бодолт оношлох V25';
-  b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
-  b.onclick=show;document.body.appendChild(b);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',button);else button();
-})();
-</script>
-
-
-<script id="mongo-travel-link-diagnostic-v26">
-(function(){
-'use strict';
-
-function safe(v){ try{return String(v??'');}catch(_){return '';} }
-function n(v){ var x=Number(v); return Number.isFinite(x)?x:0; }
-function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-
-function collect(){
-  var goalName='Аялал';
-  var goalId='1788767359713';
-  var rows=[];
-  var transfers=[];
-  var accounts=[];
-
-  try{
-    if(Array.isArray(window.goals)){
-      rows=window.goals.filter(g=>safe(g.id)===goalId || safe(g.name)===goalName)
-        .map(g=>({id:safe(g.id),name:safe(g.name),archivedAt:g.archivedAt||null,openingBalance:n(g.openingBalance)}));
-    }
-  }catch(_){}
-
-  try{
-    if(Array.isArray(window.accountTransfers)){
-      transfers=window.accountTransfers.filter(t=>
-        safe(t.date)==='2026-09-10' &&
-        (n(t.amount)===100000 || safe(t.targetId)===goalId)
-      ).map(t=>({
-        id:safe(t.id),date:safe(t.date),amount:n(t.amount),
-        purpose:safe(t.purpose),targetId:t.targetId==null?null:safe(t.targetId),
-        fromId:t.fromId==null?null:safe(t.fromId),toId:t.toId==null?null:safe(t.toId)
-      }));
-    }
-  }catch(_){}
-
-  try{
-    if(Array.isArray(window.moneyAccounts)){
-      accounts=window.moneyAccounts.filter(a=>
-        safe(a.linkedGoalId)===goalId || safe(a.goalId)===goalId || safe(a.name)===goalName
-      ).map(a=>({
-        id:safe(a.id),name:safe(a.name),type:safe(a.type),
-        linkedGoalId:a.linkedGoalId==null?null:safe(a.linkedGoalId),
-        goalId:a.goalId==null?null:safe(a.goalId)
-      }));
-    }
-  }catch(_){}
-
-  var gspent=null;
-  try{
-    if(typeof window.gSpent==='function'){
-      gspent=window.gSpent('Хуримтлал','Аялал',9,{key:'goal_'+goalId,names:{mn:'Аялал'}});
-    }
-  }catch(e){gspent='ERR:'+e.message;}
-
-  return {
-    expected:{goalId:goalId,name:goalName,date:'2026-09-10',newSavings:100000},
-    directRuntime:{goals:rows,accounts:accounts,transfers:transfers,gSpentSeptember:gspent},
-    note:"Хэрэв directRuntime хоосон байвал V24 шиг хадгалсан өгөгдлийн оношилгоог ашиглана. Энэ оношилгоо өгөгдөл өөрчлөхгүй."
-  };
-}
-
-function show(){
-  var d=collect();
-  var old=document.getElementById('mongo-v26-box');if(old)old.remove();
-  var b=document.createElement('div');b.id='mongo-v26-box';
-  b.style.cssText='position:fixed;inset:5% 3%;z-index:2147483647;background:#fff;color:#111;border-radius:16px;padding:16px;overflow:auto;box-shadow:0 12px 50px rgba(0,0,0,.35);font:11px/1.45 monospace';
-  b.innerHTML='<button id="mongo-v26-close" style="position:sticky;top:0;float:right;padding:8px 12px">Хаах</button><h3 style="font-family:sans-serif">V26 — Аялал холбоосын оношилгоо</h3><pre style="white-space:pre-wrap;word-break:break-word">'+esc(JSON.stringify(d,null,2))+'</pre>';
-  document.body.appendChild(b);
-  document.getElementById('mongo-v26-close').onclick=()=>b.remove();
-}
-function button(){
-  if(document.getElementById('mongo-v26-btn'))return;
-  var b=document.createElement('button');b.id='mongo-v26-btn';b.textContent='Аялал ₮100,000 оношлох V26';
-  b.style.cssText='position:fixed;right:12px;bottom:58px;z-index:2147483000;padding:10px 12px;border:0;border-radius:999px;background:#49B0B6;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.2)';
-  b.onclick=show;document.body.appendChild(b);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',button);else button();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
 
