@@ -8854,7 +8854,11 @@ function gSpent(catNm,subNm,month,subObjOverride){
       if(!sameName)return false;
       return investmentTxnMatchesBudgetSub(t,catObj,subObj,subNm);
     }).reduce((sum,t)=>sum+t.amount,0);
-    return legacy+transferSaved(subNm)+loanPaid(subNm);
+    const linkedGoalId=(isSavingsBudget&&String(subKey).startsWith('goal_'))?String(subKey).slice(5):null;
+    const savingsActual=linkedGoalId
+      ? window.MongoBudget.savingsGoalActual(accountTransfers,txns,linkedGoalId,month,budgetYear)
+      : transferSaved(subNm);
+    return legacy+savingsActual+loanPaid(subNm);
   }
   const legacy=txns.filter(t=>matchTxnCat(t,catNm,'expense')&&filterM(t)&&!t.autoPaySelf).reduce((sum,t)=>sum+(Number(t.amount)||0),0);
   return legacy+transferSaved(null)+loanPaid(null);
