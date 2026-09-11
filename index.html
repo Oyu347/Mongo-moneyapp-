@@ -16513,6 +16513,85 @@ setTimeout(installNew,50);
 })();
 </script>
 
+
+<style id="v38-2b-tabs-style">
+#v382ModeTabs{display:flex;gap:8px;margin:12px 0 16px;padding:5px;border-radius:16px;background:#eef7f7}
+#v382ModeTabs button{flex:1;min-height:44px;border:0;border-radius:12px;background:transparent;color:#4b5563;font-weight:800;font-size:14px;padding:8px}
+#v382ModeTabs button.active{background:#49B0B6;color:#fff}
+#v382CancelPanel{display:none}
+@media(max-width:700px){#v382ModeTabs button{font-size:13px;line-height:1.25}}
+</style>
+<script id="v38-2b-tabs-mount">
+(function(){
+ function findCalculatorCard(){
+   var headings=document.querySelectorAll('h1,h2,h3,h4,div');
+   for(var i=0;i<headings.length;i++){
+     var t=(headings[i].textContent||'').trim();
+     if(t==='Хуримтлалын тооцоолуур' || t==='Savings Calculator' ||
+        t.indexOf('储蓄')===0 || t.indexOf('貯蓄')===0 ||
+        t.indexOf('저축')===0 || t.indexOf('Накоп')===0 ||
+        t.indexOf('Spar')===0){
+       var p=headings[i];
+       for(var d=0;p && d<5;d++,p=p.parentElement){
+         if(p.querySelector && p.querySelector('input') && p.querySelector('button')) return p;
+       }
+     }
+   }
+   return null;
+ }
+ function labels(){
+   var l=(window.currentLang||window.lang||localStorage.getItem('lang')||'mn').slice(0,2);
+   var x={
+    mn:['Хуримтлал тооцох','Хугацаанаас өмнө цуцлах'],
+    en:['Savings calculation','Early cancellation'],
+    zh:['储蓄计算','提前解约'],
+    ja:['貯蓄計算','中途解約'],
+    ko:['저축 계산','중도 해지'],
+    ru:['Расчёт накоплений','Досрочное расторжение'],
+    de:['Sparen berechnen','Vorzeitig kündigen']
+   }; return x[l]||x.mn;
+ }
+ function mount(){
+   if(document.getElementById('v382ModeTabs'))return;
+   var card=findCalculatorCard(); if(!card)return;
+   var z=labels();
+   var tabs=document.createElement('div');tabs.id='v382ModeTabs';
+   tabs.innerHTML='<button id="v382SavingsTab" class="active">'+z[0]+'</button><button id="v382CancelTab">'+z[1]+'</button>';
+   card.insertBefore(tabs,card.children[1]||card.firstChild);
+
+   var oldBox=document.getElementById('v382Calc');
+   var panel=document.createElement('div');panel.id='v382CancelPanel';
+   if(oldBox){panel.appendChild(oldBox); oldBox.style.display='block';}
+   else{
+     panel.innerHTML='<div class="v382-box"><div class="v382-title">'+z[1]+'</div><div class="v382-note">Тооцоолуурыг ачаалж байна…</div></div>';
+   }
+   card.parentElement.insertBefore(panel,card.nextSibling);
+
+   function show(which){
+     var cancel=which==='cancel';
+     // Keep the calculator card shell/title/tabs, hide its original form children except tabs/title-like first child.
+     Array.from(card.children).forEach(function(ch,idx){
+       if(ch===tabs) return;
+       if(cancel){
+         if(idx===0) ch.style.display='';
+         else ch.style.display='none';
+       }else ch.style.display='';
+     });
+     tabs.style.display='flex';
+     panel.style.display=cancel?'block':'none';
+     document.getElementById('v382SavingsTab').classList.toggle('active',!cancel);
+     document.getElementById('v382CancelTab').classList.toggle('active',cancel);
+   }
+   document.getElementById('v382SavingsTab').onclick=function(){show('savings')};
+   document.getElementById('v382CancelTab').onclick=function(){show('cancel')};
+   show('savings');
+ }
+ document.addEventListener('DOMContentLoaded',function(){setTimeout(mount,350)});
+ document.addEventListener('click',function(){setTimeout(mount,80)});
+ setTimeout(mount,700);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
