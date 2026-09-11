@@ -16128,6 +16128,53 @@ else setTimeout(runOnce,1800);
 })();
 </script>
 
+<script id="mongo-savings-budget-lifecycle-reconcile-v32">
+(function(){'use strict';
+const S=v=>String(v??''),N=v=>Number(v)||0;
+function nm(x){try{return cN(x)||x?.name||''}catch(_){return x?.name||''}}
+function goalById(id){return (goals||[]).find(g=>S(g?.id)===S(id))}
+function actual(id){return (accountTransfers||[]).some(t=>S(t?.targetId)===S(id)&&Math.abs(N(t?.amount))>0)}
+function plan(parent,sb){
+ let base='';try{base=S(bSubKey(parent,sb))}catch(_){}
+ return Object.entries(budgets||{}).some(([k,v])=>{
+   if(!(k===base||k.startsWith(base+'__')))return false;
+   return v&&typeof v==='object'?Object.values(v).some(x=>Math.abs(N(x))>0):Math.abs(N(v))>0;
+ });
+}
+function activeNamed(name){
+ const a=(goals||[]).filter(g=>{
+  const saved=typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):N(g?.saved);
+  const active=window.MongoArchive?.goalActive?!!window.MongoArchive.goalActive(g,saved):!(g?.archivedAt||g?.completedAt);
+  return active&&nm(g)===name;
+ });
+ return a.length===1?a[0]:null;
+}
+function run(){
+ const p=(bCatsExp||[]).find(c=>c?.key==='savings_cat');
+ if(!p||!Array.isArray(p.subs))return {changed:false,removed:[]};
+ const live=new Set((goals||[]).map(g=>'goal_'+S(g?.id))), kept=[],removed=[];
+ for(const sb of p.subs){
+  const key=S(sb?.key),m=key.match(/^goal_(.+)$/);
+  if(!m){kept.push(sb);continue}
+  const id=m[1],name=nm(sb);
+  if(live.has(key)||plan(p,sb)||actual(id)){kept.push(sb);continue}
+  const canonical=activeNamed(name);
+  if(canonical&&S(canonical.id)!==id){removed.push({key,name,reason:'stale-zero-after-lifecycle'});continue}
+  if(!goalById(id)){removed.push({key,name,reason:'detached-zero'});continue}
+  kept.push(sb);
+ }
+ const seen=new Set(),final=[];
+ for(const sb of kept){const k=S(sb?.key);if(k&&seen.has(k)){removed.push({key:k,name:nm(sb),reason:'duplicate-exact-key'});continue}if(k)seen.add(k);final.push(sb)}
+ if(!removed.length)return {changed:false,removed:[]};
+ p.subs=final;try{saveData()}catch(_){};try{rBList();rBProg();uDash()}catch(_){}
+ window.MONGO_V32_LAST_RECONCILE={at:new Date().toISOString(),removed};
+ return {changed:true,removed};
+}
+window.MongoSavingsBudgetLifecycleV32={run};
+function once(){try{const k='mongo_v32_budget_lifecycle_'+S(window._authUid||'local');if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');console.info('[Möngö V32]',run())}catch(e){console.warn('[Möngö V32]',e)}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(once,2200),{once:true});else setTimeout(once,2200);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
