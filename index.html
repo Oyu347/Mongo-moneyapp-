@@ -16302,6 +16302,62 @@ setTimeout(installNew,50);
 })();
 </script>
 
+
+<style id="v38-1b-cancellation-rule-mobile-fix">
+@media (max-width: 700px){
+  #v38EarlyCancellationRule,
+  [data-v38-field="earlyCancellationRule"],
+  .v38-early-cancellation-rule select{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:72px !important;
+    height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+  }
+}
+</style>
+<script id="v38-1b-cancellation-rule-mobile-fix-js">
+(function(){
+  function fixV38RuleSelect(){
+    var selectors=[
+      '#v38EarlyCancellationRule',
+      '[data-v38-field="earlyCancellationRule"]',
+      '.v38-early-cancellation-rule select'
+    ];
+    var el=null;
+    for(var i=0;i<selectors.length && !el;i++) el=document.querySelector(selectors[i]);
+    if(!el){
+      var labels=document.querySelectorAll('label,div,span');
+      for(var j=0;j<labels.length;j++){
+        var t=(labels[j].textContent||'').trim();
+        if(t==='Цуцлалтын тооцооны дүрэм'){
+          var box=labels[j].parentElement;
+          if(box) el=box.querySelector('select');
+          if(el) break;
+        }
+      }
+    }
+    if(!el) return;
+    el.style.width='100%';
+    el.style.maxWidth='100%';
+    el.style.minHeight='72px';
+    el.style.height='auto';
+    el.style.paddingTop='12px';
+    el.style.paddingBottom='12px';
+    el.style.lineHeight='1.35';
+  }
+  document.addEventListener('DOMContentLoaded',fixV38RuleSelect);
+  document.addEventListener('change',function(e){
+    if(e && e.target && e.target.tagName==='SELECT') setTimeout(fixV38RuleSelect,0);
+  });
+  document.addEventListener('click',function(){ setTimeout(fixV38RuleSelect,0); });
+  setTimeout(fixV38RuleSelect,250);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
