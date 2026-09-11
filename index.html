@@ -16358,6 +16358,58 @@ setTimeout(installNew,50);
 })();
 </script>
 
+
+<style id="v38-1c-edit-rule-fix">
+@media (max-width:700px){
+  select[data-v38-role="cancellation-rule"]{
+    width:100% !important; max-width:100% !important;
+    min-height:78px !important; height:78px !important;
+    padding-top:12px !important; padding-bottom:12px !important;
+    line-height:1.3 !important; box-sizing:border-box !important;
+  }
+}
+</style>
+<script id="v38-1c-edit-rule-fix-js">
+(function(){
+  function isRuleSelect(sel){
+    if(!sel || sel.tagName!=='SELECT') return false;
+    var p=sel.parentElement;
+    for(var d=0;p && d<5;d++,p=p.parentElement){
+      var t=p.textContent||'';
+      if(t.indexOf('Цуцлалтын тооцооны дүрэм')>=0 ||
+         t.indexOf('Early cancellation')>=0 ||
+         t.indexOf('提前')>=0 || t.indexOf('中途')>=0 ||
+         t.indexOf('조기')>=0 || t.indexOf('досроч')>=0 ||
+         t.indexOf('vorzeitig')>=0) return true;
+    }
+    return false;
+  }
+  function fit(sel){
+    if(!isRuleSelect(sel)) return;
+    sel.setAttribute('data-v38-role','cancellation-rule');
+    sel.style.setProperty('width','100%','important');
+    sel.style.setProperty('max-width','100%','important');
+    sel.style.setProperty('min-height','78px','important');
+    sel.style.setProperty('height','78px','important');
+    sel.style.setProperty('padding-top','12px','important');
+    sel.style.setProperty('padding-bottom','12px','important');
+    sel.style.setProperty('line-height','1.3','important');
+    sel.style.setProperty('box-sizing','border-box','important');
+  }
+  function scan(){ document.querySelectorAll('select').forEach(fit); }
+  document.addEventListener('DOMContentLoaded',scan);
+  document.addEventListener('click',function(){setTimeout(scan,30)});
+  document.addEventListener('change',function(){setTimeout(scan,30)});
+  var mo=new MutationObserver(function(m){
+    for(var i=0;i<m.length;i++) if(m[i].addedNodes&&m[i].addedNodes.length){setTimeout(scan,0);break;}
+  });
+  document.addEventListener('DOMContentLoaded',function(){
+    if(document.body) mo.observe(document.body,{childList:true,subtree:true});
+  });
+  setTimeout(scan,250);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
