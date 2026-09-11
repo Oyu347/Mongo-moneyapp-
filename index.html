@@ -16061,120 +16061,111 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
 })();
 </script>
 
-<!-- V31: conservative orphan Savings-Budget row cleanup.
-     Removes only goal_<id> rows whose goal no longer exists AND that have
-     no transfer history and no non-zero stored budget. Historical/live rows stay. -->
-<script id="mongo-savings-budget-orphan-cleanup-v31">
+<script id="mongo-savings-budget-post-cloud-cleanup-v33">
 (function(){
 'use strict';
-const same=(a,b)=>String(a??'')===String(b??'');
-function hasNonZeroBudgetFor(parent,sb){
-  let bases=[];
-  try{ bases.push(String(bSubKey(parent,sb))); }catch(_){}
-  const k=String(sb?.key||'');
-  bases.push('savings_cat__'+k,'savings_cat_'+k,k);
-  return Object.keys(budgets||{}).some(key=>{
-    if(!bases.some(b=>key===b||key.startsWith(b+'__'))) return false;
-    const v=budgets[key];
-    if(v&&typeof v==='object') return Object.values(v).some(x=>Math.abs(Number(x)||0)>0);
-    return Math.abs(Number(v)||0)>0;
+const S=v=>String(v??''), N=v=>Number(v)||0;
+const same=(a,b)=>S(a)===S(b);
+
+function parent(){return (bCatsExp||[]).find(c=>c?.key==='savings_cat');}
+function gid(sb){const m=S(sb?.key).match(/^goal_(.+)$/);return m?m[1]:'';}
+function goal(id){return (goals||[]).find(g=>same(g?.id,id));}
+
+function hasActual(id){
+  return (accountTransfers||[]).some(t =>
+    t?.purpose==='savings' && same(t?.targetId,id) && Math.abs(N(t?.amount))>0
+  );
+}
+function hasPlan(p,sb){
+  let bk='';
+  try{bk=S(bSubKey(p,sb));}catch(_){}
+  if(!bk)return true; // unknown storage shape: protect, never delete
+  return Object.entries(budgets||{}).some(([k,v])=>{
+    if(!(k===bk || k.startsWith(bk+'__'))) return false;
+    if(v && typeof v==='object') return Object.values(v).some(x=>Math.abs(N(x))>0);
+    return Math.abs(N(v))>0;
   });
 }
-function hasTransferForGoal(id){
-  return (accountTransfers||[]).some(t=>same(t?.targetId,id));
+function isActive(g){
+  if(!g)return false;
+  const saved=typeof getGoalEffectiveSaved==='function'
+    ? Math.max(0,N(getGoalEffectiveSaved(g))) : Math.max(0,N(g?.saved));
+  return window.MongoArchive?.goalActive
+    ? !!window.MongoArchive.goalActive(g,saved)
+    : !g?.archivedAt && !(N(g?.target)>0 && saved>=N(g?.target));
 }
-function cleanup(){
-  const parent=(bCatsExp||[]).find(c=>c?.key==='savings_cat');
-  if(!parent||!Array.isArray(parent.subs)) return {removed:0,kept:0};
-  const liveIds=new Set((goals||[]).map(g=>String(g?.id??'')));
-  const seen=new Set(), kept=[], removed=[];
-  for(const sb of parent.subs){
-    const key=String(sb?.key||'');
-    const m=key.match(/^goal_(.+)$/);
-    if(!m){ kept.push(sb); continue; }
-    const gid=m[1];
-    // Exact duplicate key: keep the first unless this copy carries unique
-    // historical budget evidence (in practice both share the same key).
-    if(seen.has(key)){ removed.push({key,name:(typeof cN==='function'?cN(sb):(sb.name||'')),reason:'duplicate-key'}); continue; }
+function isLinked(id){
+  return (moneyAccounts||[]).some(a =>
+    a?.active!==false && (same(a?.linkedGoalId,id)||same(a?.goalId,id))
+  );
+}
+
+/* Historical rule:
+   V8-V13 created Budget rows by goal ID but deletion did not remove them.
+   V14 changed creation de-duplication from display-name to exact goal ID,
+   allowing old same-name rows and a new canonical row to coexist.
+   V16 fixed future deletion. This pass removes only zero-evidence leftovers,
+   and only AFTER cloud data has finished loading. */
+function cleanup(reason){
+  const p=parent();
+  if(!p||!Array.isArray(p.subs)) return {reason,removed:0};
+
+  const kept=[], removed=[], seen=new Set();
+  for(const sb of p.subs){
+    const key=S(sb?.key), id=gid(sb);
+    if(!id){kept.push(sb);continue;}
+
+    if(seen.has(key)){
+      if(!hasPlan(p,sb) && !hasActual(id)){
+        removed.push({key,name:(typeof cN==='function'?cN(sb):sb?.name)||'',why:'duplicate-zero'});
+        continue;
+      }
+    }
     seen.add(key);
-    const live=liveIds.has(gid);
-    const history=hasTransferForGoal(gid);
-    const budget=hasNonZeroBudgetFor(parent,sb);
-    if(!live&&!history&&!budget){
-      removed.push({key,name:(typeof cN==='function'?cN(sb):(sb.name||'')),reason:'orphan-zero'});
-    }else kept.push(sb);
+
+    const g=goal(id);
+    const evidence = hasPlan(p,sb) || hasActual(id);
+    const current = g && isActive(g) && isLinked(id);
+
+    // Protect every row with real budget/transfer evidence and the current linked goal.
+    if(evidence || current){kept.push(sb);continue;}
+
+    // A live-but-archived test goal with no plan/actual/link is also a zero-evidence leftover.
+    removed.push({
+      key,
+      name:(typeof cN==='function'?cN(sb):sb?.name)||'',
+      why:g?'inactive-unlinked-zero':'orphan-zero'
+    });
   }
-  if(!removed.length) return {removed:0,kept:kept.length,items:[]};
-  parent.subs=kept;
+
+  if(!removed.length){
+    window.MONGO_V33_LAST_CLEANUP={at:new Date().toISOString(),reason,removed:[]};
+    return {reason,removed:0};
+  }
+
+  p.subs=kept;
   try{saveData();}catch(_){}
-  try{rBList();}catch(_){}
-  try{rBProg();}catch(_){}
-  try{uDash();}catch(_){}
-  window.MONGO_V31_LAST_CLEANUP={at:new Date().toISOString(),removed:removed.length,items:removed};
-  return {removed:removed.length,kept:kept.length,items:removed};
+  try{rBList();rBProg();uDash();}catch(_){}
+  window.MONGO_V33_LAST_CLEANUP={at:new Date().toISOString(),reason,removed};
+  console.info('[Möngö V33] savings budget cleanup',window.MONGO_V33_LAST_CLEANUP);
+  return {reason,removed:removed.length,items:removed};
 }
-window.MongoSavingsBudgetCleanupV31={run:cleanup};
-function runOnce(){
-  try{
-    const marker='mongo_v31_savings_budget_cleanup_'+String(window._authUid||'local');
-    if(sessionStorage.getItem(marker))return;
-    sessionStorage.setItem(marker,'1');
-    const result=cleanup();
-    console.info('[Möngö V31] Savings budget orphan cleanup',result);
-  }catch(e){console.warn('[Möngö V31] cleanup skipped',e);}
+
+window.MongoSavingsBudgetCleanupV33={run:()=>cleanup('manual')};
+
+/* Critical difference from V31/V32:
+   run after the authoritative cloud snapshot has been applied. */
+window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(()=>cleanup('cloud-load-complete'),250));
+
+/* Local/offline fallback. Cloud completion may later run it again safely. */
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>cleanup('local-fallback'),5000),{once:true});
+}else{
+  setTimeout(()=>cleanup('local-fallback'),5000);
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(runOnce,1800),{once:true});
-else setTimeout(runOnce,1800);
 })();
 </script>
 
-<script id="mongo-savings-budget-lifecycle-reconcile-v32">
-(function(){'use strict';
-const S=v=>String(v??''),N=v=>Number(v)||0;
-function nm(x){try{return cN(x)||x?.name||''}catch(_){return x?.name||''}}
-function goalById(id){return (goals||[]).find(g=>S(g?.id)===S(id))}
-function actual(id){return (accountTransfers||[]).some(t=>S(t?.targetId)===S(id)&&Math.abs(N(t?.amount))>0)}
-function plan(parent,sb){
- let base='';try{base=S(bSubKey(parent,sb))}catch(_){}
- return Object.entries(budgets||{}).some(([k,v])=>{
-   if(!(k===base||k.startsWith(base+'__')))return false;
-   return v&&typeof v==='object'?Object.values(v).some(x=>Math.abs(N(x))>0):Math.abs(N(v))>0;
- });
-}
-function activeNamed(name){
- const a=(goals||[]).filter(g=>{
-  const saved=typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):N(g?.saved);
-  const active=window.MongoArchive?.goalActive?!!window.MongoArchive.goalActive(g,saved):!(g?.archivedAt||g?.completedAt);
-  return active&&nm(g)===name;
- });
- return a.length===1?a[0]:null;
-}
-function run(){
- const p=(bCatsExp||[]).find(c=>c?.key==='savings_cat');
- if(!p||!Array.isArray(p.subs))return {changed:false,removed:[]};
- const live=new Set((goals||[]).map(g=>'goal_'+S(g?.id))), kept=[],removed=[];
- for(const sb of p.subs){
-  const key=S(sb?.key),m=key.match(/^goal_(.+)$/);
-  if(!m){kept.push(sb);continue}
-  const id=m[1],name=nm(sb);
-  if(live.has(key)||plan(p,sb)||actual(id)){kept.push(sb);continue}
-  const canonical=activeNamed(name);
-  if(canonical&&S(canonical.id)!==id){removed.push({key,name,reason:'stale-zero-after-lifecycle'});continue}
-  if(!goalById(id)){removed.push({key,name,reason:'detached-zero'});continue}
-  kept.push(sb);
- }
- const seen=new Set(),final=[];
- for(const sb of kept){const k=S(sb?.key);if(k&&seen.has(k)){removed.push({key:k,name:nm(sb),reason:'duplicate-exact-key'});continue}if(k)seen.add(k);final.push(sb)}
- if(!removed.length)return {changed:false,removed:[]};
- p.subs=final;try{saveData()}catch(_){};try{rBList();rBProg();uDash()}catch(_){}
- window.MONGO_V32_LAST_RECONCILE={at:new Date().toISOString(),removed};
- return {changed:true,removed};
-}
-window.MongoSavingsBudgetLifecycleV32={run};
-function once(){try{const k='mongo_v32_budget_lifecycle_'+S(window._authUid||'local');if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');console.info('[Möngö V32]',run())}catch(e){console.warn('[Möngö V32]',e)}}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(once,2200),{once:true});else setTimeout(once,2200);
-})();
-</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
