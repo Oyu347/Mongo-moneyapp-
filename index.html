@@ -16410,6 +16410,109 @@ setTimeout(installNew,50);
 })();
 </script>
 
+
+<style id="v38-2-cancel-calculator-style">
+.v382-box{margin-top:14px;padding:16px;border:1px solid rgba(73,176,182,.28);border-radius:18px;background:rgba(73,176,182,.055)}
+.v382-title{font-weight:800;font-size:18px;margin-bottom:12px;color:#374151}
+.v382-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.v382-field label{display:block;font-size:13px;font-weight:700;margin:0 0 5px;color:#4b5563}
+.v382-field input,.v382-field select{width:100%;box-sizing:border-box;min-height:46px;border:1px solid #d7e6e7;border-radius:13px;padding:10px 12px;background:#fff;color:#374151;font-size:15px}
+.v382-result{margin-top:12px;padding:13px;border-radius:14px;background:#fff}
+.v382-row{display:flex;justify-content:space-between;gap:14px;padding:6px 0;border-bottom:1px dashed #e5e7eb}
+.v382-row:last-child{border-bottom:0}
+.v382-row strong{white-space:nowrap}
+.v382-note{font-size:12px;line-height:1.45;color:#6b7280;margin-top:9px}
+.v382-btn{width:100%;margin-top:12px;min-height:48px;border:0;border-radius:14px;font-weight:800;background:#49B0B6;color:white;font-size:16px}
+@media(max-width:700px){.v382-grid{grid-template-columns:1fr}.v382-row{align-items:flex-start}.v382-row strong{white-space:normal;text-align:right}}
+</style>
+
+<script id="v38-2-cancel-calculator-engine">
+(function(){
+  const DAY=86400000;
+  function n(v){v=Number(v);return Number.isFinite(v)?v:0}
+  function daysBetween(a,b){
+    const x=new Date(a+'T00:00:00'), y=new Date(b+'T00:00:00');
+    return Math.max(0,Math.round((y-x)/DAY));
+  }
+  function simpleInterest(principal,annualRate,days){
+    return Math.max(0,n(principal))*Math.max(0,n(annualRate))/100*(Math.max(0,n(days))/365);
+  }
+  function calculate(input){
+    input=input||{};
+    const principal=Math.max(0,n(input.principal));
+    const contractRate=Math.max(0,n(input.contractRate));
+    const cancelRate=Math.max(0,n(input.cancelRate));
+    const fee=Math.max(0,n(input.fee));
+    const elapsedDays=Math.max(0,n(input.elapsedDays));
+    const priorInterest=Math.max(0,n(input.priorInterest));
+    const rule=input.rule||'reprice_all';
+
+    let allowedInterest=0;
+    if(rule==='reprice_all'){
+      allowedInterest=simpleInterest(principal,cancelRate,elapsedDays);
+    }else if(rule==='vested_years'){
+      const fullYears=Math.floor(elapsedDays/365);
+      const remDays=Math.max(0,elapsedDays-fullYears*365);
+      allowedInterest=simpleInterest(principal,contractRate,fullYears*365)+simpleInterest(principal,cancelRate,remDays);
+    }else if(rule==='threshold_reprice'){
+      const thresholdDays=Math.max(0,n(input.thresholdDays));
+      const thresholdRate=Math.max(0,n(input.thresholdRate));
+      allowedInterest=simpleInterest(principal, elapsedDays>=thresholdDays?thresholdRate:cancelRate, elapsedDays);
+    }else{
+      allowedInterest=Math.max(0,n(input.manualAllowedInterest));
+    }
+
+    const clawback=Math.max(0,priorInterest-allowedInterest);
+    const unpaidInterest=Math.max(0,allowedInterest-priorInterest);
+    const estimatedSettlement=Math.max(0,principal+unpaidInterest-clawback-fee);
+    return {principal,allowedInterest,priorInterest,clawback,unpaidInterest,fee,estimatedSettlement,elapsedDays,rule};
+  }
+  window.MongoSavingsCancellationV38={calculate,simpleInterest,daysBetween};
+})();
+</script>
+
+<script id="v38-2-cancel-calculator-ui">
+(function(){
+ const L={
+  mn:{title:'Хугацаанаас өмнө цуцлах · Урьдчилсан тооцоо',p:'Үндсэн мөнгө',r:'Гэрээний жилийн хүү (%)',cr:'Цуцлалтын жилийн хүү (%)',d:'Хадгалсан хоног',pi:'Өмнө бодитоор олгосон хүү',fee:'Цуцлалтын шимтгэл',rule:'Цуцлалтын дүрэм',calc:'Тооцоолох',ai:'Цуцлалтаар зөвшөөрөгдөх хүү',cb:'Өмнөх хүүгийн буцаан тохируулга',ui:'Нэмж олгох хүү',settle:'Банкнаас авах тооцоолсон дүн',note:'Энэ нь урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.',all:'Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох',vest:'Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр',manual:'Банкны нөхцөлөөр / бодит хүүг гараар оруулах',mai:'Банкны зөвшөөрсөн эцсийн хүү'},
+  en:{title:'Early cancellation · Preview',p:'Principal',r:'Contract annual rate (%)',cr:'Cancellation annual rate (%)',d:'Days deposited',pi:'Interest already paid',fee:'Cancellation fee',rule:'Cancellation rule',calc:'Calculate',ai:'Allowed interest at cancellation',cb:'Interest clawback',ui:'Additional interest due',settle:'Estimated bank settlement',note:'Preview only. No account, transaction, or budget data is changed.',all:'Reprice all elapsed time at cancellation rate',vest:'Contract rate for full years, cancellation rate for remainder',manual:'Bank rule / enter final allowed interest manually',mai:'Final interest allowed by bank'}
+ };
+ function lang(){return (window.currentLang||window.lang||localStorage.getItem('lang')||'mn').slice(0,2)}
+ function t(){return L[lang()]||L.en}
+ function fmt(v){try{return new Intl.NumberFormat(lang()==='mn'?'mn-MN':undefined,{maximumFractionDigits:0}).format(Math.round(v))}catch(e){return Math.round(v).toLocaleString()}}
+ function mount(){
+   if(document.getElementById('v382Calc'))return;
+   const host=document.querySelector('#calcSavings,#savingsCalc,.savings-calculator,[data-page="savings-calculator"]');
+   if(!host)return;
+   const z=t(), box=document.createElement('div'); box.id='v382Calc';box.className='v382-box';
+   box.innerHTML=`<div class="v382-title">${z.title}</div>
+   <div class="v382-grid">
+    <div class="v382-field"><label>${z.p}</label><input id="v382p" type="number" min="0" value="10000000"></div>
+    <div class="v382-field"><label>${z.r}</label><input id="v382r" type="number" min="0" step=".01" value="14"></div>
+    <div class="v382-field"><label>${z.cr}</label><input id="v382cr" type="number" min="0" step=".01" value="2.4"></div>
+    <div class="v382-field"><label>${z.d}</label><input id="v382d" type="number" min="0" value="584"></div>
+    <div class="v382-field"><label>${z.pi}</label><input id="v382pi" type="number" min="0" value="0"></div>
+    <div class="v382-field"><label>${z.fee}</label><input id="v382fee" type="number" min="0" value="0"></div>
+    <div class="v382-field" style="grid-column:1/-1"><label>${z.rule}</label><select id="v382rule"><option value="reprice_all">${z.all}</option><option value="vested_years">${z.vest}</option><option value="manual_actual">${z.manual}</option></select></div>
+    <div class="v382-field" id="v382manualWrap" style="display:none"><label>${z.mai}</label><input id="v382manual" type="number" min="0" value="0"></div>
+   </div>
+   <button class="v382-btn" id="v382go">${z.calc}</button>
+   <div class="v382-result" id="v382out"></div><div class="v382-note">${z.note}</div>`;
+   host.appendChild(box);
+   const $=id=>document.getElementById(id);
+   function run(){
+    const z=t(), rule=$('v382rule').value;
+    $('v382manualWrap').style.display=rule==='manual_actual'?'block':'none';
+    const x=window.MongoSavingsCancellationV38.calculate({principal:$('v382p').value,contractRate:$('v382r').value,cancelRate:$('v382cr').value,elapsedDays:$('v382d').value,priorInterest:$('v382pi').value,fee:$('v382fee').value,rule,manualAllowedInterest:$('v382manual').value});
+    $('v382out').innerHTML=`<div class="v382-row"><span>${z.p}</span><strong>₮${fmt(x.principal)}</strong></div><div class="v382-row"><span>${z.ai}</span><strong>₮${fmt(x.allowedInterest)}</strong></div><div class="v382-row"><span>${z.cb}</span><strong>−₮${fmt(x.clawback)}</strong></div><div class="v382-row"><span>${z.ui}</span><strong>+₮${fmt(x.unpaidInterest)}</strong></div><div class="v382-row"><span>${z.fee}</span><strong>−₮${fmt(x.fee)}</strong></div><div class="v382-row"><span>${z.settle}</span><strong>₮${fmt(x.estimatedSettlement)}</strong></div>`;
+   }
+   $('v382go').onclick=run;$('v382rule').onchange=run;run();
+ }
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,300));
+ document.addEventListener('click',()=>setTimeout(mount,100));
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
