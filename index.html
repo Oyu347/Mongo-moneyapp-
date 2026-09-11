@@ -16180,6 +16180,8 @@ ru:{action:'Перевести из накоплений',title:'Перевод 
 de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.',insufficient:'Das Sparguthaben reicht nicht aus.'}
 };
 window.savingsOutTextV36=()=>Q[(typeof lang!=='undefined'&&lang)||'mn']||Q.en;
+/* V35 account-detail renderer still calls this name; keep a compatibility alias. */
+window.savingsOutTextV35=window.savingsOutTextV36;
 const S=v=>String(v??''),N=v=>Number(v)||0,esc=v=>S(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* Use the app's authoritative balance calculation.
