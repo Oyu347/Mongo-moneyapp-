@@ -16592,6 +16592,81 @@ setTimeout(installNew,50);
 })();
 </script>
 
+
+<style id="v38-2c-panel-style">
+#v382InlineCancel{display:none;margin-top:14px}
+#v382InlineCancel .v382-box{margin-top:0}
+</style>
+<script id="v38-2c-panel-fix">
+(function(){
+ function txt(){
+   var l=(window.currentLang||window.lang||localStorage.getItem('lang')||'mn').slice(0,2);
+   var x={
+    mn:{p:'Үндсэн мөнгө',r:'Гэрээний жилийн хүү (%)',cr:'Цуцлалтын жилийн хүү (%)',d:'Хадгалсан хоног',pi:'Өмнө бодитоор олгосон хүү',fee:'Цуцлалтын шимтгэл',rule:'Цуцлалтын дүрэм',go:'Тооцоолох',ai:'Цуцлалтаар зөвшөөрөгдөх хүү',cb:'Өмнөх хүүгийн буцаан тохируулга',ui:'Нэмж олгох хүү',st:'Банкнаас авах тооцоолсон дүн',note:'Урьдчилсан тооцоо — бодит данс, гүйлгээ, төсөв өөрчлөгдөхгүй.',a:'Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох',v:'Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр',m:'Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах',mi:'Банкны зөвшөөрсөн эцсийн хүү'},
+    en:{p:'Principal',r:'Contract annual rate (%)',cr:'Cancellation annual rate (%)',d:'Days deposited',pi:'Interest already paid',fee:'Cancellation fee',rule:'Cancellation rule',go:'Calculate',ai:'Allowed interest at cancellation',cb:'Interest clawback',ui:'Additional interest due',st:'Estimated bank settlement',note:'Preview only — no account, transaction, or budget data is changed.',a:'Reprice all elapsed time at cancellation rate',v:'Contract rate for full years, cancellation rate for remainder',m:'Bank rule / enter final allowed interest manually',mi:'Final interest allowed by bank'}
+   };return x[l]||x.en;
+ }
+ function fmt(v){try{return new Intl.NumberFormat('mn-MN',{maximumFractionDigits:0}).format(Math.round(v))}catch(e){return Math.round(v).toLocaleString()}}
+ function build(card){
+   if(document.getElementById('v382InlineCancel')) return document.getElementById('v382InlineCancel');
+   var z=txt(), p=document.createElement('div'); p.id='v382InlineCancel';
+   p.innerHTML=`<div class="v382-box">
+    <div class="v382-grid">
+     <div class="v382-field"><label>${z.p}</label><input id="v382cp" type="number" min="0" value="10000000"></div>
+     <div class="v382-field"><label>${z.r}</label><input id="v382cRate" type="number" min="0" step=".01" value="14"></div>
+     <div class="v382-field"><label>${z.cr}</label><input id="v382ccRate" type="number" min="0" step=".01" value="2.4"></div>
+     <div class="v382-field"><label>${z.d}</label><input id="v382cDays" type="number" min="0" value="584"></div>
+     <div class="v382-field"><label>${z.pi}</label><input id="v382cPrior" type="number" min="0" value="0"></div>
+     <div class="v382-field"><label>${z.fee}</label><input id="v382cFee" type="number" min="0" value="0"></div>
+     <div class="v382-field" style="grid-column:1/-1"><label>${z.rule}</label><select id="v382cRule"><option value="reprice_all">${z.a}</option><option value="vested_years">${z.v}</option><option value="manual_actual">${z.m}</option></select></div>
+     <div class="v382-field" id="v382cManualWrap" style="display:none"><label>${z.mi}</label><input id="v382cManual" type="number" min="0" value="0"></div>
+    </div>
+    <button class="v382-btn" id="v382cGo">${z.go}</button>
+    <div class="v382-result" id="v382cOut"></div><div class="v382-note">${z.note}</div>
+   </div>`;
+   card.appendChild(p);
+   function run(){
+     var rule=document.getElementById('v382cRule').value;
+     document.getElementById('v382cManualWrap').style.display=rule==='manual_actual'?'block':'none';
+     var E=window.MongoSavingsCancellationV38;
+     if(!E){document.getElementById('v382cOut').textContent='Calculation engine unavailable';return}
+     var r=E.calculate({principal:document.getElementById('v382cp').value,contractRate:document.getElementById('v382cRate').value,cancelRate:document.getElementById('v382ccRate').value,elapsedDays:document.getElementById('v382cDays').value,priorInterest:document.getElementById('v382cPrior').value,fee:document.getElementById('v382cFee').value,rule:rule,manualAllowedInterest:document.getElementById('v382cManual').value});
+     var q=txt();
+     document.getElementById('v382cOut').innerHTML=
+      `<div class="v382-row"><span>${q.p}</span><strong>₮${fmt(r.principal)}</strong></div>
+       <div class="v382-row"><span>${q.ai}</span><strong>₮${fmt(r.allowedInterest)}</strong></div>
+       <div class="v382-row"><span>${q.cb}</span><strong>−₮${fmt(r.clawback)}</strong></div>
+       <div class="v382-row"><span>${q.ui}</span><strong>+₮${fmt(r.unpaidInterest)}</strong></div>
+       <div class="v382-row"><span>${q.fee}</span><strong>−₮${fmt(r.fee)}</strong></div>
+       <div class="v382-row"><span>${q.st}</span><strong>₮${fmt(r.estimatedSettlement)}</strong></div>`;
+   }
+   document.getElementById('v382cGo').onclick=run;
+   document.getElementById('v382cRule').onchange=run;
+   run(); return p;
+ }
+ function wire(){
+   var tabs=document.getElementById('v382ModeTabs'); if(!tabs)return;
+   var card=tabs.parentElement; if(!card)return;
+   var panel=build(card);
+   var oldExternal=document.getElementById('v382CancelPanel'); if(oldExternal) oldExternal.style.display='none';
+   var s=document.getElementById('v382SavingsTab'), c=document.getElementById('v382CancelTab');
+   if(!s||!c)return;
+   var originals=Array.from(card.children).filter(function(ch){return ch!==tabs && ch!==panel});
+   function show(cancel){
+     originals.forEach(function(ch){ch.style.display=cancel?'none':''});
+     tabs.style.display='flex'; panel.style.display=cancel?'block':'none';
+     s.classList.toggle('active',!cancel); c.classList.toggle('active',cancel);
+   }
+   s.onclick=function(){show(false)};
+   c.onclick=function(){show(true)};
+   show(false);
+ }
+ document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,700)});
+ document.addEventListener('click',function(){setTimeout(wire,120)});
+ setTimeout(wire,1200);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
