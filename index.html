@@ -16167,69 +16167,107 @@ if(document.readyState==='loading'){
 </script>
 
 
-<script id="mongo-savings-out-v35">
+<script id="mongo-savings-out-v36">
 (()=>{
 'use strict';
 const Q={
-mn:{action:'Хуримтлалаас шилжүүлэх',title:'Хуримтлалаас шилжүүлэх',to:'Хүлээн авах данс',amount:'Дүн',cancel:'Болих',send:'Шилжүүлэх',confirm:'Энэ шилжүүлгийг хийх үү? Зарлага үүсэхгүй, нийт мөнгө өөрчлөгдөхгүй.',bad:'Дүн болон дансаа шалгана уу.',none:'Хүлээн авах боломжтой харилцах эсвэл бэлэн мөнгөний данс алга.'},
-en:{action:'Transfer from savings',title:'Transfer from savings',to:'Destination account',amount:'Amount',cancel:'Cancel',send:'Transfer',confirm:'Make this transfer? It is not an expense and total money will not change.',bad:'Check the amount and account.',none:'No eligible checking or cash account.'},
-zh:{action:'从储蓄转出',title:'从储蓄转出',to:'收款账户',amount:'金额',cancel:'取消',send:'转账',confirm:'确认转账吗？这不是支出，总资金不会改变。',bad:'请检查金额和账户。',none:'没有可用的活期或现金账户。'},
-ja:{action:'貯蓄から振替',title:'貯蓄から振替',to:'振替先口座',amount:'金額',cancel:'キャンセル',send:'振替',confirm:'振替しますか？支出ではなく、総資金は変わりません。',bad:'金額と口座を確認してください。',none:'利用可能な普通預金または現金口座がありません。'},
-ko:{action:'저축에서 이체',title:'저축에서 이체',to:'받는 계좌',amount:'금액',cancel:'취소',send:'이체',confirm:'이체할까요? 지출이 아니며 총자금은 변하지 않습니다.',bad:'금액과 계좌를 확인하세요.',none:'사용 가능한 입출금 또는 현금 계좌가 없습니다.'},
-ru:{action:'Перевести из накоплений',title:'Перевод из накоплений',to:'Счёт получателя',amount:'Сумма',cancel:'Отмена',send:'Перевести',confirm:'Выполнить перевод? Это не расход, общая сумма денег не изменится.',bad:'Проверьте сумму и счёт.',none:'Нет доступного расчётного или наличного счёта.'},
-de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.'}
+mn:{action:'Хуримтлалаас шилжүүлэх',title:'Хуримтлалаас шилжүүлэх',to:'Хүлээн авах данс',amount:'Дүн',cancel:'Болих',send:'Шилжүүлэх',confirm:'Энэ шилжүүлгийг хийх үү? Зарлага үүсэхгүй, нийт мөнгө өөрчлөгдөхгүй.',bad:'Дүн болон дансаа шалгана уу.',none:'Хүлээн авах боломжтой харилцах эсвэл бэлэн мөнгөний данс алга.',insufficient:'Хуримтлалын үлдэгдэл хүрэлцэхгүй байна.'},
+en:{action:'Transfer from savings',title:'Transfer from savings',to:'Destination account',amount:'Amount',cancel:'Cancel',send:'Transfer',confirm:'Make this transfer? It is not an expense and total money will not change.',bad:'Check the amount and account.',none:'No eligible checking or cash account.',insufficient:'The savings balance is insufficient.'},
+zh:{action:'从储蓄转出',title:'从储蓄转出',to:'收款账户',amount:'金额',cancel:'取消',send:'转账',confirm:'确认转账吗？这不是支出，总资金不会改变。',bad:'请检查金额和账户。',none:'没有可用的活期或现金账户。',insufficient:'储蓄余额不足。'},
+ja:{action:'貯蓄から振替',title:'貯蓄から振替',to:'振替先口座',amount:'金額',cancel:'キャンセル',send:'振替',confirm:'振替しますか？支出ではなく、総資金は変わりません。',bad:'金額と口座を確認してください。',none:'利用可能な普通預金または現金口座がありません。',insufficient:'貯蓄残高が不足しています。'},
+ko:{action:'저축에서 이체',title:'저축에서 이체',to:'받는 계좌',amount:'금액',cancel:'취소',send:'이체',confirm:'이체할까요? 지출이 아니며 총자금은 변하지 않습니다.',bad:'금액과 계좌를 확인하세요.',none:'사용 가능한 입출금 또는 현금 계좌가 없습니다.',insufficient:'저축 잔액이 부족합니다.'},
+ru:{action:'Перевести из накоплений',title:'Перевод из накоплений',to:'Счёт получателя',amount:'Сумма',cancel:'Отмена',send:'Перевести',confirm:'Выполнить перевод? Это не расход, общая сумма денег не изменится.',bad:'Проверьте сумму и счёт.',none:'Нет доступного расчётного или наличного счёта.',insufficient:'Недостаточно средств в накоплениях.'},
+de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.',insufficient:'Das Sparguthaben reicht nicht aus.'}
 };
-window.savingsOutTextV35=()=>Q[(typeof lang!=='undefined'&&lang)||'mn']||Q.en;
+window.savingsOutTextV36=()=>Q[(typeof lang!=='undefined'&&lang)||'mn']||Q.en;
 const S=v=>String(v??''),N=v=>Number(v)||0,esc=v=>S(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function bal(a){try{return N(window.MongoLedgerCore.accountBalance(a.id))}catch(_){return N(a?.balance)}}
+
+/* Use the app's authoritative balance calculation.
+   MongoLedgerCore.accountBalance requires accounts + ledger and was the V35 ₮0 bug. */
+function bal(a){
+  if(!a)return 0;
+  try{
+    if(typeof accountBalanceRaw==='function') return N(accountBalanceRaw(a.id));
+    if(typeof accountBalance==='function') return N(accountBalance(a.id));
+  }catch(_){}
+  return N(a.openingBalance);
+}
 function linkedGoalId(a){return S(a?.linkedGoalId||a?.goalId||'')}
 function eligibleDest(a){
  const t=normalizeAccountType(a?.type);
  return a?.active!==false && (t==='checking'||t==='cash'||t==='current');
 }
-window.openSavingsOutV35=function(id){
+function notify(msg){
+ try{ if(typeof showToast==='function'){showToast(msg);return;} }catch(_){}
+ const box=document.createElement('div');
+ box.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100000;background:#fff;padding:14px 18px;border-radius:14px;box-shadow:0 8px 30px #0003;font-weight:800;max-width:86vw';
+ box.textContent=msg;document.body.appendChild(box);setTimeout(()=>box.remove(),2200);
+}
+async function ask(msg){
+ try{if(typeof showConfirm==='function')return await showConfirm(msg)}catch(_){}
+ return false;
+}
+window.openSavingsOutV36=window.openSavingsOutV35=function(id){
  const a=(moneyAccounts||[]).find(x=>S(x?.id)===S(id)); if(!a||normalizeAccountType(a.type)!=='savings')return;
- const q=savingsOutTextV35(), dest=(moneyAccounts||[]).filter(eligibleDest);
- if(!dest.length){alert(q.none);return}
+ const q=savingsOutTextV36(), dest=(moneyAccounts||[]).filter(eligibleDest);
+ if(!dest.length){notify(q.none);return}
  document.getElementById('savings-out-v35-modal')?.remove();
- const m=document.createElement('div');m.id='savings-out-v35-modal';m.className='loan-modal-backdrop';
+ document.getElementById('savings-out-v36-modal')?.remove();
+ const m=document.createElement('div');m.id='savings-out-v36-modal';m.className='loan-modal-backdrop';
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${esc(q.title)} · ${esc(a.name)}</div>
- <div style="font-size:12px;font-weight:800;margin-bottom:4px">${esc(q.to)}</div><select class="fi" id="savings-out-v35-to">${dest.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${fmt(bal(x))}</option>`).join('')}</select>
- <div style="font-size:12px;font-weight:800;margin:10px 0 4px">${esc(q.amount)}</div><input class="fi" id="savings-out-v35-amount" inputmode="decimal" data-amt="1">
- <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="savings-out-v35-cancel">${esc(q.cancel)}</button><button class="btn btn-p" id="savings-out-v35-save">${esc(q.send)}</button></div></div>`;
- document.body.appendChild(m);setupAmtInput?.(document.getElementById('savings-out-v35-amount'));
- document.getElementById('savings-out-v35-cancel').onclick=()=>m.remove();
- document.getElementById('savings-out-v35-save').onclick=()=>{
-   const amount=Math.round(parseAmt(document.getElementById('savings-out-v35-amount').value)||0),toId=document.getElementById('savings-out-v35-to').value;
-   if(!(amount>0)||amount>bal(a)||!toId){alert(q.bad);return}
-   if(!confirm(q.confirm))return;
-   const made=window.MongoTransactions.makeTransfer({fromId:a.id,toId,amount,date:new Date().toISOString().slice(0,10),purpose:'savings_withdrawal',targetId:linkedGoalId(a)});
-   if(!made?.ok){alert(q.bad);return}
+ <div style="font-size:12px;font-weight:800;margin-bottom:4px">${esc(q.to)}</div><select class="fi" id="savings-out-v36-to">${dest.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${fmt(bal(x))}</option>`).join('')}</select>
+ <div style="font-size:12px;font-weight:800;margin:10px 0 4px">${esc(q.amount)}</div><input class="fi" id="savings-out-v36-amount" inputmode="decimal" data-amt="1">
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="savings-out-v36-cancel">${esc(q.cancel)}</button><button class="btn btn-p" id="savings-out-v36-save">${esc(q.send)}</button></div></div>`;
+ document.body.appendChild(m);
+ try{setupAmtInput(document.getElementById('savings-out-v36-amount'))}catch(_){}
+ document.getElementById('savings-out-v36-cancel').onclick=()=>m.remove();
+ document.getElementById('savings-out-v36-save').onclick=async()=>{
+   const amount=Math.round(parseAmt(document.getElementById('savings-out-v36-amount').value)||0);
+   const toId=document.getElementById('savings-out-v36-to').value;
+   if(!(amount>0)||!toId){notify(q.bad);return}
+   if(amount>bal(a)+.001){notify(q.insufficient);return}
+   if(!(await ask(q.confirm)))return;
+   const made=window.MongoTransactions.makeTransfer({
+     fromId:a.id,toId,amount,date:new Date().toISOString().slice(0,10),
+     purpose:'savings_withdrawal',targetId:linkedGoalId(a)
+   });
+   if(!made?.ok){notify(q.bad);return}
    accountTransfers.push(made.transfer);
    try{saveData()}catch(_){}
-   m.remove();try{rAll();rGoals();rBList();rBProg();uDash();renderMoneyAccounts()}catch(_){}
+   m.remove();
+   try{rAll();rGoals();rBList();rBProg();uDash();renderMoneyAccounts()}catch(_){}
  };
 };
 
 /* Savings goal balance = deposits + interest - withdrawals. */
 const oldEffective=window.getGoalEffectiveSaved;
-if(typeof oldEffective==='function'&&!oldEffective.__v35){
- const f=function(g){const base=N(oldEffective(g)),out=(accountTransfers||[]).filter(t=>t?.purpose==='savings_withdrawal'&&S(t?.targetId)===S(g?.id)).reduce((s,t)=>s+N(t.amount),0);return Math.max(0,base-out)};f.__v35=true;window.getGoalEffectiveSaved=f;getGoalEffectiveSaved=f;
+if(typeof oldEffective==='function'&&!oldEffective.__v35&&!oldEffective.__v36){
+ const f=function(g){
+   const base=N(oldEffective(g));
+   const out=(accountTransfers||[]).filter(t=>t?.purpose==='savings_withdrawal'&&S(t?.targetId)===S(g?.id)).reduce((sum,t)=>sum+N(t.amount),0);
+   return Math.max(0,base-out);
+ };
+ f.__v36=true;window.getGoalEffectiveSaved=f;getGoalEffectiveSaved=f;
 }
 
-/* Budget actual for goal rows is net savings for that month. */
+/* Budget actual for goal rows = deposits minus savings withdrawals for the selected month. */
 const priorGSpent=window.gSpent||gSpent;
-if(typeof priorGSpent==='function'&&!priorGSpent.__v35){
+if(typeof priorGSpent==='function'&&!priorGSpent.__v35&&!priorGSpent.__v36){
  const f=function(catNm,subNm,month,subObj){
    let base=N(priorGSpent.apply(this,arguments));
    const key=S(subObj?.key),m=key.match(/^goal_(.+)$/);
    if(m){
      const y=Number(typeof budgetYear!=='undefined'?budgetYear:new Date().getFullYear()),mo=Number(month);
-     const out=(accountTransfers||[]).filter(t=>t?.purpose==='savings_withdrawal'&&S(t?.targetId)===m[1]&&new Date(t.date).getFullYear()===y&&(new Date(t.date).getMonth()+1)===mo).reduce((s,t)=>s+N(t.amount),0);
+     const out=(accountTransfers||[]).filter(t=>{
+       if(t?.purpose!=='savings_withdrawal'||S(t?.targetId)!==m[1])return false;
+       const d=new Date(t.date);
+       return d.getFullYear()===y&&(d.getMonth()+1)===mo;
+     }).reduce((sum,t)=>sum+N(t.amount),0);
      base=Math.max(0,base-out);
    }
    return base;
- };f.__v35=true;window.gSpent=f;gSpent=f;
+ };
+ f.__v36=true;window.gSpent=f;gSpent=f;
 }
 })();
 </script>
