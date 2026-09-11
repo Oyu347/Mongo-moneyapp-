@@ -3500,7 +3500,7 @@ global.MongoLoans=Object.freeze({payments,principalPaid,totalPaid,interestPaid,o
 (function(global){
 'use strict';
 const num=v=>Number(v)||0,MODES=new Set(['compound','payout','maturity','none']),FREQUENCIES=new Set(['monthly','quarterly','yearly','maturity']);
-function transferContribution(goal,transfers){return (Array.isArray(transfers)?transfers:[]).filter(t=>t?.purpose==='savings'&&String(t.targetId)===String(goal?.id)).reduce((s,t)=>s+num(t.amount),0);}
+function transferContribution(goal,transfers){return (Array.isArray(transfers)?transfers:[]).filter(t=>(t?.purpose==='savings'||t?.purpose==='savings_withdrawal')&&String(t.targetId)===String(goal?.id)).reduce((s,t)=>s+(t?.purpose==='savings_withdrawal'?-num(t.amount):num(t.amount)),0);}
 function interestContribution(goal,txns){return (Array.isArray(txns)?txns:[]).filter(t=>t?.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===String(goal?.id)).reduce((s,t)=>s+num(t.amount),0);}
 function autoSaved(goal,transfers,txns){return transferContribution(goal,transfers)+interestContribution(goal,txns);}
 function effectiveSaved(goal,transfers,txns){return Math.max(0,num(goal?.saved))+autoSaved(goal,transfers,txns);}
@@ -3549,7 +3549,7 @@ function yearMonthKey(budgetKey,month,year){return `${year}_${month}_${budgetKey
 function getValue(budgets,budgetKey,month,year,currentYear){const map=budgets||{},ymk=yearMonthKey(budgetKey,month,year);if(map[ymk]!==undefined)return map[ymk];if(year===currentYear&&map[budgetKey]&&typeof map[budgetKey]==='object')return map[budgetKey][month]||0;return 0;}
 function rowInMonth(row,month,year){const p=String(row?.date||'').split('-');return Number(p[0])===Number(year)&&Number(p[1])===Number(month);}
 function sumRows(rows,predicate){return (Array.isArray(rows)?rows:[]).filter(predicate||(()=>true)).reduce((s,x)=>s+num(x?.amount),0);}
-function savingsGoalActual(transfers,txns,goalId,month,year){const moved=sumRows(transfers,t=>t?.purpose==='savings'&&String(t.targetId)===String(goalId)&&rowInMonth(t,month,year));const interest=sumRows(txns,t=>t?.type==='income'&&t?.incomePurpose==='savings_interest'&&String(t.goalId)===String(goalId)&&rowInMonth(t,month,year));return moved+interest;}
+function savingsGoalActual(transfers,txns,goalId,month,year){const moved=sumRows(transfers,t=>t?.purpose==='savings'&&String(t.targetId)===String(goalId)&&rowInMonth(t,month,year));const withdrawn=sumRows(transfers,t=>t?.purpose==='savings_withdrawal'&&String(t.targetId)===String(goalId)&&rowInMonth(t,month,year));const interest=sumRows(txns,t=>t?.type==='income'&&t?.incomePurpose==='savings_interest'&&String(t.goalId)===String(goalId)&&rowInMonth(t,month,year));return moved-withdrawn+interest;}
 function investmentActual(transfers,keys,month,year){const eligible=new Set((keys||[]).map(String));return sumRows(transfers,t=>(t?.purpose==='investment'||t?.purpose==='asset')&&rowInMonth(t,month,year)&&(eligible.has(String(t.targetId))||eligible.has(String(t.assetId))));}
 function loanActual(payments,month,year){return (Array.isArray(payments)?payments:[]).filter(p=>rowInMonth(p,month,year)).reduce((s,p)=>s+num(p?.total),0);}
 function progress(plan,actual,isIncomePlan){const p=num(plan),a=num(actual),pct=p?a/p*100:0;let health='good';if(!isIncomePlan&&pct>100)health='bad';else if((isIncomePlan&&pct<80)||(!isIncomePlan&&pct>=80))health='warn';return {plan:p,actual:a,pct,health};}
@@ -8422,8 +8422,10 @@ function accountInlineDetail(a){
   const rows=accountRowsFor(a);
   const editLbl=lang==='mn'?'Засах':(lang==='en'?'Edit':'✎');
   const offLbl=lang==='mn'?'Идэвхгүй болгох':(lang==='en'?'Deactivate':'Deactivate');
+  const outLbl={mn:'Хуримтлалаас шилжүүлэх',en:'Transfer from savings',zh:'从储蓄转出',ja:'貯蓄から振替',ko:'저축에서 이체',ru:'Перевести из накоплений',de:'Aus Sparen übertragen'}[lang]||'Transfer from savings';
+  const outBtn=(normalizeAccountType(a.type)==='savings'&&a.active!==false)?`<button class="btn btn-sm" onclick="event.stopPropagation();openSavingsWithdrawalV34('${a.id}')">↗ ${outLbl}</button>`:'';
   return `<div class="account-detail show" style="margin:-4px 0 10px 0;border-radius:0 0 18px 18px">
-    <div style="display:flex;gap:6px;margin:4px 0 9px"><button class="btn btn-sm" onclick="event.stopPropagation();editMoneyAccount('${a.id}')">✎ ${editLbl}</button>${a.active!==false?`<button class="btn btn-sm" onclick="event.stopPropagation();archiveMoneyAccount('${a.id}')">${offLbl}</button>`:''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 9px"><button class="btn btn-sm" onclick="event.stopPropagation();editMoneyAccount('${a.id}')">✎ ${editLbl}</button>${outBtn}${a.active!==false?`<button class="btn btn-sm" onclick="event.stopPropagation();archiveMoneyAccount('${a.id}')">${offLbl}</button>`:''}</div>
     <div>${rows.length?rows.map(r=>`<div class="account-history-item"><span>${r.date} · ${r.label}</span><b>${r.amount>0?'+':''}${fmt(r.amount)}</b></div>`).join(''):`<div class="empty">${L.notxn}</div>`}</div>
   </div>`;
 }
@@ -16166,6 +16168,21 @@ if(document.readyState==='loading'){
 })();
 </script>
 
+<script id="mongo-savings-withdrawal-v34">
+(function(){'use strict';
+const S=v=>String(v??''),N=v=>Number(v)||0;
+const X={mn:['Хуримтлалаас шилжүүлэх','Хүлээн авах данс','Дүн','Шилжүүлэх','Хаах','Дүн болон дансаа шалгана уу.','Шилжүүлэх боломжтой харилцах/бэлэн мөнгөний данс алга.','Энэ мөнгийг хуримтлалаас шилжүүлэх үү? Энэ нь зарлага биш бөгөөд нийт мөнгө өөрчлөгдөхгүй.'],en:['Transfer from savings','Destination account','Amount','Transfer','Close','Check the amount and account.','No eligible everyday/cash account.','Transfer this money from savings? This is not an expense and total money will not change.'],zh:['从储蓄转出','收款账户','金额','转账','关闭','请检查金额和账户。','没有可用的日常/现金账户。','从储蓄转出这笔资金吗？这不是支出，总资金不会改变。'],ja:['貯蓄から振替','振替先口座','金額','振替','閉じる','金額と口座を確認してください。','振替可能な日常用・現金口座がありません。','貯蓄からこの金額を振替しますか？支出ではなく、総資金額は変わりません。'],ko:['저축에서 이체','받는 계좌','금액','이체','닫기','금액과 계좌를 확인하세요.','이체 가능한 생활/현금 계좌가 없습니다.','저축에서 이 금액을 이체할까요? 지출이 아니며 총금액은 변하지 않습니다.'],ru:['Перевести из накоплений','Счёт получателя','Сумма','Перевести','Закрыть','Проверьте сумму и счёт.','Нет доступного текущего/наличного счёта.','Перевести эту сумму из накоплений? Это не расход, общая сумма денег не изменится.'],de:['Aus Sparen übertragen','Zielkonto','Betrag','Übertragen','Schließen','Bitte Betrag und Konto prüfen.','Kein geeignetes Alltags-/Bargeldkonto verfügbar.','Diesen Betrag aus dem Sparen übertragen? Dies ist keine Ausgabe; das Gesamtgeld bleibt unverändert.']};
+function T(){return X[window.lang]||X.mn} function esc(x){return S(x).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
+window.openSavingsWithdrawalV34=function(id){
+ const a=(moneyAccounts||[]).find(x=>S(x.id)===S(id)); if(!a)return; const t=T();
+ const dest=(moneyAccounts||[]).filter(x=>x.active!==false&&normalizeAccountType(x.type)!=='savings'&&!x.legacy&&S(x.id)!==S(id)); if(!dest.length){alert(t[6]);return}
+ const b=N(accountBalance(a.id)); const old=document.getElementById('mongo-v34-out');if(old)old.remove();
+ const m=document.createElement('div');m.id='mongo-v34-out';m.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:8vh 16px 40px';
+ m.innerHTML=`<div style="width:min(560px,100%);background:#fff;border-radius:28px;padding:24px;margin:auto 0"><h2>${esc(t[0])}</h2><div style="padding:12px;border:1px solid #dbe8e8;border-radius:16px;margin-bottom:12px"><b>${esc(a.name)}</b> · ${fmt(b)}</div><label>${esc(t[1])}</label><select id="v34to" style="width:100%;padding:14px;margin:6px 0 14px;border:1px solid #dbe8e8;border-radius:16px">${dest.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${fmt(accountBalance(x.id))}</option>`).join('')}</select><label>${esc(t[2])}</label><input id="v34amt" type="number" min="1" max="${b}" inputmode="decimal" style="width:100%;box-sizing:border-box;padding:14px;margin:6px 0 18px;border:1px solid #dbe8e8;border-radius:16px"><div style="display:flex;gap:10px"><button id="v34x" class="btn" style="flex:1">${esc(t[4])}</button><button id="v34go" class="btn" style="flex:1;background:#49B0B6;color:#fff">${esc(t[3])}</button></div></div>`;document.body.appendChild(m);
+ m.querySelector('#v34x').onclick=()=>m.remove();m.querySelector('#v34go').onclick=()=>{const toId=m.querySelector('#v34to').value,amount=N(m.querySelector('#v34amt').value);if(!toId||amount<=0||amount>b){alert(t[5]);return}if(!confirm(t[7]))return;const made=window.MongoTransactions.makeTransfer({fromId:a.id,toId,amount,date:new Date().toISOString().slice(0,10),purpose:'savings_withdrawal',targetId:a.linkedGoalId||a.goalId||null});if(!made?.ok){alert(t[5]);return}accountTransfers.unshift(made.transfer);saveData();m.remove();renderMoneyAccounts();rGoals();rBProg();uDash();};
+};
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
