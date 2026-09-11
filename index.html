@@ -16060,6 +16060,74 @@ window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
   setTimeout(repair,1800);
 })();
 </script>
+
+<!-- V31: conservative orphan Savings-Budget row cleanup.
+     Removes only goal_<id> rows whose goal no longer exists AND that have
+     no transfer history and no non-zero stored budget. Historical/live rows stay. -->
+<script id="mongo-savings-budget-orphan-cleanup-v31">
+(function(){
+'use strict';
+const same=(a,b)=>String(a??'')===String(b??'');
+function hasNonZeroBudgetFor(parent,sb){
+  let bases=[];
+  try{ bases.push(String(bSubKey(parent,sb))); }catch(_){}
+  const k=String(sb?.key||'');
+  bases.push('savings_cat__'+k,'savings_cat_'+k,k);
+  return Object.keys(budgets||{}).some(key=>{
+    if(!bases.some(b=>key===b||key.startsWith(b+'__'))) return false;
+    const v=budgets[key];
+    if(v&&typeof v==='object') return Object.values(v).some(x=>Math.abs(Number(x)||0)>0);
+    return Math.abs(Number(v)||0)>0;
+  });
+}
+function hasTransferForGoal(id){
+  return (accountTransfers||[]).some(t=>same(t?.targetId,id));
+}
+function cleanup(){
+  const parent=(bCatsExp||[]).find(c=>c?.key==='savings_cat');
+  if(!parent||!Array.isArray(parent.subs)) return {removed:0,kept:0};
+  const liveIds=new Set((goals||[]).map(g=>String(g?.id??'')));
+  const seen=new Set(), kept=[], removed=[];
+  for(const sb of parent.subs){
+    const key=String(sb?.key||'');
+    const m=key.match(/^goal_(.+)$/);
+    if(!m){ kept.push(sb); continue; }
+    const gid=m[1];
+    // Exact duplicate key: keep the first unless this copy carries unique
+    // historical budget evidence (in practice both share the same key).
+    if(seen.has(key)){ removed.push({key,name:(typeof cN==='function'?cN(sb):(sb.name||'')),reason:'duplicate-key'}); continue; }
+    seen.add(key);
+    const live=liveIds.has(gid);
+    const history=hasTransferForGoal(gid);
+    const budget=hasNonZeroBudgetFor(parent,sb);
+    if(!live&&!history&&!budget){
+      removed.push({key,name:(typeof cN==='function'?cN(sb):(sb.name||'')),reason:'orphan-zero'});
+    }else kept.push(sb);
+  }
+  if(!removed.length) return {removed:0,kept:kept.length,items:[]};
+  parent.subs=kept;
+  try{saveData();}catch(_){}
+  try{rBList();}catch(_){}
+  try{rBProg();}catch(_){}
+  try{uDash();}catch(_){}
+  window.MONGO_V31_LAST_CLEANUP={at:new Date().toISOString(),removed:removed.length,items:removed};
+  return {removed:removed.length,kept:kept.length,items:removed};
+}
+window.MongoSavingsBudgetCleanupV31={run:cleanup};
+function runOnce(){
+  try{
+    const marker='mongo_v31_savings_budget_cleanup_'+String(window._authUid||'local');
+    if(sessionStorage.getItem(marker))return;
+    sessionStorage.setItem(marker,'1');
+    const result=cleanup();
+    console.info('[Möngö V31] Savings budget orphan cleanup',result);
+  }catch(e){console.warn('[Möngö V31] cleanup skipped',e);}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(runOnce,1800),{once:true});
+else setTimeout(runOnce,1800);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
