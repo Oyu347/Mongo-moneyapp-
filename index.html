@@ -16427,28 +16427,103 @@ function run(){let rule=v382drule.value;v382dmw.style.display=rule==='manual'?'b
 function show(on){original.forEach(x=>x.style.display=on?'none':'');c.style.display=on?'block':'none';tabs.style.display='flex';v382dSave.classList.toggle('active',!on);v382dEarly.classList.toggle('active',on)}v382dSave.onclick=()=>show(false);v382dEarly.onclick=()=>{show(true);run()};v382dGo.onclick=run;v382drule.onchange=run;show(false)}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,900)})();
 </script>
-<style id="v382f-style">
-.v382f-days{padding:10px 12px;border-radius:12px;background:#f4fafa;color:#374151;font-weight:700}
+
+<style id="v382g-style">
+#v382gCancel{display:none;margin-top:14px}
+#v382gCancel .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#v382gCancel label{display:block;font-weight:700;margin-bottom:6px;color:#374151}
+#v382gCancel input,#v382gCancel select{width:100%;box-sizing:border-box;min-height:52px;border:1px solid #d7e6e7;border-radius:15px;padding:11px 13px;background:#fff;font-size:16px}
+#v382gCancel select{min-height:72px}
+#v382gGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;background:#49B0B6;color:#fff;font-size:17px;font-weight:800}
+.gdays{min-height:52px;display:flex;align-items:center;padding:0 13px;border-radius:15px;background:#f4fafa;font-weight:700}
+.gout{margin-top:14px;padding:14px;border-radius:15px;background:#f8fbfb}
+.grow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.grow:last-child{border:0}
+.gnote{font-size:12px;color:#6b7280;line-height:1.45;margin-top:10px}
+@media(max-width:700px){#v382gCancel .ggrid{grid-template-columns:1fr}}
 </style>
-<script id="v382f-fix">
+<script id="v382g-isolated">
 (function(){
- let cancel=false, hidden=[];
- function card(e){let p=e;for(let i=0;p&&i<6;i++,p=p.parentElement){let c=(p.className||'').toString().toLowerCase();if(c.includes('card')||c.includes('panel')||c.includes('box'))return p}return e.parentElement}
- function restore(){hidden.forEach(e=>e.style.removeProperty('display'));hidden=[]}
- function hide(el){if(el&&!hidden.includes(el)){hidden.push(el);el.style.setProperty('display','none','important')}}
- function clean(){if(!cancel)return;restore();
-   const words=['Нийт хуримтлал','Таны хийсэн мөнгө','Хүүгийн ашиг','Зорилгод хүрэхэд сард','Өсөлтийн график','Кофены мөнгө challenge'];
-   [...document.querySelectorAll('div,h1,h2,h3,h4')].forEach(e=>{let t=(e.textContent||'').trim();if(words.some(w=>t===w||t.startsWith(w+' '))&&!e.closest('#v382dCancel'))hide(card(e))});
+ function num(v){v=Number(v);return Number.isFinite(v)?v:0}
+ function fmt(v){try{return Math.round(v).toLocaleString()}catch(e){return String(Math.round(v))}}
+ function findCalc(){
+   const tabs=document.getElementById('v382dTabs');
+   if(!tabs)return null;
+   return tabs.parentElement;
  }
- function upgrade(){let p=document.getElementById('v382dCancel');if(!p||p.dataset.v382f)return;p.dataset.v382f='1';
-   ['v382dp','v382dcr','v382drr','v382dprior','v382dfee','v382dm'].forEach(id=>{let e=document.getElementById(id);if(e){e.value='';e.placeholder='0'}});
-   let old=document.getElementById('v382dd');if(old){let w=old.closest('.v382d-field');w.innerHTML='<label>Хадгаламж эхэлсэн огноо</label><input id="v382fStart" type="date">';let e=document.createElement('div');e.className='v382d-field';e.innerHTML='<label>Цуцлах огноо</label><input id="v382fEnd" type="date">';w.after(e);let d=document.createElement('div');d.className='v382d-field';d.innerHTML='<label>Хадгалсан хугацаа</label><div class="v382f-days" id="v382fDays">— хоног</div>';e.after(d)}
-   function days(){let a=v382fStart.value,b=v382fEnd.value;if(!a||!b)return 0;let n=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);v382fDays.textContent=n>=0?n+' хоног':'Огноогоо шалгана уу';return Math.max(0,n)}
-   ['v382fStart','v382fEnd'].forEach(id=>document.getElementById(id).addEventListener('change',days));
-   document.getElementById('v382dGo').addEventListener('click',()=>{let g=document.getElementById('v382dd');if(!g){g=document.createElement('input');g.type='hidden';g.id='v382dd';p.appendChild(g)}g.value=days()},true)
+ function findCoffee(){
+   for(const e of document.querySelectorAll('h1,h2,h3,h4,div')){
+     const t=(e.textContent||'').trim().toLowerCase();
+     if(t==='кофены мөнгө challenge'||t==='coffee money challenge'){
+       let p=e;
+       for(let i=0;p&&i<5;i++,p=p.parentElement){
+         const c=(p.className||'').toString().toLowerCase();
+         if(c.includes('card')||c.includes('panel')) return p;
+       }
+       return e.parentElement;
+     }
+   }
+   return null;
  }
- function wire(){upgrade();let s=document.getElementById('v382dSave'),c=document.getElementById('v382dEarly');if(s&&!s.dataset.f){s.dataset.f=1;s.addEventListener('click',()=>{cancel=false;restore()})}if(c&&!c.dataset.f){c.dataset.f=1;c.addEventListener('click',()=>{cancel=true;setTimeout(clean,20);setTimeout(clean,180)})}if(cancel)clean()}
- document.addEventListener('DOMContentLoaded',()=>setTimeout(wire,700));document.addEventListener('click',()=>setTimeout(wire,60));setTimeout(wire,1200)
+ function mount(){
+   if(document.getElementById('v382gCancel'))return;
+   const card=findCalc(); if(!card)return;
+   const tabs=document.getElementById('v382dTabs'), save=document.getElementById('v382dSave'), early=document.getElementById('v382dEarly');
+   if(!save||!early)return;
+
+   // Remove V38.2d cancellation panel; build a fresh isolated one.
+   const old=document.getElementById('v382dCancel'); if(old)old.remove();
+
+   // Everything currently belonging to the original savings calculator stays in one wrapper.
+   const savings=document.createElement('div'); savings.id='v382gSavings';
+   const movable=[...card.children].filter(x=>x!==tabs && x.id!=='v382gCancel');
+   movable.forEach(x=>savings.appendChild(x));
+   card.appendChild(savings);
+
+   const cancel=document.createElement('div'); cancel.id='v382gCancel';
+   cancel.innerHTML=`<div class="ggrid">
+    <div><label>Үндсэн мөнгө</label><input id="gp" type="number" min="0" placeholder="0"></div>
+    <div><label>Гэрээний жилийн хүү (%)</label><input id="gcr" type="number" min="0" step=".01" placeholder="0"></div>
+    <div><label>Цуцлалтын жилийн хүү (%)</label><input id="grr" type="number" min="0" step=".01" placeholder="0"></div>
+    <div><label>Өмнө бодитоор олгосон хүү</label><input id="gprior" type="number" min="0" placeholder="0"></div>
+    <div><label>Хадгаламж эхэлсэн огноо</label><input id="gstart" type="date"></div>
+    <div><label>Цуцлах огноо</label><input id="gend" type="date"></div>
+    <div><label>Хадгалсан хугацаа</label><div class="gdays" id="gdays">— хоног</div></div>
+    <div><label>Цуцлалтын шимтгэл</label><input id="gfee" type="number" min="0" placeholder="0"></div>
+    <div style="grid-column:1/-1"><label>Цуцлалтын дүрэм</label><select id="grule"><option value="all">Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох</option><option value="vested">Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр бодох</option><option value="manual">Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах</option></select></div>
+    <div id="gmanualWrap" style="display:none"><label>Банкны зөвшөөрсөн эцсийн хүү</label><input id="gmanual" type="number" min="0" placeholder="0"></div>
+   </div><button id="v382gGo">Тооцоолох</button><div id="gout"></div><div class="gnote">Урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.</div>`;
+   card.appendChild(cancel);
+
+   function days(){
+     const a=gstart.value,b=gend.value;
+     if(!a||!b){gdays.textContent='— хоног';return 0}
+     const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+     gdays.textContent=d>=0?d+' хоног':'Огноогоо шалгана уу'; return Math.max(0,d);
+   }
+   function run(){
+     const p=Math.max(0,num(gp.value)), cr=Math.max(0,num(gcr.value)), rr=Math.max(0,num(grr.value)),
+       prior=Math.max(0,num(gprior.value)), fee=Math.max(0,num(gfee.value)), d=days(), rule=grule.value;
+     let allowed=0;
+     if(rule==='all') allowed=p*rr/100*d/365;
+     else if(rule==='vested'){const y=Math.floor(d/365),rem=d-y*365;allowed=p*cr/100*y+p*rr/100*rem/365}
+     else allowed=Math.max(0,num(gmanual.value));
+     const claw=Math.max(0,prior-allowed), add=Math.max(0,allowed-prior), total=Math.max(0,p+add-claw-fee);
+     gout.innerHTML=`<div class="gout"><div class="grow"><span>Үндсэн мөнгө</span><strong>₮${fmt(p)}</strong></div><div class="grow"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><strong>₮${fmt(allowed)}</strong></div><div class="grow"><span>Өмнөх хүүгийн буцаан тохируулга</span><strong>−₮${fmt(claw)}</strong></div><div class="grow"><span>Нэмж олгох хүү</span><strong>+₮${fmt(add)}</strong></div><div class="grow"><span>Шимтгэл</span><strong>−₮${fmt(fee)}</strong></div><div class="grow"><span>Банкнаас авах тооцоолсон дүн</span><strong>₮${fmt(total)}</strong></div></div>`;
+   }
+   function mode(which){
+     const isCancel=which==='cancel', coffee=findCoffee();
+     savings.style.display=isCancel?'none':'block';
+     cancel.style.display=isCancel?'block':'none';
+     if(coffee){coffee.style.display=isCancel?'none':''; if(!isCancel)coffee.style.marginTop='28px'}
+     save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel);
+   }
+   save.onclick=()=>mode('save'); early.onclick=()=>mode('cancel');
+   gstart.onchange=days;gend.onchange=days;grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};v382gGo.onclick=run;
+   mode('save');
+ }
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,650));
+ document.addEventListener('click',()=>setTimeout(mount,80));
+ setTimeout(mount,1200);
 })();
 </script>
 
