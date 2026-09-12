@@ -9,12 +9,21 @@
 - **Pointer home:** `development-modular`
 - **ACTIVE BRANCH:** `feature/completed-cards-archive`
 - **Verified production lineage:** `V44.12.30`
-- **Current feature branch head observed:** `59ba5ac830e16c5cb38de8e2e9b6b342e9b1dd07` — `38.2g` (2026-09-12)
-- **Status:** `ACTIVE / CONTINUITY CHECK REQUIRED`
+- **Last phone-confirmed checkpoint:** `38.2g` — early-cancellation calculator opens and known Mongolian calculation case produces a result.
+- **Current target:** `V38.2h` — 7-language early-cancellation UI + live thousands separators for money-entry fields.
+- **Status:** `PATCH STAGED / NEEDS PHONE TEST AFTER BRANCH UPDATE`
 
 ## CURRENT AREA
 
-Completed Cards / Archive + Savings lifecycle work has progressed on the isolated feature branch. The most recent user-visible phone checkpoint shown in chat is in **Savings → Calculator**, including the **early cancellation (Хугацаанаас өмнө цуцлах)** calculator UI. Before the next code edit, inspect the latest feature-branch commits and journal entries to identify the exact last tested behavior and next unfinished step. Do not infer the next task from older `development-modular` notes.
+**Savings → Calculator → Early cancellation (Хугацаанаас өмнө цуцлах).**
+
+User-confirmed remaining issues from V38.2g:
+1. Newly added early-cancellation UI is not yet translated in all 7 languages.
+2. Money-entry fields should show thousands separators while typing (example: `12500000` → `12,500,000`).
+3. Percent and date fields must remain unchanged.
+4. Preserve the V38.2g calculation formula and all unrelated app behavior.
+
+V38.2h patch is scoped only to these items. After the patch reaches the active branch, phone-test language switching, comma formatting, and the known calculation case before moving on.
 
 ## START HERE — EVERY NEW CHAT
 
