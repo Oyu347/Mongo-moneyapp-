@@ -16465,7 +16465,12 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
   const old=document.getElementById('v382dCancel');if(old)old.remove();
   const savings=document.createElement('div');savings.id='v382gSavings';[...card.children].filter(x=>x!==tabs&&x.id!=='v382gCancel').forEach(x=>savings.appendChild(x));card.appendChild(savings);
   const cancel=document.createElement('div');cancel.id='v382gCancel';card.appendChild(cancel);
-  function render(){const q=Q();cancel.innerHTML=`<div class="ggrid">
+  function render(){
+   const keep={};
+   ['gp','gcr','grr','gprior','gstart','gend','gfee','grule','gmanual'].forEach(id=>{
+     const el=document.getElementById(id); if(el)keep[id]=el.value;
+   });
+   const q=Q();cancel.innerHTML=`<div class="ggrid">
    <div><label>${q.principal}</label><input id="gp" inputmode="decimal" data-amt="1" placeholder="0"></div>
    <div><label>${q.contractRate}</label><input id="gcr" type="number" min="0" step=".01" placeholder="0"></div>
    <div><label>${q.cancelRate}</label><input id="grr" type="number" min="0" step=".01" placeholder="0"></div>
@@ -16477,7 +16482,12 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
    <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
   </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
   ['gp','gprior','gfee','gmanual'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
-  gstart.onchange=days;gend.onchange=days;grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};v382gGo.onclick=run;
+  Object.keys(keep).forEach(id=>{const el=document.getElementById(id);if(el)el.value=keep[id]});
+  gstart.onchange=days;gend.onchange=days;
+  grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};
+  v382gGo.onclick=run;
+  grule.onchange(); days();
+  window.v382gRefreshLanguage=render;
   }
   function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;let allowed=0;if(rule==='all')allowed=p*rr/100*d/365;else if(rule==='vested'){const y=Math.floor(d/365),rem=d-y*365;allowed=p*cr/100*y+p*rr/100*rem/365}else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
@@ -16485,6 +16495,19 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
   render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
  }
  document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,650));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,1200);
+
+ // V38.2h — sync this panel from Möngö's existing single language source.
+ try{
+   if(typeof setLang==='function'&&!setLang.__v382hCancelSync){
+     const originalSetLang=setLang;
+     setLang=function(){
+       const r=originalSetLang.apply(this,arguments);
+       setTimeout(()=>{if(typeof window.v382gRefreshLanguage==='function')window.v382gRefreshLanguage()},0);
+       return r;
+     };
+     setLang.__v382hCancelSync=true;
+   }
+ }catch(e){}
 })();
 </script>
 
