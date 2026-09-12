@@ -11201,7 +11201,13 @@ const MONGO_TRIAL_DAYS=7;
 // V43.15 TEST ONLY:
 // Add ?trialTestDay=5, ?trialTestDay=6, ?trialTestDay=7 or ?trialTestDay=8 to the URL.
 // This changes only the in-browser test calculation. Firestore trialStartDate is NEVER modified.
-function mongoTrialTestDay(){return null;}
+function mongoTrialTestDay(){
+  try{
+    const q=new URLSearchParams(location.search);
+    const v=Number(q.get('trialTestDay'));
+    return [5,6,7,8].includes(v)?v:null;
+  }catch(e){ return null; }
+}
 function mongoTrialInfo(state){
   const override=mongoTrialTestDay();
   if(window.MongoSubscription&&typeof window.MongoSubscription.trialInfo==='function'){
