@@ -11,7 +11,7 @@
 - **Verified production lineage:** `V44.12.30`
 - **Last phone-confirmed checkpoint:** `38.2g` — early-cancellation calculator opens and known Mongolian calculation case produces a result.
 - **Current target:** `V38.2h` — 7-language early-cancellation UI + live thousands separators for money-entry fields.
-- **Status:** `PATCH STAGED / NEEDS PHONE TEST AFTER BRANCH UPDATE`
+- **Status:** `PATCH STAGED / NEEDS PHONE TEST`
 
 ## CURRENT AREA
 
@@ -23,7 +23,7 @@ User-confirmed remaining issues from V38.2g:
 3. Percent and date fields must remain unchanged.
 4. Preserve the V38.2g calculation formula and all unrelated app behavior.
 
-V38.2h patch is scoped only to these items. After the patch reaches the active branch, phone-test language switching, comma formatting, and the known calculation case before moving on.
+V38.2h patch is scoped only to these items. Phone-test language switching, comma formatting, and the known calculation case before moving on.
 
 ## START HERE — EVERY NEW CHAT
 
