@@ -16443,87 +16443,48 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
 </style>
 <script id="v382g-isolated">
 (function(){
- function num(v){v=Number(v);return Number.isFinite(v)?v:0}
- function fmt(v){try{return Math.round(v).toLocaleString()}catch(e){return String(Math.round(v))}}
- function findCalc(){
-   const tabs=document.getElementById('v382dTabs');
-   if(!tabs)return null;
-   return tabs.parentElement;
- }
- function findCoffee(){
-   for(const e of document.querySelectorAll('h1,h2,h3,h4,div')){
-     const t=(e.textContent||'').trim().toLowerCase();
-     if(t==='кофены мөнгө challenge'||t==='coffee money challenge'){
-       let p=e;
-       for(let i=0;p&&i<5;i++,p=p.parentElement){
-         const c=(p.className||'').toString().toLowerCase();
-         if(c.includes('card')||c.includes('panel')) return p;
-       }
-       return e.parentElement;
-     }
-   }
-   return null;
- }
+ const TXT={
+  mn:{principal:'Үндсэн мөнгө',contractRate:'Гэрээний жилийн хүү (%)',cancelRate:'Цуцлалтын жилийн хүү (%)',priorInterest:'Өмнө бодитоор олгосон хүү',startDate:'Хадгаламж эхэлсэн огноо',cancelDate:'Цуцлах огноо',heldPeriod:'Хадгалсан хугацаа',fee:'Цуцлалтын шимтгэл',rule:'Цуцлалтын дүрэм',all:'Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох',vested:'Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр бодох',manual:'Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах',manualInterest:'Банкны зөвшөөрсөн эцсийн хүү',calculate:'Тооцоолох',note:'Урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.',days:'хоног',checkDate:'Огноогоо шалгана уу',allowed:'Цуцлалтаар зөвшөөрөгдөх хүү',claw:'Өмнөх хүүгийн буцаан тохируулга',add:'Нэмж олгох хүү',estimated:'Банкнаас авах тооцоолсон дүн'},
+  en:{principal:'Principal',contractRate:'Contract annual interest rate (%)',cancelRate:'Early termination annual rate (%)',priorInterest:'Interest already paid',startDate:'Deposit start date',cancelDate:'Termination date',heldPeriod:'Held period',fee:'Early termination fee',rule:'Early termination rule',all:'Recalculate the full held period at the early termination rate',vested:'Use the contract rate for full years and the early termination rate for the remaining period',manual:'Use bank terms / enter the final interest manually',manualInterest:'Final interest allowed by the bank',calculate:'Calculate',note:'Estimate only. This does not change actual accounts, transactions, or budgets.',days:'days',checkDate:'Please check the dates',allowed:'Interest allowed on termination',claw:'Adjustment of previously paid interest',add:'Additional interest to be paid',estimated:'Estimated amount receivable from bank'},
+  zh:{principal:'本金',contractRate:'合同年利率 (%)',cancelRate:'提前支取年利率 (%)',priorInterest:'此前实际已支付利息',startDate:'存款开始日期',cancelDate:'提前支取日期',heldPeriod:'存款期限',fee:'提前支取手续费',rule:'提前支取规则',all:'全部存期按提前支取利率重新计算',vested:'完整年度按合同利率计算，其余期间按提前支取利率计算',manual:'按银行条款 / 手动输入最终利息',manualInterest:'银行认可的最终利息',calculate:'计算',note:'仅为预估，不会更改实际账户、交易或预算。',days:'天',checkDate:'请检查日期',allowed:'提前支取可得利息',claw:'已付利息调整',add:'追加支付利息',estimated:'预计从银行收到的金额'},
+  ja:{principal:'元本',contractRate:'契約年利率 (%)',cancelRate:'中途解約年利率 (%)',priorInterest:'すでに実際に支払われた利息',startDate:'預入開始日',cancelDate:'解約日',heldPeriod:'預入期間',fee:'中途解約手数料',rule:'中途解約ルール',all:'全預入期間を中途解約利率で再計算',vested:'満了した年は契約利率、残りの期間は中途解約利率で計算',manual:'銀行条件 / 最終利息を手動入力',manualInterest:'銀行が認めた最終利息',calculate:'計算する',note:'概算のみです。実際の口座、取引、予算は変更されません。',days:'日',checkDate:'日付を確認してください',allowed:'中途解約で認められる利息',claw:'既払利息の調整',add:'追加で支払われる利息',estimated:'銀行から受け取る見込額'},
+  ko:{principal:'원금',contractRate:'계약 연 이율 (%)',cancelRate:'중도 해지 연 이율 (%)',priorInterest:'이전에 실제 지급된 이자',startDate:'예금 시작일',cancelDate:'해지일',heldPeriod:'예치 기간',fee:'중도 해지 수수료',rule:'중도 해지 규칙',all:'전체 예치 기간을 중도 해지 이율로 재계산',vested:'완료된 연도는 계약 이율, 남은 기간은 중도 해지 이율로 계산',manual:'은행 조건 / 최종 이자를 직접 입력',manualInterest:'은행이 인정한 최종 이자',calculate:'계산하기',note:'예상 계산입니다. 실제 계좌, 거래 또는 예산은 변경되지 않습니다.',days:'일',checkDate:'날짜를 확인하세요',allowed:'중도 해지 시 인정되는 이자',claw:'기지급 이자 조정',add:'추가 지급 이자',estimated:'은행에서 받을 예상 금액'},
+  ru:{principal:'Основная сумма',contractRate:'Годовая ставка по договору (%)',cancelRate:'Годовая ставка при досрочном расторжении (%)',priorInterest:'Ранее фактически выплаченные проценты',startDate:'Дата открытия вклада',cancelDate:'Дата расторжения',heldPeriod:'Срок хранения',fee:'Комиссия за досрочное расторжение',rule:'Правило досрочного расторжения',all:'Пересчитать весь срок по ставке досрочного расторжения',vested:'Полные годы считать по договорной ставке, остаток срока — по ставке досрочного расторжения',manual:'По условиям банка / ввести итоговые проценты вручную',manualInterest:'Итоговые проценты, признанные банком',calculate:'Рассчитать',note:'Предварительный расчёт. Реальные счета, операции и бюджет не изменяются.',days:'дн.',checkDate:'Проверьте даты',allowed:'Проценты при досрочном расторжении',claw:'Корректировка ранее выплаченных процентов',add:'Дополнительные проценты к выплате',estimated:'Расчётная сумма к получению из банка'},
+  de:{principal:'Kapital',contractRate:'Vertraglicher Jahreszins (%)',cancelRate:'Jahreszins bei vorzeitiger Kündigung (%)',priorInterest:'Bereits tatsächlich gezahlte Zinsen',startDate:'Beginn der Einlage',cancelDate:'Kündigungsdatum',heldPeriod:'Anlagedauer',fee:'Gebühr bei vorzeitiger Kündigung',rule:'Regel für vorzeitige Kündigung',all:'Gesamte Anlagedauer mit dem Kündigungszins neu berechnen',vested:'Volle Jahre mit Vertragszins, Restlaufzeit mit Kündigungszins berechnen',manual:'Nach Bankbedingungen / Endzins manuell eingeben',manualInterest:'Von der Bank anerkannter Endzins',calculate:'Berechnen',note:'Nur eine Schätzung. Tatsächliche Konten, Transaktionen und Budgets werden nicht geändert.',days:'Tage',checkDate:'Bitte Datum prüfen',allowed:'Zulässige Zinsen bei Kündigung',claw:'Korrektur bereits gezahlter Zinsen',add:'Zusätzlich auszuzahlende Zinsen',estimated:'Geschätzter Auszahlungsbetrag der Bank'}
+ };
+ function Q(){const l=typeof lang==='string'&&TXT[lang]?lang:'mn';return TXT[l]}
+ function num(v){if(typeof parseAmt==='function')return parseAmt(v);v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+ function fmt(v){try{return Math.round(v).toLocaleString('en-US')}catch(e){return String(Math.round(v))}}
+ function money(v){return (typeof CS==='string'?CS:'₮')+fmt(v)}
+ function findCalc(){const tabs=document.getElementById('v382dTabs');return tabs?tabs.parentElement:null}
+ function findCoffee(){for(const e of document.querySelectorAll('h1,h2,h3,h4,div')){const t=(e.textContent||'').trim().toLowerCase();if(t==='кофены мөнгө challenge'||t==='coffee money challenge'){let p=e;for(let i=0;p&&i<5;i++,p=p.parentElement){const c=(p.className||'').toString().toLowerCase();if(c.includes('card')||c.includes('panel'))return p}return e.parentElement}}return null}
  function mount(){
-   if(document.getElementById('v382gCancel'))return;
-   const card=findCalc(); if(!card)return;
-   const tabs=document.getElementById('v382dTabs'), save=document.getElementById('v382dSave'), early=document.getElementById('v382dEarly');
-   if(!save||!early)return;
-
-   // Remove V38.2d cancellation panel; build a fresh isolated one.
-   const old=document.getElementById('v382dCancel'); if(old)old.remove();
-
-   // Everything currently belonging to the original savings calculator stays in one wrapper.
-   const savings=document.createElement('div'); savings.id='v382gSavings';
-   const movable=[...card.children].filter(x=>x!==tabs && x.id!=='v382gCancel');
-   movable.forEach(x=>savings.appendChild(x));
-   card.appendChild(savings);
-
-   const cancel=document.createElement('div'); cancel.id='v382gCancel';
-   cancel.innerHTML=`<div class="ggrid">
-    <div><label>Үндсэн мөнгө</label><input id="gp" type="number" min="0" placeholder="0"></div>
-    <div><label>Гэрээний жилийн хүү (%)</label><input id="gcr" type="number" min="0" step=".01" placeholder="0"></div>
-    <div><label>Цуцлалтын жилийн хүү (%)</label><input id="grr" type="number" min="0" step=".01" placeholder="0"></div>
-    <div><label>Өмнө бодитоор олгосон хүү</label><input id="gprior" type="number" min="0" placeholder="0"></div>
-    <div><label>Хадгаламж эхэлсэн огноо</label><input id="gstart" type="date"></div>
-    <div><label>Цуцлах огноо</label><input id="gend" type="date"></div>
-    <div><label>Хадгалсан хугацаа</label><div class="gdays" id="gdays">— хоног</div></div>
-    <div><label>Цуцлалтын шимтгэл</label><input id="gfee" type="number" min="0" placeholder="0"></div>
-    <div style="grid-column:1/-1"><label>Цуцлалтын дүрэм</label><select id="grule"><option value="all">Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох</option><option value="vested">Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр бодох</option><option value="manual">Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах</option></select></div>
-    <div id="gmanualWrap" style="display:none"><label>Банкны зөвшөөрсөн эцсийн хүү</label><input id="gmanual" type="number" min="0" placeholder="0"></div>
-   </div><button id="v382gGo">Тооцоолох</button><div id="gout"></div><div class="gnote">Урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.</div>`;
-   card.appendChild(cancel);
-
-   function days(){
-     const a=gstart.value,b=gend.value;
-     if(!a||!b){gdays.textContent='— хоног';return 0}
-     const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
-     gdays.textContent=d>=0?d+' хоног':'Огноогоо шалгана уу'; return Math.max(0,d);
-   }
-   function run(){
-     const p=Math.max(0,num(gp.value)), cr=Math.max(0,num(gcr.value)), rr=Math.max(0,num(grr.value)),
-       prior=Math.max(0,num(gprior.value)), fee=Math.max(0,num(gfee.value)), d=days(), rule=grule.value;
-     let allowed=0;
-     if(rule==='all') allowed=p*rr/100*d/365;
-     else if(rule==='vested'){const y=Math.floor(d/365),rem=d-y*365;allowed=p*cr/100*y+p*rr/100*rem/365}
-     else allowed=Math.max(0,num(gmanual.value));
-     const claw=Math.max(0,prior-allowed), add=Math.max(0,allowed-prior), total=Math.max(0,p+add-claw-fee);
-     gout.innerHTML=`<div class="gout"><div class="grow"><span>Үндсэн мөнгө</span><strong>₮${fmt(p)}</strong></div><div class="grow"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><strong>₮${fmt(allowed)}</strong></div><div class="grow"><span>Өмнөх хүүгийн буцаан тохируулга</span><strong>−₮${fmt(claw)}</strong></div><div class="grow"><span>Нэмж олгох хүү</span><strong>+₮${fmt(add)}</strong></div><div class="grow"><span>Шимтгэл</span><strong>−₮${fmt(fee)}</strong></div><div class="grow"><span>Банкнаас авах тооцоолсон дүн</span><strong>₮${fmt(total)}</strong></div></div>`;
-   }
-   function mode(which){
-     const isCancel=which==='cancel', coffee=findCoffee();
-     savings.style.display=isCancel?'none':'block';
-     cancel.style.display=isCancel?'block':'none';
-     if(coffee){coffee.style.display=isCancel?'none':''; if(!isCancel)coffee.style.marginTop='28px'}
-     save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel);
-   }
-   save.onclick=()=>mode('save'); early.onclick=()=>mode('cancel');
-   gstart.onchange=days;gend.onchange=days;grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};v382gGo.onclick=run;
-   mode('save');
+  if(document.getElementById('v382gCancel'))return;
+  const card=findCalc();if(!card)return;
+  const tabs=document.getElementById('v382dTabs'),save=document.getElementById('v382dSave'),early=document.getElementById('v382dEarly');if(!save||!early)return;
+  const old=document.getElementById('v382dCancel');if(old)old.remove();
+  const savings=document.createElement('div');savings.id='v382gSavings';[...card.children].filter(x=>x!==tabs&&x.id!=='v382gCancel').forEach(x=>savings.appendChild(x));card.appendChild(savings);
+  const cancel=document.createElement('div');cancel.id='v382gCancel';card.appendChild(cancel);
+  function render(){const q=Q();cancel.innerHTML=`<div class="ggrid">
+   <div><label>${q.principal}</label><input id="gp" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div><label>${q.contractRate}</label><input id="gcr" type="number" min="0" step=".01" placeholder="0"></div>
+   <div><label>${q.cancelRate}</label><input id="grr" type="number" min="0" step=".01" placeholder="0"></div>
+   <div><label>${q.priorInterest}</label><input id="gprior" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div><label>${q.startDate}</label><input id="gstart" type="date"></div><div><label>${q.cancelDate}</label><input id="gend" type="date"></div>
+   <div><label>${q.heldPeriod}</label><div class="gdays" id="gdays">— ${q.days}</div></div>
+   <div><label>${q.fee}</label><input id="gfee" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div style="grid-column:1/-1"><label>${q.rule}</label><select id="grule"><option value="all">${q.all}</option><option value="vested">${q.vested}</option><option value="manual">${q.manual}</option></select></div>
+   <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
+  </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
+  ['gp','gprior','gfee','gmanual'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
+  gstart.onchange=days;gend.onchange=days;grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};v382gGo.onclick=run;
+  }
+  function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
+  function run(){const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;let allowed=0;if(rule==='all')allowed=p*rr/100*d/365;else if(rule==='vested'){const y=Math.floor(d/365),rem=d-y*365;allowed=p*cr/100*y+p*rr/100*rem/365}else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
+  function mode(which){const isCancel=which==='cancel',coffee=findCoffee();savings.style.display=isCancel?'none':'block';cancel.style.display=isCancel?'block':'none';if(coffee){coffee.style.display=isCancel?'none':'';if(!isCancel)coffee.style.marginTop='28px'}save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel)}
+  render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
  }
- document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,650));
- document.addEventListener('click',()=>setTimeout(mount,80));
- setTimeout(mount,1200);
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,650));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,1200);
 })();
 </script>
 
