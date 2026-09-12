@@ -3,10 +3,26 @@
 > Энэ файл нь Möngö — Money Flow System хөгжүүлэлтийн agent-ийн үндсэн ажлын хяналтын баримт бичиг.
 > Код өөрчлөхөөс өмнө заавал уншина.
 
+## 0. NEW CHAT / STARTUP POINTER — REQUIRED
+
+Every new chat or development cycle must first read `docs/CURRENT_WORK.md` from `development-modular`.
+
+`CURRENT_WORK.md` is the canonical navigation pointer. It tells the agent which feature/integration branch currently contains the active work. Do not guess the active task from `main`, old chat history, or an older `PROGRESS.md` milestone.
+
+Startup order:
+1. Read `development-modular:docs/CURRENT_WORK.md`.
+2. Go directly to its `ACTIVE BRANCH`.
+3. Read that branch's workbook and latest relevant `PROGRESS.md` / `ROADMAP.md` notes.
+4. Inspect that branch head and latest relevant commits.
+5. Continue from the latest explicit PHONE PASS / PHONE FAIL / NEEDS TEST checkpoint.
+
+Whenever active work moves to another branch, updating `development-modular:docs/CURRENT_WORK.md` is mandatory before the handoff is considered complete.
+
 ## 1. Source of Truth
 
 - Repository: `Oyu347/Mongo-moneyapp-`
-- Working branch: `development-modular`
+- Control/pointer branch: `development-modular`
+- Active work branch: defined by `docs/CURRENT_WORK.md`
 - Current verified lineage: `V44.12.30`
 - Verified baseline commit: `7ea64684074f6f5f33ee3b65d4abddcc70bbc53d` — Restore verified V44.12.30 working Vercel baseline
 - Complete runtime restore: `e98e6e2732ca5d69b1d52137b0f6e7b6d5e15601`
@@ -20,17 +36,19 @@ Never silently replace this baseline with V44.12.40, V44.12.5, an older upload, 
 Before every development task:
 
 1. Confirm repository is `Oyu347/Mongo-moneyapp-`.
-2. Confirm working branch is `development-modular`.
-3. Read this workbook.
+2. Read `development-modular:docs/CURRENT_WORK.md` and follow its ACTIVE BRANCH.
+3. Read the workbook on the active branch.
 4. Inspect the latest relevant commits and compare them with the verified lineage.
 5. Identify exactly one requested task/fix.
 6. Determine which files/functions are affected before editing.
 7. Preserve all unrelated working behavior.
 8. Make the smallest safe change.
 9. Run available tests/checks.
-10. Report what changed, what was tested, and what still needs user testing.
+10. Record meaningful results in the active branch journal.
+11. Update CURRENT_WORK when branch/task/status/next step materially changes.
+12. Report what changed, what was tested, and what still needs user testing.
 
-If repository, branch, baseline, or requested scope is ambiguous: STOP and ask before modifying code.
+If repository, active branch, baseline, or requested scope is ambiguous: STOP and resolve the continuity pointer before modifying code.
 
 ## 3. Current protected behavior
 
@@ -49,21 +67,7 @@ Do not regress these areas while fixing another issue:
 
 ## 4. Current focus
 
-### Recently handled
-- Restored verified V44.12.30 Vercel baseline.
-- Restored complete V44.12.30 runtime modules.
-- Applied a targeted mobile backup-download fix.
-
-### Immediate verification
-The latest backup fix must be regression-tested. Confirm at minimum:
-
-- Backup action responds visibly.
-- Download/file creation completes on mobile where supported.
-- Existing app data remains present after backup attempt.
-- Refresh/re-login does not lose existing data.
-- No unrelated UI/functionality changed.
-
-Do not mark the backup issue DONE solely because code was committed. User test result is required.
+The exact current focus is intentionally NOT duplicated here. Read `docs/CURRENT_WORK.md`, then the active branch journal. This prevents this workbook from becoming a stale second copy of the current task.
 
 ## 5. Launch-critical priority order
 
@@ -146,7 +150,8 @@ A task is DONE only when:
 2. Relevant regression checks pass.
 3. Existing protected behavior remains intact.
 4. User-facing test is completed when device/browser behavior is involved.
-5. The workbook is updated with the result when the change becomes a new verified state.
+5. The active branch journal is updated with the result.
+6. `CURRENT_WORK.md` is updated if the active branch/task/status/next step changed materially.
 
 Commit ≠ verified. Deploy ≠ verified. User-tested working state = candidate for verified baseline.
 
@@ -165,9 +170,10 @@ At the end of each development cycle report briefly:
 
 ## 12. Project Manager handoff
 
-The future Möngö Project Manager Agent should use this workbook to prioritize work. It may recommend the next task but must not silently redefine the verified baseline or override the safety/approval rules above.
+The Möngö Project Manager Agent should use `CURRENT_WORK.md` first, then this workbook and the active branch journal. It may recommend the next task but must not silently redefine the verified baseline or override the safety/approval rules above.
 
 ---
 
 Last initialized: 2026-09-04
-Status: ACTIVE — initial agent control workbook created.
+Startup continuity pointer added: 2026-09-12
+Status: ACTIVE — CURRENT_WORK navigation required.
