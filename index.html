@@ -16427,6 +16427,31 @@ function run(){let rule=v382drule.value;v382dmw.style.display=rule==='manual'?'b
 function show(on){original.forEach(x=>x.style.display=on?'none':'');c.style.display=on?'block':'none';tabs.style.display='flex';v382dSave.classList.toggle('active',!on);v382dEarly.classList.toggle('active',on)}v382dSave.onclick=()=>show(false);v382dEarly.onclick=()=>{show(true);run()};v382dGo.onclick=run;v382drule.onchange=run;show(false)}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,900)})();
 </script>
+<style id="v382f-style">
+.v382f-days{padding:10px 12px;border-radius:12px;background:#f4fafa;color:#374151;font-weight:700}
+</style>
+<script id="v382f-fix">
+(function(){
+ let cancel=false, hidden=[];
+ function card(e){let p=e;for(let i=0;p&&i<6;i++,p=p.parentElement){let c=(p.className||'').toString().toLowerCase();if(c.includes('card')||c.includes('panel')||c.includes('box'))return p}return e.parentElement}
+ function restore(){hidden.forEach(e=>e.style.removeProperty('display'));hidden=[]}
+ function hide(el){if(el&&!hidden.includes(el)){hidden.push(el);el.style.setProperty('display','none','important')}}
+ function clean(){if(!cancel)return;restore();
+   const words=['Нийт хуримтлал','Таны хийсэн мөнгө','Хүүгийн ашиг','Зорилгод хүрэхэд сард','Өсөлтийн график','Кофены мөнгө challenge'];
+   [...document.querySelectorAll('div,h1,h2,h3,h4')].forEach(e=>{let t=(e.textContent||'').trim();if(words.some(w=>t===w||t.startsWith(w+' '))&&!e.closest('#v382dCancel'))hide(card(e))});
+ }
+ function upgrade(){let p=document.getElementById('v382dCancel');if(!p||p.dataset.v382f)return;p.dataset.v382f='1';
+   ['v382dp','v382dcr','v382drr','v382dprior','v382dfee','v382dm'].forEach(id=>{let e=document.getElementById(id);if(e){e.value='';e.placeholder='0'}});
+   let old=document.getElementById('v382dd');if(old){let w=old.closest('.v382d-field');w.innerHTML='<label>Хадгаламж эхэлсэн огноо</label><input id="v382fStart" type="date">';let e=document.createElement('div');e.className='v382d-field';e.innerHTML='<label>Цуцлах огноо</label><input id="v382fEnd" type="date">';w.after(e);let d=document.createElement('div');d.className='v382d-field';d.innerHTML='<label>Хадгалсан хугацаа</label><div class="v382f-days" id="v382fDays">— хоног</div>';e.after(d)}
+   function days(){let a=v382fStart.value,b=v382fEnd.value;if(!a||!b)return 0;let n=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);v382fDays.textContent=n>=0?n+' хоног':'Огноогоо шалгана уу';return Math.max(0,n)}
+   ['v382fStart','v382fEnd'].forEach(id=>document.getElementById(id).addEventListener('change',days));
+   document.getElementById('v382dGo').addEventListener('click',()=>{let g=document.getElementById('v382dd');if(!g){g=document.createElement('input');g.type='hidden';g.id='v382dd';p.appendChild(g)}g.value=days()},true)
+ }
+ function wire(){upgrade();let s=document.getElementById('v382dSave'),c=document.getElementById('v382dEarly');if(s&&!s.dataset.f){s.dataset.f=1;s.addEventListener('click',()=>{cancel=false;restore()})}if(c&&!c.dataset.f){c.dataset.f=1;c.addEventListener('click',()=>{cancel=true;setTimeout(clean,20);setTimeout(clean,180)})}if(cancel)clean()}
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(wire,700));document.addEventListener('click',()=>setTimeout(wire,60));setTimeout(wire,1200)
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
