@@ -9780,6 +9780,22 @@ function importData(e){
       localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
     }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
+    // V10 diagnostic: isolate the exact runtime checkpoint where Restore becomes empty.
+    // No Cloud write and no reload in this diagnostic build.
+    try{
+      const diag=(label,obj)=>{
+        const box=document.getElementById('mongo-restore-diag')||(()=>{const x=document.createElement('div');x.id='mongo-restore-diag';x.style.cssText='position:fixed;z-index:100000;left:10px;right:10px;top:90px;background:#fff;border:2px solid #49B0B6;border-radius:14px;padding:12px;font:12px/1.45 monospace;color:#1f2937;white-space:pre-wrap;max-height:70vh;overflow:auto';document.body.appendChild(x);return x;})();
+        box.textContent+=(box.textContent?'\n':'')+label+': '+JSON.stringify(obj);
+      };
+      diag('1 PARSED',{txns:(clean.txns||[]).length,accounts:(clean.moneyAccounts||[]).length,ledger:(clean.moneyLedger||[]).length,opening:clean.openingBalance||0});
+      const stored=window.MongoStorage.getJSON?window.MongoStorage.getJSON(getDBKey(),{}):JSON.parse(window.MongoStorage.get(getDBKey(),'{}')||'{}');
+      diag('2 LOCAL',{txns:(stored.txns||[]).length,accounts:(stored.moneyAccounts||[]).length,ledger:(stored.moneyLedger||[]).length,opening:stored.openingBalance||0});
+      const applied=(window.CloudDataService&&typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):null;
+      diag('3 APPLY',{ok:applied,txns:(typeof txns!=='undefined'?txns:[]).length,accounts:(typeof moneyAccounts!=='undefined'?moneyAccounts:[]).length,ledger:(typeof moneyLedger!=='undefined'?moneyLedger:[]).length,opening:(typeof openingBalance!=='undefined'?openingBalance:0)});
+      setTimeout(()=>diag('4 AFTER 250MS',{txns:(typeof txns!=='undefined'?txns:[]).length,accounts:(typeof moneyAccounts!=='undefined'?moneyAccounts:[]).length,ledger:(typeof moneyLedger!=='undefined'?moneyLedger:[]).length,opening:(typeof openingBalance!=='undefined'?openingBalance:0)}),250);
+      e.target.value='';
+      return;
+    }catch(diagErr){console.warn('Restore diagnostic failed',diagErr);}
     // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
     // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
     let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
