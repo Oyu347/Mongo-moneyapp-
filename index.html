@@ -12423,7 +12423,19 @@ auth.onAuthStateChanged(async user=>{
       const isRestore=(reason==='restore-import');
       const kept=queued.filter(item=>{const isClear=item&&item.reason==='clear-tombstone';const newer=window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt);return isClear?(isRestore?newer:true):newer;});
       if(kept.length!==queued.length)setQueue(kept);
-      await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
+      await processQueue();
+      // A user-confirmed restore is a new state after Delete All Data. Retire the
+      // old clear barrier only after the restored state has been written and its
+      // older clear-tombstone queue entries have been drained.
+      if(isRestore){
+        const barrier=getClearBarrier();
+        const restoreTime=window.MongoCloud.stamp(data&&data.clientUpdatedAt);
+        const clearTime=window.MongoCloud.stamp(barrier&&barrier.clearedAt);
+        if(restoreTime>clearTime){
+          try{localStorage.removeItem(uidKey(CLEAR_BARRIER_KEY_PREFIX));}catch(e){}
+        }
+      }
+      updateSyncStatus(getQueue().length?'pending':'synced'); return true;
     }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
