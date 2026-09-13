@@ -11,7 +11,13 @@ function sortNewestCandidates(candidates){return [...(Array.isArray(candidates)?
 function makeCandidate(raw,source){return raw&&raw.data?{raw,source}:null;}
 function unwrapFinancialState(container,source){return makeCandidate(container&&container.financialState,source);}
 function compactCandidates(items){return (Array.isArray(items)?items:[]).filter(Boolean);}
-function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
+function activeClearTombstone(raw){
+  const r=raw&&typeof raw==='object'?raw:null;
+  if(!r||!r.clearedAt)return false;
+  const cleared=stamp(r.clearedAt),dataTime=stamp(r.data&&r.data.clientUpdatedAt);
+  return !!cleared&&(!dataTime||dataTime<=cleared);
+}
+function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
 const REQUIRED_STATE_ARRAYS=Object.freeze(['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones']);
 function stateCompleteness(data){
   const d=data&&typeof data==='object'?data:{},missing=REQUIRED_STATE_ARRAYS.filter(k=>!Array.isArray(d[k]));
@@ -30,7 +36,7 @@ function safeCandidateOrder(a,b){
 }
 function selectSafeLoadCandidate(candidates){
   const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;
-  if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};
+  if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};
   const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);
   const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);
   return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};
@@ -73,5 +79,5 @@ async function runSafeHardReset(ops){
   return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};
 }
 global.getClientId=getClientId;
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,activeClearTombstone,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
 })(window);
