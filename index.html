@@ -9768,9 +9768,21 @@ function exportData(){
 
 function importData(e){
   const file=e.target.files[0];if(!file)return;
-  if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
-  window.MongoWeb.readTextFile(file,{load:async raw=>{try{
-    const clean=secParseBackup(raw);
+  const restoreReadDiag=(label,obj)=>{
+    try{
+      const box=document.getElementById('mongo-restore-read-diag')||(()=>{const x=document.createElement('div');x.id='mongo-restore-read-diag';x.style.cssText='position:fixed;z-index:100001;left:10px;right:10px;top:90px;background:#fff;border:3px solid #49B0B6;border-radius:14px;padding:12px;font:13px/1.5 monospace;color:#111827;white-space:pre-wrap;max-height:70vh;overflow:auto;box-shadow:0 8px 28px rgba(0,0,0,.18)';document.body.appendChild(x);return x;})();
+      box.textContent+=(box.textContent?'\n':'')+label+': '+JSON.stringify(obj||{});
+    }catch(_e){}
+  };
+  restoreReadDiag('1 FILE SELECTED',{name:file.name,size:file.size,type:file.type||''});
+  if(file.size>SECURITY_MAX_BACKUP_BYTES){restoreReadDiag('STOP FILE TOO LARGE',{limit:SECURITY_MAX_BACKUP_BYTES});showToast('Backup файл хэт том байна');e.target.value='';return;}
+  restoreReadDiag('2 READ START',{hasMongoWeb:!!window.MongoWeb,hasReader:!!(window.MongoWeb&&window.MongoWeb.readTextFile)});
+  try{
+    window.MongoWeb.readTextFile(file,{
+      load:async raw=>{restoreReadDiag('3 READ SUCCESS',{chars:typeof raw==='string'?raw.length:-1});try{
+        let clean;
+        try{clean=secParseBackup(raw);restoreReadDiag('4 PARSE SUCCESS',{txns:(clean.txns||[]).length,accounts:(clean.moneyAccounts||[]).length,ledger:(clean.moneyLedger||[]).length,opening:clean.openingBalance||0});}
+        catch(parseErr){restoreReadDiag('4 PARSE ERROR',{name:parseErr&&parseErr.name||'',message:parseErr&&parseErr.message||String(parseErr)});e.target.value='';return;}
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
     // Restore is an explicit user action that replaces a previously cleared state.
@@ -9813,8 +9825,15 @@ function importData(e){
       }
     }
     if(restoreCommitted) window.MongoWeb.reload(350);
-  }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
-  finally{e.target.value='';}}});
+  }catch(err){restoreReadDiag('5 IMPORT ERROR',{name:err&&err.name||'',message:err&&err.message||String(err)});showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
+  finally{e.target.value='';}},
+      error:err=>{restoreReadDiag('3 READ ERROR',{name:err&&err.name||'',message:err&&err.message||String(err)});e.target.value='';},
+      abort:()=>{restoreReadDiag('3 READ ABORT',{});e.target.value='';}
+    });
+  }catch(readStartErr){
+    restoreReadDiag('2 READ THROW',{name:readStartErr&&readStartErr.name||'',message:readStartErr&&readStartErr.message||String(readStartErr)});
+    e.target.value='';
+  }
 }
 
 function showSaveIndicator(){const el=document.getElementById('save-dot');if(!el)return;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1400);}
