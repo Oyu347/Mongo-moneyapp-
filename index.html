@@ -67,6 +67,20 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+<script id="mongo-restore-error-diagnostic">
+(function(){
+window.mongoRestoreDiagnostic=function(stage,error){
+ var entry={stage:stage,message:String(error&&error.message||error||''),stack:String(error&&error.stack||'')};
+ console.error('MONGO_RESTORE_DIAGNOSTIC',entry);
+ try{sessionStorage.setItem('mongo_restore_diagnostic',JSON.stringify(entry));}catch(e){}
+ function show(){if(!document.body)return;var box=document.getElementById('mongo-restore-error-box');if(!box){box=document.createElement('pre');box.id='mongo-restore-error-box';box.style.cssText='position:fixed;inset:12px 12px auto;max-height:70vh;overflow:auto;white-space:pre-wrap;background:#fff4f4;color:#8a1c1c;padding:16px;border:2px solid #b42335;border-radius:12px;z-index:2147483647;font:13px monospace';document.body.appendChild(box);}box.textContent='Сэргээх алдааны оношилгоо\n'+entry.stage+'\n'+entry.message+'\n'+entry.stack;}
+ if(document.body)show();else document.addEventListener('DOMContentLoaded',show,{once:true});
+};
+window.addEventListener('error',function(e){if(e.error)window.mongoRestoreDiagnostic('Дэлгэц ачаалах',e.error);});
+window.addEventListener('unhandledrejection',function(e){window.mongoRestoreDiagnostic('Дуусаагүй үйлдэл',e.reason);});
+})();
+</script>
+
 <style id="mongo-force-light-v4335">html{color-scheme:light!important;} body{color-scheme:light!important;}
 /* V43.48 */
 .account-group-title{font-size:11px;font-weight:900;letter-spacing:.04em;color:var(--text2);margin:12px 2px 6px}
@@ -9769,36 +9783,91 @@ function exportData(){
 function importData(e){
   const file=e.target.files[0];if(!file)return;
   if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
-  const reader=new FileReader();
-  reader.onload=async ev=>{try{
-    const raw=String((ev&&ev.target&&ev.target.result)||'');
+  window.MongoWeb.readTextFile(file,{load:async raw=>{try{
     const clean=secParseBackup(raw);
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
+    // Restore is an explicit user action that replaces a previously cleared state.
+    // Retire only this user's local clear barrier before applying/uploading the backup.
     try{
       const restoreUid=(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid)||window._authUid||'guest';
       localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
-    }catch(_e){}
+    }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
-    let applied=true;
-    if(window.CloudDataService&&typeof window.CloudDataService.applyFinancialState==='function'){
-      applied=window.CloudDataService.applyFinancialState(clean,'restore-import');
+    // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
+    // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
+    let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
+    if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
+      try{
+        const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
+        if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
+        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(clean):await window.CloudDataService.saveFinancialData('force');
+        if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
+        restoreCommitted=true;
+        showToast('Restore + Cloud sync ✓');
+      }catch(syncErr){
+        window.mongoRestoreDiagnostic('Сэргээх ба цахим хадгалалт',syncErr); console.warn('Restore cloud sync failed:',syncErr);
+        showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
+      }
     }
-    if(applied===false)throw new Error('RESTORE_APPLY_BLOCKED');
-    if(window.CloudDataService&&window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth.currentUser){
-      const committed=await window.CloudDataService.saveFinancialData('force');
-      if(committed===false)throw new Error('RESTORE_CLOUD_COMMIT_BLOCKED');
-    }
-    showToast('Restore + Cloud sync ✓');
-    if(window.MongoWeb&&typeof window.MongoWeb.reload==='function')window.MongoWeb.reload(350);
-    else setTimeout(()=>location.reload(),350);
-  }catch(err){
-    console.warn('Restore failed:',err);
-    showToast('Restore хийхэд алдаа гарлаа');
-  }finally{e.target.value='';}};
-  reader.onerror=()=>{showToast('Backup файл уншиж чадсангүй');e.target.value='';};
-  reader.onabort=()=>{showToast('Backup файл уншилт цуцлагдлаа');e.target.value='';};
-  reader.readAsText(file);
+    if(restoreCommitted) window.MongoWeb.reload(350);
+  }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
+  finally{e.target.value='';}}});
+}
+
+function showSaveIndicator(){const el=document.getElementById('save-dot');if(!el)return;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1400);}
+
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a2628;color:#f9f940;padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;transition:opacity 0.3s;pointer-events:none';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2400);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+const hadData=loadData();
+normalizeDefaultCatColors();
+
+// Sync active lang button
+document.querySelectorAll('.lbtn').forEach(b=>{
+  if(b.onclick&&b.onclick.toString().includes("'"+lang+"'"))b.classList.add('active');
+  else b.classList.remove('active');
+});
+// Sync budget type button
+if(budgetType==='income'){
+  document.getElementById('btype-income').classList.add('active');
+  document.getElementById('btype-expense').classList.remove('active');
+}
+
+// Setup comma-formatted inputs
+['t-amount','account-opening','g-target','g-saved','d-total','d-rem','d-mon','d-asset-value','i-invested','i-current'].forEach(setupAmtInput);
+const _ds=document.getElementById('d-start-date');if(_ds&&!_ds.value)_ds.value=new Date().toISOString().slice(0,10);renderDebtFundingAccounts();
+
+rTIrow();rTCrow();rBIrow();rBCrow();
+rInvSel('t-inv-type');rInvSel('i-type');
+rCatSel();rTChips();rBList();rBMonthSel();
+rGoals();rDebts();rInvests();rDash();
+applyLang();
+updateBudgetTotal();
+
+const _origSetLang=setLang;
+setLang=function(l,btn){_origSetLang(l,btn);CS=CURR[l]||'$';saveData();};
+
+if(hadData)showToast('Өгөгдөл ачааллагдлаа ✓');
+
+// Цэсийн top-ыг топбарын өндөрт тохируулна
+function fixNavTop(){
+  const tb=document.querySelector('.topbar');
+  const nav=document.querySelector('.nav');
+  if(tb&&nav)nav.style.top=tb.offsetHeight+'px';
+}
+window.addEventListener('resize',fixNavTop);
+requestAnimationFrame(fixNavTop);
+
+// ── Custom confirm modal ──────────────────────────────────────
+let _modalResolve=null;
+function modalResolve(val){
+  document.getElementById('custom-modal').classList.remove('show');
+  if(_modalResolve){_modalResolve(val);_modalResolve=null;}
 }
 function showConfirm(msg){
   return new Promise(resolve=>{
@@ -12224,7 +12293,7 @@ auth.onAuthStateChanged(async user=>{
       if(data.clientUpdatedAt) markLocalUpdated(data.clientUpdatedAt);
       try{localStorage.setItem(getDBKey(),JSON.stringify(data));}catch(e){}
       rerenderFinance(); lastCloudFingerprint=fingerprint(data); saveSnapshot(data,{source:source||'unknown'}); return true;
-    }catch(e){ updateSyncStatus('error'); return false; }
+    }catch(e){ window.mongoRestoreDiagnostic('Сэргээсэн өгөгдөл хэрэглэх',e); updateSyncStatus('error'); return false; }
     finally{applyingCloud=false;}
   }
 
@@ -12234,7 +12303,7 @@ auth.onAuthStateChanged(async user=>{
       if(typeof rTIrow==='function')rTIrow(); if(typeof rTCrow==='function')rTCrow(); if(typeof rInvSel==='function'){rInvSel('t-inv-type');rInvSel('i-type');} if(typeof rCatSel==='function')rCatSel(); if(typeof rTChips==='function')rTChips();
       if(typeof rBList==='function')rBList(); if(typeof rBMonthSel==='function')rBMonthSel(); if(typeof rGoals==='function')rGoals(); if(typeof rDebts==='function')rDebts(); if(typeof rInvests==='function')rInvests(); if(typeof renderAccountSelectors==='function')renderAccountSelectors(); if(typeof rDash==='function')rDash(); if(typeof rTxns==='function')rTxns();
       if(typeof applyFullLang==='function')applyFullLang(lang); else if(typeof applyLang==='function')applyLang(); if(typeof renderOpeningBalance==='function')renderOpeningBalance(); if(typeof updateBudgetTotal==='function')updateBudgetTotal(); if(typeof rProfile==='function')rProfile(); ensureSyncStatusUI(); updateSyncStatus(syncStatus);
-    }catch(e){ updateSyncStatus('error'); }
+    }catch(e){ window.mongoRestoreDiagnostic('Сэргээсний дараа дэлгэц зурах',e); updateSyncStatus('error'); }
   }
 
   function enqueueSave(reason,data){
