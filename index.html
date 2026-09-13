@@ -3400,7 +3400,89 @@ global.getClientId=getClientId;
 global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,activeClearTombstone,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/storage/storage.js"></script>
+<script data-mongo-source="src/services/storage/storage.js">
+// Möngö local storage service
+// V44 modularization foundation.
+// Compatibility-first wrapper: callers can migrate incrementally without
+// changing the stored keys or serialized data format.
+
+(function (global) {
+  'use strict';
+
+  const nativeStorage = global.localStorage;
+
+  function get(key, fallback = null) {
+    try {
+      const value = nativeStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (error) {
+      console.warn('[Möngö storage] get failed:', key, error);
+      return fallback;
+    }
+  }
+
+  function set(key, value) {
+    try {
+      nativeStorage.setItem(key, String(value));
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] set failed:', key, error);
+      return false;
+    }
+  }
+
+  function remove(key) {
+    try {
+      nativeStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] remove failed:', key, error);
+      return false;
+    }
+  }
+
+  function getJSON(key, fallback = null) {
+    const raw = get(key, null);
+    if (raw === null) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      console.warn('[Möngö storage] invalid JSON:', key, error);
+      return fallback;
+    }
+  }
+
+  function setJSON(key, value) {
+    try {
+      return set(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn('[Möngö storage] JSON stringify failed:', key, error);
+      return false;
+    }
+  }
+
+  function has(key) {
+    return get(key, null) !== null;
+  }
+
+  function keys() {
+    try {
+      const out = [];
+      for (let i = 0; i < nativeStorage.length; i += 1) {
+        const key = nativeStorage.key(i);
+        if (key !== null) out.push(key);
+      }
+      return out;
+    } catch (error) {
+      console.warn('[Möngö storage] keys failed:', error);
+      return [];
+    }
+  }
+
+  global.MongoStorage = Object.freeze({ get, set, remove, getJSON, setJSON, has, keys });
+})(window);
+
+</script>
 <script>
 /* Phase 1L phone-inline: exact-compatible Core subset required by current app callers. */
 (function(g){'use strict';const K=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']),id=v=>String(v??''),cl=v=>v==null?v:JSON.parse(JSON.stringify(v));
@@ -3583,8 +3665,36 @@ function applyBudgetMoves(budgets,moves){(moves||[]).forEach(m=>{if(!Object.prot
 global.MongoBudget=Object.freeze({categoryKey,subcategoryKey,yearMonthKey,getValue,rowInMonth,sumRows,savingsGoalActual,investmentActual,loanActual,progress,sourceKey,sourceNames,sourceDescriptor,selectedPeriodIsCurrentOrFuture,canSeedBudget,investmentSourceEligible,investmentContributionEligible,isLinkedSourceKey,findLegacySource,migrateBudgetSuffixes,applyBudgetMoves});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/cloud/cloud.js?v=4166a5e87c19b4cbca9b9731212601474220278b"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/audit/audit.js"></script>
+<!-- Cloud helpers are already embedded above; removed CSP-blocked duplicate. -->
+<script data-mongo-source="src/audit/audit.js">
+// Möngö Audit — Phase 1 COMPLETE
+// Pure read-only cross-feature invariant findings and deterministic reports. Never mutates or auto-fixes financial data.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0, id=v=>String(v==null?'':v);
+function finding(code,severity,details){return {code,severity:severity||'error',...(details||{})};}
+function duplicateIds(rows){const seen=new Set(),dupes=new Set();(rows||[]).forEach(r=>{const k=id(r&&r.id);if(!k)return;if(seen.has(k))dupes.add(k);seen.add(k);});return [...dupes];}
+function stableValue(v){if(Array.isArray(v))return v.map(stableValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>o[k]=stableValue(v[k]));return o;}return v;}
+function findingKey(f){return JSON.stringify(stableValue(f||{}));}
+function normalizeFindings(findings){const seen=new Set();return (findings||[]).filter(Boolean).filter(f=>{const k=findingKey(f);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>{const rank={error:0,warn:1,info:2},sa=rank[a.severity]??9,sb=rank[b.severity]??9;return sa-sb||String(a.code||'').localeCompare(String(b.code||''))||findingKey(a).localeCompare(findingKey(b));});}
+function summarize(findings){const rows=normalizeFindings(findings),bySeverity={error:0,warn:0,info:0},byCode={};rows.forEach(f=>{const s=f.severity||'error';bySeverity[s]=(bySeverity[s]||0)+1;const c=String(f.code||'unknown');byCode[c]=(byCode[c]||0)+1;});return {total:rows.length,bySeverity,byCode,findings:rows};}
+function ledgerIdFindings(ledger,expectedIds){const rows=Array.isArray(ledger)?ledger:[],actual=new Set(rows.map(r=>id(r&&r.id)).filter(Boolean)),out=[];duplicateIds(rows).forEach(x=>out.push(finding('duplicate-ledger-id','error',{id:x})));(expectedIds||[]).map(id).filter(Boolean).forEach(x=>{if(!actual.has(x))out.push(finding('missing-ledger-id','error',{id:x}));});return out;}
+function sourceLedgerIds(input){const x=input||{},ids=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>ids.push('txn:'+id(t.id)));(x.transfers||[]).forEach(t=>ids.push('transfer:'+id(t.id)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&num(d.fundingAmount)>0&&d.fundingAccountId)ids.push('loan-received:'+id(d.id));(Array.isArray(d&&d.payments)?d.payments:[]).forEach(p=>ids.push('loan-payment:'+id(p.id)));});return ids;}
+function sourceLedgerParityFindings(input){const x=input||{},expected=sourceLedgerIds(x),expectedSet=new Set(expected),out=ledgerIdFindings(x.ledger,expected);(x.ledger||[]).forEach(e=>{const lid=id(e&&e.id);if(lid&&/^(txn:|transfer:|loan-received:|loan-payment:)/.test(lid)&&!expectedSet.has(lid))out.push(finding('orphan-ledger-row','warn',{ledgerId:lid,kind:e&&e.kind}));});return out;}
+function transferFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to)out.push(finding('transfer-missing-account','error',{id:tid,fromId:from,toId:to}));if(from&&to&&from===to)out.push(finding('transfer-same-account','error',{id:tid,accountId:from}));if(amount<=0)out.push(finding('transfer-nonpositive-amount','error',{id:tid,amount}));});return out;}
+function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]);if(aid&&!known.has(aid))out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
+function ledgerDeltaForAccount(accountId,ledger){const aid=id(accountId);return (ledger||[]).reduce((sum,e)=>sum+(id(e&&e.toAccountId)===aid?num(e.amount):0)-(id(e&&e.fromAccountId)===aid?num(e.amount):0),0);}
+function accountBalanceFindings(accounts,ledger,balanceFor){if(typeof balanceFor!=='function')return [];const out=[];(accounts||[]).forEach(a=>{const aid=id(a&&a.id),opening=num(a&&a.openingBalance),delta=ledgerDeltaForAccount(aid,ledger),expected=opening+delta,actual=num(balanceFor(aid));if(Math.abs(actual-expected)>1)out.push(finding('account-balance-ledger-mismatch','error',{accountId:aid,opening,ledgerDelta:delta,expected,actual}));});return out;}
+function transferConservationFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to||from===to||amount<=0)return;const sourceDelta=-amount,destinationDelta=amount,net=sourceDelta+destinationDelta;if(Math.abs(net)>1e-9)out.push(finding('transfer-conservation-failed','error',{id:tid,sourceDelta,destinationDelta,net}));});return out;}
+function loanSplitFindings(ledger){const out=[];(ledger||[]).filter(e=>e&&e.kind==='loan_payment').forEach(e=>{const total=num(e.amount),split=num(e.principal)+num(e.interest)+num(e.extraPrincipal);if(Math.abs(total-split)>1)out.push(finding('loan-payment-split-mismatch','error',{ledgerId:id(e.id),total,split}));});return out;}
+function legacyLoanTxnFindings(txns){return (txns||[]).filter(t=>t&&t.loanPaymentId).map(t=>finding('loan-payment-duplicate-txn-signal','warn',{txnId:id(t.id),loanPaymentId:id(t.loanPaymentId)}));}
+function savingsDoubleCountFindings(txns,transfers){const moved=new Set((transfers||[]).filter(t=>t&&t.purpose==='savings').map(t=>id(t.targetId)).filter(Boolean));return (txns||[]).filter(t=>t&&t.type==='expense'&&moved.has(id(t.goalId||t.targetId))&&(t.purpose==='savings'||t.expensePurpose==='savings')).map(t=>finding('savings-transfer-expense-double-count-signal','warn',{txnId:id(t.id),goalId:id(t.goalId||t.targetId)}));}
+function run(input){const x=input||{},out=[];out.push(...sourceLedgerParityFindings(x));out.push(...transferFindings(x.transfers));out.push(...accountReferenceFindings(x.accounts,x.ledger));out.push(...accountBalanceFindings(x.accounts,x.ledger,x.balanceFor));out.push(...transferConservationFindings(x.transfers));out.push(...loanSplitFindings(x.ledger));out.push(...legacyLoanTxnFindings(x.txns));out.push(...savingsDoubleCountFindings(x.txns,x.transfers));return normalizeFindings(out);}
+function report(input){return summarize(run(input));}
+global.MongoAudit=Object.freeze({finding,duplicateIds,stableValue,findingKey,normalizeFindings,summarize,ledgerIdFindings,sourceLedgerIds,sourceLedgerParityFindings,transferFindings,accountReferenceFindings,ledgerDeltaForAccount,accountBalanceFindings,transferConservationFindings,loanSplitFindings,legacyLoanTxnFindings,savingsDoubleCountFindings,run,report});
+})(window);
+
+</script>
 <script>
 // Möngö i18n dictionaries — Phase 1E COMPLETE
 // Exact extracted payload from the latest full HTML. Do not rewrite translations during modularization.
@@ -3616,9 +3726,101 @@ function keyParity(dictionaries){const out={};LOCALES.forEach(l=>out[l]=missingK
 global.MongoI18n=Object.freeze({LOCALES,DEFAULT_LOCALE,CURRENCY,hasLocale,normalizeLocale,language,currency,ownValue,value,categoryLabel,namedLabel,missingKeys,keyParity});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/web/platform.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/features/subscription/access.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/mobile/platform.js"></script>
+<script data-mongo-source="src/web/platform.js">
+// Möngö Web — Phase 1 COMPLETE
+// Browser/platform compatibility only. No financial, Firebase, storage or UI policy logic.
+(function(global){
+'use strict';
+function capabilities(env){const w=env||global,n=w&&w.navigator,d=w&&w.document,u=w&&w.URL;return Object.freeze({dom:!!(d&&typeof d.createElement==='function'),blob:typeof (w&&w.Blob)==='function',objectUrl:!!(u&&typeof u.createObjectURL==='function'),fileReader:typeof (w&&w.FileReader)==='function',reload:!!(w&&w.location&&typeof w.location.reload==='function'),online:!!(n&&typeof n.onLine==='boolean'),events:!!(w&&typeof w.addEventListener==='function'),documentEvents:!!(d&&typeof d.addEventListener==='function')});}
+function canDownload(env){const c=capabilities(env);return c.dom&&c.blob&&c.objectUrl;}
+function downloadText(text,filename,mime,env){
+  const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;
+  if(!canDownload(w))return false;
+  let href='',a=null;
+  try{
+    const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'});
+    if(w.navigator&&typeof w.navigator.msSaveOrOpenBlob==='function'){
+      w.navigator.msSaveOrOpenBlob(blob,String(filename||'download.txt'));
+      return true;
+    }
+    href=u.createObjectURL(blob);a=d.createElement('a');
+    a.href=href;a.download=String(filename||'download.txt');a.rel='noopener';
+    if(a.style)a.style.display='none';
+    const parent=d.body||d.documentElement;
+    if(parent&&typeof parent.appendChild==='function')parent.appendChild(a);
+    a.click();
+    setTimeout(()=>{try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}},3000);
+    return true;
+  }catch(_){
+    try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}
+    try{if(href&&typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}
+    return false;
+  }
+}
+function readTextFile(file,handlers,env){const w=env||global,R=w&&w.FileReader,h=handlers||{};if(!file||typeof R!=='function')return false;const reader=new R();reader.onload=function(ev){if(typeof h.load==='function')h.load(ev&&ev.target?ev.target.result:reader.result,ev);};reader.onerror=function(ev){if(typeof h.error==='function')h.error(ev);};reader.readAsText(file);return true;}
+function reload(delay,env){const w=env||global;if(!(w&&w.location&&typeof w.location.reload==='function'))return false;if(Number(delay)>0)setTimeout(()=>w.location.reload(),Number(delay));else w.location.reload();return true;}
+function onPageShow(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('pageshow',handler);return true;}
+function onVisible(handler,env){const w=env||global,d=w&&w.document;if(!(d&&typeof d.addEventListener==='function')||typeof handler!=='function')return false;d.addEventListener('visibilitychange',function(ev){if(!d.hidden)handler(ev);});return true;}
+function onFocus(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('focus',handler);return true;}
+global.MongoWeb=Object.freeze({capabilities,canDownload,downloadText,readTextFile,reload,onPageShow,onVisible,onFocus});
+})(window);
+
+</script>
+<script data-mongo-source="src/features/subscription/access.js">
+// Möngö Subscription/Trial access — Phase 1A
+// Pure compatibility extraction from the V43.14–V43.20 inline trial/paywall policy.
+(function(global){
+'use strict';
+const TRIAL_DAYS=7;
+function trialInfo(state,overrideDay){
+  if(!state)return {day:null,remaining:null,isExpired:false,isPaid:false,status:'unknown'};
+  const isPaid=state.subscriptionStatus==='active'||!!state.subscriptionStartDate;
+  const override=Number.isInteger(overrideDay)&&overrideDay>=1&&overrideDay<=30?overrideDay:null;
+  const day=Math.max(1,override||Number(state.trialDay||1));
+  return {day,remaining:Math.max(0,TRIAL_DAYS-day),isExpired:!isPaid&&day>TRIAL_DAYS,isPaid,status:isPaid?'active':(day>TRIAL_DAYS?'expired':'trial')};
+}
+function isReadOnly(state,overrideDay){const info=trialInfo(state,overrideDay);return !!(info&&info.isExpired&&!info.isPaid);}
+function reminderDay(state,overrideDay){const info=trialInfo(state,overrideDay);return !info.isPaid&&!info.isExpired&&[5,6,7].includes(info.day)?info.day:null;}
+function classifyTarget(input){
+  const x=input||{},text=String(x.text||'').trim().toLowerCase(),idcls=String(x.idClass||'').toLowerCase();
+  const exactLoan=['зээл','loan','loans','debt'];
+  if(x.freeAfterTrial==='loan-nav'||exactLoan.includes(text)||['nav-loan','loan-nav','nav-debt','debt-nav','tab-loan-main','loan-menu'].some(k=>idcls.includes(k)))return 'loan-free';
+  const calc=text==='тооцоолуур'||text==='calculator'||text.includes('зээлийн тооцоолуур')||text.includes('loan calculator')||idcls.includes('calculator')||idcls.includes('calc');
+  const context=String(x.context||'').toLowerCase();
+  if(calc&&(text.includes('зээл')||text.includes('loan')||idcls.includes('loan')||idcls.includes('debt')||context.includes('loan')||context.includes('debt')))return 'loan-free';
+  if(x.insideLoanCalculator)return 'loan-free';
+  if(calc&&(context.includes('хуримтлал')||context.includes('saving')||context.includes('хөрөнгө')||context.includes('investment')||context.includes('asset')))return 'premium-calculator';
+  if(x.writeAction)return 'write';
+  return 'view';
+}
+function accessDecision(state,target,overrideDay){
+  if(!isReadOnly(state,overrideDay))return {allowed:true,reason:'active'};
+  const kind=classifyTarget(target);
+  if(kind==='loan-free'||kind==='view')return {allowed:true,reason:kind};
+  return {allowed:false,reason:kind};
+}
+global.MongoSubscription=Object.freeze({TRIAL_DAYS,trialInfo,isReadOnly,reminderDay,classifyTarget,accessDecision});
+})(window);
+
+</script>
+<script data-mongo-source="src/mobile/platform.js">
+// Möngö Mobile — Phase 1 COMPLETE
+// Platform/shell compatibility only. No financial, Cloud, storage, auth, payment or UI routing policy.
+(function(global){
+'use strict';
+function capacitor(env){const w=env||global;return w&&w.Capacitor||null;}
+function isNative(env){const c=capacitor(env);if(!c)return false;if(typeof c.isNativePlatform==='function')return !!c.isNativePlatform();if(typeof c.getPlatform==='function')return c.getPlatform()!=='web';return false;}
+function platform(env){const c=capacitor(env);if(c&&typeof c.getPlatform==='function')return String(c.getPlatform()||'web');return 'web';}
+function plugin(name,env){const c=capacitor(env);const p=c&&c.Plugins;return p&&name?p[name]||null:null;}
+function normalizeAppState(event){const e=event||{};return Object.freeze({active:!!e.isActive});}
+function normalizeDeepLink(event,env){const raw=event&&typeof event.url==='string'?event.url.trim():'';if(!raw)return Object.freeze({url:'',protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});try{const w=env||global;const U=w&&w.URL?w.URL:URL;const u=new U(raw);return Object.freeze({url:u.href,protocol:u.protocol||'',host:u.host||'',pathname:u.pathname||'',search:u.search||'',hash:u.hash||'',valid:true});}catch(_){return Object.freeze({url:raw,protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});}}
+function normalizeBackEvent(event){const e=event||{};return Object.freeze({canGoBack:!!e.canGoBack});}
+function fileCapabilities(env){return Object.freeze({filesystem:!!plugin('Filesystem',env),share:!!plugin('Share',env)});}
+function capabilities(env){const w=env||global,c=capacitor(w),files=fileCapabilities(w);return Object.freeze({capacitor:!!c,native:isNative(w),platform:platform(w),touch:!!(w&&(('ontouchstart' in w)||(w.navigator&&Number(w.navigator.maxTouchPoints)>0))),safeAreaCss:true,appPlugin:!!plugin('App',w),keyboardPlugin:!!plugin('Keyboard',w),statusBarPlugin:!!plugin('StatusBar',w),filesystemPlugin:files.filesystem,sharePlugin:files.share});}
+global.MongoMobile=Object.freeze({capacitor,isNative,platform,plugin,normalizeAppState,normalizeDeepLink,normalizeBackEvent,fileCapabilities,capabilities});
+})(window);
+
+</script>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────
 const PAL=['#22C55E','#49B0B6','#F97316','#EF4444','#8B5CF6','#06B6D4','#F59E0B','#14B8A6','#64748B','#A855F7','#10B981','#FB7185','#334155','#84CC16'];
@@ -15794,7 +15996,23 @@ select.fi{touch-action:pan-y;cursor:pointer}
 .mongo-archive-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 7px;border-radius:999px;background:rgba(73,176,182,.12);color:#1f7f86;margin-left:6px}
 .mongo-archive-action{font-size:10px!important;padding:5px 8px!important}
 </style>
-<script src="./src/features/archive/archive.js"></script>
+<script data-mongo-source="src/features/archive/archive.js">
+// Möngö Completed Cards Archive — pure lifecycle/classification helpers.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0;
+function goalCompleted(goal,effectiveSaved){const target=Math.max(0,num(goal?.target)),saved=Math.max(0,num(effectiveSaved==null?goal?.saved:effectiveSaved));return target>0&&saved>=target;}
+function goalArchived(goal,effectiveSaved){return !!goal&&(!!goal.archivedAt||goalCompleted(goal,effectiveSaved));}
+function goalActive(goal,effectiveSaved){return !!goal&&!goalArchived(goal,effectiveSaved);}
+function debtCompleted(debt,effectiveRemaining){const rem=Math.max(0,num(effectiveRemaining==null?debt?.remaining:effectiveRemaining));return rem<=0.01&&Math.max(0,num(debt?.total))>0;}
+function assetGroupArchived(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.archivedAt);}
+function assetGroupSold(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.soldAt);}
+function assetSaleBreakdown(costBasis,saleProceeds){const cost=Math.max(0,num(costBasis)),proceeds=Math.max(0,num(saleProceeds)),pnl=proceeds-cost;return {costBasis:cost,saleProceeds:proceeds,pnl,gain:Math.max(0,pnl),loss:Math.max(0,-pnl)};}
+function savingsUndoPlan(transfers,goalId,savingsAccountId){const rows=(Array.isArray(transfers)?transfers:[]).filter(t=>String(t?.goalId||t?.linkedGoalId||'')===String(goalId)&&String(t?.to||t?.toAccountId||'')===String(savingsAccountId)&&!t?.reversedAt);const bySource={};let total=0;for(const t of rows){const source=String(t?.from||t?.fromAccountId||'');const amount=Math.max(0,num(t?.amount));if(!source||!amount)continue;bySource[source]=(bySource[source]||0)+amount;total+=amount;}return {transferIds:rows.map(t=>t.id).filter(Boolean),bySource,total};}
+global.MongoArchive=Object.freeze({goalCompleted,goalArchived,goalActive,debtCompleted,assetGroupArchived,assetGroupSold,assetSaleBreakdown,savingsUndoPlan});
+})(typeof window!=='undefined'?window:globalThis);
+
+</script>
 <script id="mongo-completed-cards-archive">
 (()=>{
 'use strict';
