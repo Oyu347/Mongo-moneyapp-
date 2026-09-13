@@ -9990,7 +9990,12 @@ function importData(e){
       try{
         const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
         if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
-        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(clean):await window.CloudDataService.saveFinancialData('force');
+        // The apply guard may advance the revision on a clone. Persist and upload
+        // the applied state so local and Cloud copies share the same revision.
+        if(typeof window.CloudDataService.collectFinancialState!=='function') throw new Error('RESTORE_STATE_COLLECTION_UNAVAILABLE');
+        const restoredState=window.CloudDataService.collectFinancialState();
+        window.MongoStorage.setJSON(getDBKey(),restoredState);
+        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(restoredState):await window.CloudDataService.saveFinancialData('force');
         if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
         restoreCommitted=true;
         showToast('Restore + Cloud sync ✓');
