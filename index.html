@@ -3349,7 +3349,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 // Möngö Cloud — Phase 2 reset safety
 (function(global){
 'use strict';
-const MIRROR_REASONS=Object.freeze(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
+const MIRROR_REASONS=Object.freeze(['force','restore-import','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
 const LEGACY_SOURCES=Object.freeze(['legacy-financial','settings-fallback','profile-fallback','user-root-fallback']);
 const REQUIRED_MIRRORS=Object.freeze(['appState','financial','settings','profile','user-root']);
 function stamp(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
@@ -9779,7 +9779,7 @@ function importData(e){
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
         if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
-        await window.CloudDataService.saveFinancialData('force');
+        await window.CloudDataService.saveFinancialData('restore-import');
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
         console.warn('Restore cloud sync failed:',syncErr);
@@ -12420,7 +12420,8 @@ auth.onAuthStateChanged(async user=>{
       const saveStartedAt=nowIso();
       await writeCloud(data,reason||'auto',sessionUid);
       const queued=getQueue();
-      const kept=queued.filter(item=>item&&item.reason==='clear-tombstone'||window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt));
+      const isRestore=(reason==='restore-import');
+      const kept=queued.filter(item=>{const isClear=item&&item.reason==='clear-tombstone';const newer=window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt);return isClear?(isRestore?newer:true):newer;});
       if(kept.length!==queued.length)setQueue(kept);
       await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
     }
