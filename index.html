@@ -9782,17 +9782,21 @@ function importData(e){
     window.MongoStorage.setJSON(getDBKey(),clean);
     // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
     // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
+    let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
-        if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
-        await window.CloudDataService.saveFinancialData('force');
+        const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
+        if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
+        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(clean):await window.CloudDataService.saveFinancialData('force');
+        if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
+        restoreCommitted=true;
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
       }
     }
-    window.MongoWeb.reload(350);
+    if(restoreCommitted) window.MongoWeb.reload(350);
   }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
   finally{e.target.value='';}}});
 }
@@ -12301,9 +12305,10 @@ auth.onAuthStateChanged(async user=>{
     return payload.id;
   }
 
-  async function writeCloud(data,reason,expectedUid){
+  async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    const isExplicitRestore=!!(options&&options.explicitRestore);
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
@@ -12432,6 +12437,25 @@ auth.onAuthStateChanged(async user=>{
     }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
+  async function restoreCloudNow(data){
+    if(!hasFirebaseUser() || !accountReadyForCloud() || !navigator.onLine) return false;
+    const sessionUid=currentUid();
+    if(!sessionUid || currentUid()!==sessionUid) return false;
+    const restoreStartedAt=nowIso();
+    try{
+      await writeCloud(data,'force',sessionUid,{explicitRestore:true});
+      const queued=getQueue();
+      const kept=queued.filter(item=>window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(restoreStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      updateSyncStatus('synced');
+      return true;
+    }catch(e){
+      console.warn('Explicit restore cloud write failed:',e);
+      updateSyncStatus('error');
+      return false;
+    }
+  }
+
   function scheduleCloudSave(reason){
     if(applyingCloud||clearingFinancialData||window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return;
     clearTimeout(cloudSaveTimer);
@@ -12664,7 +12688,7 @@ auth.onAuthStateChanged(async user=>{
   window.CloudDataService={
     version:CLOUD_FINANCIAL_VERSION,
     collectFinancialState, applyFinancialState,
-    saveFinancialData:saveCloudNow, loadFinancialData:loadCloudFinancialData,
+    saveFinancialData:saveCloudNow, restoreFinancialData:restoreCloudNow, loadFinancialData:loadCloudFinancialData,
     scheduleSave:scheduleCloudSave, rerender:rerenderFinance,
     queue:{get:getQueue,process:processQueue,enqueue:enqueueSave},
     snapshot:{get:getSnapshot,save:saveSnapshot},
