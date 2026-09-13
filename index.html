@@ -3349,7 +3349,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 // Möngö Cloud — Phase 2 reset safety
 (function(global){
 'use strict';
-const MIRROR_REASONS=Object.freeze(['force','restore-import','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
+const MIRROR_REASONS=Object.freeze(['force','login-mirror','legacy-path-migration','first-cloud-migration','bootstrap-mirror','clear-tombstone']);
 const LEGACY_SOURCES=Object.freeze(['legacy-financial','settings-fallback','profile-fallback','user-root-fallback']);
 const REQUIRED_MIRRORS=Object.freeze(['appState','financial','settings','profile','user-root']);
 function stamp(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
@@ -9773,21 +9773,23 @@ function importData(e){
     const clean=secParseBackup(raw);
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
+    // Restore is an explicit user action that replaces a previously cleared state.
+    // Retire only this user's local clear barrier before applying/uploading the backup.
+    try{
+      const restoreUid=(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid)||window._authUid||'guest';
+      localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
+    }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
     // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
     // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
-        const applied=(typeof window.CloudDataService.applyFinancialState==='function') ? window.CloudDataService.applyFinancialState(clean,'restore-import') : true;
-        if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
-        const cloudRestored=await window.CloudDataService.saveFinancialData('restore-import',clean);
-        if(cloudRestored===false) throw new Error('RESTORE_CLOUD_NOT_COMMITTED');
+        if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
+        await window.CloudDataService.saveFinancialData('force');
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
-        // Cloud-д баталгаажаагүй Restore-ийг reload хийж хоосон Cloud төлвөөр даруулахгүй.
-        return;
       }
     }
     window.MongoWeb.reload(350);
@@ -12301,8 +12303,7 @@ auth.onAuthStateChanged(async user=>{
 
   async function writeCloud(data,reason,expectedUid){
     const isClearTombstone=reason==='clear-tombstone';
-    const isExplicitRestore=reason==='restore-import';
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
@@ -12414,37 +12415,20 @@ auth.onAuthStateChanged(async user=>{
   function scheduleRetry(delay){ clearTimeout(retryTimer); retryTimer=setTimeout(processQueue,Math.max(1000,delay||BASE_RETRY_MS)); }
   function scheduleQueueProcess(){ if(navigator.onLine) scheduleRetry(900); else updateSyncStatus('offline'); }
 
-  async function saveCloudNow(reason,explicitData){
-    const isExplicitRestore=(reason==='restore-import');
-    if((window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)&&!isExplicitRestore) return false;
+  async function saveCloudNow(reason){
+    if(window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return false;
     if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
     const sessionUid=currentUid();
-    // Explicit Restore must upload the validated backup payload itself. Do not
-    // recollect mutable UI state here: a failed/partial apply could otherwise
-    // turn a valid backup into an empty Cloud write.
-    const data=isExplicitRestore&&explicitData ? sanitizeFinancialData(explicitData) : collectFinancialState();
+    const data=collectFinancialState();
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
     try{
       const saveStartedAt=nowIso();
       await writeCloud(data,reason||'auto',sessionUid);
       const queued=getQueue();
-      const isRestore=(reason==='restore-import');
-      const kept=queued.filter(item=>{const isClear=item&&item.reason==='clear-tombstone';const newer=window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt);return isClear?(isRestore?newer:true):newer;});
+      const kept=queued.filter(item=>item&&item.reason==='clear-tombstone'||window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt));
       if(kept.length!==queued.length)setQueue(kept);
-      await processQueue();
-      // A user-confirmed restore is a new state after Delete All Data. Retire the
-      // old clear barrier only after the restored state has been written and its
-      // older clear-tombstone queue entries have been drained.
-      if(isRestore){
-        const barrier=getClearBarrier();
-        const restoreTime=window.MongoCloud.stamp(data&&data.clientUpdatedAt);
-        const clearTime=window.MongoCloud.stamp(barrier&&barrier.clearedAt);
-        if(restoreTime>clearTime){
-          try{localStorage.removeItem(uidKey(CLEAR_BARRIER_KEY_PREFIX));}catch(e){}
-        }
-      }
-      updateSyncStatus(getQueue().length?'pending':'synced'); return true;
+      await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
     }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
