@@ -4,4 +4,16 @@ const meaningful=d=>!!(d&&d.txns&&d.txns.length);const app=C.makeCandidate({upda
 const tomb=C.makeCandidate({updatedAtClient:'2026-08-30T12:00:00Z',clearedAt:'2026-08-30T12:00:00Z',data:{txns:[]}},'legacy-financial');s=C.selectLoadCandidate([app,settings,tomb],meaningful);assert.strictEqual(s.selected.source,'legacy-financial');assert.strictEqual(s.clearMarker,true,'newest tombstone is a real state and blocks older meaningful copies');
 const emptyNew=C.makeCandidate({updatedAtClient:'2026-08-30T13:00:00Z',data:{txns:[]}},'profile-fallback');s=C.selectLoadCandidate([app,emptyNew],meaningful);assert.strictEqual(s.newest.source,'profile-fallback');assert.strictEqual(s.selected.source,'appState','newest non-tombstone empty copy does not hide older meaningful data');assert.strictEqual(C.requiresCanonicalMigration('legacy-financial'),true);assert.strictEqual(C.requiresCanonicalMigration('settings-fallback'),true);assert.strictEqual(C.requiresCanonicalMigration('appState'),false);
 assert.strictEqual(C.shouldSkipFingerprint('same','same','clear-tombstone'),false);const barrier={clearedAt:'2026-08-30T12:00:00Z'};assert.deepStrictEqual(C.filterQueueAfterClear([{id:1,reason:'auto',createdAt:'2026-08-30T11:00:00Z'},{id:2,reason:'clear-tombstone',createdAt:'2026-08-30T12:00:00Z'}],barrier).map(x=>x.id),[2]);
+
+// Regression: a stale clear marker must not turn a later normal save into a delete tombstone.
+// This reproduces the Firebase shape observed on 2026-09-13: transactions survived while
+// moneyAccounts/goals/budgets were empty and an older clearedAt was still present.
+const completeState={txns:[{id:'t1',accountId:'a1'}],goals:[{id:'g1'}],debts:[],invests:[],moneyAccounts:[{id:'a1'}],accountTransfers:[],moneyLedger:[],moneyLedgerTombstones:[],budgets:{'2026-09':{food:100}}};
+const damagedState={txns:[{id:'t2',accountId:'a1'}],goals:[],debts:[],invests:[],moneyAccounts:[],accountTransfers:[],moneyLedger:[],moneyLedgerTombstones:[],budgets:{}};
+const healthy=C.makeCandidate({updatedAtClient:'2026-09-05T10:00:00Z',data:completeState},'financial');
+const staleClearDamaged=C.makeCandidate({clearedAt:'2026-09-05T11:00:00Z',updatedAtClient:'2026-09-13T10:00:00Z',data:Object.assign({clientUpdatedAt:'2026-09-13T10:00:00Z'},damagedState)},'appState');
+const safe=C.selectSafeLoadCandidate([healthy,staleClearDamaged]);
+assert.strictEqual(safe.clearMarker,false,'an older clearedAt must not remain an active tombstone after a later normal save');
+assert.strictEqual(safe.selected&&safe.selected.source,'financial','transaction-bearing state with lost accounts/goals/budgets must not overwrite a richer intact state');
+
 (async()=>{const calls=[];const result=await C.runSafeHardReset({emptyMemory:()=>calls.push('memory'),purgeLocal:()=>calls.push('local'),clearFinancialData:async()=>calls.push('cloud'),reload:()=>calls.push('reload')});assert.deepStrictEqual(calls,['memory','local','cloud','memory','local','reload'],'hard reset clears cloud exactly once and never force-loads deleted data');assert.strictEqual(result.cloudClearCalls,1);assert.strictEqual(result.forceReloadCalls,0);console.log('Möngö cloud regression tests: PASS');})().catch(e=>{console.error(e);process.exitCode=1;});
