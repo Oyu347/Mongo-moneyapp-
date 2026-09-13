@@ -9779,11 +9779,14 @@ function importData(e){
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
         if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
-        await window.CloudDataService.saveFinancialData('restore-import');
+        const cloudRestored=await window.CloudDataService.saveFinancialData('restore-import');
+        if(cloudRestored===false) throw new Error('RESTORE_CLOUD_NOT_COMMITTED');
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
+        // Cloud-д баталгаажаагүй Restore-ийг reload хийж хоосон Cloud төлвөөр даруулахгүй.
+        return;
       }
     }
     window.MongoWeb.reload(350);
@@ -12297,7 +12300,8 @@ auth.onAuthStateChanged(async user=>{
 
   async function writeCloud(data,reason,expectedUid){
     const isClearTombstone=reason==='clear-tombstone';
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    const isExplicitRestore=reason==='restore-import';
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
@@ -12410,7 +12414,8 @@ auth.onAuthStateChanged(async user=>{
   function scheduleQueueProcess(){ if(navigator.onLine) scheduleRetry(900); else updateSyncStatus('offline'); }
 
   async function saveCloudNow(reason){
-    if(window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return false;
+    const isExplicitRestore=(reason==='restore-import');
+    if((window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)&&!isExplicitRestore) return false;
     if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
     const sessionUid=currentUid();
     const data=collectFinancialState();
