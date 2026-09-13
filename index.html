@@ -3377,7 +3377,7 @@ function queueChangedByBarrier(queue,barrier){const before=Array.isArray(queue)?
 function mirrorRequired(reason){return MIRROR_REASONS.includes(String(reason||''));}
 function shouldSkipFingerprint(fp,lastFp,reason){return fp===lastFp&&!mirrorRequired(reason);}
 function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear-tombstone'?((clean&&clean.clientUpdatedAt)||updatedAtClient):null;}
-function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
+function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);meta.clearedAt=clearedAt||null;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
 function getClientId(){const key='mongo_cloud_client_id_v1';try{let id=global.localStorage&&global.localStorage.getItem(key);if(!id){id='mongo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);if(global.localStorage)global.localStorage.setItem(key,id);}return id;}catch(e){return 'mongo-session-'+Math.random().toString(36).slice(2,10);}}
@@ -12416,7 +12416,14 @@ auth.onAuthStateChanged(async user=>{
     const data=collectFinancialState();
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
-    try{ await writeCloud(data,reason||'auto',sessionUid); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
+    try{
+      const saveStartedAt=nowIso();
+      await writeCloud(data,reason||'auto',sessionUid);
+      const queued=getQueue();
+      const kept=queued.filter(item=>item&&item.reason==='clear-tombstone'||window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
+    }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
   function scheduleCloudSave(reason){
