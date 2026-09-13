@@ -16502,11 +16502,30 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
   }
   function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){
-   if((typeof ginterest!=='undefined'&&ginterest.value==='compound')||(typeof gcontrib!=='undefined'&&gcontrib.value==='regular')){
-     alert(lang==='en'?'This calculation mode will be enabled after its formula is verified.':lang==='ja'?'この計算方式は数式の検証後に有効になります。':lang==='ko'?'이 계산 방식은 공식 검증 후 활성화됩니다.':lang==='ru'?'Этот режим будет включён после проверки формулы.':lang==='de'?'Diese Berechnung wird nach Prüfung der Formel aktiviert.':lang==='zh'?'此计算方式将在公式验证后启用。':'Энэ тооцооллын томьёог баталгаажуулсны дараа идэвхжүүлнэ.');
+   if(typeof gcontrib!=='undefined'&&gcontrib.value==='regular'){
+     alert(lang==='en'?'Regular additional deposits will be enabled after their formula is verified.':lang==='ja'?'定期的な追加預入は数式の検証後に有効になります。':lang==='ko'?'정기 추가 입금은 공식 검증 후 활성화됩니다.':lang==='ru'?'Регулярные пополнения будут включены после проверки формулы.':lang==='de'?'Regelmäßige Einzahlungen werden nach Prüfung der Formel aktiviert.':lang==='zh'?'定期追加资金将在公式验证后启用。':'Тогтмол мөнгө нэмэх тооцоог томьёог нь баталгаажуулсны дараа идэвхжүүлнэ.');
      return;
    }
-   const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;let allowed=0;if(rule==='all')allowed=p*rr/100*d/365;else if(rule==='vested'){const y=Math.floor(d/365),rem=d-y*365;allowed=p*cr/100*y+p*rr/100*rem/365}else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
+   const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;
+   const compound=(typeof ginterest!=='undefined'&&ginterest.value==='compound');
+   const freq=compound?Math.max(1,Number(gcompoundfreq.value)||1):1;
+   function interestFor(principal,annualRate,dayCount,useCompound){
+     if(!useCompound)return principal*annualRate/100*dayCount/365;
+     const periodDays=365/freq, full=Math.floor(dayCount/periodDays), rem=dayCount-full*periodDays;
+     let bal=principal*Math.pow(1+annualRate/100/freq,full);
+     if(rem>0)bal+=bal*(annualRate/100/freq)*(rem/periodDays);
+     return Math.max(0,bal-principal);
+   }
+   let allowed=0;
+   if(rule==='all')allowed=interestFor(p,rr,d,compound);
+   else if(rule==='vested'){
+     const y=Math.floor(d/365),rem=d-y*365;
+     if(compound){
+       const vestedInterest=interestFor(p,cr,y*365,true);
+       const vestedBalance=p+vestedInterest;
+       allowed=vestedInterest+interestFor(vestedBalance,rr,rem,true);
+     }else allowed=p*cr/100*y+p*rr/100*rem/365;
+   }else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
   function mode(which){const isCancel=which==='cancel',coffee=findCoffee();savings.style.display=isCancel?'none':'block';cancel.style.display=isCancel?'block':'none';if(coffee){coffee.style.display=isCancel?'none':'';if(!isCancel)coffee.style.marginTop='28px'}save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel)}
   render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
  }
