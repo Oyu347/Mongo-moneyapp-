@@ -15076,7 +15076,14 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function installCloudGuard(){
     const svc=window.CloudDataService;if(!svc||typeof svc.applyFinancialState!=='function'){setTimeout(installCloudGuard,500);return;}if(svc.__v4412Guard){cloudGuardInstalled=true;return;}
     const original=svc.applyFinancialState.bind(svc);svc.applyFinancialState=function(raw,source){
-      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),localRev=Math.max(0,Number(moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
+      const localRev=Math.max(0,Number(moneyLedgerRevision)||0),isExplicitRestore=String(source||'')==='restore-import';
+      if(isExplicitRestore){
+        const incoming=clone(raw||{}),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0);
+        incoming.moneyLedgerTombstones=Array.isArray(incoming.moneyLedgerTombstones)?clone(incoming.moneyLedgerTombstones):[];
+        incoming.moneyLedgerRevision=Math.max(localRev,incomingRev)+1;
+        const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=clone(incoming.moneyLedgerTombstones);moneyLedgerRevision=incoming.moneyLedgerRevision;committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
+      }
+      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
       if(localRev>incomingRev&&localTime>=incomingTime){if(typeof svc.saveFinancialData==='function')setTimeout(()=>svc.saveFinancialData('v44.12-local-newer'),0);return false;}
       const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=mergeTombstones(moneyLedgerTombstones,incoming.moneyLedgerTombstones);moneyLedgerRevision=Math.max(localRev,incomingRev);committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
     };svc.__v4412Guard=true;cloudGuardInstalled=true;
