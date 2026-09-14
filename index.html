@@ -16489,14 +16489,42 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
    <div><label>${q.fee}</label><input id="gfee" inputmode="decimal" data-amt="1" placeholder="0"></div>
    <div style="grid-column:1/-1"><label>${q.rule}</label><select id="grule"><option value="all">${q.all}</option><option value="vested">${q.vested}</option><option value="manual">${q.manual}</option></select></div>
    <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
-  </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
+  </div><button id="v382gGo" type="button">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
   ['gp','gprior','gfee','gmanual','gcontribamt'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
   Object.keys(keep).forEach(id=>{const el=document.getElementById(id);if(el)el.value=keep[id]});
   document.getElementById('gstart').onchange=days;document.getElementById('gend').onchange=days;
   document.getElementById('grule').onchange=()=>{document.getElementById('gmanualWrap').style.display=document.getElementById('grule').value==='manual'?'block':'none'};
   document.getElementById('ginterest').onchange=()=>{document.getElementById('gcompoundWrap').style.display=document.getElementById('ginterest').value==='compound'?'block':'none'};
   document.getElementById('gcontrib').onchange=()=>{const on=document.getElementById('gcontrib').value==='regular';document.getElementById('gcontribAmtWrap').style.display=on?'block':'none';document.getElementById('gcontribFreqWrap').style.display=on?'block':'none'};
+
+  // V38.2o: robust Android/mobile event wiring for compound selection.
+  // Capture phase prevents older page handlers from breaking this isolated calculator.
+  const _gi=document.getElementById('ginterest');
+  const _gc=document.getElementById('gcontrib');
+  const _gr=document.getElementById('grule');
+  if(_gi){
+    _gi.addEventListener('change',function(ev){
+      const w=document.getElementById('gcompoundWrap');
+      if(w)w.style.display=this.value==='compound'?'block':'none';
+    },true);
+  }
+  if(_gc){
+    _gc.addEventListener('change',function(ev){
+      const on=this.value==='regular';
+      const a=document.getElementById('gcontribAmtWrap'), f=document.getElementById('gcontribFreqWrap');
+      if(a)a.style.display=on?'block':'none';
+      if(f)f.style.display=on?'block':'none';
+    },true);
+  }
+  if(_gr){
+    _gr.addEventListener('change',function(ev){
+      const w=document.getElementById('gmanualWrap');
+      if(w)w.style.display=this.value==='manual'?'block':'none';
+    },true);
+  }
+
   document.getElementById('v382gGo').onclick=run;
+  document.getElementById('v382gGo').addEventListener('click',function(ev){ev.preventDefault();run();},true);
   document.getElementById('grule').onchange();document.getElementById('ginterest').onchange();document.getElementById('gcontrib').onchange();days();
   window.v382gRefreshLanguage=render;
   }
