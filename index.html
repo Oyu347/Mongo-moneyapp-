@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V38.2t TEST: Partial State Guard. Production baseline/version intentionally unchanged. -->
 <!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
@@ -12295,10 +12296,6 @@ auth.onAuthStateChanged(async user=>{
   }
 
   async function writeCloud(data,reason,expectedUid){
-    if(window.MONGO_V382R_TRACE_ACTIVE){
-      try{ window.MONGO_V382R_LOG && window.MONGO_V382R_LOG('CLOUD writeCloud BLOCKED', reason||'', data); }catch(e){}
-      return true;
-    }
     const isClearTombstone=reason==='clear-tombstone';
     if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
@@ -12417,6 +12414,7 @@ auth.onAuthStateChanged(async user=>{
     if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
     const sessionUid=currentUid();
     const data=collectFinancialState();
+    if(v382tBlockPartial(data,'saveCloudNow-before-cloud-write')) return false;
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
     try{ await writeCloud(data,reason||'auto',sessionUid); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
@@ -12494,7 +12492,6 @@ auth.onAuthStateChanged(async user=>{
         barrier:clearBarrier,localUpdatedAt:getLocalUpdatedAt(),
         newestCloudUpdatedAt:newestCandidate&&newestCandidate.raw&&((newestCandidate.raw.updatedAtClient)||(newestCandidate.raw.data&&newestCandidate.raw.data.clientUpdatedAt))
       });
-
       /* A locally completed reset is authoritative even while its Cloud write
          is queued. Old Cloud copies cannot repopulate this device. A genuinely
          newer local save or Cloud save is still allowed normally. */
@@ -12551,8 +12548,73 @@ auth.onAuthStateChanged(async user=>{
     }
   }
 
+
+  /* V38.2t — Partial State Guard
+     Protects a previously healthy local/cloud snapshot from being overwritten
+     when several core finance sections disappear at the same time.
+     Explicit Delete All Data remains on its existing clearingFinancialData /
+     clear-tombstone path; Restore keeps its existing direct restore writer. */
+  function v382tSectionCounts(data){
+    const d=safeObj(data);
+    return {
+      goals:safeArray(d.goals).length,
+      debts:safeArray(d.debts).length,
+      invests:safeArray(d.invests).length,
+      budgets:Object.keys(safeObj(d.budgets)).length,
+      accounts:safeArray(d.moneyAccounts).length,
+      txns:safeArray(d.txns).length,
+      ledger:safeArray(d.moneyLedger).length
+    };
+  }
+  function v382tSuspiciousPartial(nextData){
+    if(clearingFinancialData || applyingCloud || window.MONGO_CLOUD_LOAD_IN_PROGRESS) return false;
+    const snap=getSnapshot();
+    const prev=snap&&snap.data;
+    if(!prev || !hasMeaningfulFinancialData(prev)) return false;
+
+    const a=v382tSectionCounts(prev), b=v382tSectionCounts(nextData);
+    let drops=0;
+    if(a.goals>0 && b.goals===0)drops++;
+    if(a.debts>0 && b.debts===0)drops++;
+    if(a.invests>0 && b.invests===0)drops++;
+    if(a.budgets>0 && b.budgets===0)drops++;
+    if(a.accounts>=2 && b.accounts<=1)drops++;
+
+    const prevCore=a.goals+a.debts+a.invests+a.budgets+Math.max(0,a.accounts-1);
+    const nextCore=b.goals+b.debts+b.invests+b.budgets+Math.max(0,b.accounts-1);
+    const catastrophic = prevCore>=4 && nextCore<=Math.floor(prevCore*0.35);
+
+    // Require a multi-section collapse (or a very large collapse). A normal
+    // one-at-a-time user deletion is therefore not blocked.
+    return drops>=2 || catastrophic;
+  }
+  function v382tBlockPartial(nextData,where){
+    if(!v382tSuspiciousPartial(nextData)) return false;
+    window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+    window.MONGO_PARTIAL_STATE_GUARD_INFO={
+      at:nowIso(), where:where||'unknown',
+      previous:v382tSectionCounts((getSnapshot()||{}).data),
+      attempted:v382tSectionCounts(nextData)
+    };
+    console.error('V38.2t blocked suspicious partial financial state',window.MONGO_PARTIAL_STATE_GUARD_INFO);
+    try{
+      if(typeof showToast==='function')showToast('Өгөгдлийн хамгаалалт: дутуу төлөв хадгалагдсангүй. Аппыг дахин нээнэ үү.');
+    }catch(e){}
+    updateSyncStatus('error');
+    return true;
+  }
+
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
-  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
+  if(originalSaveData){ window.saveData=function(){
+    if(!applyingCloud){
+      const candidate=collectFinancialState();
+      if(v382tBlockPartial(candidate,'saveData-before-local-write')) return false;
+      markLocalUpdated();
+    }
+    const res=originalSaveData.apply(this,arguments);
+    scheduleCloudSave('saveData');
+    return res;
+  }; try{saveData=window.saveData;}catch(e){} }
   const originalImportData=window.importData || (typeof importData==='function'?importData:null);
   if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
 
@@ -12695,7 +12757,7 @@ auth.onAuthStateChanged(async user=>{
   window.addEventListener('online',()=>{ updateSyncStatus('pending'); processQueue(); scheduleCloudSave('online'); });
   window.addEventListener('offline',()=>updateSyncStatus('offline'));
   window.addEventListener('visibilitychange',()=>{ if(!document.hidden) processQueue(); });
-  window.addEventListener('beforeunload',()=>{ try{ if(!accountReadyForCloud()) return; const data=collectFinancialState(); saveSnapshot(data,{beforeunload:true,ownerUid:currentUid()}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
+  window.addEventListener('beforeunload',()=>{ try{ if(!accountReadyForCloud()) return; const data=collectFinancialState(); if(v382tBlockPartial(data,'beforeunload')) return; saveSnapshot(data,{beforeunload:true,ownerUid:currentUid()}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
   setTimeout(()=>processQueue(),2500);
 })();
 </script>
@@ -16552,71 +16614,6 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
      setLang.__v382hCancelSync=true;
    }
  }catch(e){}
-})();
-</script>
-
-<script id="v382r-save-caller-readonly-trace">
-(function(){
-  'use strict';
-  window.MONGO_V382R_TRACE_ACTIVE=true;
-  const events=[];
-  function counts(){
-    const A=(v)=>Array.isArray(v)?v.length:0;
-    let b=0; try{b=(budgets&&typeof budgets==='object'&&!Array.isArray(budgets))?Object.keys(budgets).length:0}catch(e){}
-    return {
-      txns:(typeof txns!=='undefined'?A(txns):0),
-      accounts:(typeof moneyAccounts!=='undefined'?A(moneyAccounts):0),
-      goals:(typeof goals!=='undefined'?A(goals):0),
-      debts:(typeof debts!=='undefined'?A(debts):0),
-      invests:(typeof invests!=='undefined'?A(invests):0),
-      ledger:(typeof moneyLedger!=='undefined'?A(moneyLedger):0), budgets:b
-    };
-  }
-  function caller(){
-    try{
-      const lines=(new Error()).stack.split('\n').slice(2).map(x=>x.trim());
-      return lines.find(x=>!x.includes('v382r-save-caller-readonly-trace')) || lines[0] || 'unknown';
-    }catch(e){return 'unknown'}
-  }
-  function authReady(){
-    try{return !!(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser)}catch(e){return false}
-  }
-  function render(force){
-    if(!force&&!authReady()) return;
-    let box=document.getElementById('mongo-v382r-save-trace');
-    if(!box){ box=document.createElement('div'); box.id='mongo-v382r-save-trace'; document.body.appendChild(box); }
-    box.style.cssText='position:fixed;inset:10px;z-index:2147483647;background:#fff;color:#1f2937;border:3px solid #49B0B6;border-radius:16px;padding:16px;overflow:auto;font:13px/1.5 system-ui,sans-serif;box-shadow:0 12px 40px #0005';
-    const c=counts();
-    box.innerHTML='<div style="font-size:18px;font-weight:900">Möngö V38.2s — LOGIN + SAVE TRACE READ-ONLY</div>'+
-      '<div style="margin:8px 0;padding:9px;background:#ecfeff;border-radius:10px"><b>Local/Cloud бичилтийг хаасан.</b><br>Нэвтэрсний дараах startup үед saveData() хэн дуудсаныг бүртгэнэ.</div>'+
-      '<div><b>CURRENT:</b> txns '+c.txns+' | accounts '+c.accounts+' | goals '+c.goals+' | debts '+c.debts+' | invests '+c.invests+' | ledger '+c.ledger+' | budgets '+c.budgets+'</div>'+
-      '<div style="margin-top:10px"><b>saveData attempts: '+events.length+'</b></div>'+
-      (events.length?events.map((e,i)=>'<div style="border-top:1px solid #ddd;padding:8px 0"><b>#'+(i+1)+' '+e.time+'</b><br>'+e.line+'<br>txns '+e.c.txns+' | accounts '+e.c.accounts+' | goals '+e.c.goals+' | debts '+e.c.debts+' | invests '+e.c.invests+' | ledger '+e.c.ledger+' | budgets '+e.c.budgets+'</div>').join(''):'<div style="padding:8px 0">Одоогоор saveData() дуудлага бүртгэгдээгүй.</div>')+
-      '<div style="margin-top:12px;font-weight:800">10–15 секунд хүлээгээд энэ дэлгэцийн зургийг явуулна уу.</div>';
-  }
-  window.MONGO_V382R_LOG=function(label,reason,data){
-    if(label==='CLOUD writeCloud BLOCKED'){
-      events.push({time:new Date().toLocaleTimeString(),line:'[BLOCKED CLOUD] writeCloud reason='+String(reason||''),c:counts()});
-      render();
-    }
-  };
-  const base=(typeof saveData==='function')?saveData:(window.saveData||null);
-  function tracedSaveData(){
-    events.push({time:new Date().toLocaleTimeString(),line:caller(),c:counts()});
-    render();
-    return undefined; // READ-ONLY: never call persistence chain
-  }
-  if(base){ try{saveData=tracedSaveData}catch(e){} window.saveData=tracedSaveData; }
-  document.addEventListener('DOMContentLoaded',()=>{
-    try{
-      if(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth){
-        window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{
-          if(user){ setTimeout(()=>render(true),300); setTimeout(()=>render(true),2500); setTimeout(()=>render(true),7000); setTimeout(()=>render(true),15000); }
-        });
-      }
-    }catch(e){}
-  });
-  window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(()=>render(true),100));
 })();
 </script>
 
