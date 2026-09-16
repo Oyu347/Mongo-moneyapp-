@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- V38.2v TEST: exact Restore V11 state-collection/cloud-restore flow + stage diagnostic. -->
 <!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
@@ -68,6 +67,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+
 <style id="mongo-force-light-v4335">html{color-scheme:light!important;} body{color-scheme:light!important;}
 /* V43.48 */
 .account-group-title{font-size:11px;font-weight:900;letter-spacing:.04em;color:var(--text2);margin:12px 2px 6px}
@@ -3360,13 +3360,14 @@ function sortNewestCandidates(candidates){return [...(Array.isArray(candidates)?
 function makeCandidate(raw,source){return raw&&raw.data?{raw,source}:null;}
 function unwrapFinancialState(container,source){return makeCandidate(container&&container.financialState,source);}
 function compactCandidates(items){return (Array.isArray(items)?items:[]).filter(Boolean);}
-function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
+function activeClearTombstone(raw){const r=raw&&typeof raw==='object'?raw:null;if(!r||!r.clearedAt)return false;const cleared=stamp(r.clearedAt),dataTime=stamp(r.data&&r.data.clientUpdatedAt);return !!cleared&&(!dataTime||dataTime<=cleared);}
+function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
 const REQUIRED_STATE_ARRAYS=Object.freeze(['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones']);
 function stateCompleteness(data){const d=data&&typeof data==='object'?data:{},missing=REQUIRED_STATE_ARRAYS.filter(k=>!Array.isArray(d[k]));if(!d.budgets||typeof d.budgets!=='object'||Array.isArray(d.budgets))missing.push('budgets');return {complete:missing.length===0,missing};}
 function stateRevision(data){const n=Number(data&&data.moneyLedgerRevision);return Number.isFinite(n)&&n>=0?n:0;}
 function stateRichness(data){const d=data&&typeof data==='object'?data:{};return REQUIRED_STATE_ARRAYS.reduce((sum,k)=>sum+(Array.isArray(d[k])?d[k].length:0),0)+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;}
 function safeCandidateOrder(a,b){const ad=a&&a.raw&&a.raw.data,bd=b&&b.raw&&b.raw.data;return stateRevision(bd)-stateRevision(ad)||stateRichness(bd)-stateRichness(ad)||candidateTime(b)-candidateTime(a);}
-function selectSafeLoadCandidate(candidates){const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};}
+function selectSafeLoadCandidate(candidates){const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};}
 function activeClearBarrier(barrier){return !!(barrier&&barrier.active!==false&&barrier.clearedAt&&barrier.data);}
 function selectLoadCandidateWithBarrier(candidates,isMeaningful,barrier){const cloudDecision=selectLoadCandidate(candidates,isMeaningful);if(!activeClearBarrier(barrier))return Object.assign({},cloudDecision,{barrierActive:false,cloudDecision});const raw={clearedAt:barrier.clearedAt,updatedAtClient:barrier.clearedAt,data:barrier.data};const selected={raw,source:'local-clear-barrier'};return {selected,newest:cloudDecision.newest,ordered:cloudDecision.ordered,clearMarker:true,barrierActive:true,cloudDecision};}
 function requiresCanonicalMigration(source){return LEGACY_SOURCES.includes(String(source||''));}
@@ -3377,16 +3378,98 @@ function queueChangedByBarrier(queue,barrier){const before=Array.isArray(queue)?
 function mirrorRequired(reason){return MIRROR_REASONS.includes(String(reason||''));}
 function shouldSkipFingerprint(fp,lastFp,reason){return fp===lastFp&&!mirrorRequired(reason);}
 function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear-tombstone'?((clean&&clean.clientUpdatedAt)||updatedAtClient):null;}
-function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
+function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);meta.clearedAt=clearedAt||null;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
 function getClientId(){const key='mongo_cloud_client_id_v1';try{let id=global.localStorage&&global.localStorage.getItem(key);if(!id){id='mongo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);if(global.localStorage)global.localStorage.setItem(key,id);}return id;}catch(e){return 'mongo-session-'+Math.random().toString(36).slice(2,10);}}
 async function runSafeHardReset(ops){const x=ops||{};if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');x.emptyMemory();x.purgeLocal();const cloudCleared=await x.clearFinancialData();if(cloudCleared===false)throw new Error('reset-cloud-clear-failed');x.emptyMemory();x.purgeLocal();if(typeof x.reload==='function')x.reload();return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};}
 global.getClientId=getClientId;
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,activeClearTombstone,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/storage/storage.js"></script>
+<script data-mongo-source="src/services/storage/storage.js">
+// Möngö local storage service
+// V44 modularization foundation.
+// Compatibility-first wrapper: callers can migrate incrementally without
+// changing the stored keys or serialized data format.
+
+(function (global) {
+  'use strict';
+
+  const nativeStorage = global.localStorage;
+
+  function get(key, fallback = null) {
+    try {
+      const value = nativeStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (error) {
+      console.warn('[Möngö storage] get failed:', key, error);
+      return fallback;
+    }
+  }
+
+  function set(key, value) {
+    try {
+      nativeStorage.setItem(key, String(value));
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] set failed:', key, error);
+      return false;
+    }
+  }
+
+  function remove(key) {
+    try {
+      nativeStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] remove failed:', key, error);
+      return false;
+    }
+  }
+
+  function getJSON(key, fallback = null) {
+    const raw = get(key, null);
+    if (raw === null) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      console.warn('[Möngö storage] invalid JSON:', key, error);
+      return fallback;
+    }
+  }
+
+  function setJSON(key, value) {
+    try {
+      return set(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn('[Möngö storage] JSON stringify failed:', key, error);
+      return false;
+    }
+  }
+
+  function has(key) {
+    return get(key, null) !== null;
+  }
+
+  function keys() {
+    try {
+      const out = [];
+      for (let i = 0; i < nativeStorage.length; i += 1) {
+        const key = nativeStorage.key(i);
+        if (key !== null) out.push(key);
+      }
+      return out;
+    } catch (error) {
+      console.warn('[Möngö storage] keys failed:', error);
+      return [];
+    }
+  }
+
+  global.MongoStorage = Object.freeze({ get, set, remove, getJSON, setJSON, has, keys });
+})(window);
+
+</script>
 <script>
 /* Phase 1L phone-inline: exact-compatible Core subset required by current app callers. */
 (function(g){'use strict';const K=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']),id=v=>String(v??''),cl=v=>v==null?v:JSON.parse(JSON.stringify(v));
@@ -3569,8 +3652,36 @@ function applyBudgetMoves(budgets,moves){(moves||[]).forEach(m=>{if(!Object.prot
 global.MongoBudget=Object.freeze({categoryKey,subcategoryKey,yearMonthKey,getValue,rowInMonth,sumRows,savingsGoalActual,investmentActual,loanActual,progress,sourceKey,sourceNames,sourceDescriptor,selectedPeriodIsCurrentOrFuture,canSeedBudget,investmentSourceEligible,investmentContributionEligible,isLinkedSourceKey,findLegacySource,migrateBudgetSuffixes,applyBudgetMoves});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/cloud/cloud.js?v=4166a5e87c19b4cbca9b9731212601474220278b"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/audit/audit.js"></script>
+<!-- Cloud helpers are already embedded above; removed CSP-blocked duplicate. -->
+<script data-mongo-source="src/audit/audit.js">
+// Möngö Audit — Phase 1 COMPLETE
+// Pure read-only cross-feature invariant findings and deterministic reports. Never mutates or auto-fixes financial data.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0, id=v=>String(v==null?'':v);
+function finding(code,severity,details){return {code,severity:severity||'error',...(details||{})};}
+function duplicateIds(rows){const seen=new Set(),dupes=new Set();(rows||[]).forEach(r=>{const k=id(r&&r.id);if(!k)return;if(seen.has(k))dupes.add(k);seen.add(k);});return [...dupes];}
+function stableValue(v){if(Array.isArray(v))return v.map(stableValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>o[k]=stableValue(v[k]));return o;}return v;}
+function findingKey(f){return JSON.stringify(stableValue(f||{}));}
+function normalizeFindings(findings){const seen=new Set();return (findings||[]).filter(Boolean).filter(f=>{const k=findingKey(f);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>{const rank={error:0,warn:1,info:2},sa=rank[a.severity]??9,sb=rank[b.severity]??9;return sa-sb||String(a.code||'').localeCompare(String(b.code||''))||findingKey(a).localeCompare(findingKey(b));});}
+function summarize(findings){const rows=normalizeFindings(findings),bySeverity={error:0,warn:0,info:0},byCode={};rows.forEach(f=>{const s=f.severity||'error';bySeverity[s]=(bySeverity[s]||0)+1;const c=String(f.code||'unknown');byCode[c]=(byCode[c]||0)+1;});return {total:rows.length,bySeverity,byCode,findings:rows};}
+function ledgerIdFindings(ledger,expectedIds){const rows=Array.isArray(ledger)?ledger:[],actual=new Set(rows.map(r=>id(r&&r.id)).filter(Boolean)),out=[];duplicateIds(rows).forEach(x=>out.push(finding('duplicate-ledger-id','error',{id:x})));(expectedIds||[]).map(id).filter(Boolean).forEach(x=>{if(!actual.has(x))out.push(finding('missing-ledger-id','error',{id:x}));});return out;}
+function sourceLedgerIds(input){const x=input||{},ids=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>ids.push('txn:'+id(t.id)));(x.transfers||[]).forEach(t=>ids.push('transfer:'+id(t.id)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&num(d.fundingAmount)>0&&d.fundingAccountId)ids.push('loan-received:'+id(d.id));(Array.isArray(d&&d.payments)?d.payments:[]).forEach(p=>ids.push('loan-payment:'+id(p.id)));});return ids;}
+function sourceLedgerParityFindings(input){const x=input||{},expected=sourceLedgerIds(x),expectedSet=new Set(expected),out=ledgerIdFindings(x.ledger,expected);(x.ledger||[]).forEach(e=>{const lid=id(e&&e.id);if(lid&&/^(txn:|transfer:|loan-received:|loan-payment:)/.test(lid)&&!expectedSet.has(lid))out.push(finding('orphan-ledger-row','warn',{ledgerId:lid,kind:e&&e.kind}));});return out;}
+function transferFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to)out.push(finding('transfer-missing-account','error',{id:tid,fromId:from,toId:to}));if(from&&to&&from===to)out.push(finding('transfer-same-account','error',{id:tid,accountId:from}));if(amount<=0)out.push(finding('transfer-nonpositive-amount','error',{id:tid,amount}));});return out;}
+function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]);if(aid&&!known.has(aid))out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
+function ledgerDeltaForAccount(accountId,ledger){const aid=id(accountId);return (ledger||[]).reduce((sum,e)=>sum+(id(e&&e.toAccountId)===aid?num(e.amount):0)-(id(e&&e.fromAccountId)===aid?num(e.amount):0),0);}
+function accountBalanceFindings(accounts,ledger,balanceFor){if(typeof balanceFor!=='function')return [];const out=[];(accounts||[]).forEach(a=>{const aid=id(a&&a.id),opening=num(a&&a.openingBalance),delta=ledgerDeltaForAccount(aid,ledger),expected=opening+delta,actual=num(balanceFor(aid));if(Math.abs(actual-expected)>1)out.push(finding('account-balance-ledger-mismatch','error',{accountId:aid,opening,ledgerDelta:delta,expected,actual}));});return out;}
+function transferConservationFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to||from===to||amount<=0)return;const sourceDelta=-amount,destinationDelta=amount,net=sourceDelta+destinationDelta;if(Math.abs(net)>1e-9)out.push(finding('transfer-conservation-failed','error',{id:tid,sourceDelta,destinationDelta,net}));});return out;}
+function loanSplitFindings(ledger){const out=[];(ledger||[]).filter(e=>e&&e.kind==='loan_payment').forEach(e=>{const total=num(e.amount),split=num(e.principal)+num(e.interest)+num(e.extraPrincipal);if(Math.abs(total-split)>1)out.push(finding('loan-payment-split-mismatch','error',{ledgerId:id(e.id),total,split}));});return out;}
+function legacyLoanTxnFindings(txns){return (txns||[]).filter(t=>t&&t.loanPaymentId).map(t=>finding('loan-payment-duplicate-txn-signal','warn',{txnId:id(t.id),loanPaymentId:id(t.loanPaymentId)}));}
+function savingsDoubleCountFindings(txns,transfers){const moved=new Set((transfers||[]).filter(t=>t&&t.purpose==='savings').map(t=>id(t.targetId)).filter(Boolean));return (txns||[]).filter(t=>t&&t.type==='expense'&&moved.has(id(t.goalId||t.targetId))&&(t.purpose==='savings'||t.expensePurpose==='savings')).map(t=>finding('savings-transfer-expense-double-count-signal','warn',{txnId:id(t.id),goalId:id(t.goalId||t.targetId)}));}
+function run(input){const x=input||{},out=[];out.push(...sourceLedgerParityFindings(x));out.push(...transferFindings(x.transfers));out.push(...accountReferenceFindings(x.accounts,x.ledger));out.push(...accountBalanceFindings(x.accounts,x.ledger,x.balanceFor));out.push(...transferConservationFindings(x.transfers));out.push(...loanSplitFindings(x.ledger));out.push(...legacyLoanTxnFindings(x.txns));out.push(...savingsDoubleCountFindings(x.txns,x.transfers));return normalizeFindings(out);}
+function report(input){return summarize(run(input));}
+global.MongoAudit=Object.freeze({finding,duplicateIds,stableValue,findingKey,normalizeFindings,summarize,ledgerIdFindings,sourceLedgerIds,sourceLedgerParityFindings,transferFindings,accountReferenceFindings,ledgerDeltaForAccount,accountBalanceFindings,transferConservationFindings,loanSplitFindings,legacyLoanTxnFindings,savingsDoubleCountFindings,run,report});
+})(window);
+
+</script>
 <script>
 // Möngö i18n dictionaries — Phase 1E COMPLETE
 // Exact extracted payload from the latest full HTML. Do not rewrite translations during modularization.
@@ -3602,9 +3713,101 @@ function keyParity(dictionaries){const out={};LOCALES.forEach(l=>out[l]=missingK
 global.MongoI18n=Object.freeze({LOCALES,DEFAULT_LOCALE,CURRENCY,hasLocale,normalizeLocale,language,currency,ownValue,value,categoryLabel,namedLabel,missingKeys,keyParity});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/web/platform.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/features/subscription/access.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/mobile/platform.js"></script>
+<script data-mongo-source="src/web/platform.js">
+// Möngö Web — Phase 1 COMPLETE
+// Browser/platform compatibility only. No financial, Firebase, storage or UI policy logic.
+(function(global){
+'use strict';
+function capabilities(env){const w=env||global,n=w&&w.navigator,d=w&&w.document,u=w&&w.URL;return Object.freeze({dom:!!(d&&typeof d.createElement==='function'),blob:typeof (w&&w.Blob)==='function',objectUrl:!!(u&&typeof u.createObjectURL==='function'),fileReader:typeof (w&&w.FileReader)==='function',reload:!!(w&&w.location&&typeof w.location.reload==='function'),online:!!(n&&typeof n.onLine==='boolean'),events:!!(w&&typeof w.addEventListener==='function'),documentEvents:!!(d&&typeof d.addEventListener==='function')});}
+function canDownload(env){const c=capabilities(env);return c.dom&&c.blob&&c.objectUrl;}
+function downloadText(text,filename,mime,env){
+  const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;
+  if(!canDownload(w))return false;
+  let href='',a=null;
+  try{
+    const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'});
+    if(w.navigator&&typeof w.navigator.msSaveOrOpenBlob==='function'){
+      w.navigator.msSaveOrOpenBlob(blob,String(filename||'download.txt'));
+      return true;
+    }
+    href=u.createObjectURL(blob);a=d.createElement('a');
+    a.href=href;a.download=String(filename||'download.txt');a.rel='noopener';
+    if(a.style)a.style.display='none';
+    const parent=d.body||d.documentElement;
+    if(parent&&typeof parent.appendChild==='function')parent.appendChild(a);
+    a.click();
+    setTimeout(()=>{try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}},3000);
+    return true;
+  }catch(_){
+    try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}
+    try{if(href&&typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}
+    return false;
+  }
+}
+function readTextFile(file,handlers,env){const w=env||global,R=w&&w.FileReader,h=handlers||{};if(!file||typeof R!=='function')return false;const reader=new R();reader.onload=function(ev){if(typeof h.load==='function')h.load(ev&&ev.target?ev.target.result:reader.result,ev);};reader.onerror=function(ev){if(typeof h.error==='function')h.error(ev);};reader.readAsText(file);return true;}
+function reload(delay,env){const w=env||global;if(!(w&&w.location&&typeof w.location.reload==='function'))return false;if(Number(delay)>0)setTimeout(()=>w.location.reload(),Number(delay));else w.location.reload();return true;}
+function onPageShow(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('pageshow',handler);return true;}
+function onVisible(handler,env){const w=env||global,d=w&&w.document;if(!(d&&typeof d.addEventListener==='function')||typeof handler!=='function')return false;d.addEventListener('visibilitychange',function(ev){if(!d.hidden)handler(ev);});return true;}
+function onFocus(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('focus',handler);return true;}
+global.MongoWeb=Object.freeze({capabilities,canDownload,downloadText,readTextFile,reload,onPageShow,onVisible,onFocus});
+})(window);
+
+</script>
+<script data-mongo-source="src/features/subscription/access.js">
+// Möngö Subscription/Trial access — Phase 1A
+// Pure compatibility extraction from the V43.14–V43.20 inline trial/paywall policy.
+(function(global){
+'use strict';
+const TRIAL_DAYS=7;
+function trialInfo(state,overrideDay){
+  if(!state)return {day:null,remaining:null,isExpired:false,isPaid:false,status:'unknown'};
+  const isPaid=state.subscriptionStatus==='active'||!!state.subscriptionStartDate;
+  const override=Number.isInteger(overrideDay)&&overrideDay>=1&&overrideDay<=30?overrideDay:null;
+  const day=Math.max(1,override||Number(state.trialDay||1));
+  return {day,remaining:Math.max(0,TRIAL_DAYS-day),isExpired:!isPaid&&day>TRIAL_DAYS,isPaid,status:isPaid?'active':(day>TRIAL_DAYS?'expired':'trial')};
+}
+function isReadOnly(state,overrideDay){const info=trialInfo(state,overrideDay);return !!(info&&info.isExpired&&!info.isPaid);}
+function reminderDay(state,overrideDay){const info=trialInfo(state,overrideDay);return !info.isPaid&&!info.isExpired&&[5,6,7].includes(info.day)?info.day:null;}
+function classifyTarget(input){
+  const x=input||{},text=String(x.text||'').trim().toLowerCase(),idcls=String(x.idClass||'').toLowerCase();
+  const exactLoan=['зээл','loan','loans','debt'];
+  if(x.freeAfterTrial==='loan-nav'||exactLoan.includes(text)||['nav-loan','loan-nav','nav-debt','debt-nav','tab-loan-main','loan-menu'].some(k=>idcls.includes(k)))return 'loan-free';
+  const calc=text==='тооцоолуур'||text==='calculator'||text.includes('зээлийн тооцоолуур')||text.includes('loan calculator')||idcls.includes('calculator')||idcls.includes('calc');
+  const context=String(x.context||'').toLowerCase();
+  if(calc&&(text.includes('зээл')||text.includes('loan')||idcls.includes('loan')||idcls.includes('debt')||context.includes('loan')||context.includes('debt')))return 'loan-free';
+  if(x.insideLoanCalculator)return 'loan-free';
+  if(calc&&(context.includes('хуримтлал')||context.includes('saving')||context.includes('хөрөнгө')||context.includes('investment')||context.includes('asset')))return 'premium-calculator';
+  if(x.writeAction)return 'write';
+  return 'view';
+}
+function accessDecision(state,target,overrideDay){
+  if(!isReadOnly(state,overrideDay))return {allowed:true,reason:'active'};
+  const kind=classifyTarget(target);
+  if(kind==='loan-free'||kind==='view')return {allowed:true,reason:kind};
+  return {allowed:false,reason:kind};
+}
+global.MongoSubscription=Object.freeze({TRIAL_DAYS,trialInfo,isReadOnly,reminderDay,classifyTarget,accessDecision});
+})(window);
+
+</script>
+<script data-mongo-source="src/mobile/platform.js">
+// Möngö Mobile — Phase 1 COMPLETE
+// Platform/shell compatibility only. No financial, Cloud, storage, auth, payment or UI routing policy.
+(function(global){
+'use strict';
+function capacitor(env){const w=env||global;return w&&w.Capacitor||null;}
+function isNative(env){const c=capacitor(env);if(!c)return false;if(typeof c.isNativePlatform==='function')return !!c.isNativePlatform();if(typeof c.getPlatform==='function')return c.getPlatform()!=='web';return false;}
+function platform(env){const c=capacitor(env);if(c&&typeof c.getPlatform==='function')return String(c.getPlatform()||'web');return 'web';}
+function plugin(name,env){const c=capacitor(env);const p=c&&c.Plugins;return p&&name?p[name]||null:null;}
+function normalizeAppState(event){const e=event||{};return Object.freeze({active:!!e.isActive});}
+function normalizeDeepLink(event,env){const raw=event&&typeof event.url==='string'?event.url.trim():'';if(!raw)return Object.freeze({url:'',protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});try{const w=env||global;const U=w&&w.URL?w.URL:URL;const u=new U(raw);return Object.freeze({url:u.href,protocol:u.protocol||'',host:u.host||'',pathname:u.pathname||'',search:u.search||'',hash:u.hash||'',valid:true});}catch(_){return Object.freeze({url:raw,protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});}}
+function normalizeBackEvent(event){const e=event||{};return Object.freeze({canGoBack:!!e.canGoBack});}
+function fileCapabilities(env){return Object.freeze({filesystem:!!plugin('Filesystem',env),share:!!plugin('Share',env)});}
+function capabilities(env){const w=env||global,c=capacitor(w),files=fileCapabilities(w);return Object.freeze({capacitor:!!c,native:isNative(w),platform:platform(w),touch:!!(w&&(('ontouchstart' in w)||(w.navigator&&Number(w.navigator.maxTouchPoints)>0))),safeAreaCss:true,appPlugin:!!plugin('App',w),keyboardPlugin:!!plugin('Keyboard',w),statusBarPlugin:!!plugin('StatusBar',w),filesystemPlugin:files.filesystem,sharePlugin:files.share});}
+global.MongoMobile=Object.freeze({capacitor,isNative,platform,plugin,normalizeAppState,normalizeDeepLink,normalizeBackEvent,fileCapabilities,capabilities});
+})(window);
+
+</script>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────
 const PAL=['#22C55E','#49B0B6','#F97316','#EF4444','#8B5CF6','#06B6D4','#F59E0B','#14B8A6','#64748B','#A855F7','#10B981','#FB7185','#334155','#84CC16'];
@@ -9766,74 +9969,44 @@ function exportData(){
   showToast('Backup ✓');
 }
 
-function v382vRestoreDiag(){
-  let box=document.getElementById('v382v-restore-diag');
-  if(!box){
-    box=document.createElement('div'); box.id='v382v-restore-diag';
-    box.style.cssText='position:fixed;inset:12px;z-index:2147483647;background:#fff;border:4px solid #49B0B6;border-radius:24px;padding:18px;overflow:auto;font:15px/1.45 system-ui;color:#263238;box-shadow:0 10px 40px #0004';
-    box.innerHTML='<h2 style="margin:0 0 10px">Möngö V38.2v — Restore V11 шалгалт</h2><div id="v382v-lines"></div>';
-    document.body.appendChild(box);
-  }
-  return document.getElementById('v382v-lines');
-}
-function v382vCounts(d){
-  d=d&&typeof d==='object'?d:{};
-  const n=k=>Array.isArray(d[k])?d[k].length:0;
-  return 'txns '+n('txns')+' | accounts '+n('moneyAccounts')+' | goals '+n('goals')+
-    ' | debts '+n('debts')+' | invests '+n('invests')+' | ledger '+n('moneyLedger')+
-    ' | budgets '+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;
-}
-function v382vStep(label,status,detail){
-  const row=document.createElement('div'); row.style.cssText='padding:9px 0;border-bottom:1px solid #ddd';
-  row.innerHTML='<b>'+label+' — '+status+'</b>'+(detail?'<div>'+detail+'</div>':'');
-  v382vRestoreDiag().appendChild(row);
-}
 function importData(e){
   const file=e.target.files[0];if(!file)return;
   if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
   window.MongoWeb.readTextFile(file,{load:async raw=>{try{
     const clean=secParseBackup(raw);
-    v382vStep('① Backup parsed','PASS ✓',v382vCounts(clean));
-    window.MONGO_RESTORE_IN_PROGRESS=true;
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
+    // Restore is an explicit user action that replaces a previously cleared state.
+    // Retire only this user's local clear barrier before applying/uploading the backup.
     try{
       const restoreUid=(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid)||window._authUid||'guest';
       localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
     }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
-    v382vStep('② Local written','PASS ✓',v382vCounts(window.MongoStorage.getJSON(getDBKey(),{})));
+    // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
+    // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
     let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
         const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
         if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
-        v382vStep('③ applyFinancialState','PASS ✓','backup applied to runtime');
+        // The apply guard may advance the revision on a clone. Persist and upload
+        // the applied state so local and Cloud copies share the same revision.
         if(typeof window.CloudDataService.collectFinancialState!=='function') throw new Error('RESTORE_STATE_COLLECTION_UNAVAILABLE');
         const restoredState=window.CloudDataService.collectFinancialState();
-        v382vStep('④ restoredState collected','PASS ✓',v382vCounts(restoredState));
         window.MongoStorage.setJSON(getDBKey(),restoredState);
         const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(restoredState):await window.CloudDataService.saveFinancialData('force');
         if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
         restoreCommitted=true;
-        v382vStep('⑤ Cloud committed','PASS ✓','Restore V11 cloud writer returned true');
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
-        v382vStep('Restore error','FAIL ✗',String(syncErr&&syncErr.message||syncErr));
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
       }
     }
-    window.MONGO_RESTORE_IN_PROGRESS=false;
-    if(restoreCommitted){
-      v382vStep('✓ Дууслаа','STOP','Автоматаар reload хийхгүй. Энэ дэлгэцийн зургийг явуулна уу.');
-    }
-  }catch(err){
-    window.MONGO_RESTORE_IN_PROGRESS=false;
-    v382vStep('Backup/Restore','FAIL ✗',String(err&&err.message||err));
-    showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');
-  }
-  finally{window.MONGO_RESTORE_IN_PROGRESS=false;e.target.value='';}}});
+    if(restoreCommitted) window.MongoWeb.reload(350);
+  }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
+  finally{e.target.value='';}}});
 }
 
 function showSaveIndicator(){const el=document.getElementById('save-dot');if(!el)return;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1400);}
@@ -12340,9 +12513,10 @@ auth.onAuthStateChanged(async user=>{
     return payload.id;
   }
 
-  async function writeCloud(data,reason,expectedUid){
+  async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    const isExplicitRestore=!!(options&&options.explicitRestore);
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
@@ -12459,12 +12633,37 @@ auth.onAuthStateChanged(async user=>{
     if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
     const sessionUid=currentUid();
     const data=collectFinancialState();
-    if(v382tBlockPartial(data,'saveCloudNow-before-cloud-write')) return false;
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
-    try{ await writeCloud(data,reason||'auto',sessionUid); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
+    try{
+      const saveStartedAt=nowIso();
+      await writeCloud(data,reason||'auto',sessionUid);
+      const queued=getQueue();
+      const kept=queued.filter(item=>item&&item.reason==='clear-tombstone'||window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
+    }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
+  async function restoreCloudNow(data){
+    if(!hasFirebaseUser() || !accountReadyForCloud() || !navigator.onLine) return false;
+    const sessionUid=currentUid();
+    if(!sessionUid || currentUid()!==sessionUid) return false;
+    const restoreStartedAt=nowIso();
+    try{
+      await writeCloud(data,'force',sessionUid,{explicitRestore:true});
+      const queued=getQueue();
+      const kept=queued.filter(item=>window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(restoreStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      updateSyncStatus('synced');
+      return true;
+    }catch(e){
+      console.warn('Explicit restore cloud write failed:',e);
+      updateSyncStatus('error');
+      return false;
+    }
+  }
+
   function scheduleCloudSave(reason){
     if(applyingCloud||clearingFinancialData||window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return;
     clearTimeout(cloudSaveTimer);
@@ -12552,7 +12751,7 @@ auth.onAuthStateChanged(async user=>{
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
-        const chosen=raw.clearedAt
+        const chosen=(MongoCloud.activeClearTombstone?MongoCloud.activeClearTombstone(raw):!!raw.clearedAt)
           ? {data:raw.data,source:'cloud-cleared'}
           : chooseCloudOrLocal(raw.data,raw.updatedAtClient);
         const ok=applyFinancialState(chosen.data,chosen.source);
@@ -12593,73 +12792,8 @@ auth.onAuthStateChanged(async user=>{
     }
   }
 
-
-  /* V38.2t — Partial State Guard
-     Protects a previously healthy local/cloud snapshot from being overwritten
-     when several core finance sections disappear at the same time.
-     Explicit Delete All Data remains on its existing clearingFinancialData /
-     clear-tombstone path; Restore keeps its existing direct restore writer. */
-  function v382tSectionCounts(data){
-    const d=safeObj(data);
-    return {
-      goals:safeArray(d.goals).length,
-      debts:safeArray(d.debts).length,
-      invests:safeArray(d.invests).length,
-      budgets:Object.keys(safeObj(d.budgets)).length,
-      accounts:safeArray(d.moneyAccounts).length,
-      txns:safeArray(d.txns).length,
-      ledger:safeArray(d.moneyLedger).length
-    };
-  }
-  function v382tSuspiciousPartial(nextData){
-    if(clearingFinancialData || applyingCloud || window.MONGO_CLOUD_LOAD_IN_PROGRESS || window.MONGO_RESTORE_IN_PROGRESS) return false;
-    const snap=getSnapshot();
-    const prev=snap&&snap.data;
-    if(!prev || !hasMeaningfulFinancialData(prev)) return false;
-
-    const a=v382tSectionCounts(prev), b=v382tSectionCounts(nextData);
-    let drops=0;
-    if(a.goals>0 && b.goals===0)drops++;
-    if(a.debts>0 && b.debts===0)drops++;
-    if(a.invests>0 && b.invests===0)drops++;
-    if(a.budgets>0 && b.budgets===0)drops++;
-    if(a.accounts>=2 && b.accounts<=1)drops++;
-
-    const prevCore=a.goals+a.debts+a.invests+a.budgets+Math.max(0,a.accounts-1);
-    const nextCore=b.goals+b.debts+b.invests+b.budgets+Math.max(0,b.accounts-1);
-    const catastrophic = prevCore>=4 && nextCore<=Math.floor(prevCore*0.35);
-
-    // Require a multi-section collapse (or a very large collapse). A normal
-    // one-at-a-time user deletion is therefore not blocked.
-    return drops>=2 || catastrophic;
-  }
-  function v382tBlockPartial(nextData,where){
-    if(!v382tSuspiciousPartial(nextData)) return false;
-    window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
-    window.MONGO_PARTIAL_STATE_GUARD_INFO={
-      at:nowIso(), where:where||'unknown',
-      previous:v382tSectionCounts((getSnapshot()||{}).data),
-      attempted:v382tSectionCounts(nextData)
-    };
-    console.error('V38.2t blocked suspicious partial financial state',window.MONGO_PARTIAL_STATE_GUARD_INFO);
-    try{
-      if(typeof showToast==='function')showToast('Өгөгдлийн хамгаалалт: дутуу төлөв хадгалагдсангүй. Аппыг дахин нээнэ үү.');
-    }catch(e){}
-    updateSyncStatus('error');
-    return true;
-  }
-
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
-  if(originalSaveData){ window.saveData=function(){
-    if(!applyingCloud){
-      const candidate=collectFinancialState();
-      if(v382tBlockPartial(candidate,'saveData-before-local-write')) return false;
-      markLocalUpdated();
-    }
-    const res=originalSaveData.apply(this,arguments);
-    scheduleCloudSave('saveData');
-    return res;
-  }; try{saveData=window.saveData;}catch(e){} }
+  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
   const originalImportData=window.importData || (typeof importData==='function'?importData:null);
   if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
 
@@ -12762,7 +12896,7 @@ auth.onAuthStateChanged(async user=>{
   window.CloudDataService={
     version:CLOUD_FINANCIAL_VERSION,
     collectFinancialState, applyFinancialState,
-    saveFinancialData:saveCloudNow, loadFinancialData:loadCloudFinancialData,
+    saveFinancialData:saveCloudNow, restoreFinancialData:restoreCloudNow, loadFinancialData:loadCloudFinancialData,
     scheduleSave:scheduleCloudSave, rerender:rerenderFinance,
     queue:{get:getQueue,process:processQueue,enqueue:enqueueSave},
     snapshot:{get:getSnapshot,save:saveSnapshot},
@@ -12802,7 +12936,7 @@ auth.onAuthStateChanged(async user=>{
   window.addEventListener('online',()=>{ updateSyncStatus('pending'); processQueue(); scheduleCloudSave('online'); });
   window.addEventListener('offline',()=>updateSyncStatus('offline'));
   window.addEventListener('visibilitychange',()=>{ if(!document.hidden) processQueue(); });
-  window.addEventListener('beforeunload',()=>{ try{ if(!accountReadyForCloud()) return; const data=collectFinancialState(); if(v382tBlockPartial(data,'beforeunload')) return; saveSnapshot(data,{beforeunload:true,ownerUid:currentUid()}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
+  window.addEventListener('beforeunload',()=>{ try{ if(!accountReadyForCloud()) return; const data=collectFinancialState(); saveSnapshot(data,{beforeunload:true,ownerUid:currentUid()}); if(getQueue().length) return; if(!navigator.onLine) enqueueSave('beforeunload-offline',data); }catch(e){} });
   setTimeout(()=>processQueue(),2500);
 })();
 </script>
@@ -15174,7 +15308,14 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function installCloudGuard(){
     const svc=window.CloudDataService;if(!svc||typeof svc.applyFinancialState!=='function'){setTimeout(installCloudGuard,500);return;}if(svc.__v4412Guard){cloudGuardInstalled=true;return;}
     const original=svc.applyFinancialState.bind(svc);svc.applyFinancialState=function(raw,source){
-      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),localRev=Math.max(0,Number(moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
+      const localRev=Math.max(0,Number(moneyLedgerRevision)||0),isExplicitRestore=String(source||'')==='restore-import';
+      if(isExplicitRestore){
+        const incoming=clone(raw||{}),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0);
+        incoming.moneyLedgerTombstones=Array.isArray(incoming.moneyLedgerTombstones)?clone(incoming.moneyLedgerTombstones):[];
+        incoming.moneyLedgerRevision=Math.max(localRev,incomingRev)+1;
+        const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=clone(incoming.moneyLedgerTombstones);moneyLedgerRevision=incoming.moneyLedgerRevision;committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
+      }
+      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
       if(localRev>incomingRev&&localTime>=incomingTime){if(typeof svc.saveFinancialData==='function')setTimeout(()=>svc.saveFinancialData('v44.12-local-newer'),0);return false;}
       const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=mergeTombstones(moneyLedgerTombstones,incoming.moneyLedgerTombstones);moneyLedgerRevision=Math.max(localRev,incomingRev);committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
     };svc.__v4412Guard=true;cloudGuardInstalled=true;
@@ -15847,7 +15988,23 @@ select.fi{touch-action:pan-y;cursor:pointer}
 .mongo-archive-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 7px;border-radius:999px;background:rgba(73,176,182,.12);color:#1f7f86;margin-left:6px}
 .mongo-archive-action{font-size:10px!important;padding:5px 8px!important}
 </style>
-<script src="./src/features/archive/archive.js"></script>
+<script data-mongo-source="src/features/archive/archive.js">
+// Möngö Completed Cards Archive — pure lifecycle/classification helpers.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0;
+function goalCompleted(goal,effectiveSaved){const target=Math.max(0,num(goal?.target)),saved=Math.max(0,num(effectiveSaved==null?goal?.saved:effectiveSaved));return target>0&&saved>=target;}
+function goalArchived(goal,effectiveSaved){return !!goal&&(!!goal.archivedAt||goalCompleted(goal,effectiveSaved));}
+function goalActive(goal,effectiveSaved){return !!goal&&!goalArchived(goal,effectiveSaved);}
+function debtCompleted(debt,effectiveRemaining){const rem=Math.max(0,num(effectiveRemaining==null?debt?.remaining:effectiveRemaining));return rem<=0.01&&Math.max(0,num(debt?.total))>0;}
+function assetGroupArchived(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.archivedAt);}
+function assetGroupSold(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.soldAt);}
+function assetSaleBreakdown(costBasis,saleProceeds){const cost=Math.max(0,num(costBasis)),proceeds=Math.max(0,num(saleProceeds)),pnl=proceeds-cost;return {costBasis:cost,saleProceeds:proceeds,pnl,gain:Math.max(0,pnl),loss:Math.max(0,-pnl)};}
+function savingsUndoPlan(transfers,goalId,savingsAccountId){const rows=(Array.isArray(transfers)?transfers:[]).filter(t=>String(t?.goalId||t?.linkedGoalId||'')===String(goalId)&&String(t?.to||t?.toAccountId||'')===String(savingsAccountId)&&!t?.reversedAt);const bySource={};let total=0;for(const t of rows){const source=String(t?.from||t?.fromAccountId||'');const amount=Math.max(0,num(t?.amount));if(!source||!amount)continue;bySource[source]=(bySource[source]||0)+amount;total+=amount;}return {transferIds:rows.map(t=>t.id).filter(Boolean),bySource,total};}
+global.MongoArchive=Object.freeze({goalCompleted,goalArchived,goalActive,debtCompleted,assetGroupArchived,assetGroupSold,assetSaleBreakdown,savingsUndoPlan});
+})(typeof window!=='undefined'?window:globalThis);
+
+</script>
 <script id="mongo-completed-cards-archive">
 (()=>{
 'use strict';
@@ -16421,6 +16578,113 @@ setTimeout(installNew,50);
 </script>
 
 
+<style id="v38-1b-cancellation-rule-mobile-fix">
+@media (max-width: 700px){
+  #v38EarlyCancellationRule,
+  [data-v38-field="earlyCancellationRule"],
+  .v38-early-cancellation-rule select{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:72px !important;
+    height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+  }
+}
+</style>
+<script id="v38-1b-cancellation-rule-mobile-fix-js">
+(function(){
+  function fixV38RuleSelect(){
+    var selectors=[
+      '#v38EarlyCancellationRule',
+      '[data-v38-field="earlyCancellationRule"]',
+      '.v38-early-cancellation-rule select'
+    ];
+    var el=null;
+    for(var i=0;i<selectors.length && !el;i++) el=document.querySelector(selectors[i]);
+    if(!el){
+      var labels=document.querySelectorAll('label,div,span');
+      for(var j=0;j<labels.length;j++){
+        var t=(labels[j].textContent||'').trim();
+        if(t==='Цуцлалтын тооцооны дүрэм'){
+          var box=labels[j].parentElement;
+          if(box) el=box.querySelector('select');
+          if(el) break;
+        }
+      }
+    }
+    if(!el) return;
+    el.style.width='100%';
+    el.style.maxWidth='100%';
+    el.style.minHeight='72px';
+    el.style.height='auto';
+    el.style.paddingTop='12px';
+    el.style.paddingBottom='12px';
+    el.style.lineHeight='1.35';
+  }
+  document.addEventListener('DOMContentLoaded',fixV38RuleSelect);
+  document.addEventListener('change',function(e){
+    if(e && e.target && e.target.tagName==='SELECT') setTimeout(fixV38RuleSelect,0);
+  });
+  document.addEventListener('click',function(){ setTimeout(fixV38RuleSelect,0); });
+  setTimeout(fixV38RuleSelect,250);
+})();
+</script>
+
+
+<style id="v38-1c-edit-rule-fix">
+@media (max-width:700px){
+  select[data-v38-role="cancellation-rule"]{
+    width:100% !important; max-width:100% !important;
+    min-height:78px !important; height:78px !important;
+    padding-top:12px !important; padding-bottom:12px !important;
+    line-height:1.3 !important; box-sizing:border-box !important;
+  }
+}
+</style>
+<script id="v38-1c-edit-rule-fix-js">
+(function(){
+  function isRuleSelect(sel){
+    if(!sel || sel.tagName!=='SELECT') return false;
+    var p=sel.parentElement;
+    for(var d=0;p && d<5;d++,p=p.parentElement){
+      var t=p.textContent||'';
+      if(t.indexOf('Цуцлалтын тооцооны дүрэм')>=0 ||
+         t.indexOf('Early cancellation')>=0 ||
+         t.indexOf('提前')>=0 || t.indexOf('中途')>=0 ||
+         t.indexOf('조기')>=0 || t.indexOf('досроч')>=0 ||
+         t.indexOf('vorzeitig')>=0) return true;
+    }
+    return false;
+  }
+  function fit(sel){
+    if(!isRuleSelect(sel)) return;
+    sel.setAttribute('data-v38-role','cancellation-rule');
+    sel.style.setProperty('width','100%','important');
+    sel.style.setProperty('max-width','100%','important');
+    sel.style.setProperty('min-height','78px','important');
+    sel.style.setProperty('height','78px','important');
+    sel.style.setProperty('padding-top','12px','important');
+    sel.style.setProperty('padding-bottom','12px','important');
+    sel.style.setProperty('line-height','1.3','important');
+    sel.style.setProperty('box-sizing','border-box','important');
+  }
+  function scan(){ document.querySelectorAll('select').forEach(fit); }
+  document.addEventListener('DOMContentLoaded',scan);
+  document.addEventListener('click',function(){setTimeout(scan,30)});
+  document.addEventListener('change',function(){setTimeout(scan,30)});
+  var mo=new MutationObserver(function(m){
+    for(var i=0;i<m.length;i++) if(m[i].addedNodes&&m[i].addedNodes.length){setTimeout(scan,0);break;}
+  });
+  document.addEventListener('DOMContentLoaded',function(){
+    if(document.body) mo.observe(document.body,{childList:true,subtree:true});
+  });
+  setTimeout(scan,250);
+})();
+</script>
+
 <style>
 #v382dTabs{display:flex;gap:8px;margin:12px 0 18px;padding:5px;background:#eef7f7;border-radius:16px}#v382dTabs button{flex:1;min-height:48px;border:0;border-radius:13px;background:transparent;font-weight:800;padding:8px}#v382dTabs button.active,#v382dGo{background:#49B0B6;color:#fff}.v382d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.v382d-field label{display:block;font-weight:700;margin-bottom:6px}.v382d-field input,.v382d-field select{width:100%;min-height:52px;box-sizing:border-box;border:1px solid #d7e6e7;border-radius:15px;background:#fff;padding:11px 13px;font-size:16px}.v382d-field select{min-height:70px}#v382dGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;font-weight:800}.v382d-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.v382d-note{font-size:12px;color:#6b7280;margin-top:10px}@media(max-width:700px){.v382d-grid{grid-template-columns:1fr}#v382dTabs button{font-size:13px}}
 </style><script>
@@ -16432,19 +16696,6 @@ function run(){let rule=v382drule.value;v382dmw.style.display=rule==='manual'?'b
 function show(on){original.forEach(x=>x.style.display=on?'none':'');c.style.display=on?'block':'none';tabs.style.display='flex';v382dSave.classList.toggle('active',!on);v382dEarly.classList.toggle('active',on)}v382dSave.onclick=()=>show(false);v382dEarly.onclick=()=>{show(true);run()};v382dGo.onclick=run;v382drule.onchange=run;show(false)}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,900)})();
 </script>
-
-
-<style id="v382p-cancellation-rule-only">
-@media (max-width:700px){
-  #account-early-rule,#edit-early-rule,#grule{
-    width:100% !important;max-width:100% !important;
-    min-height:72px !important;height:auto !important;
-    padding-top:12px !important;padding-bottom:12px !important;
-    line-height:1.35 !important;box-sizing:border-box !important;
-    white-space:normal !important;
-  }
-}
-</style>
 
 <style id="v382g-style">
 #v382gCancel{display:none;margin-top:14px}
@@ -16507,141 +16758,43 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
    <div><label>${q.fee}</label><input id="gfee" inputmode="decimal" data-amt="1" placeholder="0"></div>
    <div style="grid-column:1/-1"><label>${q.rule}</label><select id="grule"><option value="all">${q.all}</option><option value="vested">${q.vested}</option><option value="manual">${q.manual}</option></select></div>
    <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
-  </div><button id="v382gGo" type="button">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
+  </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
   ['gp','gprior','gfee','gmanual','gcontribamt'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
   Object.keys(keep).forEach(id=>{const el=document.getElementById(id);if(el)el.value=keep[id]});
-  document.getElementById('gstart').onchange=days;document.getElementById('gend').onchange=days;
-  document.getElementById('grule').onchange=()=>{document.getElementById('gmanualWrap').style.display=document.getElementById('grule').value==='manual'?'block':'none'};
-  document.getElementById('ginterest').onchange=()=>{document.getElementById('gcompoundWrap').style.display=document.getElementById('ginterest').value==='compound'?'block':'none'};
-  document.getElementById('gcontrib').onchange=()=>{const on=document.getElementById('gcontrib').value==='regular';document.getElementById('gcontribAmtWrap').style.display=on?'block':'none';document.getElementById('gcontribFreqWrap').style.display=on?'block':'none'};
-
-  // V38.2o: robust Android/mobile event wiring for compound selection.
-  // Capture phase prevents older page handlers from breaking this isolated calculator.
-  const _gi=document.getElementById('ginterest');
-  const _gc=document.getElementById('gcontrib');
-  const _gr=document.getElementById('grule');
-  if(_gi){
-    _gi.addEventListener('change',function(ev){
-      const w=document.getElementById('gcompoundWrap');
-      if(w)w.style.display=this.value==='compound'?'block':'none';
-    },true);
-  }
-  if(_gc){
-    _gc.addEventListener('change',function(ev){
-      const on=this.value==='regular';
-      const a=document.getElementById('gcontribAmtWrap'), f=document.getElementById('gcontribFreqWrap');
-      if(a)a.style.display=on?'block':'none';
-      if(f)f.style.display=on?'block':'none';
-    },true);
-  }
-  if(_gr){
-    _gr.addEventListener('change',function(ev){
-      const w=document.getElementById('gmanualWrap');
-      if(w)w.style.display=this.value==='manual'?'block':'none';
-    },true);
-  }
-
-  document.getElementById('v382gGo').onclick=run;
-  document.getElementById('v382gGo').addEventListener('click',function(ev){ev.preventDefault();run();},true);
-  document.getElementById('grule').onchange();document.getElementById('ginterest').onchange();document.getElementById('gcontrib').onchange();days();
+  gstart.onchange=days;gend.onchange=days;
+  grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};
+  ginterest.onchange=()=>{gcompoundWrap.style.display=ginterest.value==='compound'?'block':'none'};
+  gcontrib.onchange=()=>{const on=gcontrib.value==='regular';gcontribAmtWrap.style.display=on?'block':'none';gcontribFreqWrap.style.display=on?'block':'none'};
+  v382gGo.onclick=run;
+  grule.onchange();ginterest.onchange();gcontrib.onchange();days();
   window.v382gRefreshLanguage=render;
   }
-  function days(){const q=Q(),a=document.getElementById('gstart')?.value||'',b=document.getElementById('gend')?.value||'',box=document.getElementById('gdays');if(!a||!b){if(box)box.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);if(box)box.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
+  function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){
-   const q=Q();
-   const el=id=>document.getElementById(id);
-   const p=Math.max(0,num(el('gp')?.value));
-   const cr=Math.max(0,Number(el('gcr')?.value)||0);
-   const rr=Math.max(0,Number(el('grr')?.value)||0);
-   const prior=Math.max(0,num(el('gprior')?.value));
-   const fee=Math.max(0,num(el('gfee')?.value));
-   const d=days();
-   const rule=el('grule')?.value||'all';
-   const compound=el('ginterest')?.value==='compound';
-   const freq=compound?Math.max(1,Number(el('gcompoundfreq')?.value)||1):1;
-   const addMode=el('gcontrib')?.value||'none';
-   const addAmount=addMode==='regular'?Math.max(0,num(el('gcontribamt')?.value)):0;
-   const addFreq=el('gcontribfreq')?.value||'monthly';
-   const startRaw=el('gstart')?.value||'';
-   const endRaw=el('gend')?.value||'';
-
+   if(typeof gcontrib!=='undefined'&&gcontrib.value==='regular'){
+     alert(lang==='en'?'Regular additional deposits will be enabled after their formula is verified.':lang==='ja'?'定期的な追加預入は数式の検証後に有効になります。':lang==='ko'?'정기 추가 입금은 공식 검증 후 활성화됩니다.':lang==='ru'?'Регулярные пополнения будут включены после проверки формулы.':lang==='de'?'Regelmäßige Einzahlungen werden nach Prüfung der Formel aktiviert.':lang==='zh'?'定期追加资金将在公式验证后启用。':'Тогтмол мөнгө нэмэх тооцоог томьёог нь баталгаажуулсны дараа идэвхжүүлнэ.');
+     return;
+   }
+   const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;
+   const compound=(typeof ginterest!=='undefined'&&ginterest.value==='compound');
+   const freq=compound?Math.max(1,Number(gcompoundfreq.value)||1):1;
    function interestFor(principal,annualRate,dayCount,useCompound){
-     if(principal<=0||annualRate<=0||dayCount<=0)return 0;
      if(!useCompound)return principal*annualRate/100*dayCount/365;
-     const periodDays=365/freq;
-     const full=Math.floor(dayCount/periodDays);
-     const rem=dayCount-full*periodDays;
+     const periodDays=365/freq, full=Math.floor(dayCount/periodDays), rem=dayCount-full*periodDays;
      let bal=principal*Math.pow(1+annualRate/100/freq,full);
      if(rem>0)bal+=bal*(annualRate/100/freq)*(rem/periodDays);
      return Math.max(0,bal-principal);
    }
-
-   function addMonthsSafe(date,months){
-     const day=date.getDate();
-     const x=new Date(date.getFullYear(),date.getMonth(),1,0,0,0,0);
-     x.setMonth(x.getMonth()+months);
-     const last=new Date(x.getFullYear(),x.getMonth()+1,0).getDate();
-     x.setDate(Math.min(day,last));
-     return x;
-   }
-
-   function contributionDates(){
-     if(addMode!=='regular'||addAmount<=0||!startRaw||!endRaw)return [];
-     const start=new Date(startRaw+'T00:00:00');
-     const end=new Date(endRaw+'T00:00:00');
-     if(!(end>start))return [];
-     const step=addFreq==='yearly'?12:(addFreq==='quarterly'?3:1);
-     const dates=[];
-     for(let n=1;n<1200;n++){
-       const dt=addMonthsSafe(start,n*step);
-       if(dt>=end)break;
-       dates.push(dt);
-     }
-     return dates;
-   }
-
-   const adds=contributionDates();
-   const totalPrincipal=p+adds.length*addAmount;
    let allowed=0;
-
-   if(rule==='all'){
-     allowed=interestFor(p,rr,d,compound);
-     const endDate=endRaw?new Date(endRaw+'T00:00:00'):null;
-     if(endDate){
-       adds.forEach(dt=>{
-         const held=Math.max(0,Math.floor((endDate-dt)/86400000));
-         allowed+=interestFor(addAmount,rr,held,compound);
-       });
-     }
-   }else if(rule==='vested'){
-     // Existing rule retained; each tranche is evaluated for its own held time.
-     function vestedFor(principal,heldDays){
-       const y=Math.floor(heldDays/365),rem=heldDays-y*365;
-       if(compound){
-         const vestedInterest=interestFor(principal,cr,y*365,true);
-         const vestedBalance=principal+vestedInterest;
-         return vestedInterest+interestFor(vestedBalance,rr,rem,true);
-       }
-       return principal*cr/100*y+principal*rr/100*rem/365;
-     }
-     allowed=vestedFor(p,d);
-     const endDate=endRaw?new Date(endRaw+'T00:00:00'):null;
-     if(endDate){
-       adds.forEach(dt=>{
-         const held=Math.max(0,Math.floor((endDate-dt)/86400000));
-         allowed+=vestedFor(addAmount,held);
-       });
-     }
-   }else{
-     allowed=Math.max(0,num(el('gmanual')?.value));
-   }
-
-   const claw=Math.max(0,prior-allowed);
-   const add=Math.max(0,allowed-prior);
-   const total=Math.max(0,totalPrincipal+add-claw-fee);
-   const outEl=el('gout');
-   if(outEl)outEl.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(totalPrincipal)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`;
-  }
+   if(rule==='all')allowed=interestFor(p,rr,d,compound);
+   else if(rule==='vested'){
+     const y=Math.floor(d/365),rem=d-y*365;
+     if(compound){
+       const vestedInterest=interestFor(p,cr,y*365,true);
+       const vestedBalance=p+vestedInterest;
+       allowed=vestedInterest+interestFor(vestedBalance,rr,rem,true);
+     }else allowed=p*cr/100*y+p*rr/100*rem/365;
+   }else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
   function mode(which){const isCancel=which==='cancel',coffee=findCoffee();savings.style.display=isCancel?'none':'block';cancel.style.display=isCancel?'block':'none';if(coffee){coffee.style.display=isCancel?'none':'';if(!isCancel)coffee.style.marginTop='28px'}save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel)}
   render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
  }
