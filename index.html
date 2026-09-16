@@ -16578,13 +16578,17 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
       return lines.find(x=>!x.includes('v382r-save-caller-readonly-trace')) || lines[0] || 'unknown';
     }catch(e){return 'unknown'}
   }
-  function render(){
+  function authReady(){
+    try{return !!(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser)}catch(e){return false}
+  }
+  function render(force){
+    if(!force&&!authReady()) return;
     let box=document.getElementById('mongo-v382r-save-trace');
     if(!box){ box=document.createElement('div'); box.id='mongo-v382r-save-trace'; document.body.appendChild(box); }
     box.style.cssText='position:fixed;inset:10px;z-index:2147483647;background:#fff;color:#1f2937;border:3px solid #49B0B6;border-radius:16px;padding:16px;overflow:auto;font:13px/1.5 system-ui,sans-serif;box-shadow:0 12px 40px #0005';
     const c=counts();
-    box.innerHTML='<div style="font-size:18px;font-weight:900">Möngö V38.2r — SAVE TRACE READ-ONLY</div>'+
-      '<div style="margin:8px 0;padding:9px;background:#ecfeff;border-radius:10px"><b>Local/Cloud бичилтийг хаасан.</b><br>Апп ачаалах үед saveData() хэн дуудсаныг л бүртгэнэ.</div>'+
+    box.innerHTML='<div style="font-size:18px;font-weight:900">Möngö V38.2s — LOGIN + SAVE TRACE READ-ONLY</div>'+
+      '<div style="margin:8px 0;padding:9px;background:#ecfeff;border-radius:10px"><b>Local/Cloud бичилтийг хаасан.</b><br>Нэвтэрсний дараах startup үед saveData() хэн дуудсаныг бүртгэнэ.</div>'+
       '<div><b>CURRENT:</b> txns '+c.txns+' | accounts '+c.accounts+' | goals '+c.goals+' | debts '+c.debts+' | invests '+c.invests+' | ledger '+c.ledger+' | budgets '+c.budgets+'</div>'+
       '<div style="margin-top:10px"><b>saveData attempts: '+events.length+'</b></div>'+
       (events.length?events.map((e,i)=>'<div style="border-top:1px solid #ddd;padding:8px 0"><b>#'+(i+1)+' '+e.time+'</b><br>'+e.line+'<br>txns '+e.c.txns+' | accounts '+e.c.accounts+' | goals '+e.c.goals+' | debts '+e.c.debts+' | invests '+e.c.invests+' | ledger '+e.c.ledger+' | budgets '+e.c.budgets+'</div>').join(''):'<div style="padding:8px 0">Одоогоор saveData() дуудлага бүртгэгдээгүй.</div>')+
@@ -16603,8 +16607,16 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
     return undefined; // READ-ONLY: never call persistence chain
   }
   if(base){ try{saveData=tracedSaveData}catch(e){} window.saveData=tracedSaveData; }
-  document.addEventListener('DOMContentLoaded',()=>{render();setTimeout(render,1500);setTimeout(render,5000);setTimeout(render,12000)});
-  setTimeout(render,100);
+  document.addEventListener('DOMContentLoaded',()=>{
+    try{
+      if(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth){
+        window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{
+          if(user){ setTimeout(()=>render(true),300); setTimeout(()=>render(true),2500); setTimeout(()=>render(true),7000); setTimeout(()=>render(true),15000); }
+        });
+      }
+    }catch(e){}
+  });
+  window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(()=>render(true),100));
 })();
 </script>
 
