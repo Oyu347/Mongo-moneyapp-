@@ -12490,6 +12490,52 @@ auth.onAuthStateChanged(async user=>{
         barrier:clearBarrier,localUpdatedAt:getLocalUpdatedAt(),
         newestCloudUpdatedAt:newestCandidate&&newestCandidate.raw&&((newestCandidate.raw.updatedAtClient)||(newestCandidate.raw.data&&newestCandidate.raw.data.clientUpdatedAt))
       });
+
+      /* V38.2q READ-ONLY CLOUD SOURCE DIAGNOSTIC.
+         Purpose: identify which stored copy would win without applying it and
+         without writing/migrating/queueing anything back to Cloud. */
+      try{
+        const countState=(data)=>{
+          const d=data&&typeof data==='object'?data:{};
+          const arr=k=>Array.isArray(d[k])?d[k].length:0;
+          return {
+            txns:arr('txns'),accounts:arr('moneyAccounts'),goals:arr('goals'),
+            debts:arr('debts'),invests:arr('invests'),transfers:arr('accountTransfers'),
+            ledger:arr('moneyLedger'),budgets:(d.budgets&&typeof d.budgets==='object'&&!Array.isArray(d.budgets))?Object.keys(d.budgets).length:0,
+            revision:Number(d.moneyLedgerRevision)||0,
+            updated:d.clientUpdatedAt||''
+          };
+        };
+        const localDiag=collectFinancialState();
+        const rows=candidates.map(c=>{
+          const rawc=c&&c.raw||{}, dc=rawc.data||{};
+          const comp=window.MongoCloud.stateCompleteness?window.MongoCloud.stateCompleteness(dc):{complete:true,missing:[]};
+          return {source:c&&c.source||'?', selected:c===candidateDecision.selected, newest:c===candidateDecision.newest,
+            clearedAt:rawc.clearedAt||'', complete:!!comp.complete, missing:(comp.missing||[]).join(','), counts:countState(dc)};
+        });
+        window.MONGO_READONLY_DIAGNOSTIC={
+          mode:'READ_ONLY_NO_APPLY_NO_WRITE', local:countState(localDiag), localUpdatedAt:getLocalUpdatedAt(),
+          blocked:!!candidateDecision.blocked, clearMarker:!!candidateDecision.clearMarker,
+          selected:candidateDecision.selected&&candidateDecision.selected.source||'none',
+          newest:candidateDecision.newest&&candidateDecision.newest.source||'none',
+          quarantined:(candidateDecision.quarantined||[]).map(c=>c&&c.source||'?'),
+          clearBarrier:{present:!!clearBarrier,useBarrier:!!barrierDecision.useBarrier,clearedAt:clearBarrier&&clearBarrier.clearedAt||''},
+          mirrors:rows
+        };
+        let box=document.getElementById('mongo-readonly-diagnostic');
+        if(!box){box=document.createElement('div');box.id='mongo-readonly-diagnostic';document.body.appendChild(box);}
+        const line=x=>`txns ${x.txns} | accounts ${x.accounts} | goals ${x.goals} | debts ${x.debts} | invests ${x.invests} | ledger ${x.ledger} | budgets ${x.budgets} | rev ${x.revision}`;
+        box.style.cssText='position:fixed;inset:10px;z-index:2147483647;background:#fff;color:#1f2937;border:3px solid #49B0B6;border-radius:16px;padding:16px;overflow:auto;font:13px/1.5 system-ui,sans-serif;box-shadow:0 12px 40px #0005';
+        box.innerHTML='<div style="font-size:18px;font-weight:900;margin-bottom:8px">Möngö READ-ONLY Cloud оношлогоо</div>'+
+          '<div style="padding:8px;background:#ecfeff;border-radius:10px;margin-bottom:10px"><b>Энэ файл Cloud өгөгдлийг ачаалахгүй, буцааж бичихгүй.</b><br>Selected: <b>'+String(window.MONGO_READONLY_DIAGNOSTIC.selected)+'</b> | Newest: <b>'+String(window.MONGO_READONLY_DIAGNOSTIC.newest)+'</b> | Blocked: '+String(window.MONGO_READONLY_DIAGNOSTIC.blocked)+'</div>'+
+          '<div style="margin-bottom:10px"><b>LOCAL</b><br>'+line(window.MONGO_READONLY_DIAGNOSTIC.local)+'<br><small>'+String(window.MONGO_READONLY_DIAGNOSTIC.localUpdatedAt||'')+'</small></div>'+
+          rows.map(r=>'<div style="border-top:1px solid #ddd;padding:8px 0"><b>'+r.source+(r.selected?' ← SELECTED':'')+(r.newest?' ← NEWEST':'')+'</b><br>'+line(r.counts)+'<br>complete '+r.complete+(r.missing?' | missing '+r.missing:'')+(r.clearedAt?' | clearedAt '+r.clearedAt:'')+'<br><small>'+String(r.counts.updated||'')+'</small></div>').join('')+
+          '<div style="border-top:1px solid #ddd;padding-top:8px"><b>Clear barrier</b>: '+String(!!clearBarrier)+' | useBarrier: '+String(!!barrierDecision.useBarrier)+(clearBarrier&&clearBarrier.clearedAt?' | '+clearBarrier.clearedAt:'')+'</div>'+
+          '<div style="margin-top:12px;font-weight:800">Энэ дэлгэцийн зургийг аваад надад илгээнэ үү.</div>';
+      }catch(diagErr){ console.error('READ_ONLY_DIAGNOSTIC_FAILED',diagErr); }
+      window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
+      updateSyncStatus('waiting');
+      return false;
       /* A locally completed reset is authoritative even while its Cloud write
          is queued. Old Cloud copies cannot repopulate this device. A genuinely
          newer local save or Cloud save is still allowed normally. */
