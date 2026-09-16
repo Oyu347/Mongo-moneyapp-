@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V38.2u TEST: Restore-safe Partial State Guard. Production baseline/version intentionally unchanged. -->
+<!-- V38.2v TEST: exact Restore V11 state-collection/cloud-restore flow + stage diagnostic. -->
 <!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
@@ -9766,31 +9766,71 @@ function exportData(){
   showToast('Backup ✓');
 }
 
+function v382vRestoreDiag(){
+  let box=document.getElementById('v382v-restore-diag');
+  if(!box){
+    box=document.createElement('div'); box.id='v382v-restore-diag';
+    box.style.cssText='position:fixed;inset:12px;z-index:2147483647;background:#fff;border:4px solid #49B0B6;border-radius:24px;padding:18px;overflow:auto;font:15px/1.45 system-ui;color:#263238;box-shadow:0 10px 40px #0004';
+    box.innerHTML='<h2 style="margin:0 0 10px">Möngö V38.2v — Restore V11 шалгалт</h2><div id="v382v-lines"></div>';
+    document.body.appendChild(box);
+  }
+  return document.getElementById('v382v-lines');
+}
+function v382vCounts(d){
+  d=d&&typeof d==='object'?d:{};
+  const n=k=>Array.isArray(d[k])?d[k].length:0;
+  return 'txns '+n('txns')+' | accounts '+n('moneyAccounts')+' | goals '+n('goals')+
+    ' | debts '+n('debts')+' | invests '+n('invests')+' | ledger '+n('moneyLedger')+
+    ' | budgets '+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;
+}
+function v382vStep(label,status,detail){
+  const row=document.createElement('div'); row.style.cssText='padding:9px 0;border-bottom:1px solid #ddd';
+  row.innerHTML='<b>'+label+' — '+status+'</b>'+(detail?'<div>'+detail+'</div>':'');
+  v382vRestoreDiag().appendChild(row);
+}
 function importData(e){
   const file=e.target.files[0];if(!file)return;
   if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
   window.MongoWeb.readTextFile(file,{load:async raw=>{try{
     const clean=secParseBackup(raw);
+    v382vStep('① Backup parsed','PASS ✓',v382vCounts(clean));
     window.MONGO_RESTORE_IN_PROGRESS=true;
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
+    try{
+      const restoreUid=(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid)||window._authUid||'guest';
+      localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
+    }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
-    // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
-    // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
+    v382vStep('② Local written','PASS ✓',v382vCounts(window.MongoStorage.getJSON(getDBKey(),{})));
+    let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
-        if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
-        await window.CloudDataService.saveFinancialData('force');
+        const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
+        if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
+        v382vStep('③ applyFinancialState','PASS ✓','backup applied to runtime');
+        if(typeof window.CloudDataService.collectFinancialState!=='function') throw new Error('RESTORE_STATE_COLLECTION_UNAVAILABLE');
+        const restoredState=window.CloudDataService.collectFinancialState();
+        v382vStep('④ restoredState collected','PASS ✓',v382vCounts(restoredState));
+        window.MongoStorage.setJSON(getDBKey(),restoredState);
+        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(restoredState):await window.CloudDataService.saveFinancialData('force');
+        if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
+        restoreCommitted=true;
+        v382vStep('⑤ Cloud committed','PASS ✓','Restore V11 cloud writer returned true');
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
+        v382vStep('Restore error','FAIL ✗',String(syncErr&&syncErr.message||syncErr));
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
       }
     }
     window.MONGO_RESTORE_IN_PROGRESS=false;
-    window.MongoWeb.reload(350);
+    if(restoreCommitted){
+      v382vStep('✓ Дууслаа','STOP','Автоматаар reload хийхгүй. Энэ дэлгэцийн зургийг явуулна уу.');
+    }
   }catch(err){
     window.MONGO_RESTORE_IN_PROGRESS=false;
+    v382vStep('Backup/Restore','FAIL ✗',String(err&&err.message||err));
     showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');
   }
   finally{window.MONGO_RESTORE_IN_PROGRESS=false;e.target.value='';}}});
