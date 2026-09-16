@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V38.2t TEST: Partial State Guard. Production baseline/version intentionally unchanged. -->
+<!-- V38.2u TEST: Restore-safe Partial State Guard. Production baseline/version intentionally unchanged. -->
 <!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
@@ -9771,6 +9771,7 @@ function importData(e){
   if(file.size>SECURITY_MAX_BACKUP_BYTES){showToast('Backup файл хэт том байна');e.target.value='';return;}
   window.MongoWeb.readTextFile(file,{load:async raw=>{try{
     const clean=secParseBackup(raw);
+    window.MONGO_RESTORE_IN_PROGRESS=true;
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
     window.MongoStorage.setJSON(getDBKey(),clean);
@@ -9786,9 +9787,13 @@ function importData(e){
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
       }
     }
+    window.MONGO_RESTORE_IN_PROGRESS=false;
     window.MongoWeb.reload(350);
-  }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
-  finally{e.target.value='';}}});
+  }catch(err){
+    window.MONGO_RESTORE_IN_PROGRESS=false;
+    showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');
+  }
+  finally{window.MONGO_RESTORE_IN_PROGRESS=false;e.target.value='';}}});
 }
 
 function showSaveIndicator(){const el=document.getElementById('save-dot');if(!el)return;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1400);}
@@ -12567,7 +12572,7 @@ auth.onAuthStateChanged(async user=>{
     };
   }
   function v382tSuspiciousPartial(nextData){
-    if(clearingFinancialData || applyingCloud || window.MONGO_CLOUD_LOAD_IN_PROGRESS) return false;
+    if(clearingFinancialData || applyingCloud || window.MONGO_CLOUD_LOAD_IN_PROGRESS || window.MONGO_RESTORE_IN_PROGRESS) return false;
     const snap=getSnapshot();
     const prev=snap&&snap.data;
     if(!prev || !hasMeaningfulFinancialData(prev)) return false;
