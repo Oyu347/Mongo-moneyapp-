@@ -17069,6 +17069,39 @@ nav button,
 }
 </style>
 
+
+<!-- Möngö V17 — INVESTMENT CALCULATOR SCOPED PHONE TEST
+     Visual-only. Scope is limited to #invest-panel-calc.
+     No global .fi/input/select rules.
+     V15 Savings and V16 Loan PHONE PASS areas remain untouched. -->
+<style id="mongo-v17-investment-calculator-scoped-phone-test">
+@media (max-width:700px){
+  #invest-panel-calc .calc-card .fi,
+  #invest-panel-calc .calc-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  #invest-panel-calc .calc-card select{
+    min-height:46px !important;
+    height:46px !important;
+    max-height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  #invest-panel-calc .calc-card .slbl,
+  #invest-panel-calc .calc-card label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  /* Wrapped labels must not stretch neighboring controls. */
+  #invest-panel-calc .form-row > div{
+    align-self:start !important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
