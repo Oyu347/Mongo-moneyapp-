@@ -16576,115 +16576,6 @@ const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{install
 setTimeout(installNew,50);
 })();
 </script>
-
-
-<style id="v38-1b-cancellation-rule-mobile-fix">
-@media (max-width: 700px){
-  #v38EarlyCancellationRule,
-  [data-v38-field="earlyCancellationRule"],
-  .v38-early-cancellation-rule select{
-    width:100% !important;
-    max-width:100% !important;
-    min-height:72px !important;
-    height:auto !important;
-    padding-top:12px !important;
-    padding-bottom:12px !important;
-    line-height:1.35 !important;
-    white-space:normal !important;
-  }
-}
-</style>
-<script id="v38-1b-cancellation-rule-mobile-fix-js">
-(function(){
-  function fixV38RuleSelect(){
-    var selectors=[
-      '#v38EarlyCancellationRule',
-      '[data-v38-field="earlyCancellationRule"]',
-      '.v38-early-cancellation-rule select'
-    ];
-    var el=null;
-    for(var i=0;i<selectors.length && !el;i++) el=document.querySelector(selectors[i]);
-    if(!el){
-      var labels=document.querySelectorAll('label,div,span');
-      for(var j=0;j<labels.length;j++){
-        var t=(labels[j].textContent||'').trim();
-        if(t==='Цуцлалтын тооцооны дүрэм'){
-          var box=labels[j].parentElement;
-          if(box) el=box.querySelector('select');
-          if(el) break;
-        }
-      }
-    }
-    if(!el) return;
-    el.style.width='100%';
-    el.style.maxWidth='100%';
-    el.style.minHeight='72px';
-    el.style.height='auto';
-    el.style.paddingTop='12px';
-    el.style.paddingBottom='12px';
-    el.style.lineHeight='1.35';
-  }
-  document.addEventListener('DOMContentLoaded',fixV38RuleSelect);
-  document.addEventListener('change',function(e){
-    if(e && e.target && e.target.tagName==='SELECT') setTimeout(fixV38RuleSelect,0);
-  });
-  document.addEventListener('click',function(){ setTimeout(fixV38RuleSelect,0); });
-  setTimeout(fixV38RuleSelect,250);
-})();
-</script>
-
-
-<style id="v38-1c-edit-rule-fix">
-@media (max-width:700px){
-  select[data-v38-role="cancellation-rule"]{
-    width:100% !important; max-width:100% !important;
-    min-height:78px !important; height:78px !important;
-    padding-top:12px !important; padding-bottom:12px !important;
-    line-height:1.3 !important; box-sizing:border-box !important;
-  }
-}
-</style>
-<script id="v38-1c-edit-rule-fix-js">
-(function(){
-  function isRuleSelect(sel){
-    if(!sel || sel.tagName!=='SELECT') return false;
-    var p=sel.parentElement;
-    for(var d=0;p && d<5;d++,p=p.parentElement){
-      var t=p.textContent||'';
-      if(t.indexOf('Цуцлалтын тооцооны дүрэм')>=0 ||
-         t.indexOf('Early cancellation')>=0 ||
-         t.indexOf('提前')>=0 || t.indexOf('中途')>=0 ||
-         t.indexOf('조기')>=0 || t.indexOf('досроч')>=0 ||
-         t.indexOf('vorzeitig')>=0) return true;
-    }
-    return false;
-  }
-  function fit(sel){
-    if(!isRuleSelect(sel)) return;
-    sel.setAttribute('data-v38-role','cancellation-rule');
-    sel.style.setProperty('width','100%','important');
-    sel.style.setProperty('max-width','100%','important');
-    sel.style.setProperty('min-height','78px','important');
-    sel.style.setProperty('height','78px','important');
-    sel.style.setProperty('padding-top','12px','important');
-    sel.style.setProperty('padding-bottom','12px','important');
-    sel.style.setProperty('line-height','1.3','important');
-    sel.style.setProperty('box-sizing','border-box','important');
-  }
-  function scan(){ document.querySelectorAll('select').forEach(fit); }
-  document.addEventListener('DOMContentLoaded',scan);
-  document.addEventListener('click',function(){setTimeout(scan,30)});
-  document.addEventListener('change',function(){setTimeout(scan,30)});
-  var mo=new MutationObserver(function(m){
-    for(var i=0;i<m.length;i++) if(m[i].addedNodes&&m[i].addedNodes.length){setTimeout(scan,0);break;}
-  });
-  document.addEventListener('DOMContentLoaded',function(){
-    if(document.body) mo.observe(document.body,{childList:true,subtree:true});
-  });
-  setTimeout(scan,250);
-})();
-</script>
-
 <style>
 #v382dTabs{display:flex;gap:8px;margin:12px 0 18px;padding:5px;background:#eef7f7;border-radius:16px}#v382dTabs button{flex:1;min-height:48px;border:0;border-radius:13px;background:transparent;font-weight:800;padding:8px}#v382dTabs button.active,#v382dGo{background:#49B0B6;color:#fff}.v382d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.v382d-field label{display:block;font-weight:700;margin-bottom:6px}.v382d-field input,.v382d-field select{width:100%;min-height:52px;box-sizing:border-box;border:1px solid #d7e6e7;border-radius:15px;background:#fff;padding:11px 13px;font-size:16px}.v382d-field select{min-height:70px}#v382dGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;font-weight:800}.v382d-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.v382d-note{font-size:12px;color:#6b7280;margin-top:10px}@media(max-width:700px){.v382d-grid{grid-template-columns:1fr}#v382dTabs button{font-size:13px}}
 </style><script>
@@ -16866,36 +16757,21 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
 }
 </style>
 
-<!-- Möngö V44.12.5 — calculator fields aligned to compact app-entry proportions.
-     Visual-only CSS. Persistence and calculator formulas untouched. -->
-<style id="mongo-v44125-calculator-compact-fields">
+<style id="mongo-cancellation-rule-scoped-height">
 @media (max-width:700px){
-  /* Calculator fields use the same compact proportions as normal app entry forms. */
-  #goals-panel-calc .fi,
-  #debts-panel-calc .fi,
-  #invest-panel-calc .fi,
-  #v382gCancel input,
-  #v382gCancel select,
-  #v382dCancel input,
-  #v382dCancel select{
-    min-height:44px !important;
-    height:44px !important;
-    padding:8px 10px !important;
-    font-size:14px !important;
-    line-height:1.25 !important;
-    box-sizing:border-box !important;
-  }
-
-  /* Only the long cancellation-rule selector may use two lines. */
   #account-early-rule,
   #edit-early-rule,
   #v382gCancel #grule,
   #v382dCancel #v382drule{
+    width:100% !important;
+    max-width:100% !important;
     min-height:72px !important;
     height:auto !important;
-    padding:10px 12px !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
     line-height:1.35 !important;
     white-space:normal !important;
+    box-sizing:border-box !important;
   }
 }
 </style>
