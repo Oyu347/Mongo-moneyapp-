@@ -16793,8 +16793,22 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
     },true);
   }
 
-  document.getElementById('v382gGo').onclick=run;
-  document.getElementById('v382gGo').addEventListener('click',function(ev){ev.preventDefault();run();},true);
+  // SAFE calculator patch: one isolated mobile-safe Calculate handler.
+  // Prevent older page click handlers from intercepting compound + contribution calculation.
+  const _go=document.getElementById('v382gGo');
+  if(_go){
+    _go.onclick=null;
+    _go.addEventListener('click',function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      try{ run(); }
+      catch(err){
+        console.error('[MONGO_CALC_RULE1]',err);
+        const box=document.getElementById('gout');
+        if(box)box.innerHTML='<div class="gout"><div class="grow"><span>Тооцооллын алдаа</span><strong>Дахин оролдоно уу</strong></div></div>';
+      }
+    },true);
+  }
   document.getElementById('grule').onchange();document.getElementById('ginterest').onchange();document.getElementById('gcontrib').onchange();days();
   window.v382gRefreshLanguage=render;
   }
