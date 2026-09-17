@@ -16757,53 +16757,46 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
 }
 </style>
 
-<!-- Möngö mobile field-height standard: loan-sized fields; only long cancellation rule may grow -->
+<!-- Möngö mobile field standard: use the previously approved Loan-field proportions -->
 <style id="mongo-unified-mobile-field-height">
 @media (max-width:700px){
-  /* App-wide normal field standard — match the compact loan form */
+  /* Normal app fields: same proportions as the previous Loan form */
   input.fi:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
   select.fi,
   textarea.fi,
   .auth-fi{
-    min-height:54px !important;
-    height:54px !important;
-    padding:12px 14px !important;
+    min-height:56px !important;
+    height:56px !important;
+    padding:13px 16px !important;
     border-radius:20px !important;
-    font-size:15px !important;
+    font-size:16px !important;
     line-height:1.25 !important;
     box-sizing:border-box !important;
   }
 
-  /* Savings early-cancellation contract rule: this one may use two lines */
-  #account-early-rule,
-  #edit-early-rule{
-    min-height:72px !important;
-    height:auto !important;
-    padding-top:12px !important;
-    padding-bottom:12px !important;
-    line-height:1.35 !important;
-    white-space:normal !important;
-  }
-
-  /* Early-cancellation calculator: normal fields stay compact */
+  /* Early-cancellation calculator normal fields */
   #v382gCancel input,
   #v382gCancel select,
   #v382dCancel input,
   #v382dCancel select{
-    min-height:54px !important;
-    height:54px !important;
-    padding:12px 14px !important;
+    min-height:56px !important;
+    height:56px !important;
+    padding:13px 16px !important;
     border-radius:20px !important;
-    font-size:15px !important;
+    font-size:16px !important;
     line-height:1.25 !important;
     box-sizing:border-box !important;
   }
 
-  /* Only the long cancellation-rule selector gets extra height */
+  /* Only long cancellation-rule selectors may grow to two lines */
+  #account-early-rule,
+  #edit-early-rule,
   #v382gCancel #grule,
   #v382dCancel #v382drule{
     min-height:72px !important;
     height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
     line-height:1.35 !important;
     white-space:normal !important;
   }
