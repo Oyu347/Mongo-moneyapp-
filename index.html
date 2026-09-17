@@ -2408,9 +2408,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 @media(max-width:520px){.mongo-plan-grid{grid-template-columns:1fr!important}.mongo-plan{min-height:112px}.mongo-paywall-sheet{max-height:92vh}}
 </style>
 
-
-
-<style id="mongo-v21-budget-text-only">
+<style id="mongo-v22-budget-text-only">
 /* Möngö V21 — Budget TEXT ONLY
    Scope rule: typography only inside #tab-budget.
    No layout, dimensions, spacing, colors, borders, controls, or financial logic are changed. */
@@ -2499,7 +2497,6 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
   line-height:1.4 !important;
 }
 </style>
-
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -11266,7 +11263,14 @@ const MONGO_TRIAL_DAYS=7;
 // V43.15 TEST ONLY:
 // Add ?trialTestDay=5, ?trialTestDay=6, ?trialTestDay=7 or ?trialTestDay=8 to the URL.
 // This changes only the in-browser test calculation. Firestore trialStartDate is NEVER modified.
-function mongoTrialTestDay(){return null;}
+function mongoTrialTestDay(){
+  try{
+    const raw=new URLSearchParams(window.location.search).get('trialTestDay');
+    if(raw===null)return null;
+    const day=Number(raw);
+    return Number.isInteger(day)&&day>=1&&day<=8?day:null;
+  }catch(e){return null;}
+}
 function mongoTrialInfo(state){
   const override=mongoTrialTestDay();
   if(window.MongoSubscription&&typeof window.MongoSubscription.trialInfo==='function'){
