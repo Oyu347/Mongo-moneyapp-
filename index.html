@@ -17035,6 +17035,40 @@ nav button,
   }
 }
 </style>
+
+<!-- Möngö V16 — LOAN CALCULATOR SCOPED PHONE TEST
+     Visual-only. Scope is limited to #debts-panel-calc.
+     Matches the approved 46px mobile field standard used in Savings.
+     No global .fi/input/select rules. New Loan, Savings, Investment,
+     financial formulas, persistence and Backup/Restore logic untouched. -->
+<style id="mongo-v16-loan-calculator-scoped-phone-test">
+@media (max-width:700px){
+  #debts-panel-calc .calc-card .fi,
+  #debts-panel-calc .calc-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  #debts-panel-calc .calc-card select{
+    min-height:46px !important;
+    height:46px !important;
+    max-height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  #debts-panel-calc .calc-card .slbl,
+  #debts-panel-calc .calc-card label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  /* Keep each field from stretching vertically when labels wrap. */
+  #debts-panel-calc .form-row > div{
+    align-self:start !important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
