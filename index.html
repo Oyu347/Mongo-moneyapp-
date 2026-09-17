@@ -17146,6 +17146,44 @@ nav button,
 }
 </style>
 
+
+<!-- Möngö V20 — TRANSACTIONS TEXT-ONLY TYPOGRAPHY PHONE TEST
+     Base: V19 PHONE PASS.
+     Scope: #tab-transactions only.
+     Text properties only. NO layout/spacing/controls/colors/amount positioning changes. -->
+<style id="mongo-v20-transactions-text-only-typography">
+@media (max-width:700px){
+  /* Main card/section headings */
+  #tab-transactions .card h3,
+  #tab-transactions .section-title,
+  #tab-transactions .sec-title{
+    font-size:20px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* Small uppercase summary labels */
+  #tab-transactions .summary-label,
+  #tab-transactions .stat-label,
+  #tab-transactions .kpi-label{
+    font-size:12px !important;
+    font-weight:700 !important;
+    line-height:1.35 !important;
+    letter-spacing:.02em !important;
+  }
+
+  /* Supporting/meta text only */
+  #tab-transactions .muted,
+  #tab-transactions .meta,
+  #tab-transactions .subtext{
+    font-size:12px !important;
+    font-weight:500 !important;
+    line-height:1.45 !important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
