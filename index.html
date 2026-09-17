@@ -17018,6 +17018,23 @@ nav button,
   document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#goals-tab-mine'))setTimeout(matchSavingsDeadlineHeight,30);});
 })();
 </script>
+
+<!-- Möngö V15 — NEW SAVINGS DEADLINE FLEX-STRETCH FIX
+     Root cause: #g-dead is a flex item. Its one-line label leaves extra vertical space,
+     so flex-grow stretches the date input while #g-saved sits under a two-line label.
+     Scoped only to the New Savings row. -->
+<style id="mongo-v15-new-savings-deadline-flex-fix">
+@media (max-width:700px){
+  #goals-panel-mine #g-saved,
+  #goals-panel-mine #g-dead{
+    flex:0 0 46px !important;
+    height:46px !important;
+    min-height:46px !important;
+    max-height:46px !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
