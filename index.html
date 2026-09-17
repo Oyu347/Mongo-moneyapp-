@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TEST: V44.12.30 SAFE Restore V11 + PHONE-PASS Rule 1 calculator block only. Persistence code unchanged. -->
 <!-- Möngö V43.71: asset income and optional income-plan saving are isolated. -->
 <!-- Möngö V43.57: Cash Flow reconciliation — Money Flow now includes non-P&L cash movements (asset purchases, loan principal/funding) while internal/savings transfers remain neutral. -->
 <!-- Möngö V43.53: Accounts + Transfer Flow — account-derived opening balance, blue Transfer mode, dynamic currency on new money inputs, and cleaner opening-balance UI. -->
@@ -16579,11 +16578,11 @@ setTimeout(installNew,50);
 </script>
 
 
-
-<style id="v38-cancellation-rule-scoped-mobile">
-@media (max-width:700px){
-  #account-early-rule,
-  #edit-early-rule{
+<style id="v38-1b-cancellation-rule-mobile-fix">
+@media (max-width: 700px){
+  #v38EarlyCancellationRule,
+  [data-v38-field="earlyCancellationRule"],
+  .v38-early-cancellation-rule select{
     width:100% !important;
     max-width:100% !important;
     min-height:72px !important;
@@ -16591,10 +16590,100 @@ setTimeout(installNew,50);
     padding-top:12px !important;
     padding-bottom:12px !important;
     line-height:1.35 !important;
-    box-sizing:border-box !important;
+    white-space:normal !important;
   }
 }
 </style>
+<script id="v38-1b-cancellation-rule-mobile-fix-js">
+(function(){
+  function fixV38RuleSelect(){
+    var selectors=[
+      '#v38EarlyCancellationRule',
+      '[data-v38-field="earlyCancellationRule"]',
+      '.v38-early-cancellation-rule select'
+    ];
+    var el=null;
+    for(var i=0;i<selectors.length && !el;i++) el=document.querySelector(selectors[i]);
+    if(!el){
+      var labels=document.querySelectorAll('label,div,span');
+      for(var j=0;j<labels.length;j++){
+        var t=(labels[j].textContent||'').trim();
+        if(t==='Цуцлалтын тооцооны дүрэм'){
+          var box=labels[j].parentElement;
+          if(box) el=box.querySelector('select');
+          if(el) break;
+        }
+      }
+    }
+    if(!el) return;
+    el.style.width='100%';
+    el.style.maxWidth='100%';
+    el.style.minHeight='72px';
+    el.style.height='auto';
+    el.style.paddingTop='12px';
+    el.style.paddingBottom='12px';
+    el.style.lineHeight='1.35';
+  }
+  document.addEventListener('DOMContentLoaded',fixV38RuleSelect);
+  document.addEventListener('change',function(e){
+    if(e && e.target && e.target.tagName==='SELECT') setTimeout(fixV38RuleSelect,0);
+  });
+  document.addEventListener('click',function(){ setTimeout(fixV38RuleSelect,0); });
+  setTimeout(fixV38RuleSelect,250);
+})();
+</script>
+
+
+<style id="v38-1c-edit-rule-fix">
+@media (max-width:700px){
+  select[data-v38-role="cancellation-rule"]{
+    width:100% !important; max-width:100% !important;
+    min-height:78px !important; height:78px !important;
+    padding-top:12px !important; padding-bottom:12px !important;
+    line-height:1.3 !important; box-sizing:border-box !important;
+  }
+}
+</style>
+<script id="v38-1c-edit-rule-fix-js">
+(function(){
+  function isRuleSelect(sel){
+    if(!sel || sel.tagName!=='SELECT') return false;
+    var p=sel.parentElement;
+    for(var d=0;p && d<5;d++,p=p.parentElement){
+      var t=p.textContent||'';
+      if(t.indexOf('Цуцлалтын тооцооны дүрэм')>=0 ||
+         t.indexOf('Early cancellation')>=0 ||
+         t.indexOf('提前')>=0 || t.indexOf('中途')>=0 ||
+         t.indexOf('조기')>=0 || t.indexOf('досроч')>=0 ||
+         t.indexOf('vorzeitig')>=0) return true;
+    }
+    return false;
+  }
+  function fit(sel){
+    if(!isRuleSelect(sel)) return;
+    sel.setAttribute('data-v38-role','cancellation-rule');
+    sel.style.setProperty('width','100%','important');
+    sel.style.setProperty('max-width','100%','important');
+    sel.style.setProperty('min-height','78px','important');
+    sel.style.setProperty('height','78px','important');
+    sel.style.setProperty('padding-top','12px','important');
+    sel.style.setProperty('padding-bottom','12px','important');
+    sel.style.setProperty('line-height','1.3','important');
+    sel.style.setProperty('box-sizing','border-box','important');
+  }
+  function scan(){ document.querySelectorAll('select').forEach(fit); }
+  document.addEventListener('DOMContentLoaded',scan);
+  document.addEventListener('click',function(){setTimeout(scan,30)});
+  document.addEventListener('change',function(){setTimeout(scan,30)});
+  var mo=new MutationObserver(function(m){
+    for(var i=0;i<m.length;i++) if(m[i].addedNodes&&m[i].addedNodes.length){setTimeout(scan,0);break;}
+  });
+  document.addEventListener('DOMContentLoaded',function(){
+    if(document.body) mo.observe(document.body,{childList:true,subtree:true});
+  });
+  setTimeout(scan,250);
+})();
+</script>
 
 <style>
 #v382dTabs{display:flex;gap:8px;margin:12px 0 18px;padding:5px;background:#eef7f7;border-radius:16px}#v382dTabs button{flex:1;min-height:48px;border:0;border-radius:13px;background:transparent;font-weight:800;padding:8px}#v382dTabs button.active,#v382dGo{background:#49B0B6;color:#fff}.v382d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.v382d-field label{display:block;font-weight:700;margin-bottom:6px}.v382d-field input,.v382d-field select{width:100%;min-height:52px;box-sizing:border-box;border:1px solid #d7e6e7;border-radius:15px;background:#fff;padding:11px 13px;font-size:16px}.v382d-field select{min-height:70px}#v382dGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;font-weight:800}.v382d-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.v382d-note{font-size:12px;color:#6b7280;margin-top:10px}@media(max-width:700px){.v382d-grid{grid-template-columns:1fr}#v382dTabs button{font-size:13px}}
@@ -16669,155 +16758,43 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
    <div><label>${q.fee}</label><input id="gfee" inputmode="decimal" data-amt="1" placeholder="0"></div>
    <div style="grid-column:1/-1"><label>${q.rule}</label><select id="grule"><option value="all">${q.all}</option><option value="vested">${q.vested}</option><option value="manual">${q.manual}</option></select></div>
    <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
-  </div><button id="v382gGo" type="button">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
+  </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
   ['gp','gprior','gfee','gmanual','gcontribamt'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
   Object.keys(keep).forEach(id=>{const el=document.getElementById(id);if(el)el.value=keep[id]});
-  document.getElementById('gstart').onchange=days;document.getElementById('gend').onchange=days;
-  document.getElementById('grule').onchange=()=>{document.getElementById('gmanualWrap').style.display=document.getElementById('grule').value==='manual'?'block':'none'};
-  document.getElementById('ginterest').onchange=()=>{document.getElementById('gcompoundWrap').style.display=document.getElementById('ginterest').value==='compound'?'block':'none'};
-  document.getElementById('gcontrib').onchange=()=>{const on=document.getElementById('gcontrib').value==='regular';document.getElementById('gcontribAmtWrap').style.display=on?'block':'none';document.getElementById('gcontribFreqWrap').style.display=on?'block':'none'};
-
-  // V38.2o: robust Android/mobile event wiring for compound selection.
-  // Capture phase prevents older page handlers from breaking this isolated calculator.
-  const _gi=document.getElementById('ginterest');
-  const _gc=document.getElementById('gcontrib');
-  const _gr=document.getElementById('grule');
-  if(_gi){
-    _gi.addEventListener('change',function(ev){
-      const w=document.getElementById('gcompoundWrap');
-      if(w)w.style.display=this.value==='compound'?'block':'none';
-    },true);
-  }
-  if(_gc){
-    _gc.addEventListener('change',function(ev){
-      const on=this.value==='regular';
-      const a=document.getElementById('gcontribAmtWrap'), f=document.getElementById('gcontribFreqWrap');
-      if(a)a.style.display=on?'block':'none';
-      if(f)f.style.display=on?'block':'none';
-    },true);
-  }
-  if(_gr){
-    _gr.addEventListener('change',function(ev){
-      const w=document.getElementById('gmanualWrap');
-      if(w)w.style.display=this.value==='manual'?'block':'none';
-    },true);
-  }
-
-  // SAFE calculator patch: one isolated mobile-safe Calculate handler.
-  // Prevent older page click handlers from intercepting compound + contribution calculation.
-  const _go=document.getElementById('v382gGo');
-  if(_go){
-    _go.onclick=null;
-    _go.addEventListener('click',function(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-      try{ run(); }
-      catch(err){
-        console.error('[MONGO_CALC_RULE1]',err);
-        const box=document.getElementById('gout');
-        if(box)box.innerHTML='<div class="gout"><div class="grow"><span>Тооцооллын алдаа</span><strong>Дахин оролдоно уу</strong></div></div>';
-      }
-    },true);
-  }
-  document.getElementById('grule').onchange();document.getElementById('ginterest').onchange();document.getElementById('gcontrib').onchange();days();
+  gstart.onchange=days;gend.onchange=days;
+  grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};
+  ginterest.onchange=()=>{gcompoundWrap.style.display=ginterest.value==='compound'?'block':'none'};
+  gcontrib.onchange=()=>{const on=gcontrib.value==='regular';gcontribAmtWrap.style.display=on?'block':'none';gcontribFreqWrap.style.display=on?'block':'none'};
+  v382gGo.onclick=run;
+  grule.onchange();ginterest.onchange();gcontrib.onchange();days();
   window.v382gRefreshLanguage=render;
   }
-  function days(){const q=Q(),a=document.getElementById('gstart')?.value||'',b=document.getElementById('gend')?.value||'',box=document.getElementById('gdays');if(!a||!b){if(box)box.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);if(box)box.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
+  function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){
-   const q=Q();
-   const el=id=>document.getElementById(id);
-   const p=Math.max(0,num(el('gp')?.value));
-   const cr=Math.max(0,Number(el('gcr')?.value)||0);
-   const rr=Math.max(0,Number(el('grr')?.value)||0);
-   const prior=Math.max(0,num(el('gprior')?.value));
-   const fee=Math.max(0,num(el('gfee')?.value));
-   const d=days();
-   const rule=el('grule')?.value||'all';
-   const compound=el('ginterest')?.value==='compound';
-   const freq=compound?Math.max(1,Number(el('gcompoundfreq')?.value)||1):1;
-   const addMode=el('gcontrib')?.value||'none';
-   const addAmount=addMode==='regular'?Math.max(0,num(el('gcontribamt')?.value)):0;
-   const addFreq=el('gcontribfreq')?.value||'monthly';
-   const startRaw=el('gstart')?.value||'';
-   const endRaw=el('gend')?.value||'';
-
+   if(typeof gcontrib!=='undefined'&&gcontrib.value==='regular'){
+     alert(lang==='en'?'Regular additional deposits will be enabled after their formula is verified.':lang==='ja'?'定期的な追加預入は数式の検証後に有効になります。':lang==='ko'?'정기 추가 입금은 공식 검증 후 활성화됩니다.':lang==='ru'?'Регулярные пополнения будут включены после проверки формулы.':lang==='de'?'Regelmäßige Einzahlungen werden nach Prüfung der Formel aktiviert.':lang==='zh'?'定期追加资金将在公式验证后启用。':'Тогтмол мөнгө нэмэх тооцоог томьёог нь баталгаажуулсны дараа идэвхжүүлнэ.');
+     return;
+   }
+   const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;
+   const compound=(typeof ginterest!=='undefined'&&ginterest.value==='compound');
+   const freq=compound?Math.max(1,Number(gcompoundfreq.value)||1):1;
    function interestFor(principal,annualRate,dayCount,useCompound){
-     if(principal<=0||annualRate<=0||dayCount<=0)return 0;
      if(!useCompound)return principal*annualRate/100*dayCount/365;
-     const periodDays=365/freq;
-     const full=Math.floor(dayCount/periodDays);
-     const rem=dayCount-full*periodDays;
+     const periodDays=365/freq, full=Math.floor(dayCount/periodDays), rem=dayCount-full*periodDays;
      let bal=principal*Math.pow(1+annualRate/100/freq,full);
      if(rem>0)bal+=bal*(annualRate/100/freq)*(rem/periodDays);
      return Math.max(0,bal-principal);
    }
-
-   function addMonthsSafe(date,months){
-     const day=date.getDate();
-     const x=new Date(date.getFullYear(),date.getMonth(),1,0,0,0,0);
-     x.setMonth(x.getMonth()+months);
-     const last=new Date(x.getFullYear(),x.getMonth()+1,0).getDate();
-     x.setDate(Math.min(day,last));
-     return x;
-   }
-
-   function contributionDates(){
-     if(addMode!=='regular'||addAmount<=0||!startRaw||!endRaw)return [];
-     const start=new Date(startRaw+'T00:00:00');
-     const end=new Date(endRaw+'T00:00:00');
-     if(!(end>start))return [];
-     const step=addFreq==='yearly'?12:(addFreq==='quarterly'?3:1);
-     const dates=[];
-     for(let n=1;n<1200;n++){
-       const dt=addMonthsSafe(start,n*step);
-       if(dt>=end)break;
-       dates.push(dt);
-     }
-     return dates;
-   }
-
-   const adds=contributionDates();
-   const totalPrincipal=p+adds.length*addAmount;
    let allowed=0;
-
-   if(rule==='all'){
-     allowed=interestFor(p,rr,d,compound);
-     const endDate=endRaw?new Date(endRaw+'T00:00:00'):null;
-     if(endDate){
-       adds.forEach(dt=>{
-         const held=Math.max(0,Math.floor((endDate-dt)/86400000));
-         allowed+=interestFor(addAmount,rr,held,compound);
-       });
-     }
-   }else if(rule==='vested'){
-     // Existing rule retained; each tranche is evaluated for its own held time.
-     function vestedFor(principal,heldDays){
-       const y=Math.floor(heldDays/365),rem=heldDays-y*365;
-       if(compound){
-         const vestedInterest=interestFor(principal,cr,y*365,true);
-         const vestedBalance=principal+vestedInterest;
-         return vestedInterest+interestFor(vestedBalance,rr,rem,true);
-       }
-       return principal*cr/100*y+principal*rr/100*rem/365;
-     }
-     allowed=vestedFor(p,d);
-     const endDate=endRaw?new Date(endRaw+'T00:00:00'):null;
-     if(endDate){
-       adds.forEach(dt=>{
-         const held=Math.max(0,Math.floor((endDate-dt)/86400000));
-         allowed+=vestedFor(addAmount,held);
-       });
-     }
-   }else{
-     allowed=Math.max(0,num(el('gmanual')?.value));
-   }
-
-   const claw=Math.max(0,prior-allowed);
-   const add=Math.max(0,allowed-prior);
-   const total=Math.max(0,totalPrincipal+add-claw-fee);
-   const outEl=el('gout');
-   if(outEl)outEl.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(totalPrincipal)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`;
-  }
+   if(rule==='all')allowed=interestFor(p,rr,d,compound);
+   else if(rule==='vested'){
+     const y=Math.floor(d/365),rem=d-y*365;
+     if(compound){
+       const vestedInterest=interestFor(p,cr,y*365,true);
+       const vestedBalance=p+vestedInterest;
+       allowed=vestedInterest+interestFor(vestedBalance,rr,rem,true);
+     }else allowed=p*cr/100*y+p*rr/100*rem/365;
+   }else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
   function mode(which){const isCancel=which==='cancel',coffee=findCoffee();savings.style.display=isCancel?'none':'block';cancel.style.display=isCancel?'block':'none';if(coffee){coffee.style.display=isCancel?'none':'';if(!isCancel)coffee.style.marginTop='28px'}save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel)}
   render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
  }
@@ -16838,6 +16815,56 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
 })();
 </script>
 
+
+<!-- Möngö: calculator result cards — visual-only, persistence/calculation logic untouched -->
+<style id="mongo-v382g-result-cards-visual-only">
+#v382gCancel #gout > .gout{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+  padding:0;
+  background:transparent;
+  border-radius:0;
+}
+#v382gCancel #gout > .gout > .grow{
+  min-width:0;
+  min-height:88px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px 13px;
+  border:1px solid #dcebec;
+  border-radius:15px;
+  background:#f8fbfb;
+  box-sizing:border-box;
+}
+#v382gCancel #gout > .gout > .grow span{
+  font-size:12px;
+  line-height:1.35;
+  color:#6b7280;
+  overflow-wrap:anywhere;
+}
+#v382gCancel #gout > .gout > .grow strong{
+  max-width:100%;
+  font-size:16px;
+  line-height:1.25;
+  color:#374151;
+  overflow-wrap:anywhere;
+}
+#v382gCancel #gout > .gout > .grow:last-child{
+  border:1px solid rgba(73,176,182,.45);
+  background:rgba(73,176,182,.10);
+}
+#v382gCancel #gout > .gout > .grow:last-child strong{color:#287f84}
+@media(max-width:380px){
+  #v382gCancel #gout > .gout{gap:8px}
+  #v382gCancel #gout > .gout > .grow{min-height:84px;padding:10px 11px}
+  #v382gCancel #gout > .gout > .grow strong{font-size:15px}
+}
+</style>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
