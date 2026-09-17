@@ -17102,6 +17102,39 @@ nav button,
 }
 </style>
 
+
+<!-- Möngö V18 — FINANCE TYPOGRAPHY SCOPED PHONE TEST
+     Scope: #tab-dashboard only.
+     Typography hierarchy only; no global rules, no amount/chart/layout changes. -->
+<style id="mongo-v18-finance-typography-scoped-phone-test">
+@media (max-width:700px){
+  /* Same-level section headings visible on the Finance dashboard */
+  #tab-dashboard .pdash-title,
+  #tab-dashboard .sec-title,
+  #tab-dashboard .section-title,
+  #tab-dashboard .card-title{
+    font-size:20px !important;
+    line-height:1.25 !important;
+    font-weight:800 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* Supporting text hierarchy */
+  #tab-dashboard .pdash-sub,
+  #tab-dashboard .section-subtitle,
+  #tab-dashboard .card-subtitle{
+    line-height:1.45 !important;
+  }
+
+  /* Dashboard metric labels only — values/amounts deliberately excluded */
+  #tab-dashboard .pdash-label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+    font-weight:700 !important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
