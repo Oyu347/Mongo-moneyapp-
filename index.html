@@ -16984,6 +16984,40 @@ nav button,
   }
 }
 </style>
+
+<!-- Möngö V14 — NEW SAVINGS DEADLINE EXACT MATCH PHONE FIX
+     Visual-only. Measures #g-saved and forces #g-dead to the same rendered height. -->
+<style id="mongo-v14-new-savings-deadline-exact-match">
+@media (max-width:700px){
+  #goals-panel-mine #g-dead{
+    box-sizing:border-box !important;
+    margin:0 !important;
+  }
+}
+</style>
+<script id="mongo-v14-new-savings-deadline-exact-match-script">
+(function(){
+  function matchSavingsDeadlineHeight(){
+    if(!window.matchMedia || !window.matchMedia('(max-width:700px)').matches) return;
+    var ref=document.getElementById('g-saved');
+    var dead=document.getElementById('g-dead');
+    if(!ref||!dead) return;
+    var h=Math.round(ref.getBoundingClientRect().height);
+    if(!h) return;
+    dead.style.setProperty('height',h+'px','important');
+    dead.style.setProperty('min-height',h+'px','important');
+    dead.style.setProperty('max-height',h+'px','important');
+    dead.style.setProperty('padding',getComputedStyle(ref).padding,'important');
+    dead.style.setProperty('border-radius',getComputedStyle(ref).borderRadius,'important');
+    dead.style.setProperty('font-size',getComputedStyle(ref).fontSize,'important');
+    dead.style.setProperty('line-height',getComputedStyle(ref).lineHeight,'important');
+  }
+  function run(){requestAnimationFrame(function(){matchSavingsDeadlineHeight();setTimeout(matchSavingsDeadlineHeight,120);});}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+  window.addEventListener('resize',run);
+  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#goals-tab-mine'))setTimeout(matchSavingsDeadlineHeight,30);});
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
