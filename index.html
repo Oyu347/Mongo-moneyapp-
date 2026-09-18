@@ -17273,6 +17273,57 @@ No layout/dimensions/spacing/background/border/control/logic changes. -->
 }
 </style>
 
+
+<!-- Möngö V26 — SAVINGS APP TYPOGRAPHY STANDARD / PHONE TEST
+Uses established Möngö typography tokens:
+title 20/700 #374151; section 16/700 #374151; body 14/400 #374151;
+label 12/600 #6B7280; muted #9CA3AF. Savings panels only. -->
+<style id="mongo-v26-savings-app-standard-typography">
+@media (max-width:700px){
+  /* Page/card titles */
+  #goals-panel-mine #lbl-addsaving,
+  #goals-panel-calc #lbl-sav-calc-title,
+  #goals-panel-calc #lbl-sav-challenge-title,
+  #goals-panel-pay #pay-title{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+    font-size:20px!important;line-height:1.25!important;font-weight:700!important;color:#374151!important;letter-spacing:0!important;
+  }
+  /* Descriptive/body copy */
+  #goals-panel-calc #lbl-sav-calc-desc,
+  #goals-panel-calc #lbl-sav-challenge-desc,
+  #goals-panel-pay #pay-desc,
+  #goals-panel-pay #pay-help{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+    font-size:14px!important;line-height:1.45!important;font-weight:400!important;color:#6B7280!important;letter-spacing:0!important;
+  }
+  /* Field labels */
+  #goals-panel-mine .slbl,
+  #goals-panel-calc .slbl,
+  #goals-panel-calc label,
+  #goals-panel-pay .slbl{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+    font-size:12px!important;line-height:1.35!important;font-weight:600!important;color:#6B7280!important;letter-spacing:0!important;
+  }
+  /* Result labels */
+  #goals-panel-calc .calc-result .k{
+    font-size:12px!important;line-height:1.35!important;font-weight:600!important;color:#6B7280!important;
+  }
+  /* Inputs/selects: typography only */
+  #goals-panel-mine .fi,
+  #goals-panel-calc .fi,
+  #goals-panel-calc select,
+  #goals-panel-pay .fi{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+    font-size:14px!important;line-height:1.35!important;font-weight:400!important;color:#374151!important;
+  }
+  #goals-panel-mine .fi::placeholder,
+  #goals-panel-calc .fi::placeholder,
+  #goals-panel-pay .fi::placeholder{
+    color:#9CA3AF!important;opacity:1!important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
