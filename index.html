@@ -17216,45 +17216,59 @@ Typography only; no layout, spacing, controls, colors, progress or logic changes
 </style>
 
 
-<!-- Möngö V24 — SAVINGS TYPOGRAPHY ONLY / PHONE TEST
-BASE: V23 MASTER. ACTUAL SAVINGS CONTAINER: #tab-goals.
-ONLY font-size / font-weight / line-height / text color.
-NO layout / spacing / dimensions / backgrounds / borders / controls / logic. -->
-<style id="mongo-v24-savings-typography-only">
+<!-- Möngö V25 — SAVINGS EXACT TYPOGRAPHY / PHONE TEST
+BASE V23 MASTER. Exact visible Savings IDs/panels only.
+Typography only: font-size, font-weight, line-height, text color.
+No layout/dimensions/spacing/background/border/control/logic changes. -->
+<style id="mongo-v25-savings-exact-typography">
 @media (max-width:700px){
-  #tab-goals .card-title,
-  #tab-goals .calc-title{
-    font-size:20px !important;
-    font-weight:800 !important;
-    line-height:1.25 !important;
-    color:#374151 !important;
+  /* New Savings */
+  #goals-panel-mine #lbl-addsaving{
+    font-size:20px!important;font-weight:800!important;line-height:1.25!important;color:#374151!important;
   }
-  #tab-goals .slbl{
-    font-size:12px !important;
-    font-weight:700 !important;
-    line-height:1.35 !important;
-    color:#6B7280 !important;
+  #goals-panel-mine #lbl-g-name-lbl,
+  #goals-panel-mine #lbl-g-target-lbl,
+  #goals-panel-mine #lbl-g-saved-lbl,
+  #goals-panel-mine #lbl-g-dead-lbl,
+  #goals-panel-mine #lbl-g-color-lbl{
+    font-size:12px!important;font-weight:700!important;line-height:1.35!important;color:#6B7280!important;
   }
-  #tab-goals .calc-desc,
-  #tab-goals .muted,
-  #tab-goals .meta,
-  #tab-goals .subtext{
-    font-size:13px !important;
-    font-weight:500 !important;
-    line-height:1.5 !important;
-    color:#6B7280 !important;
+
+  /* Savings calculator — exact visible headings/descriptions/labels */
+  #goals-panel-calc #lbl-sav-calc-title,
+  #goals-panel-calc #lbl-sav-challenge-title{
+    font-size:20px!important;font-weight:800!important;line-height:1.25!important;color:#374151!important;
   }
-  #tab-goals .calc-result .k{
-    font-size:12px !important;
-    font-weight:700 !important;
-    line-height:1.35 !important;
-    color:#6B7280 !important;
+  #goals-panel-calc #lbl-sav-calc-desc,
+  #goals-panel-calc #lbl-sav-challenge-desc{
+    font-size:13px!important;font-weight:500!important;line-height:1.5!important;color:#6B7280!important;
   }
-  #tab-goals .calc-result .v{
-    font-size:18px !important;
-    font-weight:800 !important;
-    line-height:1.2 !important;
-    color:#1F7F86 !important;
+  #goals-panel-calc #lbl-sav-start,
+  #goals-panel-calc #lbl-sav-monthly,
+  #goals-panel-calc #lbl-sav-years,
+  #goals-panel-calc #lbl-sav-rate,
+  #goals-panel-calc #lbl-sav-target,
+  #goals-panel-calc #lbl-sav-daily,
+  #goals-panel-calc #lbl-sav-ch-years,
+  #goals-panel-calc #lbl-sav-ch-rate,
+  #goals-panel-calc #lbl-sav-total,
+  #goals-panel-calc #lbl-sav-own,
+  #goals-panel-calc #lbl-sav-interest,
+  #goals-panel-calc #lbl-sav-need{
+    font-size:12px!important;font-weight:700!important;line-height:1.35!important;color:#6B7280!important;
+  }
+
+  /* Pay-yourself */
+  #goals-panel-pay #pay-title{
+    font-size:20px!important;font-weight:800!important;line-height:1.25!important;color:#1F7F86!important;letter-spacing:0!important;
+  }
+  #goals-panel-pay #pay-desc,
+  #goals-panel-pay #pay-help{
+    font-size:13px!important;font-weight:500!important;line-height:1.5!important;color:#6B7280!important;
+  }
+  #goals-panel-pay #pay-rate-label,
+  #goals-panel-pay #pay-alloc-label{
+    font-size:12px!important;font-weight:700!important;line-height:1.35!important;color:#6B7280!important;
   }
 }
 </style>
