@@ -17324,6 +17324,41 @@ label 12/600 #6B7280; muted #9CA3AF. Savings panels only. -->
 }
 </style>
 
+
+<!-- Möngö V27 — Savings two calculator tab text standard
+Scoped ONLY to the two calculator selector buttons. -->
+<style id="mongo-v27-savings-calculator-tabs-text-standard">
+@media (max-width:700px){
+  #v382dTabs button{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+    font-size:14px!important;
+    line-height:1.35!important;
+    font-weight:600!important;
+    color:#374151!important;
+    letter-spacing:0!important;
+  }
+  #v382dTabs button.active{
+    color:#FFFFFF!important;
+    font-weight:700!important;
+  }
+}
+</style>
+
+<!-- Möngö V28 — APP TYPOGRAPHY SYSTEM / PHASE 1 -->
+<style id="mongo-v28-app-typography-system">
+:root{--mongo-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;--mongo-text:#374151;--mongo-text-secondary:#6B7280;--mongo-text-muted:#9CA3AF;--mongo-brand:#49B0B6;--mongo-brand-dark:#1F7F86;--mongo-title-size:20px;--mongo-section-size:16px;--mongo-body-size:14px;--mongo-label-size:12px;--mongo-helper-size:12px;--mongo-control-size:14px;--mongo-button-size:16px;--mongo-tab-size:14px;--mongo-result-size:18px}
+@media(max-width:700px){
+#goals-panel-mine #lbl-addsaving,#goals-panel-calc #lbl-sav-calc-title,#goals-panel-calc #lbl-sav-challenge-title,#goals-panel-pay #pay-title{font-family:var(--mongo-font)!important;font-size:var(--mongo-title-size)!important;font-weight:700!important;line-height:1.25!important;color:var(--mongo-text)!important;letter-spacing:0!important}
+#goals-panel-calc #lbl-sav-calc-desc,#goals-panel-calc #lbl-sav-challenge-desc,#goals-panel-pay #pay-desc,#goals-panel-pay #pay-help{font-family:var(--mongo-font)!important;font-size:var(--mongo-body-size)!important;font-weight:400!important;line-height:1.45!important;color:var(--mongo-text-secondary)!important}
+#goals-panel-mine .slbl,#goals-panel-calc .slbl,#goals-panel-calc label,#goals-panel-pay .slbl{font-family:var(--mongo-font)!important;font-size:var(--mongo-label-size)!important;font-weight:600!important;line-height:1.35!important;color:var(--mongo-text-secondary)!important;letter-spacing:0!important}
+#goals-panel-mine .fi,#goals-panel-calc .fi,#goals-panel-calc select,#goals-panel-pay .fi{font-family:var(--mongo-font)!important;font-size:var(--mongo-control-size)!important;font-weight:400!important;line-height:1.35!important;color:var(--mongo-text)!important}
+#goals-panel-mine .fi::placeholder,#goals-panel-calc .fi::placeholder,#goals-panel-pay .fi::placeholder{color:var(--mongo-text-muted)!important;opacity:1!important}
+#goals-panel-calc .calc-result .k{font-size:var(--mongo-label-size)!important;font-weight:600!important;line-height:1.35!important;color:var(--mongo-text-secondary)!important}
+#goals-panel-calc .calc-result .v{font-size:var(--mongo-result-size)!important;font-weight:700!important;line-height:1.2!important;color:var(--mongo-brand-dark)!important}
+#v382dTabs button{font-family:var(--mongo-font)!important;font-size:var(--mongo-tab-size)!important;font-weight:600!important;line-height:1.35!important;color:var(--mongo-text)!important}
+#v382dTabs button.active{color:#fff!important;font-weight:700!important}
+}
+</style>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
