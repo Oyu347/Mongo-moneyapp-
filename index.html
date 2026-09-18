@@ -17359,6 +17359,125 @@ Scoped ONLY to the two calculator selector buttons. -->
 #v382dTabs button.active{color:#fff!important;font-weight:700!important}
 }
 </style>
+
+<!-- Möngö V29 — APP TYPOGRAPHY SYSTEM / PHASE 2: LOANS ONLY
+Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or other panels changed. -->
+<style id="mongo-v29-loan-typography-system">
+@media(max-width:700px){
+  /* Main loan/card + calculator titles */
+  #debts-panel-mine #lbl-adddebt,
+  #debts-panel-calc #lbl-loan-calc-title{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-title-size)!important;
+    font-weight:700!important;
+    line-height:1.25!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+
+  /* Calculator description and helper text */
+  #debts-panel-calc #lbl-loan-calc-desc,
+  #debts-panel-mine #lbl-debtinfo,
+  #debts-panel-mine #lf-asset-note{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-body-size)!important;
+    font-weight:400!important;
+    line-height:1.45!important;
+    color:var(--mongo-text-secondary)!important;
+    letter-spacing:0!important;
+  }
+
+  /* Field labels */
+  #debts-panel-mine .slbl,
+  #debts-panel-calc .slbl{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-label-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text-secondary)!important;
+    letter-spacing:0!important;
+  }
+
+  /* Inputs / selects — typography only */
+  #debts-panel-mine .fi,
+  #debts-panel-calc .fi{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-control-size)!important;
+    font-weight:400!important;
+    line-height:1.35!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #debts-panel-mine .fi::placeholder,
+  #debts-panel-calc .fi::placeholder{
+    color:var(--mongo-text-muted)!important;
+    opacity:1!important;
+  }
+
+  /* Loan top tabs */
+  #tab-debts .calc-tab-btn{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-tab-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #tab-debts .calc-tab-btn.active{
+    color:#fff!important;
+    font-weight:700!important;
+  }
+
+  /* Calculator result hierarchy */
+  #debts-panel-calc .calc-result .k,
+  #debts-panel-calc .loan-schedule-note,
+  #debts-panel-calc .loan-table th{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-label-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text-secondary)!important;
+    letter-spacing:0!important;
+  }
+  #debts-panel-calc .calc-result .v{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-result-size)!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    color:var(--mongo-brand-dark)!important;
+    letter-spacing:0!important;
+  }
+  #debts-panel-calc .loan-table td,
+  #debts-panel-calc .loan-split-wrap .li2{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-body-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #debts-panel-calc .loan-extra-msg,
+  #debts-panel-calc .loan-calc-empty{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-helper-size)!important;
+    font-weight:600!important;
+    line-height:1.45!important;
+    letter-spacing:0!important;
+  }
+
+  /* Buttons — typography only */
+  #debts-panel-mine .btn,
+  #debts-panel-calc .btn,
+  #debts-panel-calc #btn-loan-schedule{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-button-size)!important;
+    font-weight:700!important;
+    line-height:1.25!important;
+    letter-spacing:0!important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
