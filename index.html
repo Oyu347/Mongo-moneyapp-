@@ -17478,6 +17478,102 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
 }
 </style>
 
+
+<!-- Möngö V30 — APP TYPOGRAPHY SYSTEM / PHASE 3: INVESTMENTS ONLY
+Typography-only, scoped to #tab-invest. No layout, financial logic, i18n, Savings, Loans, or other panels changed. -->
+<style id="mongo-v30-investment-typography-system">
+@media(max-width:700px){
+  /* Main titles */
+  #tab-invest h2,
+  #tab-invest h3{
+    font-family:var(--mongo-font)!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #tab-invest h2{
+    font-size:var(--mongo-title-size)!important;
+    font-weight:700!important;
+    line-height:1.25!important;
+  }
+
+  /* Descriptions / ordinary explanatory text */
+  #tab-invest .muted,
+  #tab-invest .hint,
+  #tab-invest .helper,
+  #tab-invest .desc{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-body-size)!important;
+    font-weight:400!important;
+    line-height:1.45!important;
+    color:var(--mongo-text-secondary)!important;
+    letter-spacing:0!important;
+  }
+
+  /* Field labels */
+  #tab-invest .slbl{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-label-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text-secondary)!important;
+    letter-spacing:0!important;
+  }
+
+  /* Inputs/selects — typography only */
+  #tab-invest .fi{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-control-size)!important;
+    font-weight:400!important;
+    line-height:1.35!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #tab-invest .fi::placeholder{
+    color:var(--mongo-text-muted)!important;
+    opacity:1!important;
+  }
+
+  /* Tabs */
+  #tab-invest .calc-tab-btn{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-tab-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text)!important;
+    letter-spacing:0!important;
+  }
+  #tab-invest .calc-tab-btn.active{
+    color:#fff!important;
+    font-weight:700!important;
+  }
+
+  /* Result hierarchy */
+  #tab-invest .calc-result .k{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-label-size)!important;
+    font-weight:600!important;
+    line-height:1.35!important;
+    color:var(--mongo-text-secondary)!important;
+  }
+  #tab-invest .calc-result .v{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-result-size)!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    color:var(--mongo-brand-dark)!important;
+  }
+
+  /* Buttons — typography only */
+  #tab-invest .btn{
+    font-family:var(--mongo-font)!important;
+    font-size:var(--mongo-button-size)!important;
+    font-weight:700!important;
+    line-height:1.25!important;
+    letter-spacing:0!important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
