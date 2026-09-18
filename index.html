@@ -67,6 +67,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+
 <style id="mongo-force-light-v4335">html{color-scheme:light!important;} body{color-scheme:light!important;}
 /* V43.48 */
 .account-group-title{font-size:11px;font-weight:900;letter-spacing:.04em;color:var(--text2);margin:12px 2px 6px}
@@ -2408,95 +2409,6 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 @media(max-width:520px){.mongo-plan-grid{grid-template-columns:1fr!important}.mongo-plan{min-height:112px}.mongo-paywall-sheet{max-height:92vh}}
 </style>
 
-<style id="mongo-v22-budget-text-only">
-/* Möngö V21 — Budget TEXT ONLY
-   Scope rule: typography only inside #tab-budget.
-   No layout, dimensions, spacing, colors, borders, controls, or financial logic are changed. */
-#tab-budget .card-title{
-  font-size:18px !important;
-  font-weight:900 !important;
-  line-height:1.25 !important;
-  letter-spacing:-.025em !important;
-}
-#tab-budget .btype-btn,
-#tab-budget .budget-mode-btn{
-  font-size:12px !important;
-  font-weight:850 !important;
-  line-height:1.2 !important;
-}
-#tab-budget .budget-select{
-  font-size:13px !important;
-  font-weight:850 !important;
-  line-height:1.2 !important;
-}
-#tab-budget #lbl-budget-total-lbl{
-  font-size:12px !important;
-  font-weight:750 !important;
-  line-height:1.25 !important;
-  letter-spacing:0 !important;
-}
-#tab-budget #budget-total-val{
-  font-size:15px !important;
-  font-weight:900 !important;
-  line-height:1.2 !important;
-  letter-spacing:-.015em !important;
-}
-#tab-budget #b-cats-list .bheader > .bicon + span{
-  font-size:13px !important;
-  font-weight:800 !important;
-  line-height:1.25 !important;
-}
-#tab-budget #b-cats-list .bheader > input.mongo-inline-color + span{
-  font-size:11px !important;
-  font-weight:650 !important;
-  line-height:1.2 !important;
-}
-#tab-budget #b-cats-list .bbody span{
-  line-height:1.3 !important;
-}
-#tab-budget #b-cats-list .bbody > div > div > span:nth-of-type(2){
-  font-size:12px !important;
-  font-weight:750 !important;
-}
-#tab-budget #btn-save{
-  font-size:13px !important;
-  font-weight:900 !important;
-  line-height:1.2 !important;
-}
-#tab-budget .budget-health-num{
-  font-size:18px !important;
-  font-weight:950 !important;
-  line-height:1 !important;
-}
-#tab-budget .budget-health-label{
-  font-size:10.5px !important;
-  font-weight:800 !important;
-  line-height:1.25 !important;
-}
-#tab-budget .budget-progress-card .bheader > .bicon + div > div:first-child > span:first-of-type{
-  font-size:13px !important;
-  font-weight:850 !important;
-  line-height:1.25 !important;
-}
-#tab-budget .budget-progress-card .bheader > .bicon + div > div:first-child > span:nth-of-type(2){
-  font-size:10.5px !important;
-  font-weight:700 !important;
-  line-height:1.25 !important;
-}
-#tab-budget .budget-progress-card .bbody span{
-  line-height:1.3 !important;
-}
-#tab-budget .budget-progress-card .bbody span:nth-of-type(2){
-  font-size:11.5px !important;
-  font-weight:750 !important;
-}
-#tab-budget .budget-card-mode-note,
-#tab-budget .budget-filter-chip,
-#tab-budget .empty{
-  font-weight:700 !important;
-  line-height:1.4 !important;
-}
-</style>
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -3448,13 +3360,14 @@ function sortNewestCandidates(candidates){return [...(Array.isArray(candidates)?
 function makeCandidate(raw,source){return raw&&raw.data?{raw,source}:null;}
 function unwrapFinancialState(container,source){return makeCandidate(container&&container.financialState,source);}
 function compactCandidates(items){return (Array.isArray(items)?items:[]).filter(Boolean);}
-function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
+function activeClearTombstone(raw){const r=raw&&typeof raw==='object'?raw:null;if(!r||!r.clearedAt)return false;const cleared=stamp(r.clearedAt),dataTime=stamp(r.data&&r.data.clientUpdatedAt);return !!cleared&&(!dataTime||dataTime<=cleared);}
+function selectLoadCandidate(candidates,isMeaningful){const ordered=sortNewestCandidates(compactCandidates(candidates)),newest=ordered[0]||null;if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered,clearMarker:true};const meaningful=ordered.filter(c=>typeof isMeaningful==='function'&&isMeaningful(c.raw&&c.raw.data));return {selected:meaningful[0]||newest,newest,ordered,clearMarker:false};}
 const REQUIRED_STATE_ARRAYS=Object.freeze(['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones']);
 function stateCompleteness(data){const d=data&&typeof data==='object'?data:{},missing=REQUIRED_STATE_ARRAYS.filter(k=>!Array.isArray(d[k]));if(!d.budgets||typeof d.budgets!=='object'||Array.isArray(d.budgets))missing.push('budgets');return {complete:missing.length===0,missing};}
 function stateRevision(data){const n=Number(data&&data.moneyLedgerRevision);return Number.isFinite(n)&&n>=0?n:0;}
 function stateRichness(data){const d=data&&typeof data==='object'?data:{};return REQUIRED_STATE_ARRAYS.reduce((sum,k)=>sum+(Array.isArray(d[k])?d[k].length:0),0)+Object.keys(d.budgets&&typeof d.budgets==='object'?d.budgets:{}).length;}
 function safeCandidateOrder(a,b){const ad=a&&a.raw&&a.raw.data,bd=b&&b.raw&&b.raw.data;return stateRevision(bd)-stateRevision(ad)||stateRichness(bd)-stateRichness(ad)||candidateTime(b)-candidateTime(a);}
-function selectSafeLoadCandidate(candidates){const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;if(newest&&newest.raw&&newest.raw.clearedAt)return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};}
+function selectSafeLoadCandidate(candidates){const all=compactCandidates(candidates),newest=sortNewestCandidates(all)[0]||null;if(newest&&activeClearTombstone(newest.raw))return {selected:newest,newest,ordered:sortNewestCandidates(all),clearMarker:true,blocked:false,quarantined:[]};const complete=all.filter(c=>stateCompleteness(c&&c.raw&&c.raw.data).complete).sort(safeCandidateOrder);const selected=complete[0]||null,quarantined=all.filter(c=>!stateCompleteness(c&&c.raw&&c.raw.data).complete||c!==selected&&safeCandidateOrder(selected,c)<0);return {selected,newest,ordered:complete,clearMarker:false,blocked:!selected,quarantined};}
 function activeClearBarrier(barrier){return !!(barrier&&barrier.active!==false&&barrier.clearedAt&&barrier.data);}
 function selectLoadCandidateWithBarrier(candidates,isMeaningful,barrier){const cloudDecision=selectLoadCandidate(candidates,isMeaningful);if(!activeClearBarrier(barrier))return Object.assign({},cloudDecision,{barrierActive:false,cloudDecision});const raw={clearedAt:barrier.clearedAt,updatedAtClient:barrier.clearedAt,data:barrier.data};const selected={raw,source:'local-clear-barrier'};return {selected,newest:cloudDecision.newest,ordered:cloudDecision.ordered,clearMarker:true,barrierActive:true,cloudDecision};}
 function requiresCanonicalMigration(source){return LEGACY_SOURCES.includes(String(source||''));}
@@ -3465,16 +3378,98 @@ function queueChangedByBarrier(queue,barrier){const before=Array.isArray(queue)?
 function mirrorRequired(reason){return MIRROR_REASONS.includes(String(reason||''));}
 function shouldSkipFingerprint(fp,lastFp,reason){return fp===lastFp&&!mirrorRequired(reason);}
 function tombstoneClearedAt(reason,clean,updatedAtClient){return reason==='clear-tombstone'?((clean&&clean.clientUpdatedAt)||updatedAtClient):null;}
-function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);if(clearedAt)meta.clearedAt=clearedAt;return meta;}
+function writeMetadata(input){const x=input||{},updatedAtClient=x.updatedAtClient;const meta={ownerUid:x.uid,version:x.version,updatedAtClient,clientId:x.clientId,lastOperationId:x.lastOperationId,data:x.data,backup:{updatedAtClient,data:x.data}};const clearedAt=tombstoneClearedAt(x.reason,x.data,updatedAtClient);meta.clearedAt=clearedAt||null;return meta;}
 function missingRequiredMirrors(paths){const found=new Set((paths||[]).map(String));return REQUIRED_MIRRORS.filter(x=>!found.has(x));}
 function completeMirrorWrite(paths){const missing=missingRequiredMirrors(paths);return {complete:missing.length===0,missing,paths:[...(paths||[])]};}
 function getClientId(){const key='mongo_cloud_client_id_v1';try{let id=global.localStorage&&global.localStorage.getItem(key);if(!id){id='mongo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);if(global.localStorage)global.localStorage.setItem(key,id);}return id;}catch(e){return 'mongo-session-'+Math.random().toString(36).slice(2,10);}}
 async function runSafeHardReset(ops){const x=ops||{};if(typeof x.emptyMemory!=='function'||typeof x.purgeLocal!=='function'||typeof x.clearFinancialData!=='function')throw new Error('reset-ops-missing');x.emptyMemory();x.purgeLocal();const cloudCleared=await x.clearFinancialData();if(cloudCleared===false)throw new Error('reset-cloud-clear-failed');x.emptyMemory();x.purgeLocal();if(typeof x.reload==='function')x.reload();return {cleared:true,cloudClearCalls:1,forceReloadCalls:0};}
 global.getClientId=getClientId;
-global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
+global.MongoCloud=Object.freeze({MIRROR_REASONS,LEGACY_SOURCES,REQUIRED_MIRRORS,REQUIRED_STATE_ARRAYS,stamp,chooseCloudOrLocal,candidateTime,sortNewestCandidates,makeCandidate,unwrapFinancialState,compactCandidates,activeClearTombstone,selectLoadCandidate,stateCompleteness,stateRevision,stateRichness,safeCandidateOrder,selectSafeLoadCandidate,activeClearBarrier,selectLoadCandidateWithBarrier,requiresCanonicalMigration,chooseClearBarrier,queueItemAllowedAfterClear,filterQueueAfterClear,queueChangedByBarrier,mirrorRequired,shouldSkipFingerprint,tombstoneClearedAt,writeMetadata,missingRequiredMirrors,completeMirrorWrite,getClientId,runSafeHardReset});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/storage/storage.js"></script>
+<script data-mongo-source="src/services/storage/storage.js">
+// Möngö local storage service
+// V44 modularization foundation.
+// Compatibility-first wrapper: callers can migrate incrementally without
+// changing the stored keys or serialized data format.
+
+(function (global) {
+  'use strict';
+
+  const nativeStorage = global.localStorage;
+
+  function get(key, fallback = null) {
+    try {
+      const value = nativeStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (error) {
+      console.warn('[Möngö storage] get failed:', key, error);
+      return fallback;
+    }
+  }
+
+  function set(key, value) {
+    try {
+      nativeStorage.setItem(key, String(value));
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] set failed:', key, error);
+      return false;
+    }
+  }
+
+  function remove(key) {
+    try {
+      nativeStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.warn('[Möngö storage] remove failed:', key, error);
+      return false;
+    }
+  }
+
+  function getJSON(key, fallback = null) {
+    const raw = get(key, null);
+    if (raw === null) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      console.warn('[Möngö storage] invalid JSON:', key, error);
+      return fallback;
+    }
+  }
+
+  function setJSON(key, value) {
+    try {
+      return set(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn('[Möngö storage] JSON stringify failed:', key, error);
+      return false;
+    }
+  }
+
+  function has(key) {
+    return get(key, null) !== null;
+  }
+
+  function keys() {
+    try {
+      const out = [];
+      for (let i = 0; i < nativeStorage.length; i += 1) {
+        const key = nativeStorage.key(i);
+        if (key !== null) out.push(key);
+      }
+      return out;
+    } catch (error) {
+      console.warn('[Möngö storage] keys failed:', error);
+      return [];
+    }
+  }
+
+  global.MongoStorage = Object.freeze({ get, set, remove, getJSON, setJSON, has, keys });
+})(window);
+
+</script>
 <script>
 /* Phase 1L phone-inline: exact-compatible Core subset required by current app callers. */
 (function(g){'use strict';const K=new Set(['income','expense','transfer','savings_transfer','investment_contribution','loan_received','loan_payment','asset_purchase','asset_income','savings_interest']),id=v=>String(v??''),cl=v=>v==null?v:JSON.parse(JSON.stringify(v));
@@ -3591,8 +3586,9 @@ global.MongoLoans=Object.freeze({payments,principalPaid,totalPaid,interestPaid,o
 const num=v=>Number(v)||0,MODES=new Set(['compound','payout','maturity','none']),FREQUENCIES=new Set(['monthly','quarterly','yearly','maturity']);
 function transferContribution(goal,transfers){return (Array.isArray(transfers)?transfers:[]).filter(t=>t?.purpose==='savings'&&String(t.targetId)===String(goal?.id)).reduce((s,t)=>s+num(t.amount),0);}
 function interestContribution(goal,txns){return (Array.isArray(txns)?txns:[]).filter(t=>t?.type==='income'&&t.incomePurpose==='savings_interest'&&String(t.goalId)===String(goal?.id)).reduce((s,t)=>s+num(t.amount),0);}
+function withdrawalContribution(goal,transfers){return (Array.isArray(transfers)?transfers:[]).filter(t=>t?.purpose==='savings_withdrawal'&&String(t.targetId)===String(goal?.id)).reduce((s,t)=>s+num(t.amount),0);}
 function autoSaved(goal,transfers,txns){return transferContribution(goal,transfers)+interestContribution(goal,txns);}
-function effectiveSaved(goal,transfers,txns){return Math.max(0,num(goal?.saved))+autoSaved(goal,transfers,txns);}
+function effectiveSaved(goal,transfers,txns){return Math.max(0,Math.max(0,num(goal?.saved))+autoSaved(goal,transfers,txns)-withdrawalContribution(goal,transfers));}
 function progressPct(goal,transfers,txns){const target=Math.max(0,num(goal?.target)),saved=Math.max(0,effectiveSaved(goal,transfers,txns));return target>0?Math.max(0,Math.min(100,Math.round(saved/target*100))):0;}
 function addMonthsSafe(date,months){const d=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12,0,0,0),day=d.getDate();d.setMonth(d.getMonth()+months);if(d.getDate()<day)d.setDate(0);return d;}
 function monthsBetweenCeil(from,to){const start=new Date(from.getFullYear(),from.getMonth(),from.getDate(),12,0,0,0),end=new Date(to.getFullYear(),to.getMonth(),to.getDate(),12,0,0,0);if(end<=start)return 0;let months=(end.getFullYear()-start.getFullYear())*12+(end.getMonth()-start.getMonth());if(addMonthsSafe(start,months)<end)months++;return Math.max(0,months);}
@@ -3602,7 +3598,7 @@ function interestDestination(account,defaultAccountId){if(!account||account.inte
 function linkedGoalId(account){return account?.linkedGoalId||account?.goalId||null;}
 function makeLinkedGoal(input,options={}){const x=input||{},selected=x.selectedGoalId||'';if(selected!=='__new__')return {ok:true,id:selected||null,goal:null};const target=num(x.target);if(!(target>0))return {ok:false,reason:'target_required'};const id=x.id||options.id||null,color=x.color||options.color||null;return {ok:true,id,goal:{id,name:(x.name||'').trim(),target,saved:Math.max(0,num(x.openingBalance)),dead:x.deadline||x.maturityDate||'',color,createdAt:x.createdAt||options.date||new Date().toISOString().slice(0,10),history:[]}};}
 function makeInterestTransaction(input,options={}){const x=input||{},amount=Math.round(num(x.amount));if(!(amount>0))return {ok:false,reason:'amount_required'};if(!x.date)return {ok:false,reason:'date_required'};if(!x.accountId)return {ok:false,reason:'account_required'};if(!x.savingsAccountId)return {ok:false,reason:'savings_account_required'};return {ok:true,transaction:{id:x.id||options.id||null,type:'income',desc:x.desc||'',catKey:x.catKey||null,catName:x.catName||'',subcatName:x.subcatName||'',amount,date:x.date,accountId:x.accountId,savingsInterest:true,savingsAccountId:x.savingsAccountId,interestMode:x.interestMode||'compound',incomePurpose:'savings_interest',goalId:x.goalId||null,createdAt:x.createdAt||options.timestamp||new Date().toISOString()}};}
-global.MongoSavings=Object.freeze({transferContribution,interestContribution,autoSaved,effectiveSaved,progressPct,addMonthsSafe,monthsBetweenCeil,calendarMonthsDaysBetween,normalizeInterestMetadata,interestDestination,linkedGoalId,makeLinkedGoal,makeInterestTransaction});
+global.MongoSavings=Object.freeze({transferContribution,withdrawalContribution,interestContribution,autoSaved,effectiveSaved,progressPct,addMonthsSafe,monthsBetweenCeil,calendarMonthsDaysBetween,normalizeInterestMetadata,interestDestination,linkedGoalId,makeLinkedGoal,makeInterestTransaction});
 })(window);
 </script>
 <script>
@@ -3656,8 +3652,36 @@ function applyBudgetMoves(budgets,moves){(moves||[]).forEach(m=>{if(!Object.prot
 global.MongoBudget=Object.freeze({categoryKey,subcategoryKey,yearMonthKey,getValue,rowInMonth,sumRows,savingsGoalActual,investmentActual,loanActual,progress,sourceKey,sourceNames,sourceDescriptor,selectedPeriodIsCurrentOrFuture,canSeedBudget,investmentSourceEligible,investmentContributionEligible,isLinkedSourceKey,findLegacySource,migrateBudgetSuffixes,applyBudgetMoves});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/services/cloud/cloud.js?v=4166a5e87c19b4cbca9b9731212601474220278b"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/audit/audit.js"></script>
+<!-- Cloud helpers are already embedded above; removed CSP-blocked duplicate. -->
+<script data-mongo-source="src/audit/audit.js">
+// Möngö Audit — Phase 1 COMPLETE
+// Pure read-only cross-feature invariant findings and deterministic reports. Never mutates or auto-fixes financial data.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0, id=v=>String(v==null?'':v);
+function finding(code,severity,details){return {code,severity:severity||'error',...(details||{})};}
+function duplicateIds(rows){const seen=new Set(),dupes=new Set();(rows||[]).forEach(r=>{const k=id(r&&r.id);if(!k)return;if(seen.has(k))dupes.add(k);seen.add(k);});return [...dupes];}
+function stableValue(v){if(Array.isArray(v))return v.map(stableValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>o[k]=stableValue(v[k]));return o;}return v;}
+function findingKey(f){return JSON.stringify(stableValue(f||{}));}
+function normalizeFindings(findings){const seen=new Set();return (findings||[]).filter(Boolean).filter(f=>{const k=findingKey(f);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>{const rank={error:0,warn:1,info:2},sa=rank[a.severity]??9,sb=rank[b.severity]??9;return sa-sb||String(a.code||'').localeCompare(String(b.code||''))||findingKey(a).localeCompare(findingKey(b));});}
+function summarize(findings){const rows=normalizeFindings(findings),bySeverity={error:0,warn:0,info:0},byCode={};rows.forEach(f=>{const s=f.severity||'error';bySeverity[s]=(bySeverity[s]||0)+1;const c=String(f.code||'unknown');byCode[c]=(byCode[c]||0)+1;});return {total:rows.length,bySeverity,byCode,findings:rows};}
+function ledgerIdFindings(ledger,expectedIds){const rows=Array.isArray(ledger)?ledger:[],actual=new Set(rows.map(r=>id(r&&r.id)).filter(Boolean)),out=[];duplicateIds(rows).forEach(x=>out.push(finding('duplicate-ledger-id','error',{id:x})));(expectedIds||[]).map(id).filter(Boolean).forEach(x=>{if(!actual.has(x))out.push(finding('missing-ledger-id','error',{id:x}));});return out;}
+function sourceLedgerIds(input){const x=input||{},ids=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>ids.push('txn:'+id(t.id)));(x.transfers||[]).forEach(t=>ids.push('transfer:'+id(t.id)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&num(d.fundingAmount)>0&&d.fundingAccountId)ids.push('loan-received:'+id(d.id));(Array.isArray(d&&d.payments)?d.payments:[]).forEach(p=>ids.push('loan-payment:'+id(p.id)));});return ids;}
+function sourceLedgerParityFindings(input){const x=input||{},expected=sourceLedgerIds(x),expectedSet=new Set(expected),out=ledgerIdFindings(x.ledger,expected);(x.ledger||[]).forEach(e=>{const lid=id(e&&e.id);if(lid&&/^(txn:|transfer:|loan-received:|loan-payment:)/.test(lid)&&!expectedSet.has(lid))out.push(finding('orphan-ledger-row','warn',{ledgerId:lid,kind:e&&e.kind}));});return out;}
+function transferFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to)out.push(finding('transfer-missing-account','error',{id:tid,fromId:from,toId:to}));if(from&&to&&from===to)out.push(finding('transfer-same-account','error',{id:tid,accountId:from}));if(amount<=0)out.push(finding('transfer-nonpositive-amount','error',{id:tid,amount}));});return out;}
+function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]);if(aid&&!known.has(aid))out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
+function ledgerDeltaForAccount(accountId,ledger){const aid=id(accountId);return (ledger||[]).reduce((sum,e)=>sum+(id(e&&e.toAccountId)===aid?num(e.amount):0)-(id(e&&e.fromAccountId)===aid?num(e.amount):0),0);}
+function accountBalanceFindings(accounts,ledger,balanceFor){if(typeof balanceFor!=='function')return [];const out=[];(accounts||[]).forEach(a=>{const aid=id(a&&a.id),opening=num(a&&a.openingBalance),delta=ledgerDeltaForAccount(aid,ledger),expected=opening+delta,actual=num(balanceFor(aid));if(Math.abs(actual-expected)>1)out.push(finding('account-balance-ledger-mismatch','error',{accountId:aid,opening,ledgerDelta:delta,expected,actual}));});return out;}
+function transferConservationFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to||from===to||amount<=0)return;const sourceDelta=-amount,destinationDelta=amount,net=sourceDelta+destinationDelta;if(Math.abs(net)>1e-9)out.push(finding('transfer-conservation-failed','error',{id:tid,sourceDelta,destinationDelta,net}));});return out;}
+function loanSplitFindings(ledger){const out=[];(ledger||[]).filter(e=>e&&e.kind==='loan_payment').forEach(e=>{const total=num(e.amount),split=num(e.principal)+num(e.interest)+num(e.extraPrincipal);if(Math.abs(total-split)>1)out.push(finding('loan-payment-split-mismatch','error',{ledgerId:id(e.id),total,split}));});return out;}
+function legacyLoanTxnFindings(txns){return (txns||[]).filter(t=>t&&t.loanPaymentId).map(t=>finding('loan-payment-duplicate-txn-signal','warn',{txnId:id(t.id),loanPaymentId:id(t.loanPaymentId)}));}
+function savingsDoubleCountFindings(txns,transfers){const moved=new Set((transfers||[]).filter(t=>t&&t.purpose==='savings').map(t=>id(t.targetId)).filter(Boolean));return (txns||[]).filter(t=>t&&t.type==='expense'&&moved.has(id(t.goalId||t.targetId))&&(t.purpose==='savings'||t.expensePurpose==='savings')).map(t=>finding('savings-transfer-expense-double-count-signal','warn',{txnId:id(t.id),goalId:id(t.goalId||t.targetId)}));}
+function run(input){const x=input||{},out=[];out.push(...sourceLedgerParityFindings(x));out.push(...transferFindings(x.transfers));out.push(...accountReferenceFindings(x.accounts,x.ledger));out.push(...accountBalanceFindings(x.accounts,x.ledger,x.balanceFor));out.push(...transferConservationFindings(x.transfers));out.push(...loanSplitFindings(x.ledger));out.push(...legacyLoanTxnFindings(x.txns));out.push(...savingsDoubleCountFindings(x.txns,x.transfers));return normalizeFindings(out);}
+function report(input){return summarize(run(input));}
+global.MongoAudit=Object.freeze({finding,duplicateIds,stableValue,findingKey,normalizeFindings,summarize,ledgerIdFindings,sourceLedgerIds,sourceLedgerParityFindings,transferFindings,accountReferenceFindings,ledgerDeltaForAccount,accountBalanceFindings,transferConservationFindings,loanSplitFindings,legacyLoanTxnFindings,savingsDoubleCountFindings,run,report});
+})(window);
+
+</script>
 <script>
 // Möngö i18n dictionaries — Phase 1E COMPLETE
 // Exact extracted payload from the latest full HTML. Do not rewrite translations during modularization.
@@ -3689,9 +3713,101 @@ function keyParity(dictionaries){const out={};LOCALES.forEach(l=>out[l]=missingK
 global.MongoI18n=Object.freeze({LOCALES,DEFAULT_LOCALE,CURRENCY,hasLocale,normalizeLocale,language,currency,ownValue,value,categoryLabel,namedLabel,missingKeys,keyParity});
 })(window);
 </script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/web/platform.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/features/subscription/access.js"></script>
-<script src="https://raw.githubusercontent.com/Oyu347/Mongo-moneyapp-/development-modular/src/mobile/platform.js"></script>
+<script data-mongo-source="src/web/platform.js">
+// Möngö Web — Phase 1 COMPLETE
+// Browser/platform compatibility only. No financial, Firebase, storage or UI policy logic.
+(function(global){
+'use strict';
+function capabilities(env){const w=env||global,n=w&&w.navigator,d=w&&w.document,u=w&&w.URL;return Object.freeze({dom:!!(d&&typeof d.createElement==='function'),blob:typeof (w&&w.Blob)==='function',objectUrl:!!(u&&typeof u.createObjectURL==='function'),fileReader:typeof (w&&w.FileReader)==='function',reload:!!(w&&w.location&&typeof w.location.reload==='function'),online:!!(n&&typeof n.onLine==='boolean'),events:!!(w&&typeof w.addEventListener==='function'),documentEvents:!!(d&&typeof d.addEventListener==='function')});}
+function canDownload(env){const c=capabilities(env);return c.dom&&c.blob&&c.objectUrl;}
+function downloadText(text,filename,mime,env){
+  const w=env||global,d=w&&w.document,u=w&&w.URL,B=w&&w.Blob;
+  if(!canDownload(w))return false;
+  let href='',a=null;
+  try{
+    const blob=new B([String(text==null?'':text)],{type:mime||'text/plain'});
+    if(w.navigator&&typeof w.navigator.msSaveOrOpenBlob==='function'){
+      w.navigator.msSaveOrOpenBlob(blob,String(filename||'download.txt'));
+      return true;
+    }
+    href=u.createObjectURL(blob);a=d.createElement('a');
+    a.href=href;a.download=String(filename||'download.txt');a.rel='noopener';
+    if(a.style)a.style.display='none';
+    const parent=d.body||d.documentElement;
+    if(parent&&typeof parent.appendChild==='function')parent.appendChild(a);
+    a.click();
+    setTimeout(()=>{try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}try{if(typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}},3000);
+    return true;
+  }catch(_){
+    try{if(a&&a.parentNode)a.parentNode.removeChild(a);}catch(_){}
+    try{if(href&&typeof u.revokeObjectURL==='function')u.revokeObjectURL(href);}catch(_){}
+    return false;
+  }
+}
+function readTextFile(file,handlers,env){const w=env||global,R=w&&w.FileReader,h=handlers||{};if(!file||typeof R!=='function')return false;const reader=new R();reader.onload=function(ev){if(typeof h.load==='function')h.load(ev&&ev.target?ev.target.result:reader.result,ev);};reader.onerror=function(ev){if(typeof h.error==='function')h.error(ev);};reader.readAsText(file);return true;}
+function reload(delay,env){const w=env||global;if(!(w&&w.location&&typeof w.location.reload==='function'))return false;if(Number(delay)>0)setTimeout(()=>w.location.reload(),Number(delay));else w.location.reload();return true;}
+function onPageShow(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('pageshow',handler);return true;}
+function onVisible(handler,env){const w=env||global,d=w&&w.document;if(!(d&&typeof d.addEventListener==='function')||typeof handler!=='function')return false;d.addEventListener('visibilitychange',function(ev){if(!d.hidden)handler(ev);});return true;}
+function onFocus(handler,env){const w=env||global;if(!(w&&typeof w.addEventListener==='function')||typeof handler!=='function')return false;w.addEventListener('focus',handler);return true;}
+global.MongoWeb=Object.freeze({capabilities,canDownload,downloadText,readTextFile,reload,onPageShow,onVisible,onFocus});
+})(window);
+
+</script>
+<script data-mongo-source="src/features/subscription/access.js">
+// Möngö Subscription/Trial access — Phase 1A
+// Pure compatibility extraction from the V43.14–V43.20 inline trial/paywall policy.
+(function(global){
+'use strict';
+const TRIAL_DAYS=7;
+function trialInfo(state,overrideDay){
+  if(!state)return {day:null,remaining:null,isExpired:false,isPaid:false,status:'unknown'};
+  const isPaid=state.subscriptionStatus==='active'||!!state.subscriptionStartDate;
+  const override=Number.isInteger(overrideDay)&&overrideDay>=1&&overrideDay<=30?overrideDay:null;
+  const day=Math.max(1,override||Number(state.trialDay||1));
+  return {day,remaining:Math.max(0,TRIAL_DAYS-day),isExpired:!isPaid&&day>TRIAL_DAYS,isPaid,status:isPaid?'active':(day>TRIAL_DAYS?'expired':'trial')};
+}
+function isReadOnly(state,overrideDay){const info=trialInfo(state,overrideDay);return !!(info&&info.isExpired&&!info.isPaid);}
+function reminderDay(state,overrideDay){const info=trialInfo(state,overrideDay);return !info.isPaid&&!info.isExpired&&[5,6,7].includes(info.day)?info.day:null;}
+function classifyTarget(input){
+  const x=input||{},text=String(x.text||'').trim().toLowerCase(),idcls=String(x.idClass||'').toLowerCase();
+  const exactLoan=['зээл','loan','loans','debt'];
+  if(x.freeAfterTrial==='loan-nav'||exactLoan.includes(text)||['nav-loan','loan-nav','nav-debt','debt-nav','tab-loan-main','loan-menu'].some(k=>idcls.includes(k)))return 'loan-free';
+  const calc=text==='тооцоолуур'||text==='calculator'||text.includes('зээлийн тооцоолуур')||text.includes('loan calculator')||idcls.includes('calculator')||idcls.includes('calc');
+  const context=String(x.context||'').toLowerCase();
+  if(calc&&(text.includes('зээл')||text.includes('loan')||idcls.includes('loan')||idcls.includes('debt')||context.includes('loan')||context.includes('debt')))return 'loan-free';
+  if(x.insideLoanCalculator)return 'loan-free';
+  if(calc&&(context.includes('хуримтлал')||context.includes('saving')||context.includes('хөрөнгө')||context.includes('investment')||context.includes('asset')))return 'premium-calculator';
+  if(x.writeAction)return 'write';
+  return 'view';
+}
+function accessDecision(state,target,overrideDay){
+  if(!isReadOnly(state,overrideDay))return {allowed:true,reason:'active'};
+  const kind=classifyTarget(target);
+  if(kind==='loan-free'||kind==='view')return {allowed:true,reason:kind};
+  return {allowed:false,reason:kind};
+}
+global.MongoSubscription=Object.freeze({TRIAL_DAYS,trialInfo,isReadOnly,reminderDay,classifyTarget,accessDecision});
+})(window);
+
+</script>
+<script data-mongo-source="src/mobile/platform.js">
+// Möngö Mobile — Phase 1 COMPLETE
+// Platform/shell compatibility only. No financial, Cloud, storage, auth, payment or UI routing policy.
+(function(global){
+'use strict';
+function capacitor(env){const w=env||global;return w&&w.Capacitor||null;}
+function isNative(env){const c=capacitor(env);if(!c)return false;if(typeof c.isNativePlatform==='function')return !!c.isNativePlatform();if(typeof c.getPlatform==='function')return c.getPlatform()!=='web';return false;}
+function platform(env){const c=capacitor(env);if(c&&typeof c.getPlatform==='function')return String(c.getPlatform()||'web');return 'web';}
+function plugin(name,env){const c=capacitor(env);const p=c&&c.Plugins;return p&&name?p[name]||null:null;}
+function normalizeAppState(event){const e=event||{};return Object.freeze({active:!!e.isActive});}
+function normalizeDeepLink(event,env){const raw=event&&typeof event.url==='string'?event.url.trim():'';if(!raw)return Object.freeze({url:'',protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});try{const w=env||global;const U=w&&w.URL?w.URL:URL;const u=new U(raw);return Object.freeze({url:u.href,protocol:u.protocol||'',host:u.host||'',pathname:u.pathname||'',search:u.search||'',hash:u.hash||'',valid:true});}catch(_){return Object.freeze({url:raw,protocol:'',host:'',pathname:'',search:'',hash:'',valid:false});}}
+function normalizeBackEvent(event){const e=event||{};return Object.freeze({canGoBack:!!e.canGoBack});}
+function fileCapabilities(env){return Object.freeze({filesystem:!!plugin('Filesystem',env),share:!!plugin('Share',env)});}
+function capabilities(env){const w=env||global,c=capacitor(w),files=fileCapabilities(w);return Object.freeze({capacitor:!!c,native:isNative(w),platform:platform(w),touch:!!(w&&(('ontouchstart' in w)||(w.navigator&&Number(w.navigator.maxTouchPoints)>0))),safeAreaCss:true,appPlugin:!!plugin('App',w),keyboardPlugin:!!plugin('Keyboard',w),statusBarPlugin:!!plugin('StatusBar',w),filesystemPlugin:files.filesystem,sharePlugin:files.share});}
+global.MongoMobile=Object.freeze({capacitor,isNative,platform,plugin,normalizeAppState,normalizeDeepLink,normalizeBackEvent,fileCapabilities,capabilities});
+})(window);
+
+</script>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────
 const PAL=['#22C55E','#49B0B6','#F97316','#EF4444','#8B5CF6','#06B6D4','#F59E0B','#14B8A6','#64748B','#A855F7','#10B981','#FB7185','#334155','#84CC16'];
@@ -7720,8 +7836,19 @@ function renderTransferTarget(){
   const p=document.getElementById('t-transfer-purpose'),tar=document.getElementById('t-transfer-target');
   const to=document.getElementById('t-to-account');
   if(!p||!tar)return;
-  const purpose=p.value,fromId=document.getElementById('t-from-account')?.value||'';
+  const purpose=p.value;
   const active=window.MongoAccounts.activeAccounts(moneyAccounts,{excludeLegacy:true});
+  const everyday=active.filter(a=>normalizeAccountType(a.type)!=='savings');
+  const from=document.getElementById('t-from-account');
+  // V29: savings accounts are purpose-specific. They are never offered in Simple transfer.
+  // Savings contributions use the dedicated Savings flow, which stores purpose + goalId canonically.
+  const sourcePool=(purpose==='internal'||purpose==='savings')?everyday:active;
+  if(from){
+    const oldFrom=from.value;
+    from.innerHTML=sourcePool.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');
+    if(sourcePool.some(a=>String(a.id)===String(oldFrom)))from.value=oldFrom;
+  }
+  const fromId=from?.value||'';
 
   if(purpose==='asset'){
     // Asset / Expense decision is the only secondary choice here.
@@ -7732,11 +7859,24 @@ function renderTransferTarget(){
   }else if(purpose==='internal'){
     tar.innerHTML='';
     tar.style.setProperty('display','none','important');
-    if(to){const old=to.value;to.innerHTML=active.filter(a=>String(a.id)!==String(fromId)).map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');to.style.display='';if([...to.options].some(o=>o.value===old))to.value=old;}
+    if(to){
+      const old=to.value;
+      const destinations=everyday.filter(a=>String(a.id)!==String(fromId));
+      const emptyText={mn:'Энгийн шилжүүлэгт өөр өдөр тутмын данс алга',en:'No other everyday account for a simple transfer',zh:'没有可用于普通转账的其他日常账户',ja:'通常の振替に使える別の日常口座がありません',ko:'일반 이체에 사용할 다른 생활 계좌가 없습니다',ru:'Нет другого повседневного счёта для обычного перевода',de:'Kein weiteres Alltagskonto für eine normale Überweisung'}[lang]||'No other everyday account for a simple transfer';
+      to.innerHTML=destinations.length?destinations.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join(''):`<option value="">${emptyText}</option>`;
+      to.style.display='';
+      if(destinations.some(a=>String(a.id)===String(old)))to.value=old;
+    }
   }else if(purpose==='savings'){
     if(to){to.innerHTML='';to.style.display='none';}
     tar.style.removeProperty('display');
-    const linkedGoals=goals.filter(g=>active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id)));
+    const linkedGoals=goals.filter(g=>{
+      const saved=typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):(Number(g.saved)||0);
+      const goalIsActive=window.MongoArchive?.goalActive
+        ?!!window.MongoArchive.goalActive(g,saved)
+        :!(g.archivedAt||g.completedAt);
+      return goalIsActive&&active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id));
+    });
     tar.innerHTML=linkedGoals.map(g=>`<option value="${g.id}">🎯 ${g.name} · ${fmt(getGoalEffectiveSaved(g))}</option>`).join('');
     if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Холбогдсон хуримтлал эхлээд үүсгэнэ үү':'Create a linked savings goal first'}</option>`;
   }else if(purpose==='investment'){
@@ -7764,8 +7904,9 @@ function addTransaction(){
     const fromId=(document.getElementById('t-from-account')||{}).value;
     let toId=(document.getElementById('t-to-account')||{}).value;
     const date=document.getElementById('t-date').value;
-    const purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
+    let purpose=(document.getElementById('t-transfer-purpose')||{}).value||'internal';
     let targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
+    // V29: Simple transfer cannot target savings accounts; savings uses the dedicated flow.
     if(purpose==='savings'){
       // Canonical savings link: every new savings transfer is stored against the real goal id.
       // The selected value may be a goal id (current UI) or, for compatibility, a savings account id.
@@ -9184,7 +9325,8 @@ function rGoals(){
   el.innerHTML=goalsByProgress().map(g=>{
     const manualSaved=Math.max(0,g.saved||0);
     const autoPaid=getGoalAutoSaved(g);
-    const effectiveSaved=manualSaved+autoPaid;
+    /* Authoritative goal balance: opening/manual + deposits + interest - withdrawals. */
+    const effectiveSaved=getGoalEffectiveSaved(g);
     const pct=Math.min(100,g.target>0?Math.round(effectiveSaved/g.target*100):0);
     const hist=g.history||[];
     let cumulHtml='';
@@ -9834,20 +9976,35 @@ function importData(e){
     const clean=secParseBackup(raw);
     clean.clientUpdatedAt=new Date().toISOString();
     window.MONGO_LOCAL_DATA_UPDATED_AT=clean.clientUpdatedAt;
+    // Restore is an explicit user action that replaces a previously cleared state.
+    // Retire only this user's local clear barrier before applying/uploading the backup.
+    try{
+      const restoreUid=(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid)||window._authUid||'guest';
+      localStorage.removeItem('mongo_clear_barrier_'+restoreUid);
+    }catch(e){}
     window.MongoStorage.setJSON(getDBKey(),clean);
     // Restore хийсний дараа reload-оос ӨМНӨ Firestore руу заавал түлхэнэ.
     // Ингэснээр шинэ төхөөрөмж/нууц tab дээр ижил хэрэглэгчийн өгөгдөл шууд ачаална.
+    let restoreCommitted=!(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser);
     if(window.CloudDataService && window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth.currentUser){
       try{
-        if(typeof window.CloudDataService.applyFinancialState==='function') window.CloudDataService.applyFinancialState(clean,'restore-import');
-        await window.CloudDataService.saveFinancialData('force');
+        const applied=(typeof window.CloudDataService.applyFinancialState==='function')?window.CloudDataService.applyFinancialState(clean,'restore-import'):true;
+        if(applied===false) throw new Error('RESTORE_APPLY_FAILED');
+        // The apply guard may advance the revision on a clone. Persist and upload
+        // the applied state so local and Cloud copies share the same revision.
+        if(typeof window.CloudDataService.collectFinancialState!=='function') throw new Error('RESTORE_STATE_COLLECTION_UNAVAILABLE');
+        const restoredState=window.CloudDataService.collectFinancialState();
+        window.MongoStorage.setJSON(getDBKey(),restoredState);
+        const cloudRestored=(typeof window.CloudDataService.restoreFinancialData==='function')?await window.CloudDataService.restoreFinancialData(restoredState):await window.CloudDataService.saveFinancialData('force');
+        if(cloudRestored!==true) throw new Error('RESTORE_CLOUD_COMMIT_FAILED');
+        restoreCommitted=true;
         showToast('Restore + Cloud sync ✓');
       }catch(syncErr){
         console.warn('Restore cloud sync failed:',syncErr);
         showToast('Restore хийсэн. Cloud sync дахин оролдоно.');
       }
     }
-    window.MongoWeb.reload(350);
+    if(restoreCommitted) window.MongoWeb.reload(350);
   }catch(err){showToast('Файл буруу эсвэл аюултай өгөгдөлтэй байна');}
   finally{e.target.value='';}}});
 }
@@ -11265,11 +11422,10 @@ const MONGO_TRIAL_DAYS=7;
 // This changes only the in-browser test calculation. Firestore trialStartDate is NEVER modified.
 function mongoTrialTestDay(){
   try{
-    const raw=new URLSearchParams(window.location.search).get('trialTestDay');
-    if(raw===null)return null;
-    const day=Number(raw);
-    return Number.isInteger(day)&&day>=1&&day<=8?day:null;
-  }catch(e){return null;}
+    const q=new URLSearchParams(location.search);
+    const v=Number(q.get('trialTestDay'));
+    return [5,6,7,8].includes(v)?v:null;
+  }catch(e){ return null; }
 }
 function mongoTrialInfo(state){
   const override=mongoTrialTestDay();
@@ -12357,9 +12513,10 @@ auth.onAuthStateChanged(async user=>{
     return payload.id;
   }
 
-  async function writeCloud(data,reason,expectedUid){
+  async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    const isExplicitRestore=!!(options&&options.explicitRestore);
+    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
@@ -12478,9 +12635,35 @@ auth.onAuthStateChanged(async user=>{
     const data=collectFinancialState();
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
-    try{ await writeCloud(data,reason||'auto',sessionUid); await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true; }
+    try{
+      const saveStartedAt=nowIso();
+      await writeCloud(data,reason||'auto',sessionUid);
+      const queued=getQueue();
+      const kept=queued.filter(item=>item&&item.reason==='clear-tombstone'||window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(saveStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      await processQueue(); updateSyncStatus(getQueue().length?'pending':'synced'); return true;
+    }
     catch(e){ enqueueSave(reason||'cloud-error',data); updateSyncStatus('pending'); return false; }
   }
+  async function restoreCloudNow(data){
+    if(!hasFirebaseUser() || !accountReadyForCloud() || !navigator.onLine) return false;
+    const sessionUid=currentUid();
+    if(!sessionUid || currentUid()!==sessionUid) return false;
+    const restoreStartedAt=nowIso();
+    try{
+      await writeCloud(data,'force',sessionUid,{explicitRestore:true});
+      const queued=getQueue();
+      const kept=queued.filter(item=>window.MongoCloud.stamp(item&&item.createdAt)>window.MongoCloud.stamp(restoreStartedAt));
+      if(kept.length!==queued.length)setQueue(kept);
+      updateSyncStatus('synced');
+      return true;
+    }catch(e){
+      console.warn('Explicit restore cloud write failed:',e);
+      updateSyncStatus('error');
+      return false;
+    }
+  }
+
   function scheduleCloudSave(reason){
     if(applyingCloud||clearingFinancialData||window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return;
     clearTimeout(cloudSaveTimer);
@@ -12568,7 +12751,7 @@ auth.onAuthStateChanged(async user=>{
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
-        const chosen=raw.clearedAt
+        const chosen=(MongoCloud.activeClearTombstone?MongoCloud.activeClearTombstone(raw):!!raw.clearedAt)
           ? {data:raw.data,source:'cloud-cleared'}
           : chooseCloudOrLocal(raw.data,raw.updatedAtClient);
         const ok=applyFinancialState(chosen.data,chosen.source);
@@ -12713,7 +12896,7 @@ auth.onAuthStateChanged(async user=>{
   window.CloudDataService={
     version:CLOUD_FINANCIAL_VERSION,
     collectFinancialState, applyFinancialState,
-    saveFinancialData:saveCloudNow, loadFinancialData:loadCloudFinancialData,
+    saveFinancialData:saveCloudNow, restoreFinancialData:restoreCloudNow, loadFinancialData:loadCloudFinancialData,
     scheduleSave:scheduleCloudSave, rerender:rerenderFinance,
     queue:{get:getQueue,process:processQueue,enqueue:enqueueSave},
     snapshot:{get:getSnapshot,save:saveSnapshot},
@@ -15125,7 +15308,14 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function installCloudGuard(){
     const svc=window.CloudDataService;if(!svc||typeof svc.applyFinancialState!=='function'){setTimeout(installCloudGuard,500);return;}if(svc.__v4412Guard){cloudGuardInstalled=true;return;}
     const original=svc.applyFinancialState.bind(svc);svc.applyFinancialState=function(raw,source){
-      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),localRev=Math.max(0,Number(moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
+      const localRev=Math.max(0,Number(moneyLedgerRevision)||0),isExplicitRestore=String(source||'')==='restore-import';
+      if(isExplicitRestore){
+        const incoming=clone(raw||{}),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0);
+        incoming.moneyLedgerTombstones=Array.isArray(incoming.moneyLedgerTombstones)?clone(incoming.moneyLedgerTombstones):[];
+        incoming.moneyLedgerRevision=Math.max(localRev,incomingRev)+1;
+        const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=clone(incoming.moneyLedgerTombstones);moneyLedgerRevision=incoming.moneyLedgerRevision;committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
+      }
+      const incoming=applyTombstonesToState(raw,moneyLedgerTombstones),incomingRev=Math.max(0,Number(incoming.moneyLedgerRevision)||0),incomingTime=Date.parse(incoming.clientUpdatedAt||0)||0,localTime=Date.parse(window.MONGO_LOCAL_DATA_UPDATED_AT||0)||0;
       if(localRev>incomingRev&&localTime>=incomingTime){if(typeof svc.saveFinancialData==='function')setTimeout(()=>svc.saveFinancialData('v44.12-local-newer'),0);return false;}
       const ok=original(incoming,source);if(ok!==false){moneyLedgerTombstones=mergeTombstones(moneyLedgerTombstones,incoming.moneyLedgerTombstones);moneyLedgerRevision=Math.max(localRev,incomingRev);committed=snapshot();setTimeout(()=>{try{if(typeof rebuildMoneyViewsFromLedger==='function')rebuildMoneyViewsFromLedger();}catch(e){}},0);}return ok;
     };svc.__v4412Guard=true;cloudGuardInstalled=true;
@@ -15465,13 +15655,13 @@ select.fi{touch-action:pan-y;cursor:pointer}
 (()=>{
   'use strict';
   const TXT={
-    mn:{search:'Шилжүүлэг шүүх',placeholder:'Нэр эсвэл огноогоор хайх',edit:'Шилжүүлгийн дүн, огноо засах',editAccount:'Засах',deactivate:'Идэвхгүй болгох',amount:'Дүн',date:'Огноо',cancel:'Болих',save:'Хадгалах',remove:'Энэ шилжүүлгийг устгах уу?',linked:'Холбогдсон хуримтлал/хөрөнгө оруулалтын дүн мөн шинэчлэгдэнэ.',notFound:'Шилжүүлэг олдсонгүй'},
-    en:{search:'Filter transfers',placeholder:'Search by name or date',edit:'Edit transfer amount and date',editAccount:'Edit',deactivate:'Deactivate',amount:'Amount',date:'Date',cancel:'Cancel',save:'Save',remove:'Delete this transfer?',linked:'The linked savings/investment amount will also update.',notFound:'No matching transfer'},
-    zh:{search:'筛选转账',placeholder:'按名称或日期搜索',edit:'修改转账金额和日期',editAccount:'编辑',deactivate:'停用',amount:'金额',date:'日期',cancel:'取消',save:'保存',remove:'删除此笔转账？',linked:'关联的储蓄/投资金额也会同步更新。',notFound:'未找到匹配的转账'},
-    ja:{search:'振替を絞り込む',placeholder:'名前または日付で検索',edit:'振替金額と日付を編集',editAccount:'編集',deactivate:'無効化',amount:'金額',date:'日付',cancel:'キャンセル',save:'保存',remove:'この振替を削除しますか？',linked:'連携する貯蓄・投資額も更新されます。',notFound:'該当する振替はありません'},
-    ko:{search:'이체 필터',placeholder:'이름 또는 날짜로 검색',edit:'이체 금액 및 날짜 수정',editAccount:'수정',deactivate:'비활성화',amount:'금액',date:'날짜',cancel:'취소',save:'저장',remove:'이 이체를 삭제할까요?',linked:'연결된 저축/투자 금액도 함께 업데이트됩니다.',notFound:'일치하는 이체가 없습니다'},
-    ru:{search:'Фильтр переводов',placeholder:'Поиск по названию или дате',edit:'Изменить сумму и дату перевода',editAccount:'Изменить',deactivate:'Деактивировать',amount:'Сумма',date:'Дата',cancel:'Отмена',save:'Сохранить',remove:'Удалить этот перевод?',linked:'Связанная сумма сбережений/инвестиций также обновится.',notFound:'Переводы не найдены'},
-    de:{search:'Überweisungen filtern',placeholder:'Nach Name oder Datum suchen',edit:'Betrag und Datum bearbeiten',editAccount:'Bearbeiten',deactivate:'Deaktivieren',amount:'Betrag',date:'Datum',cancel:'Abbrechen',save:'Speichern',remove:'Diese Überweisung löschen?',linked:'Der verknüpfte Spar-/Investitionsbetrag wird ebenfalls aktualisiert.',notFound:'Keine passenden Überweisungen'}
+    mn:{search:'Шилжүүлэг шүүх',placeholder:'Нэр эсвэл огноогоор хайх',edit:'Шилжүүлгийн дүн, огноо засах',editAccount:'Засах',deactivate:'Идэвхгүй болгох',amount:'Дүн',date:'Огноо',cancel:'Болих',save:'Хадгалах',remove:'Энэ шилжүүлгийг устгах уу?',linked:'Холбогдсон хуримтлал/хөрөнгө оруулалтын дүн мөн шинэчлэгдэнэ.',deleteBtn:'Устгах',returnTo:'буцаан нэмэгдэнэ',deductFrom:'хасагдана',totalSame:'Нийт мөнгө өөрчлөгдөхгүй.',notFound:'Шилжүүлэг олдсонгүй'},
+    en:{search:'Filter transfers',placeholder:'Search by name or date',edit:'Edit transfer amount and date',editAccount:'Edit',deactivate:'Deactivate',amount:'Amount',date:'Date',cancel:'Cancel',save:'Save',remove:'Delete this transfer?',linked:'The linked savings/investment amount will also update.',deleteBtn:'Delete',returnTo:'will be returned to',deductFrom:'will be deducted from',totalSame:'Total money will not change.',notFound:'No matching transfer'},
+    zh:{search:'筛选转账',placeholder:'按名称或日期搜索',edit:'修改转账金额和日期',editAccount:'编辑',deactivate:'停用',amount:'金额',date:'日期',cancel:'取消',save:'保存',remove:'删除此笔转账？',linked:'关联的储蓄/投资金额也会同步更新。',deleteBtn:'删除',returnTo:'将退回至',deductFrom:'将从中扣除',totalSame:'总资金不会改变。',notFound:'未找到匹配的转账'},
+    ja:{search:'振替を絞り込む',placeholder:'名前または日付で検索',edit:'振替金額と日付を編集',editAccount:'編集',deactivate:'無効化',amount:'金額',date:'日付',cancel:'キャンセル',save:'保存',remove:'この振替を削除しますか？',linked:'連携する貯蓄・投資額も更新されます。',deleteBtn:'削除',returnTo:'に戻ります',deductFrom:'から差し引かれます',totalSame:'合計資金は変わりません。',notFound:'該当する振替はありません'},
+    ko:{search:'이체 필터',placeholder:'이름 또는 날짜로 검색',edit:'이체 금액 및 날짜 수정',editAccount:'수정',deactivate:'비활성화',amount:'금액',date:'날짜',cancel:'취소',save:'저장',remove:'이 이체를 삭제할까요?',linked:'연결된 저축/투자 금액도 함께 업데이트됩니다.',deleteBtn:'삭제',returnTo:'계좌로 반환됩니다',deductFrom:'에서 차감됩니다',totalSame:'총 자금은 변하지 않습니다.',notFound:'일치하는 이체가 없습니다'},
+    ru:{search:'Фильтр переводов',placeholder:'Поиск по названию или дате',edit:'Изменить сумму и дату перевода',editAccount:'Изменить',deactivate:'Деактивировать',amount:'Сумма',date:'Дата',cancel:'Отмена',save:'Сохранить',remove:'Удалить этот перевод?',linked:'Связанная сумма сбережений/инвестиций также обновится.',deleteBtn:'Удалить',returnTo:'будет возвращено на счёт',deductFrom:'будет вычтено из',totalSame:'Общая сумма денег не изменится.',notFound:'Переводы не найдены'},
+    de:{search:'Überweisungen filtern',placeholder:'Nach Name oder Datum suchen',edit:'Betrag und Datum bearbeiten',editAccount:'Bearbeiten',deactivate:'Deaktivieren',amount:'Betrag',date:'Datum',cancel:'Abbrechen',save:'Speichern',remove:'Diese Überweisung löschen?',linked:'Der verknüpfte Spar-/Investitionsbetrag wird ebenfalls aktualisiert.',deleteBtn:'Löschen',returnTo:'wird zurückgebucht auf',deductFrom:'wird abgezogen von',totalSame:'Der Gesamtbetrag bleibt unverändert.',notFound:'Keine passenden Überweisungen'}
   };
   const tx=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
   const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -15500,8 +15690,25 @@ select.fi{touch-action:pan-y;cursor:pointer}
     document.body.appendChild(modal);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.getElementById('account-transfer-edit-cancel').onclick=()=>modal.remove();
     document.getElementById('account-transfer-edit-save').onclick=()=>{const next=parseAmt(document.getElementById('account-transfer-edit-amount').value),date=document.getElementById('account-transfer-edit-date').value;if(!(next>0)||!date)return;if(rejectInsufficientBalance(t.fromId,next,Number(t.amount)||0))return;const old=Number(t.amount)||0,inv=linkedInvestment(t);t.amount=next;t.date=date;t.updatedAt=new Date().toISOString();if(inv){const delta=next-old;inv.invested=Math.max(0,(Number(inv.invested)||0)+delta);inv.current=Math.max(0,(Number(inv.current)||0)+delta);inv.date=date;}modal.remove();refreshAfterTransferMutation();};
   };
-  window.deleteAccountTransfer=function(id){
-    const t=transferById(id);if(!t)return;const q=tx();if(!confirm(q.remove+'\n'+q.linked))return;
+  function accountNameById(id){const a=(moneyAccounts||[]).find(x=>String(x?.id)===String(id));return a?(typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):(a.name||'')):'';}
+  function askDeleteTransfer(t){
+    const q=tx(),from=accountNameById(t.fromId),to=accountNameById(t.toId),amount=fmt(Number(t.amount)||0);
+    document.getElementById('account-transfer-delete-modal')?.remove();
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.id='account-transfer-delete-modal';
+      modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:18px';
+      let detail=q.linked;
+      if(t.purpose==='savings'&&to&&from)detail=`${amount} ${to} ${q.deductFrom}; ${from} ${q.returnTo}. ${q.totalSame}`;
+      else if(t.purpose==='internal'&&to&&from)detail=`${amount} ${to} ${q.deductFrom}; ${from} ${q.returnTo}. ${q.totalSame}`;
+      modal.innerHTML=`<div class="account-transfer-edit-card"><div style="font-size:19px;font-weight:900;margin-bottom:10px">${q.remove}</div><div style="font-size:14px;line-height:1.55;color:#5b6472;margin-bottom:18px">${esc(detail)}</div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-sm" id="account-transfer-delete-cancel">${q.cancel}</button><button class="btn btn-p" id="account-transfer-delete-ok">${q.deleteBtn}</button></div></div>`;
+      const finish=v=>{modal.remove();resolve(v);};document.body.appendChild(modal);
+      modal.onclick=e=>{if(e.target===modal)finish(false);};
+      document.getElementById('account-transfer-delete-cancel').onclick=()=>finish(false);
+      document.getElementById('account-transfer-delete-ok').onclick=()=>finish(true);
+    });
+  }
+  window.deleteAccountTransfer=async function(id){
+    const t=transferById(id);if(!t)return;if(!await askDeleteTransfer(t))return;
     const inv=linkedInvestment(t);if(inv){const ix=(invests||[]).findIndex(x=>String(x?.id)===String(inv.id));if(ix>=0)invests.splice(ix,1);}
     const ix=(accountTransfers||[]).findIndex(x=>String(x?.id)===String(id));if(ix>=0)accountTransfers.splice(ix,1);refreshAfterTransferMutation();
   };
@@ -15510,7 +15717,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     if(String(expandedMoneyAccountId)!==String(a.id))return '';
     const rows=accountRowsFor(a),q=tx(),groups=[];rows.forEach(r=>{const key=/^\d{4}-\d{2}/.test(String(r.date||''))?String(r.date).slice(0,7):'—';let g=groups.find(x=>x.key===key);if(!g){g={key,rows:[]};groups.push(g);}g.rows.push(r);});
     const monthly=groups.map((g,i)=>{const inc=g.rows.filter(r=>r.amount>0).reduce((s,r)=>s+(Number(r.amount)||0),0),out=Math.abs(g.rows.filter(r=>r.amount<0).reduce((s,r)=>s+(Number(r.amount)||0),0)),gid='account-month-'+String(a.id+'-'+g.key).replace(/[^a-zA-Z0-9_-]/g,'_');return `<div class="account-month-group${i===0?' open':''}" id="${gid}"><button type="button" class="account-month-head" onclick="event.stopPropagation();toggleAccountHistoryMonth('${js(a.id)}','${js(g.key)}')"><span><span class="account-month-name">${esc(monthLabel(g.key))} (${g.rows.length})</span><span class="account-month-summary">+${fmt(inc)} · -${fmt(out)}</span></span><span class="account-month-arrow">▶</span></button><div class="account-month-body">${g.rows.map(r=>`<div class="account-history-item" data-history-label="${esc((r.date||'')+' '+(r.label||''))}"><div class="account-history-line"><span class="account-history-copy">${esc(r.date)} · ${esc(r.label)}</span><b class="account-history-value">${r.amount>0?'+':''}${fmt(r.amount)}</b>${r.transferId?`<span class="account-history-actions"><button class="account-history-action" title="${esc(q.edit)}" onclick="event.stopPropagation();editAccountTransfer('${js(r.transferId)}')">✎</button><button class="account-history-action" title="${esc(q.remove)}" onclick="event.stopPropagation();deleteAccountTransfer('${js(r.transferId)}')">✕</button></span>`:''}</div></div>`).join('')}</div></div>`;}).join('');
-    const sid='account-history-search-'+String(a.id).replace(/[^a-zA-Z0-9_-]/g,'_');return `<div class="account-detail show" data-account-history="${esc(a.id)}" style="margin:-4px 0 10px;border-radius:0 0 18px 18px"><div class="account-history-tools"><button class="btn btn-sm" onclick="event.stopPropagation();editMoneyAccount('${js(a.id)}')">✎ ${q.editAccount}</button>${a.active!==false?`<button class="btn btn-sm" onclick="event.stopPropagation();archiveMoneyAccount('${js(a.id)}')">${q.deactivate}</button>`:''}<button class="btn btn-sm" onclick="event.stopPropagation();toggleAccountTransferSearch('${js(a.id)}')">🔍 ${q.search}</button></div><input id="${sid}" class="fi account-history-search" placeholder="${esc(q.placeholder)}" oninput="filterAccountTransferHistory('${js(a.id)}',this.value)" onclick="event.stopPropagation()"><div>${rows.length?monthly:`<div class="empty">${L.notxn}</div>`}<div class="empty account-history-filter-empty" style="display:none">${q.notFound}</div></div></div>`;
+    const sid='account-history-search-'+String(a.id).replace(/[^a-zA-Z0-9_-]/g,'_');return `<div class="account-detail show" data-account-history="${esc(a.id)}" style="margin:-4px 0 10px;border-radius:0 0 18px 18px"><div class="account-history-tools"><button class="btn btn-sm" onclick="event.stopPropagation();editMoneyAccount('${js(a.id)}')">✎ ${q.editAccount}</button>${a.active!==false?`<button class="btn btn-sm" onclick="event.stopPropagation();archiveMoneyAccount('${js(a.id)}')">${q.deactivate}</button>`:''}${normalizeAccountType(a.type)==='savings'?`<button class="btn btn-sm" onclick="event.stopPropagation();openSavingsOutV35('${js(a.id)}')">↗ ${savingsOutTextV35().action}</button>`:''}<button class="btn btn-sm" onclick="event.stopPropagation();toggleAccountTransferSearch('${js(a.id)}')">🔍 ${q.search}</button></div><input id="${sid}" class="fi account-history-search" placeholder="${esc(q.placeholder)}" oninput="filterAccountTransferHistory('${js(a.id)}',this.value)" onclick="event.stopPropagation()"><div>${rows.length?monthly:`<div class="empty">${L.notxn}</div>`}<div class="empty account-history-filter-empty" style="display:none">${q.notFound}</div></div></div>`;
   };
 })();
 </script>
@@ -15781,7 +15988,23 @@ select.fi{touch-action:pan-y;cursor:pointer}
 .mongo-archive-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 7px;border-radius:999px;background:rgba(73,176,182,.12);color:#1f7f86;margin-left:6px}
 .mongo-archive-action{font-size:10px!important;padding:5px 8px!important}
 </style>
-<script src="./src/features/archive/archive.js"></script>
+<script data-mongo-source="src/features/archive/archive.js">
+// Möngö Completed Cards Archive — pure lifecycle/classification helpers.
+(function(global){
+'use strict';
+const num=v=>Number(v)||0;
+function goalCompleted(goal,effectiveSaved){const target=Math.max(0,num(goal?.target)),saved=Math.max(0,num(effectiveSaved==null?goal?.saved:effectiveSaved));return target>0&&saved>=target;}
+function goalArchived(goal,effectiveSaved){return !!goal&&(!!goal.archivedAt||goalCompleted(goal,effectiveSaved));}
+function goalActive(goal,effectiveSaved){return !!goal&&!goalArchived(goal,effectiveSaved);}
+function debtCompleted(debt,effectiveRemaining){const rem=Math.max(0,num(effectiveRemaining==null?debt?.remaining:effectiveRemaining));return rem<=0.01&&Math.max(0,num(debt?.total))>0;}
+function assetGroupArchived(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.archivedAt);}
+function assetGroupSold(group){const items=Array.isArray(group?.items)?group.items:[];return items.length>0&&items.every(x=>!!x?.soldAt);}
+function assetSaleBreakdown(costBasis,saleProceeds){const cost=Math.max(0,num(costBasis)),proceeds=Math.max(0,num(saleProceeds)),pnl=proceeds-cost;return {costBasis:cost,saleProceeds:proceeds,pnl,gain:Math.max(0,pnl),loss:Math.max(0,-pnl)};}
+function savingsUndoPlan(transfers,goalId,savingsAccountId){const rows=(Array.isArray(transfers)?transfers:[]).filter(t=>String(t?.goalId||t?.linkedGoalId||'')===String(goalId)&&String(t?.to||t?.toAccountId||'')===String(savingsAccountId)&&!t?.reversedAt);const bySource={};let total=0;for(const t of rows){const source=String(t?.from||t?.fromAccountId||'');const amount=Math.max(0,num(t?.amount));if(!source||!amount)continue;bySource[source]=(bySource[source]||0)+amount;total+=amount;}return {transferIds:rows.map(t=>t.id).filter(Boolean),bySource,total};}
+global.MongoArchive=Object.freeze({goalCompleted,goalArchived,goalActive,debtCompleted,assetGroupArchived,assetGroupSold,assetSaleBreakdown,savingsUndoPlan});
+})(typeof window!=='undefined'?window:globalThis);
+
+</script>
 <script id="mongo-completed-cards-archive">
 (()=>{
 'use strict';
@@ -16059,6 +16282,939 @@ window.MongoSavingsBudgetLifecycle.isGoalActiveForFuture=function(g){
 <script id="mongo-savings-canonical-target-v19-marker">
 /* V19: savings transfers are canonicalized to the real goal id at creation time. */
 </script>
+
+<script id="mongo-v21-savings-link-normal">
+(()=>{
+'use strict';
+let repairing=false;
+function repairSavingsTransferLinks(persist=true){
+  if(repairing||!Array.isArray(accountTransfers)||!Array.isArray(moneyAccounts)||!Array.isArray(goals))return false;
+  const goalIds=new Set(goals.map(g=>String(g.id)));
+  const accounts=new Map(moneyAccounts.map(a=>[String(a.id),a]));
+  let changed=false;
+  accountTransfers.forEach(t=>{
+    if(!t||t.purpose==='savings')return;
+    const target=String(t.targetId??''),to=accounts.get(String(t.toId??''));
+    const linked=String(to?.linkedGoalId??to?.goalId??'');
+    if(normalizeAccountType(to?.type)==='savings'&&target&&goalIds.has(target)&&linked===target){
+      t.purpose='savings';t.updatedAt=t.updatedAt||new Date().toISOString();changed=true;
+    }
+  });
+  if(changed&&persist){
+    repairing=true;
+    try{saveData();}finally{repairing=false;}
+    try{rGoals();rBList();rBProg();uDash();renderMoneyAccounts();}catch(_){}
+  }
+  return changed;
+}
+window.repairSavingsTransferLinks=repairSavingsTransferLinks;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>repairSavingsTransferLinks(true));
+else repairSavingsTransferLinks(true);
+window.addEventListener('pageshow',()=>repairSavingsTransferLinks(true));
+})();
+</script>
+
+<!-- V30: app-owned 7-language transfer deletion confirmation + active-only savings targets. -->
+<script id="mongo-v28-travel-transfer-repair">
+(function(){
+  function same(a,b){return String(a??'')===String(b??'');}
+  function repair(){
+    try{
+      if(!Array.isArray(window.accountTransfers)||!Array.isArray(window.moneyAccounts)||!Array.isArray(window.goals))return false;
+      const transfer=window.accountTransfers.find(t=>same(t?.id,'b8de2713-8db2-4293-bcc3-e7652251ddac'));
+      if(!transfer||transfer.purpose!=='internal'||Number(transfer.amount)!==100000||String(transfer.date)!=='2026-09-10'||transfer.targetId!=null)return false;
+      const account=window.moneyAccounts.find(a=>same(a?.id,transfer.toId));
+      const gid=account?.linkedGoalId??account?.goalId??null;
+      const goal=gid!=null?window.goals.find(g=>same(g?.id,gid)&&!g?.archivedAt):null;
+      if(!goal||String(goal.name||'').trim()!=='Аялал')return false;
+      transfer.purpose='savings'; transfer.targetId=goal.id; transfer.updatedAt=new Date().toISOString();
+      if(typeof window.saveData==='function')window.saveData();
+      ['rGoals','rBList','rBProg','uDash','renderMoneyAccounts'].forEach(fn=>{try{if(typeof window[fn]==='function')window[fn]();}catch(_){}});
+      return true;
+    }catch(_){return false;}
+  }
+  window.addEventListener('load',()=>setTimeout(repair,900),{once:true});
+  setTimeout(repair,1800);
+})();
+</script>
+
+<script id="mongo-savings-budget-post-cloud-cleanup-v33">
+(function(){
+'use strict';
+const S=v=>String(v??''), N=v=>Number(v)||0;
+const same=(a,b)=>S(a)===S(b);
+
+function parent(){return (bCatsExp||[]).find(c=>c?.key==='savings_cat');}
+function gid(sb){const m=S(sb?.key).match(/^goal_(.+)$/);return m?m[1]:'';}
+function goal(id){return (goals||[]).find(g=>same(g?.id,id));}
+
+function hasActual(id){
+  return (accountTransfers||[]).some(t =>
+    t?.purpose==='savings' && same(t?.targetId,id) && Math.abs(N(t?.amount))>0
+  );
+}
+function hasPlan(p,sb){
+  let bk='';
+  try{bk=S(bSubKey(p,sb));}catch(_){}
+  if(!bk)return true; // unknown storage shape: protect, never delete
+  return Object.entries(budgets||{}).some(([k,v])=>{
+    if(!(k===bk || k.startsWith(bk+'__'))) return false;
+    if(v && typeof v==='object') return Object.values(v).some(x=>Math.abs(N(x))>0);
+    return Math.abs(N(v))>0;
+  });
+}
+function isActive(g){
+  if(!g)return false;
+  const saved=typeof getGoalEffectiveSaved==='function'
+    ? Math.max(0,N(getGoalEffectiveSaved(g))) : Math.max(0,N(g?.saved));
+  return window.MongoArchive?.goalActive
+    ? !!window.MongoArchive.goalActive(g,saved)
+    : !g?.archivedAt && !(N(g?.target)>0 && saved>=N(g?.target));
+}
+function isLinked(id){
+  return (moneyAccounts||[]).some(a =>
+    a?.active!==false && (same(a?.linkedGoalId,id)||same(a?.goalId,id))
+  );
+}
+
+/* Historical rule:
+   V8-V13 created Budget rows by goal ID but deletion did not remove them.
+   V14 changed creation de-duplication from display-name to exact goal ID,
+   allowing old same-name rows and a new canonical row to coexist.
+   V16 fixed future deletion. This pass removes only zero-evidence leftovers,
+   and only AFTER cloud data has finished loading. */
+function cleanup(reason){
+  const p=parent();
+  if(!p||!Array.isArray(p.subs)) return {reason,removed:0};
+
+  const kept=[], removed=[], seen=new Set();
+  for(const sb of p.subs){
+    const key=S(sb?.key), id=gid(sb);
+    if(!id){kept.push(sb);continue;}
+
+    if(seen.has(key)){
+      if(!hasPlan(p,sb) && !hasActual(id)){
+        removed.push({key,name:(typeof cN==='function'?cN(sb):sb?.name)||'',why:'duplicate-zero'});
+        continue;
+      }
+    }
+    seen.add(key);
+
+    const g=goal(id);
+    const evidence = hasPlan(p,sb) || hasActual(id);
+    const current = g && isActive(g) && isLinked(id);
+
+    // Protect every row with real budget/transfer evidence and the current linked goal.
+    if(evidence || current){kept.push(sb);continue;}
+
+    // A live-but-archived test goal with no plan/actual/link is also a zero-evidence leftover.
+    removed.push({
+      key,
+      name:(typeof cN==='function'?cN(sb):sb?.name)||'',
+      why:g?'inactive-unlinked-zero':'orphan-zero'
+    });
+  }
+
+  if(!removed.length){
+    window.MONGO_V33_LAST_CLEANUP={at:new Date().toISOString(),reason,removed:[]};
+    return {reason,removed:0};
+  }
+
+  p.subs=kept;
+  try{saveData();}catch(_){}
+  try{rBList();rBProg();uDash();}catch(_){}
+  window.MONGO_V33_LAST_CLEANUP={at:new Date().toISOString(),reason,removed};
+  console.info('[Möngö V33] savings budget cleanup',window.MONGO_V33_LAST_CLEANUP);
+  return {reason,removed:removed.length,items:removed};
+}
+
+window.MongoSavingsBudgetCleanupV33={run:()=>cleanup('manual')};
+
+/* Critical difference from V31/V32:
+   run after the authoritative cloud snapshot has been applied. */
+window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(()=>cleanup('cloud-load-complete'),250));
+
+/* Local/offline fallback. Cloud completion may later run it again safely. */
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>cleanup('local-fallback'),5000),{once:true});
+}else{
+  setTimeout(()=>cleanup('local-fallback'),5000);
+}
+})();
+</script>
+
+
+<script id="mongo-savings-out-v37">
+(()=>{
+'use strict';
+const Q={
+mn:{action:'Хуримтлалаас шилжүүлэх',title:'Хуримтлалаас шилжүүлэх',to:'Хүлээн авах данс',amount:'Дүн',cancel:'Болих',send:'Шилжүүлэх',confirm:'Энэ шилжүүлгийг хийх үү? Зарлага үүсэхгүй, нийт мөнгө өөрчлөгдөхгүй.',bad:'Дүн болон дансаа шалгана уу.',none:'Хүлээн авах боломжтой харилцах эсвэл бэлэн мөнгөний данс алга.',insufficient:'Хуримтлалын үлдэгдэл хүрэлцэхгүй байна.'},
+en:{action:'Transfer from savings',title:'Transfer from savings',to:'Destination account',amount:'Amount',cancel:'Cancel',send:'Transfer',confirm:'Make this transfer? It is not an expense and total money will not change.',bad:'Check the amount and account.',none:'No eligible checking or cash account.',insufficient:'The savings balance is insufficient.'},
+zh:{action:'从储蓄转出',title:'从储蓄转出',to:'收款账户',amount:'金额',cancel:'取消',send:'转账',confirm:'确认转账吗？这不是支出，总资金不会改变。',bad:'请检查金额和账户。',none:'没有可用的活期或现金账户。',insufficient:'储蓄余额不足。'},
+ja:{action:'貯蓄から振替',title:'貯蓄から振替',to:'振替先口座',amount:'金額',cancel:'キャンセル',send:'振替',confirm:'振替しますか？支出ではなく、総資金は変わりません。',bad:'金額と口座を確認してください。',none:'利用可能な普通預金または現金口座がありません。',insufficient:'貯蓄残高が不足しています。'},
+ko:{action:'저축에서 이체',title:'저축에서 이체',to:'받는 계좌',amount:'금액',cancel:'취소',send:'이체',confirm:'이체할까요? 지출이 아니며 총자금은 변하지 않습니다.',bad:'금액과 계좌를 확인하세요.',none:'사용 가능한 입출금 또는 현금 계좌가 없습니다.',insufficient:'저축 잔액이 부족합니다.'},
+ru:{action:'Перевести из накоплений',title:'Перевод из накоплений',to:'Счёт получателя',amount:'Сумма',cancel:'Отмена',send:'Перевести',confirm:'Выполнить перевод? Это не расход, общая сумма денег не изменится.',bad:'Проверьте сумму и счёт.',none:'Нет доступного расчётного или наличного счёта.',insufficient:'Недостаточно средств в накоплениях.'},
+de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.',insufficient:'Das Sparguthaben reicht nicht aus.'}
+};
+window.savingsOutTextV36=()=>Q[(typeof lang!=='undefined'&&lang)||'mn']||Q.en;
+window.MONGO_SAVINGS_OUT_VERSION='V37';
+/* V35 account-detail renderer still calls this name; keep a compatibility alias. */
+window.savingsOutTextV35=window.savingsOutTextV36;
+const S=v=>String(v??''),N=v=>Number(v)||0,esc=v=>S(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Use the app's authoritative balance calculation.
+   MongoLedgerCore.accountBalance requires accounts + ledger and was the V35 ₮0 bug. */
+function bal(a){
+  if(!a)return 0;
+  try{
+    if(typeof accountBalanceRaw==='function') return N(accountBalanceRaw(a.id));
+    if(typeof accountBalance==='function') return N(accountBalance(a.id));
+  }catch(_){}
+  return N(a.openingBalance);
+}
+function linkedGoalId(a){return S(a?.linkedGoalId||a?.goalId||'')}
+function eligibleDest(a){
+ const t=normalizeAccountType(a?.type);
+ return a?.active!==false && (t==='checking'||t==='cash'||t==='current');
+}
+function notify(msg){
+ try{ if(typeof showToast==='function'){showToast(msg);return;} }catch(_){}
+ const box=document.createElement('div');
+ box.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100000;background:#fff;padding:14px 18px;border-radius:14px;box-shadow:0 8px 30px #0003;font-weight:800;max-width:86vw';
+ box.textContent=msg;document.body.appendChild(box);setTimeout(()=>box.remove(),2200);
+}
+async function ask(msg){
+ try{if(typeof showConfirm==='function')return await showConfirm(msg)}catch(_){}
+ return false;
+}
+window.openSavingsOutV36=window.openSavingsOutV35=function(id){
+ const a=(moneyAccounts||[]).find(x=>S(x?.id)===S(id)); if(!a||normalizeAccountType(a.type)!=='savings')return;
+ const q=savingsOutTextV36(), dest=(moneyAccounts||[]).filter(eligibleDest);
+ if(!dest.length){notify(q.none);return}
+ document.getElementById('savings-out-v35-modal')?.remove();
+ document.getElementById('savings-out-v36-modal')?.remove();
+ const m=document.createElement('div');m.id='savings-out-v36-modal';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${esc(q.title)} · ${esc(a.name)}</div>
+ <div style="font-size:12px;font-weight:800;margin-bottom:4px">${esc(q.to)}</div><select class="fi" id="savings-out-v36-to">${dest.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${fmt(bal(x))}</option>`).join('')}</select>
+ <div style="font-size:12px;font-weight:800;margin:10px 0 4px">${esc(q.amount)}</div><input class="fi" id="savings-out-v36-amount" inputmode="decimal" data-amt="1">
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="savings-out-v36-cancel">${esc(q.cancel)}</button><button class="btn btn-p" id="savings-out-v36-save">${esc(q.send)}</button></div></div>`;
+ document.body.appendChild(m);
+ try{setupAmtInput(document.getElementById('savings-out-v36-amount'))}catch(_){}
+ document.getElementById('savings-out-v36-cancel').onclick=()=>m.remove();
+ document.getElementById('savings-out-v36-save').onclick=async()=>{
+   const amount=Math.round(parseAmt(document.getElementById('savings-out-v36-amount').value)||0);
+   const toId=document.getElementById('savings-out-v36-to').value;
+   if(!(amount>0)||!toId){notify(q.bad);return}
+   if(amount>bal(a)+.001){notify(q.insufficient);return}
+   if(!(await ask(q.confirm)))return;
+   const made=window.MongoTransactions.makeTransfer({
+     fromId:a.id,toId,amount,date:new Date().toISOString().slice(0,10),
+     purpose:'savings_withdrawal',targetId:linkedGoalId(a)
+   });
+   if(!made?.ok){notify(q.bad);return}
+   accountTransfers.push(made.transfer);
+   try{saveData()}catch(_){}
+   m.remove();
+   try{rAll();rGoals();rBList();rBProg();uDash();renderMoneyAccounts()}catch(_){}
+ };
+};
+
+/* Goal balance is handled authoritatively by MongoSavings.effectiveSaved (V37). */
+/* Budget actual for goal rows = deposits minus savings withdrawals for the selected month. */
+const priorGSpent=window.gSpent||gSpent;
+if(typeof priorGSpent==='function'&&!priorGSpent.__v35&&!priorGSpent.__v36){
+ const f=function(catNm,subNm,month,subObj){
+   let base=N(priorGSpent.apply(this,arguments));
+   const key=S(subObj?.key),m=key.match(/^goal_(.+)$/);
+   if(m){
+     const y=Number(typeof budgetYear!=='undefined'?budgetYear:new Date().getFullYear()),mo=Number(month);
+     const out=(accountTransfers||[]).filter(t=>{
+       if(t?.purpose!=='savings_withdrawal'||S(t?.targetId)!==m[1])return false;
+       const d=new Date(t.date);
+       return d.getFullYear()===y&&(d.getMonth()+1)===mo;
+     }).reduce((sum,t)=>sum+N(t.amount),0);
+     base=Math.max(0,base-out);
+   }
+   return base;
+ };
+ f.__v36=true;window.gSpent=f;gSpent=f;
+}
+})();
+</script>
+
+<style id="mongo-v381-term-deposit-style">
+.v381-contract{margin-top:12px;padding:12px;border:1px solid rgba(73,176,182,.18);border-radius:16px;background:rgba(73,176,182,.045);min-width:0;overflow:hidden}
+.v381-title{font-weight:900;font-size:13px;color:var(--text);margin-bottom:12px}.v381-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.v381-grid>div{min-width:0}.v381-grid label{display:block;margin-bottom:6px;line-height:1.35}.v381-grid .fi{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}.v381-grid select.fi{white-space:normal;text-overflow:ellipsis}.v381-check{display:flex;align-items:flex-start;gap:9px;min-height:44px;font-size:13px;font-weight:700;line-height:1.4;min-width:0}.v381-check input{width:18px;height:18px;min-width:18px;margin-top:1px}.v381-check label{min-width:0;overflow-wrap:anywhere}.v381-early{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(73,176,182,.22);min-width:0}.v381-early.show{display:block}.v381-note{font-size:11px;line-height:1.45;color:var(--muted);margin-top:10px}.v381-contract option{white-space:normal}
+@media(max-width:700px){.v381-grid{grid-template-columns:1fr}.v381-contract{padding:12px 10px}.v381-grid .fi{width:100%!important;max-width:100%!important}.v381-grid select.fi,.v381-grid input.fi{font-size:14px}.v381-check{width:100%}}
+</style>
+<script id="mongo-v381-term-deposit-script" data-mobile-layout="v38.1a">
+(function(){
+'use strict';
+const D={
+mn:{title:'Хадгаламжийн нөхцөл',kind:'Хадгаламжийн төрөл',demand:'Хугацаагүй',term:'Хугацаатай',extra:'Нэмэлт орлого хийх боломжтой',early:'Хугацаанаас өмнө цуцлах боломжтой',rule:'Цуцлалтын тооцооны дүрэм',all:'Бүх хадгалсан хугацааг бууруулсан хүүгээр дахин бодох',staged:'Үе шаттай дахин бодох',threshold:'Хугацааны босгоос хамаарч дахин бодох',actual:'Банкны нөхцөлөөр / бодит дүнгээр тохируулах',rate:'Цуцлалтын жилийн хүү (%)',fee:'Цуцлалтын шимтгэл',note:'Энэ шатанд зөвхөн гэрээний нөхцөлийг хадгална. Цуцлалтын мөнгөн тооцоо болон бодит цуцлалт дараагийн шатанд нэмэгдэнэ.',end:'Дуусах хугацаа'},
+en:{title:'Deposit terms',kind:'Deposit type',demand:'Demand savings',term:'Term deposit',extra:'Additional deposits allowed',early:'Early termination allowed',rule:'Early termination calculation rule',all:'Recalculate the full held period at the reduced rate',staged:'Recalculate by stages',threshold:'Recalculate by holding-period threshold',actual:'Use bank terms / actual settlement',rate:'Early termination annual rate (%)',fee:'Early termination fee',note:'This stage stores contract terms only. Settlement calculation and actual termination will be added in the next stage.',end:'Maturity date'},
+zh:{title:'存款条件',kind:'存款类型',demand:'活期储蓄',term:'定期存款',extra:'允许追加存款',early:'允许提前支取',rule:'提前支取计算规则',all:'全部存期按降低后的利率重新计算',staged:'分阶段重新计算',threshold:'按存期门槛重新计算',actual:'按银行条款 / 实际结算调整',rate:'提前支取年利率 (%)',fee:'提前支取手续费',note:'此阶段仅保存合同条件。结算计算和实际提前支取将在下一阶段加入。',end:'到期日'},
+ja:{title:'預金条件',kind:'預金の種類',demand:'普通・随時預金',term:'定期預金',extra:'追加預入が可能',early:'中途解約が可能',rule:'中途解約の計算ルール',all:'預入全期間を低い利率で再計算',staged:'段階別に再計算',threshold:'預入期間の基準に応じて再計算',actual:'銀行条件 / 実際の精算額で調整',rate:'中途解約年利 (%)',fee:'中途解約手数料',note:'この段階では契約条件のみ保存します。精算計算と実際の解約は次の段階で追加します。',end:'満期日'},
+ko:{title:'예금 조건',kind:'예금 유형',demand:'수시입출금 저축',term:'정기예금',extra:'추가 입금 가능',early:'중도 해지 가능',rule:'중도 해지 계산 규칙',all:'전체 예치 기간을 낮은 금리로 재계산',staged:'단계별 재계산',threshold:'예치 기간 기준에 따라 재계산',actual:'은행 조건 / 실제 정산액으로 조정',rate:'중도 해지 연 이율 (%)',fee:'중도 해지 수수료',note:'이 단계에서는 계약 조건만 저장합니다. 정산 계산과 실제 해지는 다음 단계에서 추가합니다.',end:'만기일'},
+ru:{title:'Условия вклада',kind:'Тип вклада',demand:'До востребования',term:'Срочный вклад',extra:'Разрешено пополнение',early:'Разрешено досрочное расторжение',rule:'Правило расчёта при досрочном расторжении',all:'Пересчитать весь срок по сниженной ставке',staged:'Пересчитать по этапам',threshold:'Пересчитать по порогу срока хранения',actual:'По условиям банка / фактической сумме',rate:'Годовая ставка при досрочном расторжении (%)',fee:'Комиссия за досрочное расторжение',note:'На этом этапе сохраняются только условия договора. Расчёт и фактическое расторжение будут добавлены на следующем этапе.',end:'Дата окончания'},
+de:{title:'Einlagenbedingungen',kind:'Einlagenart',demand:'Täglich fällige Einlage',term:'Festgeld',extra:'Zusätzliche Einzahlungen erlaubt',early:'Vorzeitige Kündigung erlaubt',rule:'Berechnungsregel bei vorzeitiger Kündigung',all:'Gesamte Anlagedauer mit reduziertem Zinssatz neu berechnen',staged:'Stufenweise neu berechnen',threshold:'Nach Laufzeitschwelle neu berechnen',actual:'Nach Bankbedingungen / tatsächlicher Abrechnung',rate:'Jahreszins bei vorzeitiger Kündigung (%)',fee:'Gebühr bei vorzeitiger Kündigung',note:'In dieser Stufe werden nur Vertragsbedingungen gespeichert. Abrechnung und tatsächliche Kündigung folgen in der nächsten Stufe.',end:'Fälligkeitsdatum'}};
+function Q(){return D[typeof lang==='string'&&D[lang]?lang:'en'];}
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function bool(v,def){return typeof v==='boolean'?v:def;}
+function data(a){const x=a||{};return {depositTermType:x.depositTermType==='term'?'term':'demand',allowsAdditionalDeposits:bool(x.allowsAdditionalDeposits,true),allowsEarlyTermination:bool(x.allowsEarlyTermination,true),earlyTerminationRule:['all_reduced','staged','threshold','bank_actual'].includes(x.earlyTerminationRule)?x.earlyTerminationRule:'all_reduced',earlyTerminationRate:Math.max(0,Number(x.earlyTerminationRate)||0),earlyTerminationFee:Math.max(0,Number(x.earlyTerminationFee)||0)};}
+function ruleOptions(v){const q=Q();return [['all_reduced',q.all],['staged',q.staged],['threshold',q.threshold],['bank_actual',q.actual]].map(x=>`<option value="${x[0]}"${v===x[0]?' selected':''}>${x[1]}</option>`).join('');}
+function html(prefix,a){const q=Q(),x=data(a);return `<div class="v381-contract" id="${prefix}-term-contract"><div class="v381-title">${q.title}</div><div class="v381-grid"><div><label>${q.kind}</label><select class="fi" id="${prefix}-deposit-term-type"><option value="demand"${x.depositTermType==='demand'?' selected':''}>${q.demand}</option><option value="term"${x.depositTermType==='term'?' selected':''}>${q.term}</option></select></div><div class="v381-check"><input type="checkbox" id="${prefix}-allows-extra"${x.allowsAdditionalDeposits?' checked':''}><label for="${prefix}-allows-extra">${q.extra}</label></div></div><div class="v381-early" id="${prefix}-term-only"><div class="v381-check"><input type="checkbox" id="${prefix}-allows-early"${x.allowsEarlyTermination?' checked':''}><label for="${prefix}-allows-early">${q.early}</label></div><div class="v381-early" id="${prefix}-early-fields"><div class="v381-grid"><div><label>${q.rule}</label><select class="fi" id="${prefix}-early-rule">${ruleOptions(x.earlyTerminationRule)}</select></div><div><label>${q.rate}</label><input class="fi" id="${prefix}-early-rate" type="number" min="0" step="0.01" value="${esc(x.earlyTerminationRate||'')}"></div><div><label>${q.fee}</label><input class="fi" id="${prefix}-early-fee" inputmode="decimal" value="${esc(x.earlyTerminationFee||'')}"></div></div></div></div><div class="v381-note">${q.note}</div></div>`;}
+function ensure(prefix,a){const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(!root)return;let box=document.getElementById(prefix+'-term-contract');if(box)box.remove();root.insertAdjacentHTML('beforeend',html(prefix,a));bind(prefix);sync(prefix);}
+function bind(prefix){document.getElementById(prefix+'-deposit-term-type')?.addEventListener('change',()=>sync(prefix));document.getElementById(prefix+'-allows-early')?.addEventListener('change',()=>sync(prefix));const fee=document.getElementById(prefix+'-early-fee');if(fee&&typeof setupAmtInput==='function')setupAmtInput(fee);}
+function sync(prefix){const term=document.getElementById(prefix+'-deposit-term-type')?.value==='term',early=!!document.getElementById(prefix+'-allows-early')?.checked;document.getElementById(prefix+'-term-only')?.classList.toggle('show',term);document.getElementById(prefix+'-early-fields')?.classList.toggle('show',term&&early);const maturity=document.getElementById(prefix+'-maturity')?.parentElement;if(maturity){maturity.classList.toggle('v4359-hidden',!term);maturity.style.display=term?'':'none';const l=maturity.querySelector('label');if(l)l.textContent=Q().end;}}
+function read(prefix){return {depositTermType:document.getElementById(prefix+'-deposit-term-type')?.value==='term'?'term':'demand',allowsAdditionalDeposits:!!document.getElementById(prefix+'-allows-extra')?.checked,allowsEarlyTermination:!!document.getElementById(prefix+'-allows-early')?.checked,earlyTerminationRule:document.getElementById(prefix+'-early-rule')?.value||'all_reduced',earlyTerminationRate:Math.max(0,Number(document.getElementById(prefix+'-early-rate')?.value)||0),earlyTerminationFee:Math.max(0,typeof parseAmt==='function'?parseAmt(document.getElementById(prefix+'-early-fee')?.value):Number(document.getElementById(prefix+'-early-fee')?.value)||0)};}
+function applyMeta(a,m){if(!a||!m)return;Object.assign(a,m);if(m.depositTermType!=='term'){a.allowsEarlyTermination=false;a.earlyTerminationRate=0;a.earlyTerminationFee=0;} }
+function installNew(){if(document.getElementById('account-interest-fields'))ensure('account',{});}
+const baseAdd=addMoneyAccount;addMoneyAccount=function(){const ids=new Set((moneyAccounts||[]).map(a=>String(a.id))),isSavings=document.getElementById('account-type')?.value==='savings',m=isSavings?read('account'):null;baseAdd();if(isSavings){const a=(moneyAccounts||[]).find(x=>!ids.has(String(x.id)));if(a){applyMeta(a,m);saveData();renderMoneyAccounts();}}setTimeout(()=>ensure('account',{}),0);};
+const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){await baseEdit(id);setTimeout(()=>{const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||!document.getElementById('edit-interest-fields'))return;ensure('edit',a);const btn=document.getElementById('account-edit-save');if(!btn||btn.dataset.v381==='1')return;btn.dataset.v381='1';const old=btn.onclick;btn.onclick=async function(ev){const isSavings=document.getElementById('account-edit-type')?.value==='savings',m=isSavings?read('edit'):null;const r=old?await old.call(this,ev):undefined;if(isSavings){applyMeta(a,m);saveData();renderMoneyAccounts();}return r;};},20);};
+const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{installNew();const open=document.getElementById('account-edit-modal');if(open){const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});}},30);};
+setTimeout(installNew,50);
+})();
+</script>
+<style>
+#v382dTabs{display:flex;gap:8px;margin:12px 0 18px;padding:5px;background:#eef7f7;border-radius:16px}#v382dTabs button{flex:1;min-height:48px;border:0;border-radius:13px;background:transparent;font-weight:800;padding:8px}#v382dTabs button.active,#v382dGo{background:#49B0B6;color:#fff}.v382d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.v382d-field label{display:block;font-weight:700;margin-bottom:6px}.v382d-field input,.v382d-field select{width:100%;min-height:52px;box-sizing:border-box;border:1px solid #d7e6e7;border-radius:15px;background:#fff;padding:11px 13px;font-size:16px}.v382d-field select{min-height:70px}#v382dGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;font-weight:800}.v382d-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.v382d-note{font-size:12px;color:#6b7280;margin-top:10px}@media(max-width:700px){.v382d-grid{grid-template-columns:1fr}#v382dTabs button{font-size:13px}}
+</style><script>
+(function(){
+function N(v){v=Number(v);return Number.isFinite(v)?v:0} function F(v){return Math.round(v).toLocaleString()}
+function find(){for(const e of document.querySelectorAll('h1,h2,h3,div'))if((e.textContent||'').trim()==='Хуримтлалын тооцоолуур'){let p=e;for(let d=0;p&&d<5;d++,p=p.parentElement)if(p.querySelectorAll&&p.querySelectorAll('input').length>=4&&p.querySelector('button'))return [p,e]}}
+function mount(){if(document.getElementById('v382dTabs'))return;let q=find();if(!q)return;let card=q[0],title=q[1],tabs=document.createElement('div');tabs.id='v382dTabs';tabs.innerHTML='<button id="v382dSave" class="active">Хуримтлал тооцох</button><button id="v382dEarly">Хугацаанаас өмнө цуцлах</button>';title.after(tabs);let original=[...card.children].filter(x=>x!==tabs&&x!==title),c=document.createElement('div');c.id='v382dCancel';c.style.display='none';c.innerHTML=`<div class="v382d-grid"><div class="v382d-field"><label>Үндсэн мөнгө</label><input id="v382dp" type="number" value="10000000"></div><div class="v382d-field"><label>Гэрээний жилийн хүү (%)</label><input id="v382dcr" type="number" value="14"></div><div class="v382d-field"><label>Цуцлалтын жилийн хүү (%)</label><input id="v382drr" type="number" value="2.4"></div><div class="v382d-field"><label>Хадгалсан хоног</label><input id="v382dd" type="number" value="584"></div><div class="v382d-field"><label>Өмнө бодитоор олгосон хүү</label><input id="v382dprior" type="number" value="0"></div><div class="v382d-field"><label>Цуцлалтын шимтгэл</label><input id="v382dfee" type="number" value="0"></div><div class="v382d-field" style="grid-column:1/-1"><label>Цуцлалтын дүрэм</label><select id="v382drule"><option value="all">Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох</option><option value="vested">Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр бодох</option><option value="manual">Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах</option></select></div><div class="v382d-field" id="v382dmw" style="display:none"><label>Банкны зөвшөөрсөн эцсийн хүү</label><input id="v382dm" type="number" value="0"></div></div><button id="v382dGo">Тооцоолох</button><div id="v382dOut"></div><div class="v382d-note">Урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.</div>`;card.appendChild(c);
+function run(){let rule=v382drule.value;v382dmw.style.display=rule==='manual'?'block':'none';let p=Math.max(0,N(v382dp.value)),days=Math.max(0,N(v382dd.value)),cr=N(v382dcr.value),rr=N(v382drr.value),prior=Math.max(0,N(v382dprior.value)),fee=Math.max(0,N(v382dfee.value)),a;if(rule==='all')a=p*rr/100*days/365;else if(rule==='vested'){let y=Math.floor(days/365),rem=days-y*365;a=p*cr/100*y+p*rr/100*rem/365}else a=Math.max(0,N(v382dm.value));let claw=Math.max(0,prior-a),add=Math.max(0,a-prior),total=Math.max(0,p+add-claw-fee);v382dOut.innerHTML=`<div class="v382d-row"><span>Үндсэн мөнгө</span><strong>₮${F(p)}</strong></div><div class="v382d-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><strong>₮${F(a)}</strong></div><div class="v382d-row"><span>Өмнөх хүүгийн буцаан тохируулга</span><strong>−₮${F(claw)}</strong></div><div class="v382d-row"><span>Нэмж олгох хүү</span><strong>+₮${F(add)}</strong></div><div class="v382d-row"><span>Шимтгэл</span><strong>−₮${F(fee)}</strong></div><div class="v382d-row"><span>Банкнаас авах тооцоолсон дүн</span><strong>₮${F(total)}</strong></div>`}
+function show(on){original.forEach(x=>x.style.display=on?'none':'');c.style.display=on?'block':'none';tabs.style.display='flex';v382dSave.classList.toggle('active',!on);v382dEarly.classList.toggle('active',on)}v382dSave.onclick=()=>show(false);v382dEarly.onclick=()=>{show(true);run()};v382dGo.onclick=run;v382drule.onchange=run;show(false)}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,900)})();
+</script>
+
+<style id="v382g-style">
+#v382gCancel{display:none;margin-top:14px}
+#v382gCancel .ggrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#v382gCancel label{display:block;font-weight:700;margin-bottom:6px;color:#374151}
+#v382gCancel input,#v382gCancel select{width:100%;box-sizing:border-box;min-height:52px;border:1px solid #d7e6e7;border-radius:15px;padding:11px 13px;background:#fff;font-size:16px}
+#v382gCancel select{min-height:72px}
+#v382gGo{width:100%;min-height:52px;margin-top:14px;border:0;border-radius:16px;background:#49B0B6;color:#fff;font-size:17px;font-weight:800}
+.gdays{min-height:52px;display:flex;align-items:center;padding:0 13px;border-radius:15px;background:#f4fafa;font-weight:700}
+.gout{margin-top:14px;padding:14px;border-radius:15px;background:#f8fbfb}
+.grow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed #e5e7eb}.grow:last-child{border:0}
+.gnote{font-size:12px;color:#6b7280;line-height:1.45;margin-top:10px}
+@media(max-width:700px){#v382gCancel .ggrid{grid-template-columns:1fr}}
+</style>
+<script id="v382g-isolated">
+(function(){
+ const TXT={
+  mn:{tabCalc:'Хуримтлал тооцох',tabCancel:'Хугацаанаас өмнө цуцлах',interestMethod:'Хүү бодох арга',simple:'Энгийн хүү',compound:'Нийлмэл хүү',compoundFreq:'Хүү үндсэнд нэмэгдэх давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',yearly:'Жил бүр',contribution:'Мөнгө нэмж хийх',noContribution:'Үгүй',regularContribution:'Тогтмол нэмнэ',contributionAmount:'Нэмэх дүн',contributionFreq:'Нэмэх давтамж',principal:'Үндсэн мөнгө',contractRate:'Гэрээний жилийн хүү (%)',cancelRate:'Цуцлалтын жилийн хүү (%)',priorInterest:'Өмнө бодитоор олгосон хүү',startDate:'Хадгаламж эхэлсэн огноо',cancelDate:'Цуцлах огноо',heldPeriod:'Хадгалсан хугацаа',fee:'Цуцлалтын шимтгэл',rule:'Цуцлалтын дүрэм',all:'Бүх хадгалсан хугацааг цуцлалтын хүүгээр дахин бодох',vested:'Бүтэн жилүүдийг гэрээний хүүгээр, үлдсэн хугацааг цуцлалтын хүүгээр бодох',manual:'Банкны нөхцөлөөр / эцсийн хүүг гараар оруулах',manualInterest:'Банкны зөвшөөрсөн эцсийн хүү',calculate:'Тооцоолох',note:'Урьдчилсан тооцоо. Бодит данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.',days:'хоног',checkDate:'Огноогоо шалгана уу',allowed:'Цуцлалтаар зөвшөөрөгдөх хүү',claw:'Өмнөх хүүгийн буцаан тохируулга',add:'Нэмж олгох хүү',estimated:'Банкнаас авах тооцоолсон дүн'},
+  en:{tabCalc:'Savings calculator',tabCancel:'Early termination',interestMethod:'Interest method',simple:'Simple interest',compound:'Compound interest',compoundFreq:'Compounding frequency',monthly:'Monthly',quarterly:'Quarterly',yearly:'Yearly',contribution:'Add money',noContribution:'No',regularContribution:'Add regularly',contributionAmount:'Deposit amount',contributionFreq:'Deposit frequency',principal:'Principal',contractRate:'Contract annual interest rate (%)',cancelRate:'Early termination annual rate (%)',priorInterest:'Interest already paid',startDate:'Deposit start date',cancelDate:'Termination date',heldPeriod:'Held period',fee:'Early termination fee',rule:'Early termination rule',all:'Recalculate the full held period at the early termination rate',vested:'Use the contract rate for full years and the early termination rate for the remaining period',manual:'Use bank terms / enter the final interest manually',manualInterest:'Final interest allowed by the bank',calculate:'Calculate',note:'Estimate only. This does not change actual accounts, transactions, or budgets.',days:'days',checkDate:'Please check the dates',allowed:'Interest allowed on termination',claw:'Adjustment of previously paid interest',add:'Additional interest to be paid',estimated:'Estimated amount receivable from bank'},
+  zh:{tabCalc:'储蓄计算',tabCancel:'提前终止',interestMethod:'计息方式',simple:'单利',compound:'复利',compoundFreq:'复利频率',monthly:'每月',quarterly:'每季度',yearly:'每年',contribution:'追加资金',noContribution:'否',regularContribution:'定期追加',contributionAmount:'追加金额',contributionFreq:'追加频率',principal:'本金',contractRate:'合同年利率 (%)',cancelRate:'提前支取年利率 (%)',priorInterest:'此前实际已支付利息',startDate:'存款开始日期',cancelDate:'提前支取日期',heldPeriod:'存款期限',fee:'提前支取手续费',rule:'提前支取规则',all:'全部存期按提前支取利率重新计算',vested:'完整年度按合同利率计算，其余期间按提前支取利率计算',manual:'按银行条款 / 手动输入最终利息',manualInterest:'银行认可的最终利息',calculate:'计算',note:'仅为预估，不会更改实际账户、交易或预算。',days:'天',checkDate:'请检查日期',allowed:'提前支取可得利息',claw:'已付利息调整',add:'追加支付利息',estimated:'预计从银行收到的金额'},
+  ja:{tabCalc:'貯蓄計算',tabCancel:'中途解約',interestMethod:'利息計算方式',simple:'単利',compound:'複利',compoundFreq:'複利頻度',monthly:'毎月',quarterly:'四半期ごと',yearly:'毎年',contribution:'お金を追加する',noContribution:'いいえ',regularContribution:'定期的に追加',contributionAmount:'追加金額',contributionFreq:'追加頻度',principal:'元本',contractRate:'契約年利率 (%)',cancelRate:'中途解約年利率 (%)',priorInterest:'すでに実際に支払われた利息',startDate:'預入開始日',cancelDate:'解約日',heldPeriod:'預入期間',fee:'中途解約手数料',rule:'中途解約ルール',all:'全預入期間を中途解約利率で再計算',vested:'満了した年は契約利率、残りの期間は中途解約利率で計算',manual:'銀行条件 / 最終利息を手動入力',manualInterest:'銀行が認めた最終利息',calculate:'計算する',note:'概算のみです。実際の口座、取引、予算は変更されません。',days:'日',checkDate:'日付を確認してください',allowed:'中途解約で認められる利息',claw:'既払利息の調整',add:'追加で支払われる利息',estimated:'銀行から受け取る見込額'},
+  ko:{tabCalc:'저축 계산',tabCancel:'중도 해지',interestMethod:'이자 계산 방식',simple:'단리',compound:'복리',compoundFreq:'복리 주기',monthly:'매월',quarterly:'분기별',yearly:'매년',contribution:'돈 추가하기',noContribution:'아니요',regularContribution:'정기적으로 추가',contributionAmount:'입금 금액',contributionFreq:'입금 주기',principal:'원금',contractRate:'계약 연 이율 (%)',cancelRate:'중도 해지 연 이율 (%)',priorInterest:'이전에 실제 지급된 이자',startDate:'예금 시작일',cancelDate:'해지일',heldPeriod:'예치 기간',fee:'중도 해지 수수료',rule:'중도 해지 규칙',all:'전체 예치 기간을 중도 해지 이율로 재계산',vested:'완료된 연도는 계약 이율, 남은 기간은 중도 해지 이율로 계산',manual:'은행 조건 / 최종 이자를 직접 입력',manualInterest:'은행이 인정한 최종 이자',calculate:'계산하기',note:'예상 계산입니다. 실제 계좌, 거래 또는 예산은 변경되지 않습니다.',days:'일',checkDate:'날짜를 확인하세요',allowed:'중도 해지 시 인정되는 이자',claw:'기지급 이자 조정',add:'추가 지급 이자',estimated:'은행에서 받을 예상 금액'},
+  ru:{tabCalc:'Расчёт накоплений',tabCancel:'Досрочное расторжение',interestMethod:'Способ начисления процентов',simple:'Простой процент',compound:'Сложный процент',compoundFreq:'Периодичность капитализации',monthly:'Ежемесячно',quarterly:'Ежеквартально',yearly:'Ежегодно',contribution:'Добавлять деньги',noContribution:'Нет',regularContribution:'Регулярно добавлять',contributionAmount:'Сумма пополнения',contributionFreq:'Частота пополнения',principal:'Основная сумма',contractRate:'Годовая ставка по договору (%)',cancelRate:'Годовая ставка при досрочном расторжении (%)',priorInterest:'Ранее фактически выплаченные проценты',startDate:'Дата открытия вклада',cancelDate:'Дата расторжения',heldPeriod:'Срок хранения',fee:'Комиссия за досрочное расторжение',rule:'Правило досрочного расторжения',all:'Пересчитать весь срок по ставке досрочного расторжения',vested:'Полные годы считать по договорной ставке, остаток срока — по ставке досрочного расторжения',manual:'По условиям банка / ввести итоговые проценты вручную',manualInterest:'Итоговые проценты, признанные банком',calculate:'Рассчитать',note:'Предварительный расчёт. Реальные счета, операции и бюджет не изменяются.',days:'дн.',checkDate:'Проверьте даты',allowed:'Проценты при досрочном расторжении',claw:'Корректировка ранее выплаченных процентов',add:'Дополнительные проценты к выплате',estimated:'Расчётная сумма к получению из банка'},
+  de:{tabCalc:'Sparberechnung',tabCancel:'Vorzeitig kündigen',interestMethod:'Zinsberechnung',simple:'Einfache Verzinsung',compound:'Zinseszins',compoundFreq:'Zinsgutschrift',monthly:'Monatlich',quarterly:'Vierteljährlich',yearly:'Jährlich',contribution:'Geld hinzufügen',noContribution:'Nein',regularContribution:'Regelmäßig hinzufügen',contributionAmount:'Einzahlungsbetrag',contributionFreq:'Einzahlungsintervall',principal:'Kapital',contractRate:'Vertraglicher Jahreszins (%)',cancelRate:'Jahreszins bei vorzeitiger Kündigung (%)',priorInterest:'Bereits tatsächlich gezahlte Zinsen',startDate:'Beginn der Einlage',cancelDate:'Kündigungsdatum',heldPeriod:'Anlagedauer',fee:'Gebühr bei vorzeitiger Kündigung',rule:'Regel für vorzeitige Kündigung',all:'Gesamte Anlagedauer mit dem Kündigungszins neu berechnen',vested:'Volle Jahre mit Vertragszins, Restlaufzeit mit Kündigungszins berechnen',manual:'Nach Bankbedingungen / Endzins manuell eingeben',manualInterest:'Von der Bank anerkannter Endzins',calculate:'Berechnen',note:'Nur eine Schätzung. Tatsächliche Konten, Transaktionen und Budgets werden nicht geändert.',days:'Tage',checkDate:'Bitte Datum prüfen',allowed:'Zulässige Zinsen bei Kündigung',claw:'Korrektur bereits gezahlter Zinsen',add:'Zusätzlich auszuzahlende Zinsen',estimated:'Geschätzter Auszahlungsbetrag der Bank'}
+ };
+ function Q(){const l=typeof lang==='string'&&TXT[lang]?lang:'mn';return TXT[l]}
+ function num(v){if(typeof parseAmt==='function')return parseAmt(v);v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+ function fmt(v){try{return Math.round(v).toLocaleString('en-US')}catch(e){return String(Math.round(v))}}
+ function money(v){return (typeof CS==='string'?CS:'₮')+fmt(v)}
+ function findCalc(){const tabs=document.getElementById('v382dTabs');return tabs?tabs.parentElement:null}
+ function findCoffee(){for(const e of document.querySelectorAll('h1,h2,h3,h4,div')){const t=(e.textContent||'').trim().toLowerCase();if(t==='кофены мөнгө challenge'||t==='coffee money challenge'){let p=e;for(let i=0;p&&i<5;i++,p=p.parentElement){const c=(p.className||'').toString().toLowerCase();if(c.includes('card')||c.includes('panel'))return p}return e.parentElement}}return null}
+ function mount(){
+  if(document.getElementById('v382gCancel'))return;
+  const card=findCalc();if(!card)return;
+  const tabs=document.getElementById('v382dTabs'),save=document.getElementById('v382dSave'),early=document.getElementById('v382dEarly');if(!save||!early)return;
+  const old=document.getElementById('v382dCancel');if(old)old.remove();
+  const savings=document.createElement('div');savings.id='v382gSavings';[...card.children].filter(x=>x!==tabs&&x.id!=='v382gCancel').forEach(x=>savings.appendChild(x));card.appendChild(savings);
+  const cancel=document.createElement('div');cancel.id='v382gCancel';card.appendChild(cancel);
+  function render(){
+   const keep={};
+   ['gp','gcr','grr','gprior','gstart','gend','gfee','grule','gmanual','ginterest','gcompoundfreq','gcontrib','gcontribamt','gcontribfreq'].forEach(id=>{
+     const el=document.getElementById(id); if(el)keep[id]=el.value;
+   });
+   const q=Q();
+   const tabCalc=document.getElementById('v382dSave'),tabCancel=document.getElementById('v382dEarly');
+   if(tabCalc)tabCalc.textContent=q.tabCalc;
+   if(tabCancel)tabCancel.textContent=q.tabCancel;
+   cancel.innerHTML=`<div class="ggrid">
+   <div><label>${q.principal}</label><input id="gp" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div><label>${q.interestMethod}</label><select id="ginterest"><option value="simple">${q.simple}</option><option value="compound">${q.compound}</option></select></div>
+   <div id="gcompoundWrap" style="display:none"><label>${q.compoundFreq}</label><select id="gcompoundfreq"><option value="12">${q.monthly}</option><option value="4">${q.quarterly}</option><option value="1">${q.yearly}</option></select></div>
+   <div><label>${q.contribution}</label><select id="gcontrib"><option value="none">${q.noContribution}</option><option value="regular">${q.regularContribution}</option></select></div>
+   <div id="gcontribAmtWrap" style="display:none"><label>${q.contributionAmount}</label><input id="gcontribamt" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div id="gcontribFreqWrap" style="display:none"><label>${q.contributionFreq}</label><select id="gcontribfreq"><option value="monthly">${q.monthly}</option><option value="quarterly">${q.quarterly}</option><option value="yearly">${q.yearly}</option></select></div>
+   <div><label>${q.contractRate}</label><input id="gcr" type="number" min="0" step=".01" placeholder="0"></div>
+   <div><label>${q.cancelRate}</label><input id="grr" type="number" min="0" step=".01" placeholder="0"></div>
+   <div><label>${q.priorInterest}</label><input id="gprior" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div><label>${q.startDate}</label><input id="gstart" type="date"></div><div><label>${q.cancelDate}</label><input id="gend" type="date"></div>
+   <div><label>${q.heldPeriod}</label><div class="gdays" id="gdays">— ${q.days}</div></div>
+   <div><label>${q.fee}</label><input id="gfee" inputmode="decimal" data-amt="1" placeholder="0"></div>
+   <div style="grid-column:1/-1"><label>${q.rule}</label><select id="grule"><option value="all">${q.all}</option><option value="vested">${q.vested}</option><option value="manual">${q.manual}</option></select></div>
+   <div id="gmanualWrap" style="display:none"><label>${q.manualInterest}</label><input id="gmanual" inputmode="decimal" data-amt="1" placeholder="0"></div>
+  </div><button id="v382gGo">${q.calculate}</button><div id="gout"></div><div class="gnote">${q.note}</div>`;
+  ['gp','gprior','gfee','gmanual','gcontribamt'].forEach(id=>{const el=document.getElementById(id);if(el&&typeof setupAmtInput==='function')setupAmtInput(el)});
+  Object.keys(keep).forEach(id=>{const el=document.getElementById(id);if(el)el.value=keep[id]});
+  gstart.onchange=days;gend.onchange=days;
+  grule.onchange=()=>{gmanualWrap.style.display=grule.value==='manual'?'block':'none'};
+  ginterest.onchange=()=>{gcompoundWrap.style.display=ginterest.value==='compound'?'block':'none'};
+  gcontrib.onchange=()=>{const on=gcontrib.value==='regular';gcontribAmtWrap.style.display=on?'block':'none';gcontribFreqWrap.style.display=on?'block':'none'};
+  v382gGo.onclick=run;
+  grule.onchange();ginterest.onchange();gcontrib.onchange();days();
+  window.v382gRefreshLanguage=render;
+  }
+  function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
+  function run(){
+   if(typeof gcontrib!=='undefined'&&gcontrib.value==='regular'){
+     alert(lang==='en'?'Regular additional deposits will be enabled after their formula is verified.':lang==='ja'?'定期的な追加預入は数式の検証後に有効になります。':lang==='ko'?'정기 추가 입금은 공식 검증 후 활성화됩니다.':lang==='ru'?'Регулярные пополнения будут включены после проверки формулы.':lang==='de'?'Regelmäßige Einzahlungen werden nach Prüfung der Formel aktiviert.':lang==='zh'?'定期追加资金将在公式验证后启用。':'Тогтмол мөнгө нэмэх тооцоог томьёог нь баталгаажуулсны дараа идэвхжүүлнэ.');
+     return;
+   }
+   const q=Q(),p=Math.max(0,num(gp.value)),cr=Math.max(0,Number(gcr.value)||0),rr=Math.max(0,Number(grr.value)||0),prior=Math.max(0,num(gprior.value)),fee=Math.max(0,num(gfee.value)),d=days(),rule=grule.value;
+   const compound=(typeof ginterest!=='undefined'&&ginterest.value==='compound');
+   const freq=compound?Math.max(1,Number(gcompoundfreq.value)||1):1;
+   function interestFor(principal,annualRate,dayCount,useCompound){
+     if(!useCompound)return principal*annualRate/100*dayCount/365;
+     const periodDays=365/freq, full=Math.floor(dayCount/periodDays), rem=dayCount-full*periodDays;
+     let bal=principal*Math.pow(1+annualRate/100/freq,full);
+     if(rem>0)bal+=bal*(annualRate/100/freq)*(rem/periodDays);
+     return Math.max(0,bal-principal);
+   }
+   let allowed=0;
+   if(rule==='all')allowed=interestFor(p,rr,d,compound);
+   else if(rule==='vested'){
+     const y=Math.floor(d/365),rem=d-y*365;
+     if(compound){
+       const vestedInterest=interestFor(p,cr,y*365,true);
+       const vestedBalance=p+vestedInterest;
+       allowed=vestedInterest+interestFor(vestedBalance,rr,rem,true);
+     }else allowed=p*cr/100*y+p*rr/100*rem/365;
+   }else allowed=Math.max(0,num(gmanual.value));const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,p+add-claw-fee);gout.innerHTML=`<div class="gout"><div class="grow"><span>${q.principal}</span><strong>${money(p)}</strong></div><div class="grow"><span>${q.allowed}</span><strong>${money(allowed)}</strong></div><div class="grow"><span>${q.claw}</span><strong>−${money(claw)}</strong></div><div class="grow"><span>${q.add}</span><strong>+${money(add)}</strong></div><div class="grow"><span>${q.fee}</span><strong>−${money(fee)}</strong></div><div class="grow"><span>${q.estimated}</span><strong>${money(total)}</strong></div></div>`}
+  function mode(which){const isCancel=which==='cancel',coffee=findCoffee();savings.style.display=isCancel?'none':'block';cancel.style.display=isCancel?'block':'none';if(coffee){coffee.style.display=isCancel?'none':'';if(!isCancel)coffee.style.marginTop='28px'}save.classList.toggle('active',!isCancel);early.classList.toggle('active',isCancel)}
+  render();save.onclick=()=>mode('save');early.onclick=()=>mode('cancel');mode('save');
+ }
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,650));document.addEventListener('click',()=>setTimeout(mount,80));setTimeout(mount,1200);
+
+ // V38.2h — sync this panel from Möngö's existing single language source.
+ try{
+   if(typeof setLang==='function'&&!setLang.__v382hCancelSync){
+     const originalSetLang=setLang;
+     setLang=function(){
+       const r=originalSetLang.apply(this,arguments);
+       setTimeout(()=>{if(typeof window.v382gRefreshLanguage==='function')window.v382gRefreshLanguage()},0);
+       return r;
+     };
+     setLang.__v382hCancelSync=true;
+   }
+ }catch(e){}
+})();
+</script>
+
+
+<!-- Möngö: calculator result cards — visual-only, persistence/calculation logic untouched -->
+<style id="mongo-v382g-result-cards-visual-only">
+#v382gCancel #gout > .gout{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+  padding:0;
+  background:transparent;
+  border-radius:0;
+}
+#v382gCancel #gout > .gout > .grow{
+  min-width:0;
+  min-height:88px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px 13px;
+  border:1px solid #dcebec;
+  border-radius:15px;
+  background:#f8fbfb;
+  box-sizing:border-box;
+}
+#v382gCancel #gout > .gout > .grow span{
+  font-size:12px;
+  line-height:1.35;
+  color:#6b7280;
+  overflow-wrap:anywhere;
+}
+#v382gCancel #gout > .gout > .grow strong{
+  max-width:100%;
+  font-size:16px;
+  line-height:1.25;
+  color:#374151;
+  overflow-wrap:anywhere;
+}
+#v382gCancel #gout > .gout > .grow:last-child{
+  border:1px solid rgba(73,176,182,.45);
+  background:rgba(73,176,182,.10);
+}
+#v382gCancel #gout > .gout > .grow:last-child strong{color:#287f84}
+@media(max-width:380px){
+  #v382gCancel #gout > .gout{gap:8px}
+  #v382gCancel #gout > .gout > .grow{min-height:84px;padding:10px 11px}
+  #v382gCancel #gout > .gout > .grow strong{font-size:15px}
+}
+</style>
+
+<!-- Möngö scoped exception: only long cancellation-rule fields may grow -->
+<style id="mongo-cancellation-rule-two-line-only">
+@media (max-width:700px){
+  #account-early-rule,
+  #edit-early-rule,
+  #v382gCancel #grule,
+  #v382dCancel #v382drule{
+    min-height:72px !important;
+    height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
+
+
+<!-- Möngö UI Typography Standard — visual only; financial/persistence logic untouched -->
+<style id="mongo-ui-typography-standard">
+:root{
+  --mongo-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  --mongo-text:#374151;
+  --mongo-text-soft:#6B7280;
+  --mongo-text-muted:#9CA3AF;
+  --mongo-brand:#49B0B6;
+  --mongo-brand-dark:#1F7F86;
+
+  --mongo-fs-xs:11px;
+  --mongo-fs-sm:12px;
+  --mongo-fs-body:14px;
+  --mongo-fs-field:14px;
+  --mongo-fs-section:16px;
+  --mongo-fs-title:20px;
+
+  --mongo-lh-tight:1.25;
+  --mongo-lh-body:1.45;
+}
+
+/* One font family throughout the app. Material icon glyphs keep their own font. */
+html,body,button,input,select,textarea,option{
+  font-family:var(--mongo-font) !important;
+}
+.material-symbols-rounded,
+.material-icons,
+.material-icons-round,
+[class*="material-symbol"]{
+  font-family:"Material Symbols Rounded" !important;
+}
+
+/* Default readable text */
+body{
+  color:var(--mongo-text);
+  font-size:var(--mongo-fs-body);
+  line-height:var(--mongo-lh-body);
+}
+
+/* Page / modal hierarchy */
+h1{
+  font-size:var(--mongo-fs-title) !important;
+  line-height:var(--mongo-lh-tight) !important;
+  font-weight:700 !important;
+  color:var(--mongo-text) !important;
+}
+h2{
+  font-size:18px !important;
+  line-height:1.3 !important;
+  font-weight:700 !important;
+  color:var(--mongo-text) !important;
+}
+h3,h4{
+  font-size:var(--mongo-fs-section) !important;
+  line-height:1.35 !important;
+  font-weight:700 !important;
+  color:var(--mongo-text) !important;
+}
+
+/* Form labels and controls */
+label{
+  font-size:var(--mongo-fs-sm);
+  line-height:1.35;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea{
+  font-size:var(--mongo-fs-field) !important;
+  line-height:1.35 !important;
+  font-weight:400;
+  color:var(--mongo-text) !important;
+}
+input::placeholder,
+textarea::placeholder{
+  color:var(--mongo-text-muted) !important;
+  opacity:1;
+}
+select:invalid{ color:var(--mongo-text-muted) !important; }
+
+/* Buttons: consistent typography, preserve each button's existing semantic color/background */
+button,
+.btn,
+[role="button"]{
+  font-size:var(--mongo-fs-body);
+  line-height:1.25;
+  font-weight:600;
+}
+
+/* Tables and compact data text */
+table,th,td{
+  font-family:var(--mongo-font);
+}
+th{
+  font-size:var(--mongo-fs-sm);
+  line-height:1.35;
+  font-weight:600;
+}
+td{
+  font-size:13px;
+  line-height:1.4;
+}
+
+/* Navigation stays compact and uniform */
+nav button,
+.bottom-nav button,
+.tab-btn,
+.tab-button{
+  font-size:var(--mongo-fs-xs);
+  line-height:1.25;
+}
+
+/* Calculator result cards follow the same hierarchy */
+#v382gCancel #gout > .gout > .grow span{
+  font-size:var(--mongo-fs-sm) !important;
+  line-height:1.35 !important;
+  color:var(--mongo-text-soft) !important;
+}
+#v382gCancel #gout > .gout > .grow strong{
+  font-size:var(--mongo-fs-section) !important;
+  line-height:1.25 !important;
+  color:var(--mongo-text) !important;
+}
+#v382gCancel #gout > .gout > .grow:last-child strong{
+  color:var(--mongo-brand-dark) !important;
+}
+
+/* Preserve the already-approved special two-line cancellation rule field only. */
+@media (max-width:700px){
+  #account-early-rule,
+  #edit-early-rule,
+  #v382gCancel #grule,
+  #v382dCancel #v382drule{
+    min-height:72px !important;
+    height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
+
+
+<!-- Möngö V12 — SAVINGS CALCULATORS SCOPED PHONE TEST
+     Visual-only. Scope is limited to Savings calculator + Early termination calculator.
+     No global .fi/input/select rules. Financial, persistence and Backup/Restore logic untouched. -->
+<style id="mongo-v12-savings-calculators-scoped-phone-test">
+@media (max-width:700px){
+  /* 1) Main Savings calculator only */
+  #goals-panel-calc .calc-card .fi,
+  #goals-panel-calc .calc-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  #goals-panel-calc .calc-card select{
+    min-height:46px !important;
+    height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  /* 2) Early-termination calculator only */
+  #v382gCancel input,
+  #v382gCancel select,
+  #v382gCancel .gdays{
+    min-height:46px !important;
+    height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Approved exception: cancellation rule remains a readable two-line field. */
+  #v382gCancel #grule{
+    min-height:72px !important;
+    height:auto !important;
+    padding-top:12px !important;
+    padding-bottom:12px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+  }
+
+  #goals-panel-calc .calc-card label,
+  #v382gCancel label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+}
+</style>
+
+<!-- Möngö V13 — NEW SAVINGS DEADLINE HEIGHT PHONE FIX
+     Visual-only. Only #goals-panel-mine #g-dead is touched. -->
+<style id="mongo-v13-new-savings-deadline-height-fix">
+@media (max-width:700px){
+  #goals-panel-mine #g-dead{
+    min-height:46px !important;
+    height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
+
+<!-- Möngö V14 — NEW SAVINGS DEADLINE EXACT MATCH PHONE FIX
+     Visual-only. Measures #g-saved and forces #g-dead to the same rendered height. -->
+<style id="mongo-v14-new-savings-deadline-exact-match">
+@media (max-width:700px){
+  #goals-panel-mine #g-dead{
+    box-sizing:border-box !important;
+    margin:0 !important;
+  }
+}
+</style>
+<script id="mongo-v14-new-savings-deadline-exact-match-script">
+(function(){
+  function matchSavingsDeadlineHeight(){
+    if(!window.matchMedia || !window.matchMedia('(max-width:700px)').matches) return;
+    var ref=document.getElementById('g-saved');
+    var dead=document.getElementById('g-dead');
+    if(!ref||!dead) return;
+    var h=Math.round(ref.getBoundingClientRect().height);
+    if(!h) return;
+    dead.style.setProperty('height',h+'px','important');
+    dead.style.setProperty('min-height',h+'px','important');
+    dead.style.setProperty('max-height',h+'px','important');
+    dead.style.setProperty('padding',getComputedStyle(ref).padding,'important');
+    dead.style.setProperty('border-radius',getComputedStyle(ref).borderRadius,'important');
+    dead.style.setProperty('font-size',getComputedStyle(ref).fontSize,'important');
+    dead.style.setProperty('line-height',getComputedStyle(ref).lineHeight,'important');
+  }
+  function run(){requestAnimationFrame(function(){matchSavingsDeadlineHeight();setTimeout(matchSavingsDeadlineHeight,120);});}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+  window.addEventListener('resize',run);
+  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#goals-tab-mine'))setTimeout(matchSavingsDeadlineHeight,30);});
+})();
+</script>
+
+<!-- Möngö V15 — NEW SAVINGS DEADLINE FLEX-STRETCH FIX
+     Root cause: #g-dead is a flex item. Its one-line label leaves extra vertical space,
+     so flex-grow stretches the date input while #g-saved sits under a two-line label.
+     Scoped only to the New Savings row. -->
+<style id="mongo-v15-new-savings-deadline-flex-fix">
+@media (max-width:700px){
+  #goals-panel-mine #g-saved,
+  #goals-panel-mine #g-dead{
+    flex:0 0 46px !important;
+    height:46px !important;
+    min-height:46px !important;
+    max-height:46px !important;
+    box-sizing:border-box !important;
+  }
+}
+</style>
+
+<!-- Möngö V16 — LOAN CALCULATOR SCOPED PHONE TEST
+     Visual-only. Scope is limited to #debts-panel-calc.
+     Matches the approved 46px mobile field standard used in Savings.
+     No global .fi/input/select rules. New Loan, Savings, Investment,
+     financial formulas, persistence and Backup/Restore logic untouched. -->
+<style id="mongo-v16-loan-calculator-scoped-phone-test">
+@media (max-width:700px){
+  #debts-panel-calc .calc-card .fi,
+  #debts-panel-calc .calc-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  #debts-panel-calc .calc-card select{
+    min-height:46px !important;
+    height:46px !important;
+    max-height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  #debts-panel-calc .calc-card .slbl,
+  #debts-panel-calc .calc-card label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  /* Keep each field from stretching vertically when labels wrap. */
+  #debts-panel-calc .form-row > div{
+    align-self:start !important;
+  }
+}
+</style>
+
+
+<!-- Möngö V17 — INVESTMENT CALCULATOR SCOPED PHONE TEST
+     Visual-only. Scope is limited to #invest-panel-calc.
+     No global .fi/input/select rules.
+     V15 Savings and V16 Loan PHONE PASS areas remain untouched. -->
+<style id="mongo-v17-investment-calculator-scoped-phone-test">
+@media (max-width:700px){
+  #invest-panel-calc .calc-card .fi,
+  #invest-panel-calc .calc-card input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  #invest-panel-calc .calc-card select{
+    min-height:46px !important;
+    height:46px !important;
+    max-height:46px !important;
+    padding:10px 12px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+    line-height:1.35 !important;
+    box-sizing:border-box !important;
+  }
+
+  #invest-panel-calc .calc-card .slbl,
+  #invest-panel-calc .calc-card label{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  /* Wrapped labels must not stretch neighboring controls. */
+  #invest-panel-calc .form-row > div{
+    align-self:start !important;
+  }
+}
+</style>
+
+
+<!-- Möngö V19 — FINANCE TEXT-ONLY TYPOGRAPHY PHONE TEST
+     Base: V17 PHONE PASS.
+     Scope: #tab-dashboard only.
+     Text properties only: font-size, font-weight, line-height, letter-spacing.
+     NO layout, spacing, card, chart, amount-position, input or calculator changes. -->
+<style id="mongo-v19-finance-text-only-typography">
+@media (max-width:700px){
+
+  /* Premium dashboard section title */
+  #tab-dashboard .pdash-title{
+    font-size:20px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* Main section/card headings used across Finance */
+  #tab-dashboard .card h3,
+  #tab-dashboard .chart-card h3,
+  #tab-dashboard .donut-card h3{
+    font-size:20px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* Dashboard KPI labels only */
+  #tab-dashboard .pdash-label{
+    font-size:12px !important;
+    font-weight:700 !important;
+    line-height:1.35 !important;
+    letter-spacing:.02em !important;
+  }
+
+  /* Supporting descriptions — typography only */
+  #tab-dashboard .pdash-sub{
+    font-size:12px !important;
+    font-weight:500 !important;
+    line-height:1.45 !important;
+  }
+}
+</style>
+
+
+<!-- Möngö V20 — TRANSACTIONS TEXT-ONLY TYPOGRAPHY PHONE TEST
+     Base: V19 PHONE PASS.
+     Scope: #tab-transactions only.
+     Text properties only. NO layout/spacing/controls/colors/amount positioning changes. -->
+<style id="mongo-v20-transactions-text-only-typography">
+@media (max-width:700px){
+  /* Main card/section headings */
+  #tab-transactions .card h3,
+  #tab-transactions .section-title,
+  #tab-transactions .sec-title{
+    font-size:20px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* Small uppercase summary labels */
+  #tab-transactions .summary-label,
+  #tab-transactions .stat-label,
+  #tab-transactions .kpi-label{
+    font-size:12px !important;
+    font-weight:700 !important;
+    line-height:1.35 !important;
+    letter-spacing:.02em !important;
+  }
+
+  /* Supporting/meta text only */
+  #tab-transactions .muted,
+  #tab-transactions .meta,
+  #tab-transactions .subtext{
+    font-size:12px !important;
+    font-weight:500 !important;
+    line-height:1.45 !important;
+  }
+}
+</style>
+
+
+<!-- Möngö V23 — BUDGET TEXT-ONLY PHONE TEST
+BASE: V20 MASTER. SCOPE: #tab-budget only.
+Typography only; no layout, spacing, controls, colors, progress or logic changes. -->
+<style id="mongo-v23-budget-text-only-typography">
+@media (max-width:700px){
+  #tab-budget .card h3,
+  #tab-budget .section-title,
+  #tab-budget .sec-title{
+    font-size:20px !important;
+    font-weight:800 !important;
+    line-height:1.25 !important;
+    letter-spacing:0 !important;
+  }
+  #tab-budget .slbl,
+  #tab-budget .summary-label,
+  #tab-budget .stat-label{
+    font-size:12px !important;
+    font-weight:700 !important;
+    line-height:1.35 !important;
+  }
+  #tab-budget .muted,
+  #tab-budget .meta,
+  #tab-budget .subtext{
+    font-size:12px !important;
+    font-weight:500 !important;
+    line-height:1.45 !important;
+  }
+}
+</style>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
