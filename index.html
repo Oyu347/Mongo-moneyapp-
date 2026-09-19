@@ -2409,6 +2409,85 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 @media(max-width:520px){.mongo-plan-grid{grid-template-columns:1fr!important}.mongo-plan{min-height:112px}.mongo-paywall-sheet{max-height:92vh}}
 </style>
 
+
+<style id="v30-profile-ui-standard">
+/* Möngö V30 — Profile-only UI standardization. Scoped to #tab-profile. */
+#tab-profile #profile-help-list .help-item{
+  margin-bottom:10px;
+  border-radius:20px;
+}
+#tab-profile #profile-help-list .help-q{
+  min-height:56px;
+  padding:13px 16px;
+  gap:12px;
+  font-size:13px;
+  line-height:1.35;
+  font-weight:900;
+  color:#374151;
+}
+#tab-profile #profile-help-list .help-q > span:first-child{
+  flex:1;
+  min-width:0;
+}
+#tab-profile #profile-help-list .help-q .material-symbols-rounded{
+  flex:0 0 24px;
+  width:24px;
+  text-align:center;
+  font-size:24px;
+  transition:transform .18s ease;
+}
+#tab-profile #profile-help-list .help-a{
+  padding:0 16px 15px;
+  font-size:12px;
+  line-height:1.6;
+  font-weight:650;
+  color:#6B7280;
+}
+#tab-profile .profile-settings-card .profile-row{
+  min-height:54px;
+  padding:13px 0;
+  align-items:center;
+}
+#tab-profile .profile-settings-card .profile-label{
+  font-size:12px;
+  line-height:1.35;
+  font-weight:800;
+  color:#6B7280;
+}
+#tab-profile .profile-settings-card .profile-value{
+  font-size:13px;
+  line-height:1.35;
+  font-weight:900;
+  color:#374151;
+}
+#tab-profile .profile-actions-settings{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:6px;
+}
+#tab-profile .profile-actions-settings .btn,
+#tab-profile .profile-actions-settings label.btn{
+  width:100%;
+  min-height:52px;
+  padding:12px 16px;
+  border-radius:20px!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  font-size:13px;
+  line-height:1.2;
+  font-weight:900;
+}
+#tab-profile .profile-actions-settings .material-symbols-rounded{
+  flex:0 0 24px;
+  width:24px;
+  font-size:24px;
+  line-height:1;
+}
+</style>
+
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -17469,102 +17548,6 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
   #debts-panel-mine .btn,
   #debts-panel-calc .btn,
   #debts-panel-calc #btn-loan-schedule{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-button-size)!important;
-    font-weight:700!important;
-    line-height:1.25!important;
-    letter-spacing:0!important;
-  }
-}
-</style>
-
-
-<!-- Möngö V30 — APP TYPOGRAPHY SYSTEM / PHASE 3: INVESTMENTS ONLY
-Typography-only, scoped to #tab-invest. No layout, financial logic, i18n, Savings, Loans, or other panels changed. -->
-<style id="mongo-v30-investment-typography-system">
-@media(max-width:700px){
-  /* Main titles */
-  #tab-invest h2,
-  #tab-invest h3{
-    font-family:var(--mongo-font)!important;
-    color:var(--mongo-text)!important;
-    letter-spacing:0!important;
-  }
-  #tab-invest h2{
-    font-size:var(--mongo-title-size)!important;
-    font-weight:700!important;
-    line-height:1.25!important;
-  }
-
-  /* Descriptions / ordinary explanatory text */
-  #tab-invest .muted,
-  #tab-invest .hint,
-  #tab-invest .helper,
-  #tab-invest .desc{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-body-size)!important;
-    font-weight:400!important;
-    line-height:1.45!important;
-    color:var(--mongo-text-secondary)!important;
-    letter-spacing:0!important;
-  }
-
-  /* Field labels */
-  #tab-invest .slbl{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-label-size)!important;
-    font-weight:600!important;
-    line-height:1.35!important;
-    color:var(--mongo-text-secondary)!important;
-    letter-spacing:0!important;
-  }
-
-  /* Inputs/selects — typography only */
-  #tab-invest .fi{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-control-size)!important;
-    font-weight:400!important;
-    line-height:1.35!important;
-    color:var(--mongo-text)!important;
-    letter-spacing:0!important;
-  }
-  #tab-invest .fi::placeholder{
-    color:var(--mongo-text-muted)!important;
-    opacity:1!important;
-  }
-
-  /* Tabs */
-  #tab-invest .calc-tab-btn{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-tab-size)!important;
-    font-weight:600!important;
-    line-height:1.35!important;
-    color:var(--mongo-text)!important;
-    letter-spacing:0!important;
-  }
-  #tab-invest .calc-tab-btn.active{
-    color:#fff!important;
-    font-weight:700!important;
-  }
-
-  /* Result hierarchy */
-  #tab-invest .calc-result .k{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-label-size)!important;
-    font-weight:600!important;
-    line-height:1.35!important;
-    color:var(--mongo-text-secondary)!important;
-  }
-  #tab-invest .calc-result .v{
-    font-family:var(--mongo-font)!important;
-    font-size:var(--mongo-result-size)!important;
-    font-weight:700!important;
-    line-height:1.2!important;
-    color:var(--mongo-brand-dark)!important;
-  }
-
-  /* Buttons — typography only */
-  #tab-invest .btn{
     font-family:var(--mongo-font)!important;
     font-size:var(--mongo-button-size)!important;
     font-weight:700!important;
