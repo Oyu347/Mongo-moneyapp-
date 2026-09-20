@@ -17886,3 +17886,44 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeo
 <!-- Möngö V42.5 RC2 verification fixes applied -->
 
 <!-- Möngö V30.3 logo fix marker -->
+
+<!-- Möngö PHONE TEST — Rule 4: interest can be paid externally or credited to the deposit. Scoped only to cancellation calculator. -->
+<style id="mongo-rule4-payout-destination-scoped">
+#v382gCancel #gmarketPayout{width:100%}
+</style>
+<script id="mongo-rule4-payout-destination-script">
+(function(){
+'use strict';
+const L={
+ mn:{inside:'Хадгаламждаа нэмэгдэнэ',noteIn:'Хүү хадгаламждаа нэмэгдсэн бол тусдаа дансанд бодитоор олгогдоогүй тул “Өмнө бодитоор олгосон хүү” 0 байна. Цуцлах үед зөвшөөрөгдөх хүүг сонгосон цуцлалтын нөхцөлөөр тооцно.'},
+ en:{inside:'Added to the deposit',noteIn:'When interest is credited to the deposit, it has not been paid out to another account, so “Interest already paid” is 0. Allowed interest at cancellation is calculated under the selected cancellation terms.'},
+ zh:{inside:'计入存款本金',noteIn:'利息计入存款时，并未实际支付到其他账户，因此“此前实际已支付的利息”为 0。提前终止时的认可利息按所选提前终止条件计算。'},
+ ja:{inside:'預金に加算',noteIn:'利息が預金に加算される場合、別口座へ実際に支払われていないため「すでに支払われた利息」は0です。解約時の認定利息は選択した解約条件で計算します。'},
+ ko:{inside:'예금에 더하기',noteIn:'이자가 예금에 더해진 경우 다른 계좌로 실제 지급된 것이 아니므로 “이미 지급된 이자”는 0입니다. 중도해지 시 인정 이자는 선택한 해지 조건으로 계산합니다.'},
+ ru:{inside:'Добавлять к вкладу',noteIn:'Если проценты добавляются к вкладу, они не выплачиваются фактически на другой счёт, поэтому «Ранее выплаченные проценты» равны 0. Допустимые проценты при расторжении рассчитываются по выбранным условиям.'},
+ de:{inside:'Dem Guthaben gutschreiben',noteIn:'Werden Zinsen dem Guthaben gutgeschrieben, wurden sie nicht auf ein anderes Konto ausgezahlt; daher ist „Bereits ausgezahlter Zins“ 0. Der zulässige Zins bei Kündigung wird nach den gewählten Kündigungsbedingungen berechnet.'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+function boot(){
+ const payout=document.getElementById('gmarketPayout'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo'),wrap=document.getElementById('gmarketWrap');
+ if(!payout||!prior||!go||!wrap){setTimeout(boot,300);return}
+ if(payout.querySelector('option[value="deposit"]'))return;
+ const opt=document.createElement('option');opt.value='deposit';opt.textContent=T().inside;payout.appendChild(opt);
+ const note=wrap.querySelector('.gmarket-note');
+ const externalNote=note?note.textContent:'';
+ function sync(){
+   const inside=payout.value==='deposit';
+   if(inside){prior.value='0';prior.readOnly=true;if(note)note.textContent=T().noteIn;}
+   else {if(note)note.textContent=externalNote;}
+ }
+ payout.addEventListener('change',sync);
+ ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{
+   const e=document.getElementById(id);if(e){e.addEventListener('input',()=>{if(payout.value==='deposit')prior.value='0'});e.addEventListener('change',()=>{if(payout.value==='deposit')prior.value='0'});}
+ });
+ go.addEventListener('click',()=>{if(payout.value==='deposit')prior.value='0'},true);
+ try{if(typeof setLang==='function'&&!setLang.__rule4PayoutDestination){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const o=payout.querySelector('option[value="deposit"]');if(o)o.textContent=T().inside;sync()},0);return r};setLang.__rule4PayoutDestination=true}}catch(e){}
+ sync();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,4100));setTimeout(boot,4600);
+})();
+</script>
