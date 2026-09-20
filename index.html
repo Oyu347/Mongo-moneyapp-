@@ -17840,6 +17840,47 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,2500));setTimeo
 })();
 </script>
 
+
+
+<!-- Möngö PHONE TEST — Rule 4 auto-calculated previously paid interest. Scoped to cancellation calculator only. -->
+<style id="mongo-rule4-auto-paid-scoped">
+#v382gCancel #gmarketContractWrap{display:none}
+#v382gCancel #gpriorAutoNote{display:none;grid-column:1/-1;font-size:11px;line-height:1.45;color:#6b7280;margin-top:-4px}
+#v382gCancel #gprior[readonly]{background:#f5f9f9;color:#374151}
+</style>
+<script id="mongo-rule4-auto-paid-script">
+(function(){
+'use strict';
+const L={
+ mn:{contract:'Гэрээний жилийн хүү (%)',auto:'Апп гэрээний жилийн хүү, хүү олгох давтамж, мөнгө нэмсэн огноонуудыг ашиглан өмнө олгосон хүүг автоматаар тооцно. Банкны бодит дүн өөр бол “Банкны бодит дүнгээр” тохируулж болно.'},
+ en:{contract:'Contract annual interest rate (%)',auto:'The app automatically estimates interest already paid using the contract annual rate, payout frequency and contribution dates. If the bank’s actual amount differs, use the bank actual amount option.'},
+ zh:{contract:'合同年利率 (%)',auto:'应用会根据合同年利率、付息频率和追加存款日期自动估算此前已支付的利息。如银行实际金额不同，可使用银行实际金额方式调整。'},
+ ja:{contract:'契約年利率 (%)',auto:'アプリは契約年利率、利息受取頻度、追加入金日から、すでに支払われた利息を自動計算します。銀行の実額と異なる場合は銀行の実額方式で調整できます。'},
+ ko:{contract:'계약 연이율 (%)',auto:'앱은 계약 연이율, 이자 지급 주기, 추가 입금일을 사용해 이미 지급된 이자를 자동 계산합니다. 은행 실제 금액이 다르면 은행 실제 금액 방식으로 조정할 수 있습니다.'},
+ ru:{contract:'Годовая ставка по договору (%)',auto:'Приложение автоматически рассчитывает ранее выплаченные проценты по договорной ставке, периодичности выплат и датам пополнений. Если фактическая сумма банка отличается, используйте расчёт по фактической сумме банка.'},
+ de:{contract:'Vertraglicher Jahreszins (%)',auto:'Die App berechnet bereits ausgezahlte Zinsen automatisch anhand des Vertragszinses, des Auszahlungsrhythmus und der Einzahlungsdaten. Weicht der tatsächliche Bankbetrag ab, kann die Option mit dem tatsächlichen Bankbetrag verwendet werden.'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
+function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const yy=y+Math.floor(m/12),mm=((m%12)+12)%12,last=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(day,last))}
+function contributions(sd,ed){const arr=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value))}];const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;if(!reg||!amt)return arr;const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;arr.push({date:dt,amount:amt})}return arr}
+function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
+ for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay)total+=lot.amount*rate*days(from,pay)/365;}prev=pay;}
+ return total;
+}
+function boot(){const rule=document.getElementById('grule'),wrap=document.getElementById('gmarketWrap'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo');if(!rule||!wrap||!prior||!go){setTimeout(boot,300);return}if(document.getElementById('gmarketContractWrap'))return;
+ const grid=wrap.querySelector('.gmarket-grid'),rateWrap=document.getElementById('gmarketRateWrap');const f=document.createElement('div');f.id='gmarketContractWrap';f.innerHTML='<label>'+T().contract+'</label><input id="gmarketContract" type="number" min="0" step=".01" value="12">';grid.insertBefore(f,rateWrap);
+ const note=document.createElement('div');note.id='gpriorAutoNote';note.textContent=T().auto;prior.parentElement.insertAdjacentElement('afterend',note);
+ const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';if(on){prior.readOnly=true;prior.value=Math.round(paidInterest()).toLocaleString('en-US')}else prior.readOnly=false;}rule.onchange=sync;
+ ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')}))}});
+ go.addEventListener('click',()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')},true);
+ sync();
+ try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
