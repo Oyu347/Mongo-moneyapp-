@@ -17844,7 +17844,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,2500));setTimeo
 
 <!-- Möngö PHONE TEST — Rule 4 auto-calculated previously paid interest. Scoped to cancellation calculator only. -->
 <style id="mongo-rule4-auto-paid-scoped">
-#v382gCancel #gmarketContractWrap{display:none}
+#v382gCancel #gmarketContractWrap{display:block}
 #v382gCancel #gpriorAutoNote{display:none;grid-column:1/-1;font-size:11px;line-height:1.45;color:#6b7280;margin-top:-4px}
 #v382gCancel #gprior[readonly]{background:#f5f9f9;color:#374151}
 </style>
@@ -17870,7 +17870,7 @@ function paidInterest(){const a=document.getElementById('gstart')?.value,b=docum
  return total;
 }
 function boot(){const rule=document.getElementById('grule'),wrap=document.getElementById('gmarketWrap'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo');if(!rule||!wrap||!prior||!go){setTimeout(boot,300);return}if(document.getElementById('gmarketContractWrap'))return;
- const grid=wrap.querySelector('.gmarket-grid'),rateWrap=document.getElementById('gmarketRateWrap');const f=document.createElement('div');f.id='gmarketContractWrap';f.innerHTML='<label>'+T().contract+'</label><input id="gmarketContract" type="number" min="0" step=".01" value="12">';grid.insertBefore(f,rateWrap);
+ const grid=wrap.querySelector('.gmarket-grid'),rateWrap=document.getElementById('gmarketRateWrap');const f=document.createElement('div');f.id='gmarketContractWrap';f.innerHTML='<label>'+T().contract+'</label><input id="gmarketContract" type="number" min="0" step=".01" value="" placeholder="12">';grid.insertBefore(f,rateWrap);
  const note=document.createElement('div');note.id='gpriorAutoNote';note.textContent=T().auto;prior.parentElement.insertAdjacentElement('afterend',note);
  const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';if(on){prior.readOnly=true;prior.value=Math.round(paidInterest()).toLocaleString('en-US')}else prior.readOnly=false;}rule.onchange=sync;
  ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')}))}});
