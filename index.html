@@ -16759,10 +16759,6 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
    if(rule==='all'){
      allowed=interestFor(p,rr,d,compound);
      if(regular&&contribAmt>0){
-       if(compound){
-         alert(lang==='en'?'Regular additional deposits with compound interest are still under verification.':lang==='ja'?'複利での定期追加預入は現在検証中です。':lang==='ko'?'복리 정기 추가 입금은 현재 검증 중입니다.':lang==='ru'?'Регулярные пополнения со сложным процентом ещё проверяются.':lang==='de'?'Regelmäßige Einzahlungen mit Zinseszins werden noch geprüft.':lang==='zh'?'复利定期追加资金仍在验证中。':'Нийлмэл хүүтэй тогтмол нэмэлтийн тооцоо баталгаажуулж байна.');
-         return;
-       }
        const a=gstart.value,b=gend.value;
        if(a&&b){
          const startDate=new Date(a+'T00:00:00'),endDate=new Date(b+'T00:00:00');
@@ -16775,7 +16771,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
            const dt=new Date(y,m,Math.min(startDate.getDate(),lastDay));
            if(dt>endDate)break;
            const held=Math.max(0,Math.floor((endDate-dt)/86400000));
-           allowed+=interestFor(contribAmt,rr,held,false);
+           allowed+=interestFor(contribAmt,rr,held,compound);
            totalPrincipal+=contribAmt;
            n++;
          }
