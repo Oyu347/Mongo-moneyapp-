@@ -17578,6 +17578,95 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
 }
 </style>
 
+
+
+<!-- Möngö PHONE TEST — Rule 2: holding-period tier calculation. Scoped to cancellation calculator only. -->
+<style id="mongo-rule2-staged-scoped">
+#v382gCancel #gstageWrap{grid-column:1/-1;display:none;border:1px solid #dcebec;border-radius:15px;padding:12px;background:#f8fbfb;box-sizing:border-box}
+#v382gCancel .gstage-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:4px}
+#v382gCancel .gstage-note{font-size:11px;line-height:1.4;color:#6b7280;margin-bottom:10px}
+#v382gCancel .gstage-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+#v382gCancel .gstage-row label{font-size:10px;line-height:1.25;color:#6b7280;margin-bottom:4px;display:block}
+#v382gCancel .gstage-row input{width:100%;min-width:0;box-sizing:border-box}
+@media(max-width:380px){#v382gCancel .gstage-row{gap:6px}#v382gCancel .gstage-row input{font-size:13px!important;padding-left:8px!important;padding-right:8px!important}}
+</style>
+<script id="mongo-rule2-staged-script">
+(function(){
+ 'use strict';
+ const L={
+  mn:{name:'Хадгалсан хугацааны шатлал',note:'Мөнгө тус бүр хэдэн хоног хадгалагдсанаас нь хамаарч тохирох шатны жилийн хүүг автоматаар сонгоно.',from:'Эхлэх хоног',to:'Дуусах хоног',rate:'Жилийн хүү (%)',open:'дээш'},
+  en:{name:'Holding-period tiers',note:'Each deposit automatically uses the annual rate for the number of days that money was held.',from:'From day',to:'To day',rate:'Annual rate (%)',open:'and above'},
+  zh:{name:'存期利率阶梯',note:'每笔资金按实际存放天数自动匹配相应年利率。',from:'起始天数',to:'结束天数',rate:'年利率 (%)',open:'以上'},
+  ja:{name:'預入期間別金利',note:'各入金は実際の預入日数に応じた年利率を自動適用します。',from:'開始日数',to:'終了日数',rate:'年利率 (%)',open:'以上'},
+  ko:{name:'예치기간별 금리 구간',note:'각 입금액은 실제 예치 일수에 맞는 연이율을 자동 적용합니다.',from:'시작 일수',to:'종료 일수',rate:'연이율 (%)',open:'이상'},
+  ru:{name:'Ставки по сроку хранения',note:'Для каждой суммы автоматически применяется ставка по фактическому числу дней хранения.',from:'От, дней',to:'До, дней',rate:'Годовая ставка (%)',open:'и более'},
+  de:{name:'Zinsstufen nach Anlagedauer',note:'Für jede Einzahlung gilt automatisch der Jahreszins entsprechend ihrer tatsächlichen Anlagedauer.',from:'Ab Tag',to:'Bis Tag',rate:'Jahreszins (%)',open:'und mehr'}
+ };
+ function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+ function M(v){try{return (typeof CS==='string'?CS:'₮')+Math.round(v).toLocaleString('en-US')}catch(e){return '₮'+Math.round(v)}}
+ function dayDiff(a,b){if(!a||!b)return 0;return Math.max(0,Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000))}
+ function install(){
+   const rule=document.getElementById('grule'),go=document.getElementById('v382gGo');
+   if(!rule||!go||document.getElementById('gstageWrap'))return false;
+   const grid=rule.closest('.ggrid'); if(!grid)return false;
+   const wrap=document.createElement('div'); wrap.id='gstageWrap';
+   const q=T();
+   wrap.innerHTML='<div class="gstage-title">'+q.name+'</div><div class="gstage-note">'+q.note+'</div><div id="gstageRows"></div>';
+   rule.parentElement.insertAdjacentElement('afterend',wrap);
+   const defaults=[[0,89,2.4],[90,179,4],[180,364,6],[365,'',8]];
+   const rows=document.getElementById('gstageRows');
+   defaults.forEach((r,i)=>{
+     const d=document.createElement('div'); d.className='gstage-row';
+     d.innerHTML='<div><label>'+q.from+'</label><input class="fi gsfrom" type="number" min="0" step="1" value="'+r[0]+'"></div>'+
+       '<div><label>'+q.to+(i===defaults.length-1?' ('+q.open+')':'')+'</label><input class="fi gsto" type="number" min="0" step="1" value="'+r[1]+'" placeholder="∞"></div>'+
+       '<div><label>'+q.rate+'</label><input class="fi gsrate" type="number" min="0" step=".01" value="'+r[2]+'"></div>';
+     rows.appendChild(d);
+   });
+   const originalChange=rule.onchange;
+   function sync(){
+     if(originalChange)originalChange.call(rule);
+     const on=rule.value==='staged'; wrap.style.display=on?'block':'none';
+     const rr=document.getElementById('grr'); if(rr&&rr.parentElement)rr.parentElement.style.display=on?'none':'';
+     const man=document.getElementById('gmanualWrap'); if(man&&on)man.style.display='none';
+   }
+   rule.onchange=sync; sync();
+   const originalGo=go.onclick;
+   go.onclick=function(){
+     if(rule.value!=='staged'){ if(originalGo)return originalGo.call(go); return; }
+     const q0=(typeof Q==='function'?Q():null)||{};
+     const p=Math.max(0,N(document.getElementById('gp').value));
+     const fee=Math.max(0,N(document.getElementById('gfee').value));
+     const prior=Math.max(0,N(document.getElementById('gprior').value));
+     const a=document.getElementById('gstart').value,b=document.getElementById('gend').value;
+     const d=dayDiff(a,b);
+     const compound=document.getElementById('ginterest').value==='compound';
+     const freq=compound?Math.max(1,N(document.getElementById('gcompoundfreq').value)||1):1;
+     const tiers=[...document.querySelectorAll('#gstageRows .gstage-row')].map(x=>({from:Math.max(0,N(x.querySelector('.gsfrom').value)),to:x.querySelector('.gsto').value===''?Infinity:Math.max(0,N(x.querySelector('.gsto').value)),rate:Math.max(0,N(x.querySelector('.gsrate').value))})).sort((x,y)=>x.from-y.from);
+     function tierRate(days){const z=tiers.find(x=>days>=x.from&&days<=x.to);return z?z.rate:0}
+     function interest(principal,days){const rate=tierRate(days);if(!compound)return principal*rate/100*days/365;const pd=365/freq,full=Math.floor(days/pd),rem=days-full*pd;let bal=principal*Math.pow(1+rate/100/freq,full);if(rem>0)bal+=bal*(rate/100/freq)*(rem/pd);return Math.max(0,bal-principal)}
+     let allowed=interest(p,d),totalPrincipal=p;
+     const regular=document.getElementById('gcontrib').value==='regular';
+     const amt=regular?Math.max(0,N(document.getElementById('gcontribamt').value)):0;
+     if(regular&&amt>0&&a&&b){
+       const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');
+       const cf=document.getElementById('gcontribfreq').value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);
+       for(let n=1;n<1200;n++){
+         const tm=sd.getMonth()+step*n,y=sd.getFullYear()+Math.floor(tm/12),m=((tm%12)+12)%12,last=new Date(y,m+1,0).getDate();
+         const dt=new Date(y,m,Math.min(sd.getDate(),last)); if(dt>ed)break;
+         const held=Math.max(0,Math.floor((ed-dt)/86400000)); allowed+=interest(amt,held); totalPrincipal+=amt;
+       }
+     }
+     const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,totalPrincipal+add-claw-fee);
+     const out=document.getElementById('gout');
+     out.innerHTML='<div class="gout"><div class="grow"><span>'+(q0.principal||'Үндсэн мөнгө')+'</span><strong>'+M(totalPrincipal)+'</strong></div><div class="grow"><span>'+(q0.allowed||'Цуцлалтаар зөвшөөрөгдөх хүү')+'</span><strong>'+M(allowed)+'</strong></div><div class="grow"><span>'+(q0.claw||'Өмнөх хүүгийн буцаан тохируулга')+'</span><strong>−'+M(claw)+'</strong></div><div class="grow"><span>'+(q0.add||'Нэмж олгох хүү')+'</span><strong>+'+M(add)+'</strong></div><div class="grow"><span>'+(q0.fee||'Цуцлалтын шимтгэл')+'</span><strong>−'+M(fee)+'</strong></div><div class="grow"><span>'+(q0.estimated||'Банкнаас авах тооцоолсон дүн')+'</span><strong>'+M(total)+'</strong></div></div>';
+   };
+   return true;
+ }
+ function tryInstall(){if(!install())setTimeout(tryInstall,300)}
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(tryInstall,1100));setTimeout(tryInstall,1600);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
