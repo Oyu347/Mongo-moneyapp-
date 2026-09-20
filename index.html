@@ -17738,6 +17738,54 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
  document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,1400));setTimeout(boot,1900);
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST — Rule 4: bank terms / actual settlement. Scoped to cancellation calculator only. -->
+<style id="mongo-rule4-actual-scoped">
+#v382gCancel #gactualHelp{display:none;grid-column:1/-1;font-size:11px;line-height:1.45;color:#6b7280;margin-top:-4px}
+</style>
+<script id="mongo-rule4-actual-script">
+(function(){
+ 'use strict';
+ const L={
+  mn:{label:'Банкны зөвшөөрсөн нийт хүү (₮)',help:'Банк цуцлах өдөр хүртэл нийт хэдэн төгрөгийн хүү зөвшөөрснийг оруулна. Апп үүнээс өмнө бодитоор олгосон хүүг хасаж, нэмж авах эсвэл буцаан тохируулах дүнг тооцно.'},
+  en:{label:'Total interest allowed by bank',help:'Enter the total interest amount the bank allows through the termination date. The app subtracts interest already paid and calculates the additional interest or adjustment.'},
+  zh:{label:'银行认可的利息总额',help:'输入银行截至提前终止日认可的利息总额。应用会扣除此前实际已支付的利息，并计算追加支付或返还调整金额。'},
+  ja:{label:'銀行が認めた利息総額',help:'解約日までに銀行が認める利息の総額を入力します。すでに支払われた利息を差し引き、追加支払額または返還調整額を計算します。'},
+  ko:{label:'은행이 인정한 총 이자',help:'중도 해지일까지 은행이 인정한 총 이자 금액을 입력합니다. 이미 지급된 이자를 차감하여 추가 지급 또는 반환 조정 금액을 계산합니다.'},
+  ru:{label:'Общая сумма процентов, признанная банком',help:'Введите общую сумму процентов, которую банк признаёт на дату расторжения. Приложение вычтет ранее выплаченные проценты и рассчитает доплату или корректировку.'},
+  de:{label:'Von der Bank anerkannter Gesamtzins',help:'Geben Sie den gesamten Zinsbetrag ein, den die Bank bis zum Kündigungsdatum anerkennt. Bereits gezahlte Zinsen werden abgezogen und Nachzahlung bzw. Rückbuchung berechnet.'}
+ };
+ function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+ function M(v){try{return (typeof CS==='string'?CS:'₮')+Math.round(v).toLocaleString('en-US')}catch(e){return '₮'+Math.round(v)}}
+ function install(){
+  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'),mw=document.getElementById('gmanualWrap'),mi=document.getElementById('gmanual');
+  if(!rule||!go||!mw||!mi||document.getElementById('gactualHelp'))return false;
+  const help=document.createElement('div');help.id='gactualHelp';mw.insertAdjacentElement('afterend',help);
+  function syncText(){const q=T(),lab=mw.querySelector('label');if(lab)lab.textContent=q.label;help.textContent=q.help;}
+  const oldChange=rule.onchange;
+  function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';help.style.display=on?'block':'none';if(on){mw.style.display='block';const rr=document.getElementById('grr');if(rr&&rr.parentElement)rr.parentElement.style.display='none';}syncText();}
+  rule.onchange=sync;sync();
+  const oldGo=go.onclick;
+  go.onclick=function(){
+   if(rule.value!=='actual'){if(oldGo)return oldGo.call(go);return;}
+   const q=(typeof Q==='function'?Q():null)||{};
+   const p=Math.max(0,N(document.getElementById('gp').value)),prior=Math.max(0,N(document.getElementById('gprior').value)),fee=Math.max(0,N(document.getElementById('gfee').value));
+   const allowed=Math.max(0,N(mi.value));let totalPrincipal=p;
+   const regular=document.getElementById('gcontrib').value==='regular',amt=regular?Math.max(0,N(document.getElementById('gcontribamt').value)):0;
+   const a=document.getElementById('gstart').value,b=document.getElementById('gend').value;
+   if(regular&&amt>0&&a&&b){const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00'),cf=document.getElementById('gcontribfreq').value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const tm=sd.getMonth()+step*n,y=sd.getFullYear()+Math.floor(tm/12),m=((tm%12)+12)%12,last=new Date(y,m+1,0).getDate(),dt=new Date(y,m,Math.min(sd.getDate(),last));if(dt>ed)break;totalPrincipal+=amt;}}
+   const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,totalPrincipal+add-claw-fee),out=document.getElementById('gout');
+   out.innerHTML='<div class="gout"><div class="grow"><span>'+(q.principal||'Үндсэн мөнгө')+'</span><strong>'+M(totalPrincipal)+'</strong></div><div class="grow"><span>'+(q.allowed||'Цуцлалтаар зөвшөөрөгдөх хүү')+'</span><strong>'+M(allowed)+'</strong></div><div class="grow"><span>'+(q.claw||'Өмнөх хүүгийн буцаан тохируулга')+'</span><strong>−'+M(claw)+'</strong></div><div class="grow"><span>'+(q.add||'Нэмж олгох хүү')+'</span><strong>+'+M(add)+'</strong></div><div class="grow"><span>'+(q.fee||'Цуцлалтын шимтгэл')+'</span><strong>−'+M(fee)+'</strong></div><div class="grow"><span>'+(q.estimated||'Банкнаас авах тооцоолсон дүн')+'</span><strong>'+M(total)+'</strong></div></div>';
+  };
+  try{if(typeof setLang==='function'&&!setLang.__rule4ActualText){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{syncText();sync()},0);return r};setLang.__rule4ActualText=true}}catch(e){}
+  return true;
+ }
+ function boot(){if(!install())setTimeout(boot,300)}
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,1800));setTimeout(boot,2300);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
