@@ -17786,6 +17786,60 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
  document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,1800));setTimeout(boot,2300);
 })();
 </script>
+
+<!-- Möngö PHONE TEST — Rule 4 market-based payout-interest model. Scoped to cancellation calculator only. -->
+<style id="mongo-rule4-market-scoped">
+#v382gCancel #gmarketWrap{display:none;grid-column:1/-1}
+#v382gCancel #gmarketWrap .gmarket-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#v382gCancel #gmarketWrap .gmarket-note{font-size:11px;line-height:1.45;color:#6b7280;margin:6px 0 2px}
+@media(max-width:380px){#v382gCancel #gmarketWrap .gmarket-grid{gap:8px}}
+</style>
+<script id="mongo-rule4-market-script">
+(function(){
+'use strict';
+const L={
+ mn:{mode:'Хүү олгох хэлбэр',out:'Өөр дансанд олгогдоно',freq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settle:'Цуцлалтын тооцооны арга',rate:'Цуцлахад тооцох жилийн хүү (%)',actual:'Банкны бодит нийт хүү (₮)',calc:'Хувиар тооцох',bank:'Банкны бодит дүнгээр',note:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.'},
+ en:{mode:'Interest payout method',out:'Paid to another account',freq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settle:'Cancellation calculation',rate:'Annual cancellation rate (%)',actual:'Bank actual total interest',calc:'Calculate by rate',bank:'Use bank actual amount',note:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or entered as the bank’s actual total amount.'},
+ zh:{mode:'利息支付方式',out:'支付到其他账户',freq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settle:'提前终止计算方式',rate:'提前终止年利率 (%)',actual:'银行实际利息总额',calc:'按利率计算',bank:'按银行实际金额',note:'支付到其他账户的利息不会加入存款本金。提前终止利息可按年利率计算，或输入银行实际确认的利息总额。'},
+ ja:{mode:'利息の受取方法',out:'別口座へ受取',freq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settle:'中途解約の計算方法',rate:'中途解約年利 (%)',actual:'銀行の実際の利息総額',calc:'利率で計算',bank:'銀行の実額を使用',note:'別口座に支払われた利息は預金元本に加算されません。中途解約利息は年利率で計算するか、銀行の実際の総額を入力します。'},
+ ko:{mode:'이자 지급 방식',out:'다른 계좌로 지급',freq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settle:'중도해지 계산 방식',rate:'중도해지 연이율 (%)',actual:'은행 실제 총 이자',calc:'금리로 계산',bank:'은행 실제 금액 사용',note:'다른 계좌로 지급된 이자는 예금 원금에 더해지지 않습니다. 중도해지 이자는 연이율로 계산하거나 은행의 실제 총액을 입력합니다.'},
+ ru:{mode:'Способ выплаты процентов',out:'На другой счёт',freq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settle:'Расчёт при расторжении',rate:'Годовая ставка при расторжении (%)',actual:'Фактическая общая сумма процентов банка',calc:'Рассчитать по ставке',bank:'По фактической сумме банка',note:'Проценты, выплаченные на другой счёт, не прибавляются к основной сумме вклада. При расторжении проценты рассчитываются по годовой ставке или вводятся фактической суммой банка.'},
+ de:{mode:'Art der Zinsauszahlung',out:'Auf ein anderes Konto',freq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settle:'Berechnung bei Kündigung',rate:'Jahreszins bei Kündigung (%)',actual:'Tatsächlicher Gesamtzins der Bank',calc:'Nach Zinssatz berechnen',bank:'Tatsächlichen Bankbetrag verwenden',note:'Auf ein anderes Konto ausgezahlte Zinsen werden dem Anlagekapital nicht zugeschlagen. Bei Kündigung werden die zulässigen Zinsen per Jahreszins berechnet oder als tatsächlicher Bankbetrag eingegeben.'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+function M(v){try{return (typeof CS==='string'?CS:'₮')+Math.round(v).toLocaleString('en-US')}catch(e){return '₮'+Math.round(v)}}
+function dd(a,b){if(!a||!b)return 0;return Math.max(0,Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000))}
+function boot(){
+ const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
+ if(document.getElementById('gmarketWrap'))return;
+ const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
+ const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
+ if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
+ const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
+ const oldChange=rule.onchange;
+ function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';wrap.style.display=on?'block':'none';if(on){
+   const iw=document.getElementById('ginterest')?.parentElement;if(iw)iw.style.display='none';const cw=document.getElementById('gcompoundWrap');if(cw)cw.style.display='none';
+   const cr=document.getElementById('gcr')?.parentElement;if(cr)cr.style.display='none';const rr=document.getElementById('grr')?.parentElement;if(rr)rr.style.display='none';
+   const man=document.getElementById('gmanualWrap');if(man)man.style.display='none';const help=document.getElementById('gactualHelp');if(help)help.style.display='none';
+ } settle.onchange();}
+ rule.onchange=sync;sync();
+ const oldGo=go.onclick;
+ go.onclick=function(){if(rule.value!=='actual'){if(oldGo)return oldGo.call(go);return}
+   const labels=(typeof Q==='function'?Q():null)||{},p=Math.max(0,N(document.getElementById('gp').value)),prior=Math.max(0,N(document.getElementById('gprior').value)),fee=Math.max(0,N(document.getElementById('gfee').value));
+   const a=document.getElementById('gstart').value,b=document.getElementById('gend').value;let totalPrincipal=p,allowed=0;
+   const rate=Math.max(0,N(document.getElementById('gmarketRate').value)); if(settle.value==='rate')allowed=p*rate/100*dd(a,b)/365; else allowed=Math.max(0,N(document.getElementById('gmarketActual').value));
+   const regular=document.getElementById('gcontrib').value==='regular',amt=regular?Math.max(0,N(document.getElementById('gcontribamt').value)):0;
+   if(regular&&amt>0&&a&&b){const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00'),cf=document.getElementById('gcontribfreq').value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const tm=sd.getMonth()+step*n,y=sd.getFullYear()+Math.floor(tm/12),m=((tm%12)+12)%12,last=new Date(y,m+1,0).getDate(),dt=new Date(y,m,Math.min(sd.getDate(),last));if(dt>ed)break;const held=Math.max(0,Math.floor((ed-dt)/86400000));totalPrincipal+=amt;if(settle.value==='rate')allowed+=amt*rate/100*held/365;}}
+   const claw=Math.max(0,prior-allowed),add=Math.max(0,allowed-prior),total=Math.max(0,totalPrincipal+add-claw-fee),out=document.getElementById('gout');
+   out.innerHTML='<div class="gout"><div class="grow"><span>'+(labels.principal||'Үндсэн мөнгө')+'</span><strong>'+M(totalPrincipal)+'</strong></div><div class="grow"><span>'+(labels.allowed||'Цуцлалтаар зөвшөөрөгдөх хүү')+'</span><strong>'+M(allowed)+'</strong></div><div class="grow"><span>'+(labels.claw||'Өмнөх хүүгийн буцаан тохируулга')+'</span><strong>−'+M(claw)+'</strong></div><div class="grow"><span>'+(labels.add||'Нэмж олгох хүү')+'</span><strong>+'+M(add)+'</strong></div><div class="grow"><span>'+(labels.fee||'Цуцлалтын шимтгэл')+'</span><strong>−'+M(fee)+'</strong></div><div class="grow"><span>'+(labels.estimated||'Банкнаас авах тооцоолсон дүн')+'</span><strong>'+M(total)+'</strong></div></div>';
+ };
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,2500));setTimeout(boot,3000);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
