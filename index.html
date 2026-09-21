@@ -12672,6 +12672,15 @@ auth.onAuthStateChanged(async user=>{
 
     await Promise.all(attempts);
     if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
+    // PHONE DIAGNOSTIC ONLY. Strict five-mirror guard remains unchanged.
+    const mongoDiagRequired=['appState','financial','settings','profile','user-root'];
+    window.MONGO_CLOUD_5PATH_DIAG={
+      at:new Date().toISOString(),
+      ok:[...savedPaths],
+      missing:mongoDiagRequired.filter(p=>!savedPaths.includes(p)),
+      financialError:window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''
+    };
+    try{localStorage.setItem('mongo_cloud_5path_diag',JSON.stringify(window.MONGO_CLOUD_5PATH_DIAG));}catch(_e){}
     const mirrorCheck=window.MongoCloud.completeMirrorWrite(savedPaths);
     if(!mirrorCheck.complete){
       const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');
@@ -17888,6 +17897,24 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
 })();
 </script>
+<script id="mongo-cloud-5path-phone-diagnostic">
+(function(){
+ const names=['appState','financial','settings','profile','user-root'];
+ function diag(){try{return window.MONGO_CLOUD_5PATH_DIAG||JSON.parse(localStorage.getItem('mongo_cloud_5path_diag')||'null')}catch(e){return null}}
+ function show(){
+  const d=diag(), ok=d&&Array.isArray(d.ok)?d.ok:[];
+  document.getElementById('mongo-cloud-diag-overlay')?.remove();
+  const x=document.createElement('div'); x.id='mongo-cloud-diag-overlay';
+  x.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;padding:18px';
+  const rows=names.map(n=>'<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e5e7eb"><b>'+n+'</b><b>'+(ok.includes(n)?'OK ✅':'ERROR ❌')+'</b></div>').join('');
+  x.innerHTML='<div style="width:min(430px,100%);background:white;border-radius:20px;padding:18px;color:#374151"><div style="font-size:18px;font-weight:900">Cloud 5 замын оношилгоо</div><div style="font-size:12px;margin:5px 0 10px">Зөвхөн оношилгоо — хамгаалалтын логик өөрчлөгдөөгүй.</div>'+rows+'<button id="mongo-cloud-diag-close" style="width:100%;margin-top:14px;padding:12px;border:0;border-radius:14px;background:#49B0B6;color:white;font-weight:800">Хаах</button></div>';
+  document.body.appendChild(x); x.onclick=e=>{if(e.target===x||e.target.id==='mongo-cloud-diag-close')x.remove()}
+ }
+ document.addEventListener('click',e=>{if(e.target.closest?.('#cloudBtn,#cloudStatus,.cloud-btn,.cloud-status,[data-cloud-status]'))setTimeout(show,150)},true);
+ window.showMongoCloud5PathDiagnostic=show;
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
