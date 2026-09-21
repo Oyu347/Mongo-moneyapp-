@@ -12623,52 +12623,72 @@ auth.onAuthStateChanged(async user=>{
     const savedPaths=[];
 
     const primaryRef=cloudDocRef(uid);
-    if(primaryRef) attempts.push(
+    try{window.mongoDeepDiag&&window.mongoDeepDiag('appState',primaryRef?'REF_OK':'REF_MISSING')}catch(_e){}
+    if(primaryRef) {
+      try{window.mongoDeepDiag&&window.mongoDeepDiag('appState','SET_START')}catch(_e){}
+      attempts.push(
       primaryRef.set(payload,{merge:true})
-        .then(()=>{savedPaths.push('appState');try{window.mongoMirrorDiag&&window.mongoMirrorDiag('appState',true)}catch(_e){}})
-        .catch(e=>{try{window.mongoMirrorDiag&&window.mongoMirrorDiag('appState',false,e)}catch(_e){} console.warn('appState mirror write skipped:',e)})
+        .then(()=>{savedPaths.push('appState');try{window.mongoDeepDiag&&window.mongoDeepDiag('appState','OK')}catch(_e){}})
+        .catch(e=>{try{window.mongoDeepDiag&&window.mongoDeepDiag('appState','ERROR',e)}catch(_e){} console.warn('appState mirror write skipped:',e)})
     );
+    }
 
     const legacyRef=legacyCloudDocRef(uid);
-    if(legacyRef) attempts.push(
+    try{window.mongoDeepDiag&&window.mongoDeepDiag('financial',legacyRef?'REF_OK':'REF_MISSING')}catch(_e){}
+    if(legacyRef) {
+      try{window.mongoDeepDiag&&window.mongoDeepDiag('financial','SET_START')}catch(_e){}
+      attempts.push(
       legacyRef.set(payload,{merge:true})
-        .then(()=>{savedPaths.push('financial');try{window.mongoMirrorDiag&&window.mongoMirrorDiag('financial',true)}catch(_e){}})
-        .catch(e=>{ try{window.mongoMirrorDiag&&window.mongoMirrorDiag('financial',false,e)}catch(_e){} window.MONGO_LAST_FINANCIAL_WRITE_ERROR=(e&&e.message)||String(e); console.warn('financial mirror write skipped:',e); })
+        .then(()=>{savedPaths.push('financial');try{window.mongoDeepDiag&&window.mongoDeepDiag('financial','OK')}catch(_e){}})
+        .catch(e=>{try{window.mongoDeepDiag&&window.mongoDeepDiag('financial','ERROR',e)}catch(_e){} window.MONGO_LAST_FINANCIAL_WRITE_ERROR=(e&&e.message)||String(e); console.warn('financial mirror write skipped:',e); })
     );
+    }
 
     const settingsRef=settingsCloudDocRef(uid);
-    if(settingsRef) attempts.push(
+    try{window.mongoDeepDiag&&window.mongoDeepDiag('settings',settingsRef?'REF_OK':'REF_MISSING')}catch(_e){}
+    if(settingsRef) {
+      try{window.mongoDeepDiag&&window.mongoDeepDiag('settings','SET_START')}catch(_e){}
+      attempts.push(
       settingsRef.set({
         financialState:payload,
         financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
         financialStateUpdatedAtClient:payload.updatedAtClient
       },{merge:true})
-        .then(()=>{savedPaths.push('settings');try{window.mongoMirrorDiag&&window.mongoMirrorDiag('settings',true)}catch(_e){}})
-        .catch(e=>{try{window.mongoMirrorDiag&&window.mongoMirrorDiag('settings',false,e)}catch(_e){} console.warn('settings mirror write skipped:',e)})
+        .then(()=>{savedPaths.push('settings');try{window.mongoDeepDiag&&window.mongoDeepDiag('settings','OK')}catch(_e){}})
+        .catch(e=>{try{window.mongoDeepDiag&&window.mongoDeepDiag('settings','ERROR',e)}catch(_e){} console.warn('settings mirror write skipped:',e)})
     );
+    }
 
     const profileRef=profileCloudDocRef(uid);
-    if(profileRef) attempts.push(
+    try{window.mongoDeepDiag&&window.mongoDeepDiag('profile',profileRef?'REF_OK':'REF_MISSING')}catch(_e){}
+    if(profileRef) {
+      try{window.mongoDeepDiag&&window.mongoDeepDiag('profile','SET_START')}catch(_e){}
+      attempts.push(
       profileRef.set({
         financialState:payload,
         financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
         financialStateUpdatedAtClient:payload.updatedAtClient
       },{merge:true})
-        .then(()=>{savedPaths.push('profile');try{window.mongoMirrorDiag&&window.mongoMirrorDiag('profile',true)}catch(_e){}})
-        .catch(e=>{try{window.mongoMirrorDiag&&window.mongoMirrorDiag('profile',false,e)}catch(_e){} console.warn('profile mirror write skipped:',e)})
+        .then(()=>{savedPaths.push('profile');try{window.mongoDeepDiag&&window.mongoDeepDiag('profile','OK')}catch(_e){}})
+        .catch(e=>{try{window.mongoDeepDiag&&window.mongoDeepDiag('profile','ERROR',e)}catch(_e){} console.warn('profile mirror write skipped:',e)})
     );
+    }
 
     const rootRef=rootCloudDocRef(uid);
-    if(rootRef) attempts.push(
+    try{window.mongoDeepDiag&&window.mongoDeepDiag('user-root',rootRef?'REF_OK':'REF_MISSING')}catch(_e){}
+    if(rootRef) {
+      try{window.mongoDeepDiag&&window.mongoDeepDiag('user-root','SET_START')}catch(_e){}
+      attempts.push(
       rootRef.set({
         uid:uid,
         financialState:payload,
         financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
         financialStateUpdatedAtClient:payload.updatedAtClient
       },{merge:true})
-        .then(()=>{savedPaths.push('user-root');try{window.mongoMirrorDiag&&window.mongoMirrorDiag('user-root',true)}catch(_e){}})
-        .catch(e=>{try{window.mongoMirrorDiag&&window.mongoMirrorDiag('user-root',false,e)}catch(_e){} console.warn('user-root mirror write skipped:',e)})
+        .then(()=>{savedPaths.push('user-root');try{window.mongoDeepDiag&&window.mongoDeepDiag('user-root','OK')}catch(_e){}})
+        .catch(e=>{try{window.mongoDeepDiag&&window.mongoDeepDiag('user-root','ERROR',e)}catch(_e){} console.warn('user-root mirror write skipped:',e)})
     );
+    }
 
     await Promise.all(attempts);
     if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
@@ -17888,28 +17908,25 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
 })();
 </script>
-<script id="mongo-cloud-5path-result-helper">
+<script id="mongo-cloud-deep-diag-helper">
 (function(){
- const K='mongo_cloud_5path_results_v1';
- window.mongoMirrorDiag=function(path,ok,e){
-   let d={}; try{d=JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
-   d[path]={ok:!!ok,code:e&&e.code?String(e.code):'',message:e&&e.message?String(e.message):''};
-   d.updatedAt=new Date().toISOString();
-   try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_MIRROR_DIAG=d}catch(_){}
+ const K='mongo_cloud_deep_diag_v1';
+ window.mongoDeepDiag=function(path,stage,e){
+   let d={};try{d=JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
+   d[path]={stage:stage,code:e&&e.code?String(e.code):'',message:e&&e.message?String(e.message):'',at:new Date().toISOString()};
+   try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_DEEP_DIAG=d}catch(_){}
  };
 })();
 </script>
-
-<script id="mongo-cloud-5path-result-toast">
+<script id="mongo-cloud-deep-diag-toast">
 (function(){
- const base='Cloud алдаа — дахин оролдоно', K='mongo_cloud_5path_results_v1';
+ const base='Cloud алдаа — дахин оролдоно',K='mongo_cloud_deep_diag_v1';
  const names=['appState','financial','settings','profile','user-root'];
  function enhance(){
   document.querySelectorAll('body *').forEach(el=>{
    if(el.children.length===0&&el.textContent&&el.textContent.trim()===base){
-    let d={};try{d=window.MONGO_MIRROR_DIAG||JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
-    const parts=names.map(n=>{const r=d[n];return n+':'+(!r?'?':r.ok?'OK':'ERROR'+(r.code?'('+r.code+')':''))});
-    el.textContent=base+' | '+parts.join(' · ');
+    let d={};try{d=window.MONGO_DEEP_DIAG||JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
+    el.textContent=base+' | '+names.map(n=>{let r=d[n];return n+':'+(r?r.stage:'?')+(r&&r.code?'('+r.code+')':'')}).join(' · ');
     el.style.maxWidth='96vw';el.style.whiteSpace='normal';
    }
   });
@@ -17917,7 +17934,6 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeo
  new MutationObserver(()=>setTimeout(enhance,0)).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
