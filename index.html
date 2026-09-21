@@ -12623,24 +12623,11 @@ auth.onAuthStateChanged(async user=>{
     const savedPaths=[];
 
     const primaryRef=cloudDocRef(uid);
-    if(primaryRef){
-      try{
-        window.mongoPrimaryDiag&&window.mongoPrimaryDiag('REF_OK');
-        window.mongoPrimaryDiag&&window.mongoPrimaryDiag('SET_CALL_START');
-        const primaryWritePromise=primaryRef.set(payload,{merge:true});
-        window.mongoPrimaryDiag&&window.mongoPrimaryDiag('SET_RETURNED_PROMISE');
-        attempts.push(
-          primaryWritePromise
-            .then(()=>{ window.mongoPrimaryDiag&&window.mongoPrimaryDiag('PROMISE_OK'); savedPaths.push('appState'); })
-            .catch(e=>{ window.mongoPrimaryDiag&&window.mongoPrimaryDiag('PROMISE_ERROR',e); console.warn('appState mirror write skipped:',e); })
-        );
-      }catch(e){
-        window.mongoPrimaryDiag&&window.mongoPrimaryDiag('SYNC_THROW',e);
-        throw e;
-      }
-    }else{
-      window.mongoPrimaryDiag&&window.mongoPrimaryDiag('REF_MISSING');
-    }
+    if(primaryRef) attempts.push(
+      primaryRef.set(payload,{merge:true})
+        .then(()=>savedPaths.push('appState'))
+        .catch(e=>console.warn('appState mirror write skipped:',e))
+    );
 
     const legacyRef=legacyCloudDocRef(uid);
     if(legacyRef) attempts.push(
@@ -16657,10 +16644,10 @@ de:{title:'Einlagenbedingungen',kind:'Einlagenart',demand:'Täglich fällige Ein
 function Q(){return D[typeof lang==='string'&&D[lang]?lang:'en'];}
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function bool(v,def){return typeof v==='boolean'?v:def;}
-function data(a){const x=a||{};return {depositTermType:x.depositTermType==='term'?'term':'demand',allowsAdditionalDeposits:bool(x.allowsAdditionalDeposits,true),allowsEarlyTermination:bool(x.allowsEarlyTermination,true),earlyTerminationRule:['all_reduced','staged','threshold','bank_actual'].includes(x.earlyTerminationRule)?x.earlyTerminationRule:'all_reduced',earlyTerminationRate:Math.max(0,Number(x.earlyTerminationRate)||0),earlyTerminationFee:Math.max(0,Number(x.earlyTerminationFee)||0),earlyTerminationStages:Array.isArray(x.earlyTerminationStages)&&x.earlyTerminationStages.length?x.earlyTerminationStages:[[0,89,2.4],[90,179,4],[180,364,6],[365,null,8]],earlyTerminationThresholdDays:Math.max(0,Number(x.earlyTerminationThresholdDays)||180),earlyTerminationThresholdBeforeRate:Math.max(0,Number(x.earlyTerminationThresholdBeforeRate)||2.4),earlyTerminationThresholdAfterRate:Math.max(0,Number(x.earlyTerminationThresholdAfterRate)||6)};}
+function data(a){const x=a||{};return {depositTermType:x.depositTermType==='term'?'term':'demand',allowsAdditionalDeposits:bool(x.allowsAdditionalDeposits,true),allowsEarlyTermination:bool(x.allowsEarlyTermination,true),earlyTerminationRule:['all_reduced','staged','threshold','bank_actual'].includes(x.earlyTerminationRule)?x.earlyTerminationRule:'all_reduced',earlyTerminationRate:Math.max(0,Number(x.earlyTerminationRate)||0),earlyTerminationFee:Math.max(0,Number(x.earlyTerminationFee)||0),earlyTerminationStages:(Array.isArray(x.earlyTerminationStages)&&x.earlyTerminationStages.length?x.earlyTerminationStages.map(r=>Array.isArray(r)?{from:r[0],to:r[1]??null,rate:r[2]}:{from:r.from,to:r.to??null,rate:r.rate}):[{from:0,to:89,rate:2.4},{from:90,to:179,rate:4},{from:180,to:364,rate:6},{from:365,to:null,rate:8}]),earlyTerminationThresholdDays:Math.max(0,Number(x.earlyTerminationThresholdDays)||180),earlyTerminationThresholdBeforeRate:Math.max(0,Number(x.earlyTerminationThresholdBeforeRate)||2.4),earlyTerminationThresholdAfterRate:Math.max(0,Number(x.earlyTerminationThresholdAfterRate)||6)};}
 function ruleOptions(v){const q=Q();return [['all_reduced',q.all],['staged',q.staged],['threshold',q.threshold],['bank_actual',q.actual]].map(x=>`<option value="${x[0]}"${v===x[0]?' selected':''}>${x[1]}</option>`).join('');}
 function stageHtml(prefix,stages){const q=Q(),rows=(stages||[]).map((r,i)=>{const a=Array.isArray(r)?r:[r.from,r.to,r.rate],last=i===(stages||[]).length-1;return `<div class="v381-stage-row"><div><label>${q.stageFrom}</label><input class="fi v381-stage-from" type="number" min="0" step="1" value="${esc(a[0]??'')}"></div><div><label>${q.stageTo}${last?' ('+q.stageUp+')':''}</label><input class="fi v381-stage-to" type="number" min="0" step="1" value="${esc(a[1]??'')}" placeholder="∞"></div><div><label>${q.stageRate}</label><input class="fi v381-stage-rate" type="number" min="0" step="0.01" value="${esc(a[2]??'')}"></div></div>`}).join('');return `<div class="v381-stage-box" id="${prefix}-stage-box"><div class="v381-stage-title">${q.stageTitle}</div><div class="v381-stage-help">${q.stageHelp}</div><div id="${prefix}-stage-rows">${rows}</div></div>`;}
-function readStages(prefix){return [...document.querySelectorAll('#'+prefix+'-stage-rows .v381-stage-row')].map(r=>[Math.max(0,Number(r.querySelector('.v381-stage-from')?.value)||0),r.querySelector('.v381-stage-to')?.value===''?null:Math.max(0,Number(r.querySelector('.v381-stage-to')?.value)||0),Math.max(0,Number(r.querySelector('.v381-stage-rate')?.value)||0)]);}
+function readStages(prefix){return [...document.querySelectorAll('#'+prefix+'-stage-rows .v381-stage-row')].map(r=>({from:Math.max(0,Number(r.querySelector('.v381-stage-from')?.value)||0),to:r.querySelector('.v381-stage-to')?.value===''?null:Math.max(0,Number(r.querySelector('.v381-stage-to')?.value)||0),rate:Math.max(0,Number(r.querySelector('.v381-stage-rate')?.value)||0)}));}
 function thresholdHtml(prefix,x){const q=Q();return `<div class="v381-threshold-box" id="${prefix}-threshold-box"><div class="v381-threshold-title">${q.thresholdTitle}</div><div class="v381-threshold-help">${q.thresholdHelp}</div><div class="v381-grid"><div><label>${q.thresholdDays}</label><input class="fi" id="${prefix}-threshold-days" type="number" min="0" step="1" value="${esc(x.earlyTerminationThresholdDays)}"></div><div><label>${q.thresholdBefore}</label><input class="fi" id="${prefix}-threshold-before" type="number" min="0" step="0.01" value="${esc(x.earlyTerminationThresholdBeforeRate)}"></div><div><label>${q.thresholdAfter}</label><input class="fi" id="${prefix}-threshold-after" type="number" min="0" step="0.01" value="${esc(x.earlyTerminationThresholdAfterRate)}"></div></div></div>`;}
 function html(prefix,a){const q=Q(),x=data(a);return `<div class="v381-contract" id="${prefix}-term-contract"><div class="v381-title">${q.title}</div><div class="v381-grid"><div><label>${q.kind}</label><select class="fi" id="${prefix}-deposit-term-type"><option value="demand"${x.depositTermType==='demand'?' selected':''}>${q.demand}</option><option value="term"${x.depositTermType==='term'?' selected':''}>${q.term}</option></select></div><div class="v381-check"><input type="checkbox" id="${prefix}-allows-extra"${x.allowsAdditionalDeposits?' checked':''}><label for="${prefix}-allows-extra">${q.extra}</label></div></div><div class="v381-early" id="${prefix}-term-only"><div class="v381-check"><input type="checkbox" id="${prefix}-allows-early"${x.allowsEarlyTermination?' checked':''}><label for="${prefix}-allows-early">${q.early}</label></div><div class="v381-early" id="${prefix}-early-fields"><div class="v381-grid"><div><label>${q.rule}</label><select class="fi" id="${prefix}-early-rule">${ruleOptions(x.earlyTerminationRule)}</select></div><div><label>${q.rate}</label><input class="fi" id="${prefix}-early-rate" type="number" min="0" step="0.01" value="${esc(x.earlyTerminationRate||'')}"></div><div><label>${q.fee}</label><input class="fi" id="${prefix}-early-fee" inputmode="decimal" value="${esc(x.earlyTerminationFee||'')}"></div></div>${stageHtml(prefix,x.earlyTerminationStages)}${thresholdHtml(prefix,x)}</div></div><div class="v381-note">${q.note}</div></div>`;}
 function ensure(prefix,a){const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(!root)return;let box=document.getElementById(prefix+'-term-contract');if(box)box.remove();root.insertAdjacentHTML('beforeend',html(prefix,a));bind(prefix);sync(prefix);}
@@ -16673,6 +16660,16 @@ const baseAdd=addMoneyAccount;addMoneyAccount=function(){const ids=new Set((mone
 const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){await baseEdit(id);setTimeout(()=>{const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||!document.getElementById('edit-interest-fields'))return;ensure('edit',a);const btn=document.getElementById('account-edit-save');if(!btn||btn.dataset.v381==='1')return;btn.dataset.v381='1';const old=btn.onclick;btn.onclick=async function(ev){const isSavings=document.getElementById('account-edit-type')?.value==='savings',m=isSavings?read('edit'):null;const r=old?await old.call(this,ev):undefined;if(isSavings){applyMeta(a,m);saveData();renderMoneyAccounts();}return r;};},20);};
 const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{installNew();const open=document.getElementById('account-edit-modal');if(open){const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});}},30);};
 setTimeout(installNew,50);
+setTimeout(()=>{
+  let changed=false;
+  (moneyAccounts||[]).forEach(a=>{
+    if(Array.isArray(a.earlyTerminationStages)&&a.earlyTerminationStages.some(Array.isArray)){
+      a.earlyTerminationStages=a.earlyTerminationStages.map(r=>Array.isArray(r)?{from:r[0],to:r[1]??null,rate:r[2]}:{from:r.from,to:r.to??null,rate:r.rate});
+      changed=true;
+    }
+  });
+  if(changed){ saveData(); renderMoneyAccounts(); }
+},80);
 })();
 </script>
 <style>
@@ -17899,30 +17896,6 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
  try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
-})();
-</script>
-<script id="mongo-primary-set-diag-helper">
-(function(){
- const K='mongo_primary_set_diag_v1';
- window.mongoPrimaryDiag=function(stage,e){
-   const d={stage:stage,code:e&&e.code?String(e.code):'',message:e&&e.message?String(e.message):'',at:new Date().toISOString()};
-   try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_PRIMARY_SET_DIAG=d}catch(_){}
- };
-})();
-</script>
-<script id="mongo-primary-set-diag-toast">
-(function(){
- const base='Cloud алдаа — дахин оролдоно',K='mongo_primary_set_diag_v1';
- function enhance(){
-  document.querySelectorAll('body *').forEach(el=>{
-   if(el.children.length===0&&el.textContent&&el.textContent.trim()===base){
-    let d={};try{d=window.MONGO_PRIMARY_SET_DIAG||JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
-    el.textContent=base+' | appState:'+ (d.stage||'?') +(d.code?' · code:'+d.code:'') +(d.message?' · '+d.message.slice(0,120):'');
-    el.style.maxWidth='96vw';el.style.whiteSpace='normal';
-   }
-  });
- }
- new MutationObserver(()=>setTimeout(enhance,0)).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 </body>
