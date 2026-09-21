@@ -12592,6 +12592,46 @@ auth.onAuthStateChanged(async user=>{
     return payload.id;
   }
 
+  // V44.12.31 Cloud codec: Firestore rejects arrays nested anywhere beneath
+  // another array. Keep the app/local/backup shape unchanged; encode only the
+  // Cloud copy, then decode it immediately after Cloud read.
+  const CLOUD_ARRAY_TAG='__mongoCloudArrayV1';
+  function encodeCloudValue(value,insideArray){
+    if(Array.isArray(value)){
+      if(insideArray){
+        const items={};
+        for(let i=0;i<value.length;i++) items[String(i)]=encodeCloudValue(value[i],true);
+        return {[CLOUD_ARRAY_TAG]:true,length:value.length,items};
+      }
+      return value.map(v=>encodeCloudValue(v,true));
+    }
+    if(value && typeof value==='object'){
+      // Preserve Firestore special values (Timestamp / FieldValue etc.) by
+      // transforming only plain app data objects.
+      const proto=Object.getPrototypeOf(value);
+      if(proto!==Object.prototype && proto!==null) return value;
+      const out={};
+      Object.keys(value).forEach(k=>{ out[k]=encodeCloudValue(value[k],insideArray); });
+      return out;
+    }
+    return value;
+  }
+  function decodeCloudValue(value){
+    if(Array.isArray(value)) return value.map(decodeCloudValue);
+    if(value && typeof value==='object'){
+      if(value[CLOUD_ARRAY_TAG]===true && value.items && typeof value.items==='object'){
+        const n=Math.max(0,Number(value.length)||0), arr=[];
+        for(let i=0;i<n;i++) arr.push(decodeCloudValue(value.items[String(i)]));
+        return arr;
+      }
+      const proto=Object.getPrototypeOf(value);
+      if(proto!==Object.prototype && proto!==null) return value;
+      const out={};
+      Object.keys(value).forEach(k=>{ out[k]=decodeCloudValue(value[k]); });
+      return out;
+    }
+    return value;
+  }
   async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
     const isExplicitRestore=!!(options&&options.explicitRestore);
@@ -12610,8 +12650,9 @@ auth.onAuthStateChanged(async user=>{
     if(currentUid()!==uid || (!isClearTombstone&&(window._authUid!==uid||!accountReadyForCloud()))) throw new Error('AUTH_SWITCHED');
 
     const updatedAtClient=nowIso();
+    const cloudSafeData=encodeCloudValue(clean,false);
     const payload=window.MongoCloud.writeMetadata({
-      uid,version:CLOUD_FINANCIAL_VERSION,updatedAtClient,clientId:getClientId(),lastOperationId:opId(),data:clean,reason
+      uid,version:CLOUD_FINANCIAL_VERSION,updatedAtClient,clientId:getClientId(),lastOperationId:opId(),data:cloudSafeData,reason
     });
     payload.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
 
@@ -12623,7 +12664,6 @@ auth.onAuthStateChanged(async user=>{
     const savedPaths=[];
 
     const primaryRef=cloudDocRef(uid);
-    try{window.mongoScanCloudPayload&&window.mongoScanCloudPayload(payload)}catch(_e){}
     if(primaryRef) attempts.push(
       primaryRef.set(payload,{merge:true})
         .then(()=>savedPaths.push('appState'))
@@ -12828,6 +12868,8 @@ auth.onAuthStateChanged(async user=>{
       }
 
       if(raw && raw.data){
+        // New codec is reversible and is a no-op for older Cloud documents.
+        raw.data=decodeCloudValue(raw.data);
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
@@ -17897,62 +17939,6 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
  try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
 }
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
-})();
-</script>
-<script id="mongo-cloud-payload-array-scan-helper">
-(function(){
- const K='mongo_cloud_payload_array_scan_v1';
-
- function scan(value,path,insideArray,out,seen){
-   if(value===null || value===undefined) return;
-   if(typeof value!=='object') return;
-   if(seen.has(value)) return;
-   seen.add(value);
-
-   if(Array.isArray(value)){
-     if(insideArray) out.push(path || '(root)');
-     for(let i=0;i<value.length;i++){
-       scan(value[i], (path||'(root)')+'['+i+']', true, out, seen);
-     }
-     return;
-   }
-   for(const k of Object.keys(value)){
-     let v;
-     try{v=value[k]}catch(e){continue}
-     scan(v, path ? path+'.'+k : k, insideArray, out, seen);
-   }
- }
-
- window.mongoScanCloudPayload=function(payload){
-   const found=[];
-   try{scan(payload,'payload',false,found,new WeakSet())}catch(e){
-     const d={error:String(e&&e.message||e),paths:[],at:new Date().toISOString()};
-     try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_PAYLOAD_ARRAY_SCAN=d}catch(_){}
-     return d;
-   }
-   const unique=[...new Set(found)];
-   const d={paths:unique,at:new Date().toISOString()};
-   try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_PAYLOAD_ARRAY_SCAN=d}catch(_){}
-   return d;
- };
-})();
-</script>
-<script id="mongo-cloud-payload-array-scan-toast">
-(function(){
- const base='Cloud алдаа — дахин оролдоно',K='mongo_cloud_payload_array_scan_v1';
- function enhance(){
-  document.querySelectorAll('body *').forEach(el=>{
-   if(el.children.length===0 && el.textContent && el.textContent.trim()===base){
-     let d={};try{d=window.MONGO_PAYLOAD_ARRAY_SCAN||JSON.parse(localStorage.getItem(K)||'{}')||{}}catch(_){}
-     const paths=Array.isArray(d.paths)?d.paths:[];
-     el.textContent=base+' | nested arrays: '+(paths.length?paths.slice(0,8).join(' | '):'NONE')+(paths.length>8?' | +'+(paths.length-8)+' more':'');
-     el.style.maxWidth='97vw';
-     el.style.whiteSpace='normal';
-     el.style.fontSize='13px';
-   }
-  });
- }
- new MutationObserver(()=>setTimeout(enhance,0)).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 </body>
