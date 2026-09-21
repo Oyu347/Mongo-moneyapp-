@@ -12619,7 +12619,7 @@ auth.onAuthStateChanged(async user=>{
     // Firestore surface that this deployment is allowed to write. Some older
     // Firebase rulesets permit profile/settings but not a newly-added appState
     // subcollection. Mirroring prevents a second device from appearing empty.
-    try{window.mongoCloudPipelineSnapshot&&window.mongoCloudPipelineSnapshot('five-mirror-write-enter')}catch(_e){}
+    try{window.mongoQDiag&&window.mongoQDiag('FIVE_MIRROR_ENTER')}catch(_e){}
     const attempts=[];
     const savedPaths=[];
 
@@ -12690,8 +12690,9 @@ auth.onAuthStateChanged(async user=>{
   }
 
   async function processQueue(){
-    try{window.mongoCloudPipelineSnapshot&&window.mongoCloudPipelineSnapshot('processQueue-enter')}catch(_e){}
-    if(clearingFinancialData)return false;
+    try{window.mongoQDiag&&window.mongoQDiag('PQ_ENTER')}catch(_e){}
+    if(clearingFinancialData){try{window.mongoQDiag&&window.mongoQDiag('PQ_BLOCK_CLEARING')}catch(_e){} return false;}
+    try{window.mongoQDiag&&window.mongoQDiag('PQ_GUARD_VALUES',{processing:!!processingQueue,online:!!navigator.onLine,hasUser:!!hasFirebaseUser(),accountReady:!!accountReadyForCloud()})}catch(_e){}
     if(processingQueue || !navigator.onLine || !hasFirebaseUser() || !accountReadyForCloud()) { updateSyncStatus(navigator.onLine?'waiting':'offline'); return false; }
     const sessionUid=currentUid();
     let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
@@ -17890,29 +17891,35 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
 })();
 </script>
-<script id="mongo-cloud-pipeline-diagnostic">
+<script id="mongo-cloud-queue-diag-helper">
 (function(){
- const K='mongo_cloud_pipeline_diag_v1';
- function rec(label){let d={label,at:new Date().toISOString(),online:navigator.onLine};try{d.hasFirebase=!!window.MONGO_FIREBASE;d.user=!!(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser);d.ready=typeof accountReadyForCloud==='function'?!!accountReadyForCloud():null;d.path=window.MONGO_LAST_CLOUD_PATH||null;d.financialError=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||'';localStorage.setItem(K,JSON.stringify(d));window.MONGO_CLOUD_PIPELINE_DIAG=d}catch(e){}}
- window.mongoCloudPipelineSnapshot=rec;
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>rec('DOMContentLoaded'));else rec('script-loaded');
- window.addEventListener('load',()=>setTimeout(()=>rec('window-load'),500));
- window.addEventListener('online',()=>rec('online'));
+ const K='mongo_cloud_queue_diag_v1';
+ window.mongoQDiag=function(stage,extra){
+   const d=Object.assign({stage:stage,at:new Date().toISOString(),online:navigator.onLine},extra||{});
+   try{localStorage.setItem(K,JSON.stringify(d));window.MONGO_CLOUD_QUEUE_DIAG=d}catch(e){}
+ };
 })();
 </script>
-<script id="mongo-cloud-pipeline-toast">
+
+<script id="mongo-cloud-queue-diag-toast">
 (function(){
  const base='Cloud алдаа — дахин оролдоно';
  function enhance(){
   document.querySelectorAll('body *').forEach(el=>{
    if(el.children.length===0&&el.textContent&&el.textContent.trim()===base){
-    try{window.mongoCloudPipelineSnapshot&&window.mongoCloudPipelineSnapshot('cloud-error-toast');const d=window.MONGO_CLOUD_PIPELINE_DIAG||JSON.parse(localStorage.getItem('mongo_cloud_pipeline_diag_v1')||'{}');el.textContent=base+' | online:'+d.online+' · Firebase:'+d.hasFirebase+' · user:'+d.user+' · ready:'+d.ready+' · stage:'+d.label+' · path:'+(d.path||'-')+(d.financialError?' · financial:'+d.financialError:'');el.style.maxWidth='96vw';el.style.whiteSpace='normal'}catch(e){}
+    try{
+      const d=window.MONGO_CLOUD_QUEUE_DIAG||JSON.parse(localStorage.getItem('mongo_cloud_queue_diag_v1')||'{}');
+      let x=base+' | stage:'+(d.stage||'?');
+      if(d.stage==='PQ_GUARD_VALUES')x+=' · processing:'+d.processing+' · online:'+d.online+' · user:'+d.hasUser+' · ready:'+d.accountReady;
+      el.textContent=x;el.style.maxWidth='96vw';el.style.whiteSpace='normal';
+    }catch(e){}
    }
   });
  }
  new MutationObserver(()=>setTimeout(enhance,0)).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
