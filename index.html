@@ -16704,6 +16704,7 @@ const baseAdd=addMoneyAccount;addMoneyAccount=function(){const ids=new Set((mone
 const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){await baseEdit(id);const mountEditContract=()=>{const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||!document.getElementById('edit-interest-fields'))return;ensure('edit',a);};setTimeout(mountEditContract,20);setTimeout(mountEditContract,140);setTimeout(mountEditContract,320);setTimeout(()=>{const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||!document.getElementById('edit-interest-fields'))return;ensure('edit',a);const btn=document.getElementById('account-edit-save');if(!btn||btn.dataset.v381==='1')return;btn.dataset.v381='1';const old=btn.onclick;btn.onclick=async function(ev){const isSavings=document.getElementById('account-edit-type')?.value==='savings',m=isSavings?read('edit'):null;const r=old?await old.call(this,ev):undefined;if(isSavings){applyMeta(a,m);saveData();renderMoneyAccounts();}return r;};},20);};
 document.addEventListener('change',function(ev){if(ev.target&&ev.target.id==='account-edit-type'){setTimeout(()=>{const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});},80);}});
 const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{installNew();const open=document.getElementById('account-edit-modal');if(open){const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});}},30);};
+window.MongoSavingsTermContract={ensure:ensure,read:read,applyMeta:applyMeta};
 setTimeout(installNew,50);
 setTimeout(()=>{
   let changed=false;
@@ -17943,6 +17944,39 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
 })();
 </script>
+
+<script id="mongo-term-contract-modal-observer-v1">
+(function(){
+'use strict';
+let lastModal=null,lastId=null;
+function findEditingAccount(){
+  const modal=document.getElementById('account-edit-modal');
+  if(!modal)return null;
+  const name=(document.getElementById('account-edit-name')?.value||'').trim();
+  const type=document.getElementById('account-edit-type')?.value||'';
+  if(type!=='savings')return {modal,a:null};
+  let a=null;
+  if(typeof moneyAccounts!=='undefined'){
+    a=(moneyAccounts||[]).find(x=>String(x.id)===String(typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:''));
+    if(!a&&name)a=(moneyAccounts||[]).find(x=>(x.name||'').trim()===name && (typeof normalizeAccountType==='function'?normalizeAccountType(x.type):x.type)==='savings');
+  }
+  return {modal,a};
+}
+function mount(){
+  const api=window.MongoSavingsTermContract;if(!api||typeof api.ensure!=='function')return;
+  const hit=findEditingAccount();if(!hit||!hit.modal)return;
+  const root=document.getElementById('edit-interest-fields');if(!root)return;
+  if(!document.getElementById('edit-term-contract')) api.ensure('edit',hit.a||{});
+  lastModal=hit.modal;lastId=hit.a&&hit.a.id;
+}
+const obs=new MutationObserver(()=>{setTimeout(mount,0);});
+obs.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',()=>setTimeout(mount,60),true);
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='account-edit-type')setTimeout(mount,30);},true);
+setInterval(()=>{if(document.getElementById('account-edit-modal')&&!document.getElementById('edit-term-contract'))mount();},250);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
