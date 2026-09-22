@@ -14033,13 +14033,13 @@ try{rCatSel();rTxns();rRecent();renderMoneyAccounts();}catch(e){console.warn('V4
 (function(){
 'use strict';
 const X={
- mn:{newGoal:'＋ “{name}” зорилго шинээр үүсгэх',target:'Зорилтот дүн',deadline:'Зорилгын хугацаа',needTarget:'Шинэ зорилгын зорилтот дүнг оруулна уу',selfCompound:'Хүү энэ хуримтлалын дансанд өөрт нь автоматаар нэмэгдэнэ.',selfMaturity:'Хугацааны эцэст хүү энэ хуримтлалын дансанд автоматаар нэмэгдэнэ.'},
- en:{newGoal:'＋ Create a new “{name}” goal',target:'Goal target',deadline:'Goal deadline',needTarget:'Enter the new goal target',selfCompound:'Interest is automatically added to this savings account.',selfMaturity:'At maturity, interest is automatically added to this savings account.'},
- zh:{newGoal:'＋ 新建“{name}”目标',target:'目标金额',deadline:'目标日期',needTarget:'请输入新目标金额',selfCompound:'利息会自动计入此储蓄账户。',selfMaturity:'到期时利息会自动计入此储蓄账户。'},
- ja:{newGoal:'＋「{name}」目標を新規作成',target:'目標金額',deadline:'目標期限',needTarget:'新しい目標金額を入力してください',selfCompound:'利息はこの貯蓄口座に自動で加算されます。',selfMaturity:'満期時に利息はこの貯蓄口座に自動で加算されます。'},
- ko:{newGoal:'＋ “{name}” 목표 새로 만들기',target:'목표 금액',deadline:'목표 기한',needTarget:'새 목표 금액을 입력하세요',selfCompound:'이자는 이 저축 계좌에 자동으로 더해집니다.',selfMaturity:'만기 때 이자는 이 저축 계좌에 자동으로 더해집니다.'},
- ru:{newGoal:'＋ Создать цель «{name}»',target:'Сумма цели',deadline:'Срок цели',needTarget:'Укажите сумму новой цели',selfCompound:'Проценты автоматически добавляются на этот накопительный счёт.',selfMaturity:'В конце срока проценты автоматически добавляются на этот счёт.'},
- de:{newGoal:'＋ Neues Ziel „{name}“ erstellen',target:'Zielbetrag',deadline:'Zieldatum',needTarget:'Zielbetrag für das neue Ziel eingeben',selfCompound:'Zinsen werden automatisch diesem Sparkonto gutgeschrieben.',selfMaturity:'Bei Fälligkeit werden Zinsen automatisch diesem Sparkonto gutgeschrieben.'}
+ mn:{newGoal:'＋ “{name}” зорилго шинээр үүсгэх',target:'Зорилтот дүн',deadline:'Зорилгын хугацаа',needTarget:'Шинэ зорилгын зорилтот дүнг оруулна уу',selfCompound:'Хүү энэ хуримтлалын дансанд өөрт нь автоматаар нэмэгдэнэ.',selfMaturity:'Хугацааны эцэст хүү энэ хуримтлалын дансанд автоматаар нэмэгдэнэ.',selfPayout:'Хүү сонгосон дансанд тусад нь олгогдоно.',selfNone:'Хүү бодохгүй.'},
+ en:{newGoal:'＋ Create a new “{name}” goal',target:'Goal target',deadline:'Goal deadline',needTarget:'Enter the new goal target',selfCompound:'Interest is automatically added to this savings account.',selfMaturity:'At maturity, interest is automatically added to this savings account.',selfPayout:'Interest is paid separately to the selected account.',selfNone:'No interest is calculated.'},
+ zh:{newGoal:'＋ 新建“{name}”目标',target:'目标金额',deadline:'目标日期',needTarget:'请输入新目标金额',selfCompound:'利息会自动计入此储蓄账户。',selfMaturity:'到期时利息会自动计入此储蓄账户。',selfPayout:'利息将单独支付到所选账户。',selfNone:'不计算利息。'},
+ ja:{newGoal:'＋「{name}」目標を新規作成',target:'目標金額',deadline:'目標期限',needTarget:'新しい目標金額を入力してください',selfCompound:'利息はこの貯蓄口座に自動で加算されます。',selfMaturity:'満期時に利息はこの貯蓄口座に自動で加算されます。',selfPayout:'利息は選択した口座に別途支払われます。',selfNone:'利息は計算されません。'},
+ ko:{newGoal:'＋ “{name}” 목표 새로 만들기',target:'목표 금액',deadline:'목표 기한',needTarget:'새 목표 금액을 입력하세요',selfCompound:'이자는 이 저축 계좌에 자동으로 더해집니다.',selfMaturity:'만기 때 이자는 이 저축 계좌에 자동으로 더해집니다.',selfPayout:'이자는 선택한 계좌로 별도 지급됩니다.',selfNone:'이자를 계산하지 않습니다.'},
+ ru:{newGoal:'＋ Создать цель «{name}»',target:'Сумма цели',deadline:'Срок цели',needTarget:'Укажите сумму новой цели',selfCompound:'Проценты автоматически добавляются на этот накопительный счёт.',selfMaturity:'В конце срока проценты автоматически добавляются на этот счёт.',selfPayout:'Проценты отдельно выплачиваются на выбранный счёт.',selfNone:'Проценты не начисляются.'},
+ de:{newGoal:'＋ Neues Ziel „{name}“ erstellen',target:'Zielbetrag',deadline:'Zieldatum',needTarget:'Zielbetrag für das neue Ziel eingeben',selfCompound:'Zinsen werden automatisch diesem Sparkonto gutgeschrieben.',selfMaturity:'Bei Fälligkeit werden Zinsen automatisch diesem Sparkonto gutgeschrieben.',selfPayout:'Zinsen werden separat auf das ausgewählte Konto ausgezahlt.',selfNone:'Es werden keine Zinsen berechnet.'}
 };
 function T59(){return X[lang]||X.en;}
 function v59Parent(id){const e=document.getElementById(id);return e?e.parentElement:null;}
@@ -14054,7 +14054,15 @@ function v59EnsureGoalFields(prefix){
   if(!box){box=document.createElement('div');box.id=prefix+'-new-goal-fields';box.className='v4359-new-goal';box.innerHTML=`<div><label>${T59().target}</label><input class="fi" id="${prefix}-new-goal-target" inputmode="decimal" data-amt="1"></div><div><label>${T59().deadline}</label><input class="fi" id="${prefix}-new-goal-deadline" type="date"></div>`;host.appendChild(box);const amt=document.getElementById(prefix+'-new-goal-target');if(amt&&typeof setupAmtInput==='function')setupAmtInput(amt);}
   const toggle=()=>box.classList.toggle('show',sel.value==='__new__');sel.onchange=toggle;toggle();
 }
-function v59Note(prefix,text){const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(!root)return;let n=document.getElementById(prefix+'-self-interest-note');if(!n){n=document.createElement('div');n.id=prefix+'-self-interest-note';n.className='flow-only-note';root.appendChild(n);}n.textContent=text||'';n.classList.toggle('v4359-hidden',!text);}
+function v59Note(prefix,text){
+  const root=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');if(!root)return;
+  const grid=root.querySelector('.savings-interest-grid')||root;
+  let n=document.getElementById(prefix+'-self-interest-note');
+  if(!n){n=document.createElement('div');n.id=prefix+'-self-interest-note';n.className='flow-only-note';}
+  // Keep this explanation with "Хүүгийн нөхцөл", never below the term/cancellation contract.
+  if(n.parentElement!==grid)grid.appendChild(n);
+  n.textContent=text||'';n.classList.toggle('v4359-hidden',!text);
+}
 function v59ApplyMode(prefix){
   const mode=document.getElementById(prefix+'-interest-mode')?.value||'compound';
   const rate=v59Parent(prefix+'-interest-rate'),freq=v59Parent(prefix+'-interest-frequency'),receiver=v59Parent(prefix+'-interest-account'),maturity=v59Parent(prefix+'-maturity');
@@ -14062,7 +14070,7 @@ function v59ApplyMode(prefix){
   if(freq)freq.classList.toggle('v4359-hidden',mode==='none'||mode==='maturity');
   if(receiver)receiver.classList.toggle('v4359-hidden',mode!=='payout');
   if(maturity)maturity.classList.toggle('v4359-hidden',mode!=='maturity');
-  v59Note(prefix,mode==='compound'?T59().selfCompound:(mode==='maturity'?T59().selfMaturity:''));
+  v59Note(prefix,mode==='compound'?T59().selfCompound:(mode==='maturity'?T59().selfMaturity:(mode==='payout'?T59().selfPayout:(mode==='none'?T59().selfNone:''))));
 }
 function v59Enhance(prefix){
   v59EnsureGoalFields(prefix);v59ApplyMode(prefix);const mode=document.getElementById(prefix+'-interest-mode');if(mode)mode.onchange=()=>v59ApplyMode(prefix);
