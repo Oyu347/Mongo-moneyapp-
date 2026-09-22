@@ -17994,62 +17994,92 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeo
 .mongo-cancel-adjust{display:none;padding:10px;border-radius:12px;background:var(--bg2);margin-top:10px}
 .mongo-cancel-adjust.show{display:block}
 </style>
-<script id="mongo-savings-cancel-v1">
+<script id="mongo-savings-cancel-v2">
 (function(){
 'use strict';
-function accType(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type);}
-function money(v){return typeof fmt==='function'?fmt(Math.round(Number(v)||0)):Math.round(Number(v)||0).toLocaleString()+'₮';}
-function balance(a){try{return Math.max(0,Number(window.MongoLedgerCore?.accountBalance(a.id,moneyAccounts,moneyLedger))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
-function paidInterest(a){
-  // Only actual interest transactions paid to a DIFFERENT account qualify.
-  return (txns||[]).filter(t=>{
-    const sid=String(t.savingsAccountId||t.goalAccountId||'');
-    const dest=String(t.accountId||'');
-    const isInterest=String(t.type||'').toLowerCase()==='income' || /interest|хүү/i.test(String(t.desc||t.subcatName||''));
-    return sid===String(a.id)&&dest&&dest!==String(a.id)&&isInterest;
-  }).reduce((n,t)=>n+Math.max(0,Number(t.amount)||0),0);
+const DAY=86400000;
+function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a?.type):a?.type}
+function N(v){return Number(v)||0}
+function M(v){return typeof fmt==='function'?fmt(Math.round(N(v))):Math.round(N(v)).toLocaleString()+'₮'}
+function D(v){const d=new Date(String(v||'')+'T00:00:00');return Number.isNaN(+d)?null:d}
+function days(a,b){return a&&b?Math.max(0,Math.floor((b-a)/DAY)):0}
+function currentBal(a){try{return Math.max(0,N(accountBalance(a.id)))}catch(_){return Math.max(0,N(a.openingBalance))}}
+function startDate(a){return a.openingDate||a.startDate||a.createdDate||a.date||new Date().toISOString().slice(0,10)}
+function inflows(a,end){
+ return (accountTransfers||[]).filter(t=>String(t.toId)===String(a.id)&&D(t.date)&&D(t.date)<=end&&N(t.amount)>0)
+   .map(t=>({amount:N(t.amount),date:D(t.date)}));
 }
-function eligibleInterest(a){
-  // V1 preview: bank-actual amount when explicitly enabled. Other rule engines
-  // will be wired to ledger-date calculations in the next step.
-  if(a.earlyTerminationRule==='bank_actual'&&a.earlyTerminationUseBankActual)
-    return Math.max(0,Number(a.earlyTerminationBankActualInterest)||0);
-  return 0;
+function tierRate(a,d){
+ const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];
+ const hit=rows.find(x=>d>=N(x.fromDays??x.from??0)&&(x.toDays==null&&x.to==null||d<=N(x.toDays??x.to)));
+ return N(hit?.rate);
+}
+function rateInterest(p,r,d){return Math.max(0,p*N(r)/100*d/365)}
+function allowedInterest(a,end){
+ const sd=D(startDate(a)); if(!sd||end<sd)return 0;
+ const totalDays=days(sd,end),rule=a.earlyTerminationRule||'all_reduced';
+ if(rule==='bank_actual'&&a.earlyTerminationUseBankActual)return Math.max(0,N(a.earlyTerminationBankActualInterest));
+ let fixed=N(a.earlyTerminationRate);
+ if(rule==='threshold'){
+   const threshold=N(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);
+   fixed=totalDays>=threshold?N(a.earlyTerminationThresholdAfterRate||a.earlyTerminationAfterRate):N(a.earlyTerminationThresholdBeforeRate||a.earlyTerminationBeforeRate);
+ }
+ const chunks=[{amount:Math.max(0,N(a.openingBalance)),date:sd},...inflows(a,end)];
+ return chunks.reduce((sum,x)=>{
+   const held=days(x.date,end);
+   const r=rule==='staged'?tierRate(a,held):fixed;
+   return sum+rateInterest(x.amount,r,held);
+ },0);
+}
+function paidExternalInterest(a,end){
+ if(a.earlyTerminationInterestMethod!=='external')return 0;
+ return (txns||[]).filter(t=>{
+   const dt=D(t.date); if(!dt||dt>end||t.type!=='income')return false;
+   const linked=String(t.savingsAccountId||t.sourceSavingsAccountId||t.depositAccountId||'')===String(a.id);
+   const named=/interest|хүү/i.test(String(t.desc||t.catName||t.subcatName||''));
+   return linked && named && String(t.accountId||'')!==String(a.id);
+ }).reduce((z,t)=>z+Math.max(0,N(t.amount)),0);
 }
 function openCancel(id){
-  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||accType(a)!=='savings')return;
-  document.getElementById('mongo-savings-cancel-v1')?.remove();
-  const principal=balance(a),paid=paidInterest(a),eligible=eligibleInterest(a);
-  const claw=Math.max(0,paid-eligible);
-  const fee=Math.max(0,Number(a.earlyTerminationFee)||0);
-  const showAdjust=paid>0&&claw>0;
-  const final=Math.max(0,principal-claw-fee);
-  const m=document.createElement('div');m.id='mongo-savings-cancel-v1';m.className='loan-modal-backdrop';
-  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:5px">Хадгаламж цуцлах · ${String(a.name||'')}</div>
-  <div class="flow-only-note">Энэ нь урьдчилсан тооцоо. Одоогоор дансны өгөгдөлд өөрчлөлт хийхгүй.</div>
-  <label>Цуцлах огноо</label><input class="fi" id="mongo-cancel-date" type="date" value="${new Date().toISOString().slice(0,10)}">
-  <div class="mongo-cancel-summary">
-    <div class="mongo-cancel-row"><span>Одоогийн үндсэн үлдэгдэл</span><b>${money(principal)}</b></div>
-    <div class="mongo-cancel-row"><span>Цуцлалтын шимтгэл</span><b>− ${money(fee)}</b></div>
-  </div>
-  <div class="mongo-cancel-adjust${showAdjust?' show':''}" id="mongo-cancel-adjust">
+ const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||typ(a)!=='savings')return;
+ document.getElementById('mongo-savings-cancel-v1')?.remove();
+ const m=document.createElement('div');m.id='mongo-savings-cancel-v1';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:5px">Хадгаламж цуцлах · ${String(a.name||'')}</div>
+ <div class="flow-only-note">Энэ нь урьдчилсан тооцоо. Одоогоор дансны өгөгдөлд өөрчлөлт хийхгүй.</div>
+ <label>Цуцлах огноо</label><input class="fi" id="mongo-cancel-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+ <div id="mongo-cancel-calc"></div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-cancel-v1').remove()">Болих</button></div></div>`;
+ document.body.appendChild(m);
+ function recalc(){
+   const ed=D(document.getElementById('mongo-cancel-date')?.value),principal=currentBal(a),fee=Math.max(0,N(a.earlyTerminationFee));
+   if(!ed){return}
+   const allowed=allowedInterest(a,ed),paid=paidExternalInterest(a,ed);
+   const claw=Math.max(0,paid-allowed),extra=Math.max(0,allowed-paid);
+   const showAdjust=a.earlyTerminationInterestMethod==='external'&&paid>0&&claw>0;
+   const final=Math.max(0,principal-claw-fee+extra);
+   document.getElementById('mongo-cancel-calc').innerHTML=`
+   <div class="mongo-cancel-summary">
+    <div class="mongo-cancel-row"><span>Одоогийн үндсэн үлдэгдэл</span><b>${M(principal)}</b></div>
+    <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${M(allowed)}</b></div>
+    ${extra>0?`<div class="mongo-cancel-row"><span>Нэмж авах хүү</span><b>+ ${M(extra)}</b></div>`:''}
+    <div class="mongo-cancel-row"><span>Цуцлалтын шимтгэл</span><b>− ${M(fee)}</b></div>
+   </div>
+   <div class="mongo-cancel-adjust${showAdjust?' show':''}">
     <div style="font-weight:900;margin-bottom:7px">Өмнө олгосон хүүний тохируулга</div>
-    <div class="mongo-cancel-row"><span>Өөр дансанд өмнө олгосон хүү</span><b>${money(paid)}</b></div>
-    <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${money(eligible)}</b></div>
-    <div class="mongo-cancel-row"><span>Үндсэн мөнгөнөөс суутгах</span><b>− ${money(claw)}</b></div>
-  </div>
-  <div class="mongo-cancel-row" style="font-size:16px;font-weight:900"><span>Хүлээн авах урьдчилсан дүн</span><b>${money(final)}</b></div>
-  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-cancel-v1').remove()">Болих</button></div>
-  </div>`;
-  document.body.appendChild(m);
+    <div class="mongo-cancel-row"><span>Өөр дансанд өмнө олгосон хүү</span><b>${M(paid)}</b></div>
+    <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${M(allowed)}</b></div>
+    <div class="mongo-cancel-row"><span>Үндсэн мөнгөнөөс суутгах</span><b>− ${M(claw)}</b></div>
+   </div>
+   <div class="mongo-cancel-row" style="font-size:16px;font-weight:900"><span>Хүлээн авах урьдчилсан дүн</span><b>${M(final)}</b></div>`;
+ }
+ document.getElementById('mongo-cancel-date').addEventListener('change',recalc);recalc();
 }
 window.openMongoSavingsCancelV1=openCancel;
-
 const oldDetail=accountInlineDetail;
 accountInlineDetail=function(a){
-  const base=oldDetail(a);
-  if(String(expandedMoneyAccountId)!==String(a.id)||accType(a)!=='savings'||a.depositTermType!=='term'||!a.allowsEarlyTermination)return base;
-  return base+`<div class="mongo-cancel-btn"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsCancelV1('${a.id}')">Хадгаламж цуцлах</button></div>`;
+ const base=oldDetail(a);
+ if(String(expandedMoneyAccountId)!==String(a.id)||typ(a)!=='savings'||a.depositTermType!=='term'||!a.allowsEarlyTermination)return base;
+ return base+`<div class="mongo-cancel-btn"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsCancelV1('${a.id}')">Хадгаламж цуцлах</button></div>`;
 };
 })();
 </script>
