@@ -14029,6 +14029,15 @@ try{rCatSel();rTxns();rRecent();renderMoneyAccounts();}catch(e){console.warn('V4
 .v4359-hidden{display:none!important}.v4359-new-goal{display:none;grid-column:1/-1;padding:9px;border-radius:11px;background:#FFFDF2;border:1px solid #F2D784}.v4359-new-goal.show{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media(max-width:480px){.v4359-new-goal.show{grid-template-columns:1fr}}
 </style>
+<style id="mongo-savings-interest-width-fix">
+/* Scoped only to Savings > Interest conditions. Do not affect global .fi/input/select. */
+.savings-interest-fields .savings-interest-grid{min-width:0;max-width:100%;overflow:hidden}
+.savings-interest-fields .savings-interest-grid>div{min-width:0;max-width:100%;box-sizing:border-box}
+.savings-interest-fields .savings-interest-grid .fi,
+.savings-interest-fields .savings-interest-grid select,
+.savings-interest-fields .savings-interest-grid input{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.savings-interest-fields .flow-only-note{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+</style>
 <script>
 (function(){
 'use strict';
@@ -14061,6 +14070,12 @@ function v59Note(prefix,text){
   if(!n){n=document.createElement('div');n.id=prefix+'-self-interest-note';n.className='flow-only-note';}
   // Keep this explanation with "Хүүгийн нөхцөл", never below the term/cancellation contract.
   if(n.parentElement!==grid)grid.appendChild(n);
+  n.style.gridColumn='1 / -1';
+  n.style.width='100%';
+  n.style.maxWidth='100%';
+  n.style.boxSizing='border-box';
+  n.style.minWidth='0';
+  n.style.overflowWrap='anywhere';
   n.textContent=text||'';n.classList.toggle('v4359-hidden',!text);
 }
 function v59ApplyMode(prefix){
