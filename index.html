@@ -18229,6 +18229,60 @@ editMoneyAccount=async function(id){
 })();
 </script>
 
+
+<script id="mongo-interest-receive-account-v7-correct-anchor">
+(function(){
+'use strict';
+function ty7(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function es7(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function visible7(el){return !!(el&&el.getClientRects().length)}
+function findMethod7(){
+ const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;
+ const sels=[...root.querySelectorAll('select')];
+ return sels.find(sel=>visible7(sel)&&[...sel.options].some(o=>o.value==='external'))||null;
+}
+function mount7(a){
+ const method=findMethod7(); if(!method||!a)return false;
+ let wrap=document.getElementById('edit-interest-receive-wrap-v7');
+ if(!wrap){
+   wrap=document.createElement('div'); wrap.id='edit-interest-receive-wrap-v7';
+   wrap.style.cssText='margin-top:10px;min-width:0;max-width:100%';
+   wrap.innerHTML=`<label style="display:block;margin-bottom:6px">Хүү хүлээн авах данс</label>
+   <select class="fi" id="edit-interest-receive-account-v7" style="width:100%;max-width:100%;box-sizing:border-box"></select>
+   <div style="font-size:12px;opacity:.72;margin-top:6px">Хадгаламж хүчинтэй байх хугацаанд тусдаа олгогдох хүү энэ дансанд орно.</div>`;
+   const field=method.closest('.fi-group,.field,.form-group')||method.parentElement;
+   field.insertAdjacentElement('afterend',wrap);
+ }
+ const sel=document.getElementById('edit-interest-receive-account-v7');
+ const selected=a.interestReceiveAccountId||a.interestPayoutAccountId||'';
+ if(sel){
+   sel.innerHTML='<option value="">Данс сонгох</option>'+(moneyAccounts||[])
+    .filter(x=>String(x.id)!==String(a.id)&&ty7(x)!=='savings'&&x.active!==false)
+    .map(x=>`<option value="${es7(x.id)}"${String(x.id)===String(selected)?' selected':''}>${es7(x.name||'Данс')}</option>`).join('');
+ }
+ const sync=()=>{wrap.hidden=method.value!=='external'};
+ if(!method.dataset.recv7){method.addEventListener('change',sync);method.dataset.recv7='1'} sync();
+ return true;
+}
+const edit7=editMoneyAccount;
+editMoneyAccount=async function(id){
+ const r=await edit7(id); const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+ if(a&&ty7(a)==='savings'){mount7(a);[20,60,140,300,600].forEach(ms=>setTimeout(()=>mount7(a),ms))}
+ return r;
+};
+const save7=saveMoneyAccountEdit;
+saveMoneyAccountEdit=async function(){
+ const a=(moneyAccounts||[]).find(x=>String(x.id)===String(editingMoneyAccountId));
+ const method=findMethod7(), sel=document.getElementById('edit-interest-receive-account-v7');
+ if(a&&ty7(a)==='savings'&&method?.value==='external'){
+   if(!sel?.value){alert('Хүү хүлээн авах дансаа сонгоно уу.');return}
+   a.interestReceiveAccountId=sel.value;a.interestPayoutAccountId=sel.value;
+ } else if(a&&ty7(a)==='savings'){a.interestReceiveAccountId='';a.interestPayoutAccountId=''}
+ return await save7();
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
