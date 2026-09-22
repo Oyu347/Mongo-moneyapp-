@@ -18032,12 +18032,22 @@ function allowedInterest(a,end){
  },0);
 }
 function paidExternalInterest(a,end){
- if(a.earlyTerminationInterestMethod!=='external')return 0;
+ const external=(a.earlyTerminationInterestMethod==='external'||a.interestMode==='payout');
+ if(!external)return 0;
+ const yieldKey='yield_'+String(a.name||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45);
+ const receiveId=String(a.interestReceiveAccountId||a.interestPayoutAccountId||a.interestAccountId||'');
  return (txns||[]).filter(t=>{
    const dt=D(t.date); if(!dt||dt>end||t.type!=='income')return false;
-   const linked=String(t.savingsAccountId||t.sourceSavingsAccountId||t.depositAccountId||'')===String(a.id);
-   const named=/interest|хүү/i.test(String(t.desc||t.catName||t.subcatName||''));
-   return linked && named && String(t.accountId||'')!==String(a.id);
+   const explicit=String(t.savingsAccountId||t.sourceSavingsAccountId||t.depositAccountId||'')===String(a.id);
+   const legacyYield=(String(t.catKey||'')==='asset_income_cat' &&
+     (String(t.subcatName||'')===yieldKey || String(t.subcatKey||'')===yieldKey ||
+      String(t.subcatName||'').trim()===String(a.name||'').trim() ||
+      String(t.desc||'').split(' · ')[0].trim()===String(a.name||'').trim()));
+   const destinationOk=String(t.accountId||'')!==String(a.id) &&
+     (!receiveId || String(t.accountId||'')===receiveId);
+   const interestTagged=!!t.savingsInterest || String(t.incomePurpose||'')==='savings_interest' ||
+     /interest|хүү/i.test(String(t.desc||t.catName||t.subcatName||''));
+   return destinationOk && (explicit ? interestTagged : legacyYield);
  }).reduce((z,t)=>z+Math.max(0,N(t.amount)),0);
 }
 function openCancel(id){
