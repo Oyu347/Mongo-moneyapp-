@@ -17984,6 +17984,76 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
 document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,3300));setTimeout(boot,3800);
 })();
 </script>
+
+<style id="mongo-savings-cancel-v1-style">
+.mongo-cancel-btn{margin-top:8px}
+#mongo-savings-cancel-v1 .loan-modal{max-height:88vh;overflow:auto}
+.mongo-cancel-summary{display:grid;gap:7px;margin:12px 0}
+.mongo-cancel-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mongo-cancel-row b{text-align:right}
+.mongo-cancel-adjust{display:none;padding:10px;border-radius:12px;background:var(--bg2);margin-top:10px}
+.mongo-cancel-adjust.show{display:block}
+</style>
+<script id="mongo-savings-cancel-v1">
+(function(){
+'use strict';
+function accType(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type);}
+function money(v){return typeof fmt==='function'?fmt(Math.round(Number(v)||0)):Math.round(Number(v)||0).toLocaleString()+'₮';}
+function balance(a){try{return Math.max(0,Number(window.MongoLedgerCore?.accountBalance(a.id,moneyAccounts,moneyLedger))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
+function paidInterest(a){
+  // Only actual interest transactions paid to a DIFFERENT account qualify.
+  return (txns||[]).filter(t=>{
+    const sid=String(t.savingsAccountId||t.goalAccountId||'');
+    const dest=String(t.accountId||'');
+    const isInterest=String(t.type||'').toLowerCase()==='income' || /interest|хүү/i.test(String(t.desc||t.subcatName||''));
+    return sid===String(a.id)&&dest&&dest!==String(a.id)&&isInterest;
+  }).reduce((n,t)=>n+Math.max(0,Number(t.amount)||0),0);
+}
+function eligibleInterest(a){
+  // V1 preview: bank-actual amount when explicitly enabled. Other rule engines
+  // will be wired to ledger-date calculations in the next step.
+  if(a.earlyTerminationRule==='bank_actual'&&a.earlyTerminationUseBankActual)
+    return Math.max(0,Number(a.earlyTerminationBankActualInterest)||0);
+  return 0;
+}
+function openCancel(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(!a||accType(a)!=='savings')return;
+  document.getElementById('mongo-savings-cancel-v1')?.remove();
+  const principal=balance(a),paid=paidInterest(a),eligible=eligibleInterest(a);
+  const claw=Math.max(0,paid-eligible);
+  const fee=Math.max(0,Number(a.earlyTerminationFee)||0);
+  const showAdjust=paid>0&&claw>0;
+  const final=Math.max(0,principal-claw-fee);
+  const m=document.createElement('div');m.id='mongo-savings-cancel-v1';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:5px">Хадгаламж цуцлах · ${String(a.name||'')}</div>
+  <div class="flow-only-note">Энэ нь урьдчилсан тооцоо. Одоогоор дансны өгөгдөлд өөрчлөлт хийхгүй.</div>
+  <label>Цуцлах огноо</label><input class="fi" id="mongo-cancel-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+  <div class="mongo-cancel-summary">
+    <div class="mongo-cancel-row"><span>Одоогийн үндсэн үлдэгдэл</span><b>${money(principal)}</b></div>
+    <div class="mongo-cancel-row"><span>Цуцлалтын шимтгэл</span><b>− ${money(fee)}</b></div>
+  </div>
+  <div class="mongo-cancel-adjust${showAdjust?' show':''}" id="mongo-cancel-adjust">
+    <div style="font-weight:900;margin-bottom:7px">Өмнө олгосон хүүний тохируулга</div>
+    <div class="mongo-cancel-row"><span>Өөр дансанд өмнө олгосон хүү</span><b>${money(paid)}</b></div>
+    <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${money(eligible)}</b></div>
+    <div class="mongo-cancel-row"><span>Үндсэн мөнгөнөөс суутгах</span><b>− ${money(claw)}</b></div>
+  </div>
+  <div class="mongo-cancel-row" style="font-size:16px;font-weight:900"><span>Хүлээн авах урьдчилсан дүн</span><b>${money(final)}</b></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-cancel-v1').remove()">Болих</button></div>
+  </div>`;
+  document.body.appendChild(m);
+}
+window.openMongoSavingsCancelV1=openCancel;
+
+const oldDetail=accountInlineDetail;
+accountInlineDetail=function(a){
+  const base=oldDetail(a);
+  if(String(expandedMoneyAccountId)!==String(a.id)||accType(a)!=='savings'||a.depositTermType!=='term'||!a.allowsEarlyTermination)return base;
+  return base+`<div class="mongo-cancel-btn"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsCancelV1('${a.id}')">Хадгаламж цуцлах</button></div>`;
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
