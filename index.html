@@ -18047,13 +18047,52 @@ function openCancel(id){
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:5px">Хадгаламж цуцлах · ${String(a.name||'')}</div>
  <div class="flow-only-note">Энэ нь урьдчилсан тооцоо. Одоогоор дансны өгөгдөлд өөрчлөлт хийхгүй.</div>
  <label>Цуцлах огноо</label><input class="fi" id="mongo-cancel-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+ <details id="mongo-cancel-test-tools" style="margin-top:10px">
+ <summary style="font-weight:800;cursor:pointer">🧪 Туршилтын огноо</summary>
+ <div class="flow-only-note" style="margin-top:8px">Зөвхөн энэ урьдчилсан тооцоонд ашиглана. Жинхэнэ данс, гүйлгээний огноог өөрчлөхгүй.</div>
+ <label>Эхний үлдэгдлийн туршилтын огноо</label>
+ <input class="fi" id="mongo-test-open-date" type="date" value="${startDate(a)}">
+ <label style="margin-top:8px">Нэмэлт шилжүүлгүүдийн огноо</label>
+ <div id="mongo-test-transfer-dates"></div>
+ </details>
  <div id="mongo-cancel-calc"></div>
  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-cancel-v1').remove()">Болих</button></div></div>`;
  document.body.appendChild(m);
+ const originalInflows=inflows(a,D('2999-12-31'));
+ const transferBox=document.getElementById('mongo-test-transfer-dates');
+ originalInflows.forEach((x,i)=>{
+   const row=document.createElement('div');
+   row.style.cssText='display:grid;grid-template-columns:1fr 1.15fr;gap:8px;align-items:center;margin-top:6px';
+   row.innerHTML=`<span>${M(x.amount)}</span><input class="fi mongo-test-transfer-date" data-i="${i}" type="date" value="${x.date.toISOString().slice(0,10)}">`;
+   transferBox.appendChild(row);
+ });
+ function testChunks(end){
+   const od=D(document.getElementById('mongo-test-open-date')?.value)||D(startDate(a));
+   const chunks=[{amount:Math.max(0,N(a.openingBalance)),date:od,label:'Эхний үлдэгдэл'}];
+   originalInflows.forEach((x,i)=>{
+     const el=document.querySelector(`.mongo-test-transfer-date[data-i="${i}"]`);
+     const dt=D(el?.value)||x.date;
+     if(dt<=end)chunks.push({amount:x.amount,date:dt,label:'Нэмэлт шилжүүлэг'});
+   });
+   return chunks;
+ }
+ function allowedTest(end){
+   const chunks=testChunks(end),sd=chunks[0]?.date;if(!sd||end<sd)return {interest:0,chunks:[]};
+   const totalDays=days(sd,end),rule=a.earlyTerminationRule||'all_reduced';
+   if(rule==='bank_actual'&&a.earlyTerminationUseBankActual)return {interest:Math.max(0,N(a.earlyTerminationBankActualInterest)),chunks,bankActual:true};
+   let fixed=N(a.earlyTerminationRate);
+   if(rule==='threshold'){
+     const threshold=N(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);
+     fixed=totalDays>=threshold?N(a.earlyTerminationThresholdAfterRate||a.earlyTerminationAfterRate):N(a.earlyTerminationThresholdBeforeRate||a.earlyTerminationBeforeRate);
+   }
+   let interest=0;
+   chunks.forEach(x=>{const held=days(x.date,end),r=rule==='staged'?tierRate(a,held):fixed;x.held=held;x.rate=r;x.interest=rateInterest(x.amount,r,held);interest+=x.interest});
+   return {interest,chunks};
+ }
  function recalc(){
    const ed=D(document.getElementById('mongo-cancel-date')?.value),principal=currentBal(a),fee=Math.max(0,N(a.earlyTerminationFee));
    if(!ed){return}
-   const allowed=allowedInterest(a,ed),paid=paidExternalInterest(a,ed);
+   const test=allowedTest(ed),allowed=test.interest,paid=paidExternalInterest(a,ed);
    const claw=Math.max(0,paid-allowed),extra=Math.max(0,allowed-paid);
    const showAdjust=a.earlyTerminationInterestMethod==='external'&&paid>0&&claw>0;
    const final=Math.max(0,principal-claw-fee+extra);
@@ -18061,6 +18100,7 @@ function openCancel(id){
    <div class="mongo-cancel-summary">
     <div class="mongo-cancel-row"><span>Одоогийн үндсэн үлдэгдэл</span><b>${M(principal)}</b></div>
     <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${M(allowed)}</b></div>
+    ${test.bankActual?'':`<div style="font-size:12px;opacity:.72;line-height:1.45">${test.chunks.map(x=>`${x.label}: ${M(x.amount)} · ${x.held} хоног · ${N(x.rate)}% → ${M(x.interest)}`).join('<br>')}</div>`}
     ${extra>0?`<div class="mongo-cancel-row"><span>Нэмж авах хүү</span><b>+ ${M(extra)}</b></div>`:''}
     <div class="mongo-cancel-row"><span>Цуцлалтын шимтгэл</span><b>− ${M(fee)}</b></div>
    </div>
@@ -18072,7 +18112,10 @@ function openCancel(id){
    </div>
    <div class="mongo-cancel-row" style="font-size:16px;font-weight:900"><span>Хүлээн авах урьдчилсан дүн</span><b>${M(final)}</b></div>`;
  }
- document.getElementById('mongo-cancel-date').addEventListener('change',recalc);recalc();
+ document.getElementById('mongo-cancel-date').addEventListener('change',recalc);
+ document.getElementById('mongo-test-open-date').addEventListener('change',recalc);
+ document.querySelectorAll('.mongo-test-transfer-date').forEach(el=>el.addEventListener('change',recalc));
+ recalc();
 }
 window.openMongoSavingsCancelV1=openCancel;
 const oldDetail=accountInlineDetail;
