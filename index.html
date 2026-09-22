@@ -18032,22 +18032,12 @@ function allowedInterest(a,end){
  },0);
 }
 function paidExternalInterest(a,end){
- const external=(a.earlyTerminationInterestMethod==='external'||a.interestMode==='payout');
- if(!external)return 0;
- const yieldKey='yield_'+String(a.name||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45);
- const receiveId=String(a.interestReceiveAccountId||a.interestPayoutAccountId||a.interestAccountId||'');
+ if(a.earlyTerminationInterestMethod!=='external')return 0;
  return (txns||[]).filter(t=>{
    const dt=D(t.date); if(!dt||dt>end||t.type!=='income')return false;
-   const explicit=String(t.savingsAccountId||t.sourceSavingsAccountId||t.depositAccountId||'')===String(a.id);
-   const legacyYield=(String(t.catKey||'')==='asset_income_cat' &&
-     (String(t.subcatName||'')===yieldKey || String(t.subcatKey||'')===yieldKey ||
-      String(t.subcatName||'').trim()===String(a.name||'').trim() ||
-      String(t.desc||'').split(' · ')[0].trim()===String(a.name||'').trim()));
-   const destinationOk=String(t.accountId||'')!==String(a.id) &&
-     (!receiveId || String(t.accountId||'')===receiveId);
-   const interestTagged=!!t.savingsInterest || String(t.incomePurpose||'')==='savings_interest' ||
-     /interest|хүү/i.test(String(t.desc||t.catName||t.subcatName||''));
-   return destinationOk && (explicit ? interestTagged : legacyYield);
+   const linked=String(t.savingsAccountId||t.sourceSavingsAccountId||t.depositAccountId||'')===String(a.id);
+   const named=/interest|хүү/i.test(String(t.desc||t.catName||t.subcatName||''));
+   return linked && named && String(t.accountId||'')!==String(a.id);
  }).reduce((z,t)=>z+Math.max(0,N(t.amount)),0);
 }
 function openCancel(id){
@@ -18147,99 +18137,6 @@ accountInlineDetail=function(a){
 };
 })();
 </script>
-
-
-<style id="mongo-interest-receive-account-v5-style">
-#edit-interest-receive-wrap{margin-top:10px}
-#edit-interest-receive-wrap[hidden]{display:none!important}
-</style>
-<script id="mongo-interest-receive-account-v5">
-(function(){
-'use strict';
-function typeOf(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function esc5(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function accountOptions(selected,savingsId){
-  return (moneyAccounts||[]).filter(x=>String(x.id)!==String(savingsId)&&typeOf(x)!=='savings'&&x.active!==false)
-   .map(x=>`<option value="${esc5(x.id)}"${String(x.id)===String(selected)?' selected':''}>${esc5(x.name||'Данс')}</option>`).join('');
-}
-function mountReceiveAccount(a){
- const contract=document.getElementById('edit-term-contract'); if(!contract||!a)return;
- const method=document.getElementById('edit-term-interest-method');
- if(!method)return;
- let wrap=document.getElementById('edit-interest-receive-wrap');
- if(!wrap){
-   wrap=document.createElement('div');wrap.id='edit-interest-receive-wrap';
-   wrap.innerHTML=`<label style="display:block;margin-bottom:6px">Хүү хүлээн авах данс</label>
-     <select class="fi" id="edit-interest-receive-account"></select>
-     <div style="font-size:12px;opacity:.72;margin-top:6px">Хадгаламж хүчинтэй байх хугацаанд тусдаа олгогдох хүү энэ дансанд орно.</div>`;
-   method.closest('div')?.insertAdjacentElement('afterend',wrap);
- }
- const sel=document.getElementById('edit-interest-receive-account');
- if(sel)sel.innerHTML='<option value="">Данс сонгох</option>'+accountOptions(a.interestReceiveAccountId||a.interestPayoutAccountId||'',a.id);
- function sync(){wrap.hidden=method.value!=='external'}
- method.addEventListener('change',sync);sync();
-}
-const baseEdit5=editMoneyAccount;
-editMoneyAccount=async function(id){
- await baseEdit5(id);
- const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
- if(a&&typeOf(a)==='savings'){setTimeout(()=>mountReceiveAccount(a),90)}
-};
-const baseSave5=saveMoneyAccountEdit;
-saveMoneyAccountEdit=async function(){
- const id=editingMoneyAccountId;
- const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
- const method=document.getElementById('edit-term-interest-method')?.value;
- const recv=document.getElementById('edit-interest-receive-account')?.value||'';
- if(a&&typeOf(a)==='savings'&&method==='external'&&!recv){
-   alert('Хүү хүлээн авах дансаа сонгоно уу.');return;
- }
- if(a&&typeOf(a)==='savings'){
-   a.interestReceiveAccountId=method==='external'?recv:'';
-   a.interestPayoutAccountId=a.interestReceiveAccountId;
- }
- return await baseSave5();
-};
-})();
-</script>
-
-
-<script id="mongo-interest-receive-account-v6-direct">
-(function(){
-'use strict';
-function t6(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function e6(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function opts6(a){
- const selected=a.interestReceiveAccountId||a.interestPayoutAccountId||'';
- return '<option value="">Данс сонгох</option>'+(moneyAccounts||[]).filter(x=>String(x.id)!==String(a.id)&&t6(x)!=='savings'&&x.active!==false)
- .map(x=>`<option value="${e6(x.id)}"${String(x.id)===String(selected)?' selected':''}>${e6(x.name||'Данс')}</option>`).join('');
-}
-function mount6(a){
- const method=document.getElementById('edit-term-interest-method'); if(!method||!a)return false;
- let wrap=document.getElementById('edit-interest-receive-wrap');
- if(!wrap){
-   wrap=document.createElement('div');wrap.id='edit-interest-receive-wrap';wrap.style.marginTop='10px';
-   wrap.innerHTML=`<label style="display:block;margin-bottom:6px">Хүү хүлээн авах данс</label><select class="fi" id="edit-interest-receive-account"></select><div style="font-size:12px;opacity:.72;margin-top:6px">Хадгаламж хүчинтэй байх хугацаанд тусдаа олгогдох хүү энэ дансанд орно.</div>`;
-   method.parentElement.insertAdjacentElement('afterend',wrap);
- }
- const sel=document.getElementById('edit-interest-receive-account'); if(sel&&!sel.options.length)sel.innerHTML=opts6(a);
- const sync=()=>{wrap.hidden=method.value!=='external'};
- if(!method.dataset.receiveBound){method.addEventListener('change',sync);method.dataset.receiveBound='1'}
- sync(); return true;
-}
-const previous6=editMoneyAccount;
-editMoneyAccount=async function(id){
- const r=await previous6(id);
- const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
- if(!a||t6(a)!=='savings')return r;
- // Direct mount now, then retry around legacy delayed modal enhancers.
- mount6(a); [30,100,220].forEach(ms=>setTimeout(()=>mount6(a),ms));
- return r;
-};
-})();
-</script>
-
-
 <script id="mongo-interest-receive-account-v7-correct-anchor">
 (function(){
 'use strict';
@@ -18289,6 +18186,93 @@ saveMoneyAccountEdit=async function(){
    a.interestReceiveAccountId=sel.value;a.interestPayoutAccountId=sel.value;
  } else if(a&&ty7(a)==='savings'){a.interestReceiveAccountId='';a.interestPayoutAccountId=''}
  return await save7();
+};
+})();
+</script>
+
+<style id="mongo-savings-external-interest-v9-style">
+/* Scoped only to the savings-account inline action added by V9. */
+.mongo-savings-interest-income-v9{margin-top:8px}
+#mongo-savings-interest-income-v9 .loan-modal{max-height:88vh;overflow:auto}
+</style>
+<script id="mongo-savings-external-interest-v9">
+(function(){
+'use strict';
+function ty9(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function esc9(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function isExternal9(a){
+  return !!a && ty9(a)==='savings' &&
+    (a.earlyTerminationInterestMethod==='external' || a.interestMode==='payout');
+}
+function recv9(a){return a.interestReceiveAccountId||a.interestPayoutAccountId||a.interestAccountId||''}
+function open9(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!isExternal9(a))return;
+  const accountId=recv9(a);
+  const dest=(moneyAccounts||[]).find(x=>String(x.id)===String(accountId));
+  if(!accountId||!dest){alert('Хүү хүлээн авах дансаа эхлээд дансны нөхцөлөөс сонгоно уу.');return}
+  document.getElementById('mongo-savings-interest-income-v9')?.remove();
+  const m=document.createElement('div');
+  m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal">
+    <div style="font-size:19px;font-weight:900;margin-bottom:12px">Хүүгийн орлого · ${esc9(a.name||'')}</div>
+    <div class="flow-only-note">Энэ хүү ${esc9(dest.name||'сонгосон данс')} дансанд орж, ${esc9(a.name||'хадгаламж')}-тай шууд холбогдон бүртгэгдэнэ.</div>
+    <label>Хүүгийн дүн</label>
+    <input class="fi" id="mongo-si-v9-amount" inputmode="decimal">
+    <label>Хүү орсон огноо</label>
+    <input class="fi" id="mongo-si-v9-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+    <label>Хүлээн авах данс</label>
+    <input class="fi" value="${esc9(dest.name||'')}" disabled>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px">
+      <button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">Болих</button>
+      <button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc9(a.id)}')">Хадгалах</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('mongo-si-v9-amount'));
+}
+window.openMongoSavingsExternalInterestV9=open9;
+
+window.saveMongoSavingsExternalInterestV9=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!isExternal9(a))return;
+  const accountId=recv9(a);
+  const amount=Math.round(typeof parseAmt==='function'
+    ?(parseAmt(document.getElementById('mongo-si-v9-amount')?.value)||0)
+    :(Number(document.getElementById('mongo-si-v9-amount')?.value)||0));
+  const date=document.getElementById('mongo-si-v9-date')?.value;
+  if(!(amount>0)||!date||!accountId)return;
+
+  const y=typeof ensureYieldBudgetSource==='function'
+    ?ensureYieldBudgetSource(a.name,'#1D9E75')
+    :null;
+  const goalId=window.MongoSavings?.linkedGoalId ? window.MongoSavings.linkedGoalId(a) : (a.linkedGoalId||null);
+  const made=window.MongoSavings?.makeInterestTransaction
+    ?window.MongoSavings.makeInterestTransaction({
+       id:crypto.randomUUID?crypto.randomUUID():'si_'+Date.now(),
+       desc:`${a.name} · Хүүгийн орлого`,
+       catKey:y?.cat?.key||'asset_income_cat',
+       catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого'):'Хөрөнгийн орлого',
+       subcatName:y?.sub?.key||a.name,
+       amount,date,accountId,
+       savingsAccountId:a.id,
+       interestMode:'payout',
+       goalId
+     })
+    :null;
+  if(!made?.ok)return;
+  txns.unshift(made.transaction);
+  document.getElementById('mongo-savings-interest-income-v9')?.remove();
+  saveData();rAll();renderMoneyAccounts();
+};
+
+const inline9=accountInlineDetail;
+accountInlineDetail=function(a){
+  let html=inline9(a);
+  if(String(expandedMoneyAccountId)!==String(a.id)||!isExternal9(a))return html;
+  return html+`<div class="mongo-savings-interest-income-v9">
+    <button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsExternalInterestV9('${esc9(a.id)}')">＋ Хүүгийн орлого</button>
+  </div>`;
 };
 })();
 </script>
