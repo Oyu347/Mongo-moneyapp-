@@ -18204,7 +18204,12 @@ function isExternal9(a){
   return !!a && ty9(a)==='savings' &&
     (a.earlyTerminationInterestMethod==='external' || a.interestMode==='payout');
 }
-function recv9(a){return a.interestReceiveAccountId||a.interestPayoutAccountId||a.interestAccountId||''}
+function recv9(a){
+ const ids=[a&&a.interestReceiveAccountId,a&&a.interestPayoutAccountId].filter(Boolean);
+ const id=ids.find(v=>String(v)!==String(a&&a.id) &&
+   (moneyAccounts||[]).some(x=>String(x.id)===String(v)&&String(x.id)!==String(a&&a.id)));
+ return id||'';
+}
 function open9(id){
   const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
   if(!isExternal9(a))return;
