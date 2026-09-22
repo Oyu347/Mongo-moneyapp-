@@ -18079,7 +18079,17 @@ function openCancel(id){
  function allowedTest(end){
    const chunks=testChunks(end),sd=chunks[0]?.date;if(!sd||end<sd)return {interest:0,chunks:[]};
    const totalDays=days(sd,end),rule=a.earlyTerminationRule||'all_reduced';
-   if(rule==='bank_actual'&&a.earlyTerminationUseBankActual)return {interest:Math.max(0,N(a.earlyTerminationBankActualInterest)),chunks,bankActual:true};
+   if(rule==='bank_actual'&&a.earlyTerminationUseBankActual){
+     const actual=Math.max(0,N(a.earlyTerminationBankActualInterest));
+     if(actual>0)return {interest:actual,chunks,bankActual:true};
+     /* Diagnostic fallback only: bank-actual is selected but no actual amount has
+        been entered. Show a preview using the account's cancellation rate, or
+        the main annual rate if no cancellation rate exists. */
+     const previewRate=N(a.earlyTerminationRate)||N(a.annualInterestRate)||N(a.interestRate);
+     let preview=0;
+     chunks.forEach(x=>{x.held=days(x.date,end);x.rate=previewRate;x.interest=rateInterest(x.amount,previewRate,x.held);preview+=x.interest});
+     return {interest:preview,chunks,bankActualMissing:true};
+   }
    let fixed=N(a.earlyTerminationRate);
    if(rule==='threshold'){
      const threshold=N(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);
@@ -18101,6 +18111,7 @@ function openCancel(id){
     <div class="mongo-cancel-row"><span>Одоогийн үндсэн үлдэгдэл</span><b>${M(principal)}</b></div>
     <div class="mongo-cancel-row"><span>Цуцлалтаар зөвшөөрөгдөх хүү</span><b>${M(allowed)}</b></div>
     ${test.bankActual?'':`<div style="font-size:12px;opacity:.72;line-height:1.45">${test.chunks.map(x=>`${x.label}: ${M(x.amount)} · ${x.held} хоног · ${N(x.rate)}% → ${M(x.interest)}`).join('<br>')}</div>`}
+    ${test.bankActualMissing?`<div class="flow-only-note" style="margin-top:8px">“Банкны бодит дүн ашиглах” сонгосон боловч банкны бодит нийт хүү оруулаагүй байна. Туршилтад гэрээ/цуцлалтын хүүгээр урьдчилсан дүн харуулав.</div>`:''}
     ${extra>0?`<div class="mongo-cancel-row"><span>Нэмж авах хүү</span><b>+ ${M(extra)}</b></div>`:''}
     <div class="mongo-cancel-row"><span>Цуцлалтын шимтгэл</span><b>− ${M(fee)}</b></div>
    </div>
