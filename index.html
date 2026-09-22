@@ -18193,6 +18193,42 @@ saveMoneyAccountEdit=async function(){
 })();
 </script>
 
+
+<script id="mongo-interest-receive-account-v6-direct">
+(function(){
+'use strict';
+function t6(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function e6(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function opts6(a){
+ const selected=a.interestReceiveAccountId||a.interestPayoutAccountId||'';
+ return '<option value="">Данс сонгох</option>'+(moneyAccounts||[]).filter(x=>String(x.id)!==String(a.id)&&t6(x)!=='savings'&&x.active!==false)
+ .map(x=>`<option value="${e6(x.id)}"${String(x.id)===String(selected)?' selected':''}>${e6(x.name||'Данс')}</option>`).join('');
+}
+function mount6(a){
+ const method=document.getElementById('edit-term-interest-method'); if(!method||!a)return false;
+ let wrap=document.getElementById('edit-interest-receive-wrap');
+ if(!wrap){
+   wrap=document.createElement('div');wrap.id='edit-interest-receive-wrap';wrap.style.marginTop='10px';
+   wrap.innerHTML=`<label style="display:block;margin-bottom:6px">Хүү хүлээн авах данс</label><select class="fi" id="edit-interest-receive-account"></select><div style="font-size:12px;opacity:.72;margin-top:6px">Хадгаламж хүчинтэй байх хугацаанд тусдаа олгогдох хүү энэ дансанд орно.</div>`;
+   method.parentElement.insertAdjacentElement('afterend',wrap);
+ }
+ const sel=document.getElementById('edit-interest-receive-account'); if(sel&&!sel.options.length)sel.innerHTML=opts6(a);
+ const sync=()=>{wrap.hidden=method.value!=='external'};
+ if(!method.dataset.receiveBound){method.addEventListener('change',sync);method.dataset.receiveBound='1'}
+ sync(); return true;
+}
+const previous6=editMoneyAccount;
+editMoneyAccount=async function(id){
+ const r=await previous6(id);
+ const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+ if(!a||t6(a)!=='savings')return r;
+ // Direct mount now, then retry around legacy delayed modal enhancers.
+ mount6(a); [30,100,220].forEach(ms=>setTimeout(()=>mount6(a),ms));
+ return r;
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
