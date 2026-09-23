@@ -18512,6 +18512,30 @@ function txnTrace(a,q){
    </div>`;
  }).join('')+`</div>`;
 }
+function interestClassify(a,q){
+ const id=String(a.id), n0=v=>Number(v)||0;
+ const labels={
+  mn:{title:'Цуцлалтын тооцоонд ангилсан дүн',principal:'Үндсэн мөнгө',compound:'Хадгаламждаа нэмэгдсэн хүү',payout:'Өөр дансанд өмнө олгосон хүү',total:'Хүүгийн түүхийн нийт дүн',note:'Хүүгийн гүйлгээг дансны нэрээр бус хадгаламжийн ID, хүлээн авсан дансны ID, хүүгийн хэлбэрээр ангиллаа. Энэ шатанд бодит цуцлалт хийхгүй.'},
+  en:{title:'Amounts classified for termination',principal:'Principal',compound:'Interest credited to deposit',payout:'Interest previously paid to another account',total:'Total interest history',note:'Interest transactions are classified by savings ID, receiving-account ID, and interest mode rather than account name. No actual termination is performed at this stage.'},
+  zh:{title:'提前支取金额分类',principal:'本金',compound:'计入存款的利息',payout:'此前支付到其他账户的利息',total:'利息历史合计',note:'利息交易按存款ID、收款账户ID和利息方式分类，而不是按账户名称。本阶段不会实际提前支取。'},
+  ja:{title:'中途解約計算の分類額',principal:'元本',compound:'預金に加算された利息',payout:'別口座へ以前支払われた利息',total:'利息履歴合計',note:'利息取引は口座名ではなく、預金ID・受取口座ID・利息方式で分類します。この段階では実際の解約は行いません。'},
+  ko:{title:'중도해지 계산 분류 금액',principal:'원금',compound:'예금에 더해진 이자',payout:'다른 계좌로 이전 지급된 이자',total:'이자 내역 합계',note:'이자 거래는 계좌명이 아니라 예금 ID, 수취 계좌 ID, 이자 방식으로 분류합니다. 이 단계에서는 실제 해지를 수행하지 않습니다.'},
+  ru:{title:'Суммы для расчёта расторжения',principal:'Основная сумма',compound:'Проценты, добавленные ко вкладу',payout:'Проценты, ранее выплаченные на другой счёт',total:'Всего по истории процентов',note:'Процентные операции классифицируются по ID вклада, ID счёта-получателя и способу начисления, а не по названию счёта. На этом этапе фактическое расторжение не выполняется.'},
+  de:{title:'Für die Kündigung klassifizierte Beträge',principal:'Kapital',compound:'Dem Festgeld gutgeschriebene Zinsen',payout:'Bereits auf ein anderes Konto ausgezahlte Zinsen',total:'Zinshistorie gesamt',note:'Zinsbuchungen werden anhand Festgeld-ID, Empfängerkonto-ID und Zinsmodus statt anhand des Kontonamens klassifiziert. In dieser Phase erfolgt keine tatsächliche Kündigung.'}
+ };
+ const z=labels[(typeof lang==='string'&&labels[lang])?lang:'mn']||labels.mn;
+ const rows=(Array.isArray(txns)?txns:[]).filter(t=>String(t.savingsAccountId||'')===id && t.type==='income' && (t.interestMode==='compound'||t.interestMode==='payout'));
+ let compound=0,payout=0;
+ rows.forEach(t=>{const amt=n0(t.amount); if(t.interestMode==='compound' && String(t.accountId||'')===id) compound+=amt; else if(t.interestMode==='payout' && String(t.accountId||'')!==id) payout+=amt;});
+ const current=n0(bal(a));
+ const principal=Math.max(0,current-compound);
+ return `<div class="mrc1-card"><div class="mrc1-title">${esc(z.title)}</div>
+  <div class="mrc1-row"><span>${esc(z.principal)}</span><b>${money(principal)}</b></div>
+  <div class="mrc1-row"><span>${esc(z.compound)}</span><b>${money(compound)}</b></div>
+  <div class="mrc1-row"><span>${esc(z.payout)}</span><b>${money(payout)}</b></div>
+  <div class="mrc1-row"><span>${esc(z.total)}</span><b>${money(compound+payout)}</b></div>
+  <div class="mrc1-note">${esc(z.note)}</div></div>`;
+}
 function conditions(a,q){const r=a.earlyTerminationRule||'all_reduced';
  if(r==='staged'){
   const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];
@@ -18529,7 +18553,7 @@ window.openMongoSavingsCancelV1=function(id){
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900">${esc(q.title)} · ${esc(a.name||'')}</div><div class="mrc1-note">${esc(q.note)}</div>
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.preview)}</div><div class="mrc1-row"><span>${esc(q.account)}</span><b>${esc(a.name||'')}</b></div><div class="mrc1-row"><span>${esc(q.balance)}</span><b>${money(bal(a))}</b></div><div class="mrc1-row"><span>${esc(q.start)}</span><b>${esc(dateOnly(start))}</b></div><div class="mrc1-row"><span>${esc(q.rate)}</span><b>${n(a.annualInterestRate||a.interestRate)}%</b></div><div class="mrc1-row"><span>${esc(q.rule)}</span><b>${esc(ruleName(a.earlyTerminationRule,q))}</b></div><div class="mrc1-row"><span>${esc(q.fee)}</span><b>${money(a.earlyTerminationFee)}</b></div></div>
  ${reconcile(a,q)}
- ${txnTrace(a,q)}
+ ${interestClassify(a,q)}
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.transfers)}</div>${trs.length?trs.map(x=>`<div class="mrc1-transfer"><span>${esc(dateOnly(x.date))}</span><b>${money(x.amount)}</b></div>`).join(''):`<div class="mrc1-note">${esc(q.none)}</div>`}</div>
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.conditions)}</div>${conditions(a,q)}</div>
  <div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="btn btn-sm" id="mrc1-close">${esc(q.close)}</button></div></div>`;
