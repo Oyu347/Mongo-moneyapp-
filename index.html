@@ -18482,6 +18482,36 @@ function reconcile(a,q){
  <div class="mrc1-row"><span>${esc(q.difference)}</span><b>${diff?signed(diff):money(0)}</b></div>
  <div class="mrc1-note">${esc(ok?q.matched:q.needsReview)}</div></div>`;
 }
+function accountNameById(id){
+ const a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>String(x.id)===String(id));
+ return a?.name||String(id||'—');
+}
+function txnTrace(a,q){
+ const id=String(a.id);
+ const rows=(Array.isArray(txns)?txns:[]).filter(t=>
+   String(t.accountId||'')===id || String(t.savingsAccountId||'')===id
+ ).slice().sort((x,y)=>String(x.date||'').localeCompare(String(y.date||'')));
+ if(!rows.length)return '';
+ const labels={
+  mn:{title:'Данстай ID-аар холбогдсон гүйлгээ',type:'Төрөл',income:'Орлого',expense:'Зарлага',recv:'Хүлээн авсан данс',saving:'Холбогдсон хадгаламж',goal:'Холбогдсон зорилго',mode:'Хүүгийн хэлбэр',name:'Тайлбар'},
+  en:{title:'Transactions linked by account ID',type:'Type',income:'Income',expense:'Expense',recv:'Receiving account',saving:'Linked savings',goal:'Linked goal',mode:'Interest mode',name:'Description'}
+ };
+ const z=labels[(typeof lang==='string'&&labels[lang])?lang:'mn']||labels.mn;
+ return `<div class="mrc1-card"><div class="mrc1-title">${esc(z.title)}</div>`+rows.map(t=>{
+   const typ=t.type==='income'?z.income:t.type==='expense'?z.expense:String(t.type||'—');
+   const recv=accountNameById(t.accountId);
+   const linked=String(t.savingsAccountId||'')===id?(a.name||id):(t.savingsAccountId||'—');
+   const goal=t.goalId||'—';
+   const mode=t.interestMode||'—';
+   return `<div style="padding:9px 0;border-bottom:1px dashed var(--border);font-size:13px;line-height:1.5">
+    <div style="display:flex;justify-content:space-between;gap:10px"><span>${esc(dateOnly(t.date))} · ${esc(typ)}</span><b>${money(t.amount)}</b></div>
+    <div class="mrc1-note" style="margin-top:3px">${esc(z.recv)}: <b>${esc(recv)}</b> · ID: ${esc(t.accountId||'—')}</div>
+    <div class="mrc1-note" style="margin-top:2px">${esc(z.saving)}: <b>${esc(linked)}</b> · ID: ${esc(t.savingsAccountId||'—')}</div>
+    <div class="mrc1-note" style="margin-top:2px">${esc(z.goal)}: ${esc(goal)} · ${esc(z.mode)}: ${esc(mode)}</div>
+    <div class="mrc1-note" style="margin-top:2px">${esc(z.name)}: ${esc(t.desc||t.catName||'—')}</div>
+   </div>`;
+ }).join('')+`</div>`;
+}
 function conditions(a,q){const r=a.earlyTerminationRule||'all_reduced';
  if(r==='staged'){
   const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];
@@ -18499,6 +18529,7 @@ window.openMongoSavingsCancelV1=function(id){
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900">${esc(q.title)} · ${esc(a.name||'')}</div><div class="mrc1-note">${esc(q.note)}</div>
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.preview)}</div><div class="mrc1-row"><span>${esc(q.account)}</span><b>${esc(a.name||'')}</b></div><div class="mrc1-row"><span>${esc(q.balance)}</span><b>${money(bal(a))}</b></div><div class="mrc1-row"><span>${esc(q.start)}</span><b>${esc(dateOnly(start))}</b></div><div class="mrc1-row"><span>${esc(q.rate)}</span><b>${n(a.annualInterestRate||a.interestRate)}%</b></div><div class="mrc1-row"><span>${esc(q.rule)}</span><b>${esc(ruleName(a.earlyTerminationRule,q))}</b></div><div class="mrc1-row"><span>${esc(q.fee)}</span><b>${money(a.earlyTerminationFee)}</b></div></div>
  ${reconcile(a,q)}
+ ${txnTrace(a,q)}
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.transfers)}</div>${trs.length?trs.map(x=>`<div class="mrc1-transfer"><span>${esc(dateOnly(x.date))}</span><b>${money(x.amount)}</b></div>`).join(''):`<div class="mrc1-note">${esc(q.none)}</div>`}</div>
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.conditions)}</div>${conditions(a,q)}</div>
  <div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="btn btn-sm" id="mrc1-close">${esc(q.close)}</button></div></div>`;
