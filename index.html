@@ -18561,6 +18561,88 @@ window.openMongoSavingsCancelV1=function(id){
 };
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST — Real savings cancellation Stage 2: calculation preview + compact action row. -->
+<style id="mongo-real-cancel-stage2-style">
+/* Scoped only to the two savings actions shown inside an expanded savings account. */
+.money-account-card .mongo-cancel-btn,
+.money-account-card .mongo-savings-interest-income-v13,
+.money-account-card .mongo-savings-interest-income-v9{display:inline-block;width:calc(50% - 5px);vertical-align:top;margin-top:8px;box-sizing:border-box}
+.money-account-card .mongo-cancel-btn{margin-right:6px}
+.money-account-card .mongo-cancel-btn .btn,
+.money-account-card .mongo-savings-interest-income-v13 .btn,
+.money-account-card .mongo-savings-interest-income-v9 .btn{width:100%;min-height:48px;padding-left:10px;padding-right:10px;white-space:normal;line-height:1.2}
+#mongo-savings-cancel-stage1 .mrc2-date{width:100%;box-sizing:border-box}
+#mongo-savings-cancel-stage1 .mrc2-warn{padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.10);font-size:12px;line-height:1.45;margin-top:9px}
+#mongo-savings-cancel-stage1 .mrc2-ok{padding:10px 12px;border-radius:12px;background:rgba(73,176,182,.09);font-size:12px;line-height:1.45;margin-top:9px}
+</style>
+<script id="mongo-real-cancel-stage2-script">
+(function(){
+'use strict';
+const DAY=86400000;
+function N(v){const x=Number(v);return Number.isFinite(x)?x:0}
+function M(v){return typeof fmt==='function'?fmt(Math.round(N(v))):Math.round(N(v)).toLocaleString()+'₮'}
+function E(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function D(v){const x=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+x)?null:x}
+function DS(v){const d=D(v);return d?d.toISOString().slice(0,10):'—'}
+function days(a,b){return a&&b?Math.max(0,Math.floor((b-a)/DAY)):0}
+function rateInterest(p,r,d){return Math.max(0,N(p)*N(r)/100*N(d)/365)}
+function tierRate(a,d){const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];const hit=rows.find(x=>d>=N(x.fromDays??x.from??0)&&((x.toDays??x.to)==null||(x.toDays??x.to)===''||d<=N(x.toDays??x.to)));return N(hit?.rate)}
+function current(a){try{return N(accountBalance(a.id))}catch(_){return N(a.openingBalance)}}
+function start(a){return a.startDate||a.openingDate||a.createdDate||a.date||''}
+function interestHistory(a,end){const id=String(a.id);let compound=0,payout=0;(Array.isArray(txns)?txns:[]).forEach(t=>{const dt=D(t.date);if(!dt||dt>end||String(t.savingsAccountId||'')!==id||t.type!=='income')return;const amt=Math.max(0,N(t.amount));if(t.interestMode==='compound'&&String(t.accountId||'')===id)compound+=amt;else if(t.interestMode==='payout'&&String(t.accountId||'')!==id)payout+=amt});return {compound,payout,total:compound+payout}}
+function principalLots(a,end){const sd=D(start(a));const lots=[];if(sd&&sd<=end&&N(a.openingBalance)>0)lots.push({label:'Эхний үлдэгдэл',amount:N(a.openingBalance),date:sd});(Array.isArray(accountTransfers)?accountTransfers:[]).filter(t=>String(t.toId)===String(a.id)&&N(t.amount)>0&&D(t.date)&&D(t.date)<=end).sort((x,y)=>String(x.date).localeCompare(String(y.date))).forEach(t=>lots.push({label:'Нэмэлт шилжүүлэг',amount:N(t.amount),date:D(t.date)}));return lots}
+function calc(a,end){
+ const hist=interestHistory(a,end),classifiedPrincipal=Math.max(0,current(a)-hist.compound),lots=principalLots(a,end),lotPrincipal=lots.reduce((z,x)=>z+x.amount,0),principalDiff=classifiedPrincipal-lotPrincipal;
+ const sd=D(start(a)),totalDays=sd?days(sd,end):0,rule=a.earlyTerminationRule||'all_reduced';
+ let allowed=0,ready=true,reason='',details=[];
+ if(rule==='bank_actual'){
+   const actual=Math.max(0,N(a.earlyTerminationBankActualInterest));
+   if(a.earlyTerminationUseBankActual&&actual>0)allowed=actual; else {ready=false;reason='“Банкны бодит дүн ашиглах” сонгосон боловч банкны бодит нийт хүү оруулаагүй байна.'}
+ } else {
+   let fixed=N(a.earlyTerminationRate);
+   if(rule==='threshold'){
+     const threshold=N(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);
+     fixed=totalDays>=threshold?N(a.earlyTerminationThresholdAfterRate||a.earlyTerminationAfterRate):N(a.earlyTerminationThresholdBeforeRate||a.earlyTerminationBeforeRate);
+   }
+   lots.forEach(x=>{const held=days(x.date,end),r=rule==='staged'?tierRate(a,held):fixed,interest=rateInterest(x.amount,r,held);allowed+=interest;details.push({...x,held,rate:r,interest})});
+ }
+ const fee=Math.max(0,N(a.earlyTerminationFee));
+ /* Allowed interest is the total interest the contract/bank permits after cancellation.
+    Compound and payout interest are prior interest history. The cancellation receipt therefore
+    starts from principal, replaces prior interest with allowed total interest, and subtracts
+    externally paid interest plus the fee. */
+ const receive=ready?Math.max(0,classifiedPrincipal+allowed-hist.payout-fee):null;
+ const interestAdjustment=ready?allowed-hist.total:null;
+ return {hist,classifiedPrincipal,lots,lotPrincipal,principalDiff,rule,allowed,ready,reason,details,fee,receive,interestAdjustment};
+}
+function render(a,end){const c=calc(a,end);const mismatch=Math.abs(c.principalDiff)>1;return `<div class="mrc1-card"><div class="mrc1-title">Бодит цуцлалтын урьдчилсан тооцоо</div>
+ <div class="mrc1-row"><span>Цуцлах огноо</span><b>${E(DS(end))}</b></div>
+ <div class="mrc1-row"><span>Хүү бодох үндсэн мөнгө</span><b>${M(c.classifiedPrincipal)}</b></div>
+ <div class="mrc1-row"><span>Өмнө олгосон / нэмэгдсэн хүү</span><b>${M(c.hist.total)}</b></div>
+ ${c.ready?`<div class="mrc1-row"><span>Цуцлалтаар зөвшөөрөгдөх нийт хүү</span><b>${M(c.allowed)}</b></div>
+ <div class="mrc1-row"><span>Хүүгийн тохируулга</span><b>${c.interestAdjustment>=0?'+ ': '− '}${M(Math.abs(c.interestAdjustment))}</b></div>
+ <div class="mrc1-row"><span>Цуцлалтын шимтгэл</span><b>− ${M(c.fee)}</b></div>
+ <div class="mrc1-row"><span>Хүлээн авах урьдчилсан дүн</span><b>${M(c.receive)}</b></div>`:`<div class="mrc2-warn">${E(c.reason)} Иймээс эцсийн хүлээн авах дүнг одоогоор таамаглахгүй.</div>`}
+ ${c.details.length?`<div class="mrc1-note">${c.details.map(x=>`${E(x.label)}: ${M(x.amount)} · ${x.held} хоног · ${N(x.rate)}% → ${M(x.interest)}`).join('<br>')}</div>`:''}
+ ${mismatch?`<div class="mrc2-warn">Үндсэн мөнгөний түүх ${M(c.lotPrincipal)}, ангилсан үндсэн мөнгө ${M(c.classifiedPrincipal)} байна. ${c.principalDiff>0?M(c.principalDiff)+' дутуу тайлбарлагдсан байна.':M(Math.abs(c.principalDiff))+' илүү тайлбарлагдсан байна.'} Бодит цуцлалтыг батлахаас өмнө энэ зөрүүг шалгана.</div>`:`<div class="mrc2-ok">Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд ангилсан үндсэн мөнгөтэй таарч байна.</div>`}
+ </div>`}
+function enhance(){
+ const modal=document.getElementById('mongo-savings-cancel-stage1');if(!modal)return;
+ const title=modal.querySelector('.loan-modal > div');const name=title?.textContent?.split('·').slice(1).join('·').trim();
+ const a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>x&&x.name===name&&((typeof normalizeAccountType==='function'?normalizeAccountType(x.type):x.type)==='savings'));
+ if(!a||modal.querySelector('#mrc2-date'))return;
+ const firstCard=modal.querySelector('.mrc1-card');if(!firstCard)return;
+ const wrap=document.createElement('div');wrap.className='mrc1-card';wrap.innerHTML=`<div class="mrc1-title">Цуцлах огноо</div><input id="mrc2-date" class="fi mrc2-date" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="mrc2-result"></div>`;
+ firstCard.insertAdjacentElement('afterend',wrap);
+ const input=wrap.querySelector('#mrc2-date'),box=wrap.querySelector('#mrc2-result');
+ const go=()=>{const end=D(input.value);box.innerHTML=end?render(a,end):''};input.addEventListener('change',go);go();
+}
+const oldOpen=window.openMongoSavingsCancelV1;
+if(typeof oldOpen==='function'&&!oldOpen.__mrc2){window.openMongoSavingsCancelV1=function(){const r=oldOpen.apply(this,arguments);setTimeout(enhance,0);return r};window.openMongoSavingsCancelV1.__mrc2=true}
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
