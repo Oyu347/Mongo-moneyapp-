@@ -18190,6 +18190,65 @@ saveMoneyAccountEdit=async function(){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V14 — Savings interest has its own income category and account-ID linked auto plan. -->
+<script id="mongo-savings-interest-budget-v14">
+(function(){
+'use strict';
+const CAT_KEY='savings_interest_income_cat';
+const CAT_NAMES={mn:'Хүүгийн орлого',en:'Interest income',zh:'利息收入',ja:'利息収入',ko:'이자 수입',ru:'Процентный доход',de:'Zinseinnahmen'};
+function names14(v){return {mn:v,en:v,zh:v,ja:v,ko:v,ru:v,de:v}}
+function key14(id){return 'savings_interest_'+String(id||'').replace(/[^a-zA-Z0-9_-]/g,'_')}
+function ensure14(account){
+  if(!account)return null;
+  let cat=(bCatsInc||[]).find(c=>c.key===CAT_KEY);
+  if(!cat){cat={key:CAT_KEY,names:{...CAT_NAMES},icon:'🏦',color:'#1D9E75',subs:[]};bCatsInc.push(cat)}
+  cat.names={...CAT_NAMES}; if(!Array.isArray(cat.subs))cat.subs=[];
+  if(!(incCats||[]).find(c=>c.key===CAT_KEY))incCats.push({key:CAT_KEY,names:{...CAT_NAMES},icon:'🏦',color:'#1D9E75'});
+  const sk=key14(account.id); let sub=cat.subs.find(x=>x.key===sk);
+  if(!sub){sub={key:sk,names:names14(account.name||''),color:'#1D9E75',savingsAccountId:String(account.id)};cat.subs.push(sub)}
+  sub.names=names14(account.name||''); sub.savingsAccountId=String(account.id);
+  return {cat,sub};
+}
+window.ensureSavingsInterestBudgetSourceV14=ensure14;
+function ym14(d){const x=new Date(String(d||'')+'T12:00:00');return Number.isNaN(x.getTime())?null:{y:x.getFullYear(),m:x.getMonth()+1}}
+function monthDiff14(a,b){return (b.y-a.y)*12+(b.m-a.m)}
+function due14(a,y,m){
+  if(!a||a.active===false||a.interestMode==='none'||!(Number(a.annualInterestRate)>0))return false;
+  const start=ym14(a.startDate); if(!start)return false; const cur={y:Number(y),m:Number(m)},diff=monthDiff14(start,cur); if(diff<0)return false;
+  const mat=ym14(a.maturityDate); if(mat&&(cur.y>mat.y||(cur.y===mat.y&&cur.m>mat.m)))return false;
+  const f=a.interestFrequency||'monthly';
+  if(f==='monthly')return true; if(f==='quarterly')return (diff+1)%3===0; if(f==='yearly')return (diff+1)%12===0;
+  if(f==='maturity'||a.interestMode==='maturity')return !!mat&&mat.y===cur.y&&mat.m===cur.m; return false;
+}
+function estimate14(a,y,m){
+  if(!due14(a,y,m))return 0; const bal=Math.max(0,Number(typeof accountBalance==='function'?accountBalance(a.id):a.openingBalance)||0),rate=Math.max(0,Number(a.annualInterestRate)||0)/100,f=a.interestFrequency||'monthly';
+  if(f==='quarterly')return Math.round(bal*rate/4); if(f==='yearly')return Math.round(bal*rate);
+  if(f==='maturity'||a.interestMode==='maturity'){const st=new Date(String(a.startDate||'')+'T12:00:00'),ed=new Date(String(a.maturityDate||'')+'T12:00:00');const days=Math.max(0,Math.round((ed-st)/86400000));return Math.round(bal*rate*days/365)}
+  return Math.round(bal*rate/12);
+}
+function syncOne14(a,y,m){
+  const src=ensure14(a); if(!src)return; const bk=bSubKey(src.cat,src.sub),ymk=budgetYMKeyForYear(bk,m,y),next=estimate14(a,y,m);
+  a.savingsInterestAutoPlan=a.savingsInterestAutoPlan&&typeof a.savingsInterestAutoPlan==='object'?a.savingsInterestAutoPlan:{}; const mk=`${y}-${String(m).padStart(2,'0')}`,prev=Number(a.savingsInterestAutoPlan[mk]); const current=Number(budgets[ymk]||0);
+  /* Never overwrite a user's manual edit. Only replace an empty value or our own previous auto value. */
+  if(current===0||current===prev){budgets[ymk]=next;a.savingsInterestAutoPlan[mk]=next}
+}
+function syncAll14(){
+  const now=new Date(), y0=now.getFullYear(), m0=now.getMonth()+1;
+  (moneyAccounts||[]).filter(a=>(typeof normalizeAccountType==='function'?normalizeAccountType(a.type):a.type)==='savings').forEach(a=>{ensure14(a); for(let i=0;i<18;i++){const d=new Date(y0,m0-1+i,1);syncOne14(a,d.getFullYear(),d.getMonth()+1)}});
+}
+function migrate14(){
+  let changed=false;
+  (txns||[]).forEach(t=>{if(!t?.savingsInterest&&t?.incomePurpose!=='savings_interest')return;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));if(!a)return;const src=ensure14(a);if(t.catKey!==src.cat.key||t.subcatName!==src.sub.key){t.catKey=src.cat.key;t.catName=(typeof cN==='function'?cN(src.cat):CAT_NAMES.mn);t.subcatName=src.sub.key;t.subcatKey=src.sub.key;changed=true}});
+  syncAll14(); return changed;
+}
+window.mongoSyncSavingsInterestPlansV14=syncAll14;
+const oldLoad14=typeof loadData==='function'?loadData:null; if(oldLoad14)loadData=async function(){const r=await oldLoad14.apply(this,arguments);try{if(migrate14())await saveData()}catch(e){console.warn('V14 savings interest migration',e)}return r};
+const oldRB14=typeof rBList==='function'?rBList:null; if(oldRB14)rBList=function(){try{syncAll14()}catch(e){}return oldRB14.apply(this,arguments)};
+try{migrate14()}catch(e){console.warn('V14 init',e)}
+})();
+</script>
+
 <style id="mongo-savings-external-interest-v9-style">
 /* Scoped only to the savings-account inline action added by V9. */
 .mongo-savings-interest-income-v9{margin-top:8px}
@@ -18248,16 +18307,14 @@ window.saveMongoSavingsExternalInterestV9=function(id){
   const date=document.getElementById('mongo-si-v9-date')?.value;
   if(!(amount>0)||!date||!accountId)return;
 
-  const y=typeof ensureYieldBudgetSource==='function'
-    ?ensureYieldBudgetSource(a.name,'#1D9E75')
-    :null;
+  const y=typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
   const goalId=window.MongoSavings?.linkedGoalId ? window.MongoSavings.linkedGoalId(a) : (a.linkedGoalId||null);
   const made=window.MongoSavings?.makeInterestTransaction
     ?window.MongoSavings.makeInterestTransaction({
        id:crypto.randomUUID?crypto.randomUUID():'si_'+Date.now(),
        desc:`${a.name} · Хүүгийн орлого`,
-       catKey:y?.cat?.key||'asset_income_cat',
-       catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого'):'Хөрөнгийн орлого',
+       catKey:y?.cat?.key||'savings_interest_income_cat',
+       catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хүүгийн орлого'):'Хүүгийн орлого',
        subcatName:y?.sub?.key||a.name,
        amount,date,accountId,
        savingsAccountId:a.id,
@@ -18267,6 +18324,7 @@ window.saveMongoSavingsExternalInterestV9=function(id){
     :null;
   if(!made?.ok)return;
   txns.unshift(made.transaction);
+  try{window.mongoSyncSavingsInterestPlansV14?.()}catch(_){}
   document.getElementById('mongo-savings-interest-income-v9')?.remove();
   saveData();rAll();renderMoneyAccounts();
 };
@@ -18330,18 +18388,19 @@ window.saveMongoSavingsDepositInterestV13=function(id){
   const amount=Math.round(typeof parseAmt==='function'?(parseAmt(document.getElementById('mongo-si-v13-amount')?.value)||0):(Number(document.getElementById('mongo-si-v13-amount')?.value)||0));
   const date=document.getElementById('mongo-si-v13-date')?.value;
   if(!(amount>0)||!date)return;
-  const y=typeof ensureYieldBudgetSource==='function'?ensureYieldBudgetSource(a.name,'#1D9E75'):null;
+  const y=typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
   const goalId=window.MongoSavings?.linkedGoalId?window.MongoSavings.linkedGoalId(a):(a.linkedGoalId||null);
   const made=window.MongoSavings?.makeInterestTransaction?window.MongoSavings.makeInterestTransaction({
     id:crypto.randomUUID?crypto.randomUUID():'sid_'+Date.now(),
     desc:`${a.name} · Хүүгийн орлого`,
-    catKey:y?.cat?.key||'asset_income_cat',
-    catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого'):'Хөрөнгийн орлого',
+    catKey:y?.cat?.key||'savings_interest_income_cat',
+    catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хүүгийн орлого'):'Хүүгийн орлого',
     subcatName:y?.sub?.key||a.name,
     amount,date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId
   }):null;
   if(!made?.ok)return;
   txns.unshift(made.transaction);
+  try{window.mongoSyncSavingsInterestPlansV14?.()}catch(_){}
   document.getElementById('mongo-savings-interest-income-v13')?.remove();
   saveData();rAll();renderMoneyAccounts();
 };
