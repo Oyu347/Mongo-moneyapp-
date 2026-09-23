@@ -18415,6 +18415,77 @@ accountInlineDetail=function(a){
 };
 })();
 </script>
+
+<!-- Möngö V15: reactivate an archived savings goal when an existing goal is re-selected. -->
+<script id="mongo-savings-goal-reactivate-v15">
+(function(){
+'use strict';
+const same=(a,b)=>String(a??'')===String(b??'');
+
+function ensureSavingsBudgetRow(g){
+  if(!g||!Array.isArray(window.bCatsExp))return;
+  const parent=window.bCatsExp.find(c=>c?.key==='savings_cat');
+  if(!parent)return;
+  parent.subs=Array.isArray(parent.subs)?parent.subs:[];
+  const key='goal_'+String(g.id);
+  if(parent.subs.some(s=>same(s?.key,key)))return;
+  const name=String(g.name||'').trim();
+  parent.subs.push({
+    key,
+    names:{mn:name,en:name,zh:name,ja:name,ko:name,ru:name,de:name},
+    color:g.color||'#49B0B6'
+  });
+}
+
+function reactivateSelectedGoal(){
+  const modal=document.getElementById('account-edit-modal');
+  const sel=document.getElementById('edit-linked-goal');
+  if(!modal||!sel)return;
+  const id=sel.value;
+  if(!id||id==='__new__')return;
+
+  const g=(window.goals||[]).find(x=>same(x?.id,id));
+  if(!g||!g.archivedAt)return;
+
+  const now=new Date();
+  const iso=now.toISOString();
+  const day=iso.slice(0,10);
+  const previousReason=g.archiveReason||null;
+
+  // Reactivation changes lifecycle state only. Keep the same goal ID,
+  // target, deadline, saved/history and all historical transfers.
+  g.archivedAt=null;
+  if('completedAt' in g && previousReason==='goal_switched') g.completedAt=null;
+  g.archiveReason=null;
+  g.lifecycleHistory=Array.isArray(g.lifecycleHistory)?g.lifecycleHistory:[];
+  g.lifecycleHistory.push({
+    type:'reactivated',
+    fromArchiveReason:previousReason,
+    date:day,
+    createdAt:iso
+  });
+
+  // The old zero-evidence cleanup may have removed this goal's automatic
+  // Savings budget row. Restore the same ID-based row, never a name duplicate.
+  ensureSavingsBudgetRow(g);
+}
+
+// Capture phase runs before the existing V43.59 Save onclick.
+// This lets the existing relink logic archive the old goal and link the
+// account to the reactivated goal without replacing that tested flow.
+document.addEventListener('click',function(e){
+  const btn=e.target?.closest?.('#account-edit-save');
+  if(!btn)return;
+  reactivateSelectedGoal();
+},true);
+
+window.MongoSavingsGoalReactivateV15={
+  reactivateSelectedGoal,
+  ensureSavingsBudgetRow
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
