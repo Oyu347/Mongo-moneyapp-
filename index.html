@@ -18284,6 +18284,78 @@ accountInlineDetail=function(a){
 
 \n<script id="mongo-interest-receiver-persist-v11">\n(function(){\n'use strict';\n/* Persist the Rule-4 external-interest receiver AFTER the legacy edit saver finishes.\n   The earlier V7 hook wrote to the live account before saveMoneyAccountEdit(); the legacy\n   saver can replace/rebuild that account object, which dropped the two receiver fields. */\nconst base=saveMoneyAccountEdit;\nsaveMoneyAccountEdit=async function(){\n  const id=String(editingMoneyAccountId||'');\n  const method=(typeof findMethod7==='function'?findMethod7():null) || (function(){\n    const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;\n    return [...root.querySelectorAll('select')].find(sel=>[...sel.options].some(o=>o.value==='external'))||null;\n  })();\n  const sel=document.getElementById('edit-interest-receive-account-v7');\n  const external=method?.value==='external';\n  const receiver=external?String(sel?.value||''):'';\n  if(external&&!receiver){alert('Хүү хүлээн авах дансаа сонгоно уу.');return;}\n  const result=await base();\n  if(!id)return result;\n  const a=(moneyAccounts||[]).find(x=>String(x.id)===id);\n  if(a && (typeof normalizeAccountType!=='function'||normalizeAccountType(a.type)==='savings')){\n    a.interestReceiveAccountId=receiver;\n    a.interestPayoutAccountId=receiver;\n    if(typeof saveData==='function')await saveData();\n  }\n  return result;\n};\n})();\n</script>\n
 <!-- Möngö PHONE TEST V12 — receiver persistence moved into canonical Rule4 read/applyMeta save path; failed V11 post-save wrapper removed. -->
+
+
+<!-- Möngö PHONE TEST V13 — savings interest credited back to the same savings account. -->
+<style id="mongo-savings-deposit-interest-v13-style">
+.mongo-savings-interest-income-v13{margin-top:8px}
+#mongo-savings-interest-income-v13 .loan-modal{max-height:88vh;overflow:auto}
+</style>
+<script id="mongo-savings-deposit-interest-v13">
+(function(){
+'use strict';
+function ty13(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function esc13(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function isDeposit13(a){
+  return !!a && ty13(a)==='savings' &&
+    (a.earlyTerminationInterestMethod==='deposit' || a.interestMode==='compound');
+}
+function open13(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!isDeposit13(a))return;
+  document.getElementById('mongo-savings-interest-income-v13')?.remove();
+  const m=document.createElement('div');
+  m.id='mongo-savings-interest-income-v13';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal">
+    <div style="font-size:19px;font-weight:900;margin-bottom:12px">Хүүгийн орлого · ${esc13(a.name||'')}</div>
+    <div class="flow-only-note">Энэ хүү ${esc13(a.name||'хадгаламж')} дансанд өөрт нь нэмэгдэж, хүүгийн орлогоор бүртгэгдэнэ.</div>
+    <label>Хүүгийн дүн</label>
+    <input class="fi" id="mongo-si-v13-amount" inputmode="decimal">
+    <label>Хүү орсон огноо</label>
+    <input class="fi" id="mongo-si-v13-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+    <label>Хүлээн авах данс</label>
+    <input class="fi" value="${esc13(a.name||'')}" disabled>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px">
+      <button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">Болих</button>
+      <button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc13(a.id)}')">Хадгалах</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('mongo-si-v13-amount'));
+}
+window.openMongoSavingsDepositInterestV13=open13;
+window.saveMongoSavingsDepositInterestV13=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!isDeposit13(a))return;
+  const amount=Math.round(typeof parseAmt==='function'?(parseAmt(document.getElementById('mongo-si-v13-amount')?.value)||0):(Number(document.getElementById('mongo-si-v13-amount')?.value)||0));
+  const date=document.getElementById('mongo-si-v13-date')?.value;
+  if(!(amount>0)||!date)return;
+  const y=typeof ensureYieldBudgetSource==='function'?ensureYieldBudgetSource(a.name,'#1D9E75'):null;
+  const goalId=window.MongoSavings?.linkedGoalId?window.MongoSavings.linkedGoalId(a):(a.linkedGoalId||null);
+  const made=window.MongoSavings?.makeInterestTransaction?window.MongoSavings.makeInterestTransaction({
+    id:crypto.randomUUID?crypto.randomUUID():'sid_'+Date.now(),
+    desc:`${a.name} · Хүүгийн орлого`,
+    catKey:y?.cat?.key||'asset_income_cat',
+    catName:y?.cat?(typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого'):'Хөрөнгийн орлого',
+    subcatName:y?.sub?.key||a.name,
+    amount,date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId
+  }):null;
+  if(!made?.ok)return;
+  txns.unshift(made.transaction);
+  document.getElementById('mongo-savings-interest-income-v13')?.remove();
+  saveData();rAll();renderMoneyAccounts();
+};
+const inline13=accountInlineDetail;
+accountInlineDetail=function(a){
+  let html=inline13(a);
+  if(String(expandedMoneyAccountId)!==String(a.id)||!isDeposit13(a))return html;
+  /* V13 only restores the action for interest credited to the savings itself.
+     External payout remains owned by the tested V9/V12 flow. */
+  if(html.includes('openMongoSavingsDepositInterestV13'))return html;
+  return html+`<div class="mongo-savings-interest-income-v13"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsDepositInterestV13('${esc13(a.id)}')">＋ Хүүгийн орлого</button></div>`;
+};
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
