@@ -8183,7 +8183,7 @@ function openDebtPayModal(id){
     <label>${t.payAccount}</label><select class="fi" id="lp-account">${active.map(a=>`<option value="${a.id}">${accountIcon(a)} ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('')}</select>
     <div class="loan-modal-grid">
       <div><label>${t.totalPayment}</label><input class="fi" id="lp-total" inputmode="decimal" value="${Math.round(est.total).toLocaleString('en-US')}"></div>
-      <div><label>${t.date}</label><input type="date" class="fi" id="lp-date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div><label>${t.date}</label><input type="date" class="fi" id="lp-date" value="${ymd(new Date())}"></div>
       <div><label>${t.principal}</label><input class="fi" id="lp-principal" inputmode="decimal" value="${Math.round(est.principal).toLocaleString('en-US')}"></div>
       <div><label>${t.interestPayment}</label><input class="fi" id="lp-interest" inputmode="decimal" value="${Math.round(est.interest).toLocaleString('en-US')}"></div>
       <div><label>${t.extraPrincipal}</label><input class="fi" id="lp-extra" inputmode="decimal" value="0"></div>
@@ -18577,72 +18577,7 @@ window.openMongoSavingsCancelV1=function(id){
 #mongo-savings-cancel-stage1 .mrc2-warn{padding:10px 12px;border-radius:12px;background:rgba(245,158,11,.10);font-size:12px;line-height:1.45;margin-top:9px}
 #mongo-savings-cancel-stage1 .mrc2-ok{padding:10px 12px;border-radius:12px;background:rgba(73,176,182,.09);font-size:12px;line-height:1.45;margin-top:9px}
 </style>
-<script id="mongo-real-cancel-stage2-script">
-(function(){
-'use strict';
-const DAY=86400000;
-function N(v){const x=Number(v);return Number.isFinite(x)?x:0}
-function M(v){return typeof fmt==='function'?fmt(Math.round(N(v))):Math.round(N(v)).toLocaleString()+'₮'}
-function E(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function D(v){const x=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+x)?null:x}
-function DS(v){const d=D(v);return d?d.toISOString().slice(0,10):'—'}
-function days(a,b){return a&&b?Math.max(0,Math.floor((b-a)/DAY)):0}
-function rateInterest(p,r,d){return Math.max(0,N(p)*N(r)/100*N(d)/365)}
-function tierRate(a,d){const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];const hit=rows.find(x=>d>=N(x.fromDays??x.from??0)&&((x.toDays??x.to)==null||(x.toDays??x.to)===''||d<=N(x.toDays??x.to)));return N(hit?.rate)}
-function current(a){try{return N(accountBalance(a.id))}catch(_){return N(a.openingBalance)}}
-function start(a){return a.startDate||a.openingDate||a.createdDate||a.date||''}
-function interestHistory(a,end){const id=String(a.id);let compound=0,payout=0;(Array.isArray(txns)?txns:[]).forEach(t=>{const dt=D(t.date);if(!dt||dt>end||String(t.savingsAccountId||'')!==id||t.type!=='income')return;const amt=Math.max(0,N(t.amount));if(t.interestMode==='compound'&&String(t.accountId||'')===id)compound+=amt;else if(t.interestMode==='payout'&&String(t.accountId||'')!==id)payout+=amt});return {compound,payout,total:compound+payout}}
-function principalLots(a,end){const sd=D(start(a));const lots=[];if(sd&&sd<=end&&N(a.openingBalance)>0)lots.push({label:'Эхний үлдэгдэл',amount:N(a.openingBalance),date:sd});(Array.isArray(accountTransfers)?accountTransfers:[]).filter(t=>String(t.toId)===String(a.id)&&N(t.amount)>0&&D(t.date)&&D(t.date)<=end).sort((x,y)=>String(x.date).localeCompare(String(y.date))).forEach(t=>lots.push({label:'Нэмэлт шилжүүлэг',amount:N(t.amount),date:D(t.date)}));return lots}
-function calc(a,end){
- const hist=interestHistory(a,end),classifiedPrincipal=Math.max(0,current(a)-hist.compound),lots=principalLots(a,end),lotPrincipal=lots.reduce((z,x)=>z+x.amount,0),principalDiff=classifiedPrincipal-lotPrincipal;
- const sd=D(start(a)),totalDays=sd?days(sd,end):0,rule=a.earlyTerminationRule||'all_reduced';
- let allowed=0,ready=true,reason='',details=[];
- if(rule==='bank_actual'){
-   const actual=Math.max(0,N(a.earlyTerminationBankActualInterest));
-   if(a.earlyTerminationUseBankActual&&actual>0)allowed=actual; else {ready=false;reason='“Банкны бодит дүн ашиглах” сонгосон боловч банкны бодит нийт хүү оруулаагүй байна.'}
- } else {
-   let fixed=N(a.earlyTerminationRate);
-   if(rule==='threshold'){
-     const threshold=N(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);
-     fixed=totalDays>=threshold?N(a.earlyTerminationThresholdAfterRate||a.earlyTerminationAfterRate):N(a.earlyTerminationThresholdBeforeRate||a.earlyTerminationBeforeRate);
-   }
-   lots.forEach(x=>{const held=days(x.date,end),r=rule==='staged'?tierRate(a,held):fixed,interest=rateInterest(x.amount,r,held);allowed+=interest;details.push({...x,held,rate:r,interest})});
- }
- const fee=Math.max(0,N(a.earlyTerminationFee));
- /* Allowed interest is the total interest the contract/bank permits after cancellation.
-    Compound and payout interest are prior interest history. The cancellation receipt therefore
-    starts from principal, replaces prior interest with allowed total interest, and subtracts
-    externally paid interest plus the fee. */
- const receive=ready?Math.max(0,classifiedPrincipal+allowed-hist.payout-fee):null;
- const interestAdjustment=ready?allowed-hist.total:null;
- return {hist,classifiedPrincipal,lots,lotPrincipal,principalDiff,rule,allowed,ready,reason,details,fee,receive,interestAdjustment};
-}
-function render(a,end){const c=calc(a,end);const mismatch=Math.abs(c.principalDiff)>1;return `<div class="mrc1-card"><div class="mrc1-title">Бодит цуцлалтын урьдчилсан тооцоо</div>
- <div class="mrc1-row"><span>Цуцлах огноо</span><b>${E(DS(end))}</b></div>
- <div class="mrc1-row"><span>Хүү бодох үндсэн мөнгө</span><b>${M(c.classifiedPrincipal)}</b></div>
- <div class="mrc1-row"><span>Өмнө олгосон / нэмэгдсэн хүү</span><b>${M(c.hist.total)}</b></div>
- ${c.ready?`<div class="mrc1-row"><span>Цуцлалтаар зөвшөөрөгдөх нийт хүү</span><b>${M(c.allowed)}</b></div>
- <div class="mrc1-row"><span>Хүүгийн тохируулга</span><b>${c.interestAdjustment>=0?'+ ': '− '}${M(Math.abs(c.interestAdjustment))}</b></div>
- <div class="mrc1-row"><span>Цуцлалтын шимтгэл</span><b>− ${M(c.fee)}</b></div>
- <div class="mrc1-row"><span>Хүлээн авах урьдчилсан дүн</span><b>${M(c.receive)}</b></div>`:`<div class="mrc2-warn">${E(c.reason)} Иймээс эцсийн хүлээн авах дүнг одоогоор таамаглахгүй.</div>`}
- ${c.details.length?`<div class="mrc1-note">${c.details.map(x=>`${E(x.label)}: ${M(x.amount)} · ${x.held} хоног · ${N(x.rate)}% → ${M(x.interest)}`).join('<br>')}</div>`:''}
- ${mismatch?`<div class="mrc2-warn">Үндсэн мөнгөний түүх ${M(c.lotPrincipal)}, ангилсан үндсэн мөнгө ${M(c.classifiedPrincipal)} байна. ${c.principalDiff>0?M(c.principalDiff)+' дутуу тайлбарлагдсан байна.':M(Math.abs(c.principalDiff))+' илүү тайлбарлагдсан байна.'} Бодит цуцлалтыг батлахаас өмнө энэ зөрүүг шалгана.</div>`:`<div class="mrc2-ok">Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд ангилсан үндсэн мөнгөтэй таарч байна.</div>`}
- </div>`}
-function enhance(){
- const modal=document.getElementById('mongo-savings-cancel-stage1');if(!modal)return;
- const title=modal.querySelector('.loan-modal > div');const name=title?.textContent?.split('·').slice(1).join('·').trim();
- const a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>x&&x.name===name&&((typeof normalizeAccountType==='function'?normalizeAccountType(x.type):x.type)==='savings'));
- if(!a||modal.querySelector('#mrc2-date'))return;
- const firstCard=modal.querySelector('.mrc1-card');if(!firstCard)return;
- const wrap=document.createElement('div');wrap.className='mrc1-card';wrap.innerHTML=`<div class="mrc1-title">Цуцлах огноо</div><input id="mrc2-date" class="fi mrc2-date" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="mrc2-result"></div>`;
- firstCard.insertAdjacentElement('afterend',wrap);
- const input=wrap.querySelector('#mrc2-date'),box=wrap.querySelector('#mrc2-result');
- const go=()=>{const end=D(input.value);box.innerHTML=end?render(a,end):''};input.addEventListener('change',go);go();
-}
-const oldOpen=window.openMongoSavingsCancelV1;
-if(typeof oldOpen==='function'&&!oldOpen.__mrc2){window.openMongoSavingsCancelV1=function(){const r=oldOpen.apply(this,arguments);setTimeout(enhance,0);return r};window.openMongoSavingsCancelV1.__mrc2=true}
-})();
-</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -18708,6 +18643,7 @@ const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>typeof fmt==='function'?fmt(Math.round(num(v))):Math.round(num(v)).toLocaleString()+'₮';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
+const ymd=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';
 const days=(a,b)=>a&&b?Math.max(0,Math.floor((b-a)/DAY)):0;
 const start=a=>a.startDate||a.openingDate||a.createdDate||a.date||'';
 const bal=a=>{try{return num(accountBalance(a.id))}catch(_){return num(a.openingBalance)}};
@@ -18715,7 +18651,7 @@ function history(a,end){let compound=0,payout=0;for(const t of (Array.isArray(tx
 function lots(a,end){const out=[],sd=date(start(a));if(sd&&sd<=end&&num(a.openingBalance)>0)out.push({label:'Эхний үлдэгдэл',amount:num(a.openingBalance),date:sd});for(const t of (Array.isArray(accountTransfers)?accountTransfers:[]).filter(t=>String(t.toId)===String(a.id)&&num(t.amount)>0&&date(t.date)&&date(t.date)<=end).sort((x,y)=>String(x.date).localeCompare(String(y.date))))out.push({label:'Нэмэлт шилжүүлэг',amount:num(t.amount),date:date(t.date)});return out}
 function tierRate(a,d){const rows=Array.isArray(a.earlyTerminationStages)?a.earlyTerminationStages:[];const hit=rows.find(x=>d>=num(x.fromDays??x.from??0)&&((x.toDays??x.to)==null||(x.toDays??x.to)===''||d<=num(x.toDays??x.to)));return num(hit?.rate)}
 function calculate(a,end){const h=history(a,end),principal=Math.max(0,bal(a)-h.compound),ls=lots(a,end),lotTotal=ls.reduce((s,x)=>s+x.amount,0),diff=principal-lotTotal,rule=a.earlyTerminationRule||'all_reduced';let allowed=0,ready=true,reason='',detail=[];if(rule==='bank_actual'){const actual=Math.max(0,num(a.earlyTerminationBankActualInterest));if(a.earlyTerminationUseBankActual&&actual>0)allowed=actual;else{ready=false;reason='“Банкны бодит дүн ашиглах” сонгосон боловч банкны бодит нийт хүү оруулаагүй байна.'}}else{let fixed=num(a.earlyTerminationRate);if(rule==='threshold'){const totalDays=days(date(start(a)),end),th=num(a.earlyTerminationThresholdDays||a.earlyTerminationThreshold||180);fixed=totalDays>=th?num(a.earlyTerminationThresholdAfterRate||a.earlyTerminationAfterRate):num(a.earlyTerminationThresholdBeforeRate||a.earlyTerminationBeforeRate)}for(const x of ls){const held=days(x.date,end),r=rule==='staged'?tierRate(a,held):fixed,i=Math.max(0,x.amount*r/100*held/365);allowed+=i;detail.push({...x,held,rate:r,interest:i})}}const fee=Math.max(0,num(a.earlyTerminationFee)),adjust=ready?allowed-h.total:null,receive=ready?Math.max(0,principal+allowed-h.payout-fee):null;return{h,principal,lotTotal,diff,allowed,ready,reason,detail,fee,adjust,receive}}
-function result(a,end){const c=calculate(a,end),bad=Math.abs(c.diff)>1;return `<div class="mrc1-card"><div class="mrc1-title">Бодит цуцлалтын урьдчилсан тооцоо</div><div class="mrc1-row"><span>Цуцлах огноо</span><b>${esc(end.toISOString().slice(0,10))}</b></div><div class="mrc1-row"><span>Хүү бодох үндсэн мөнгө</span><b>${money(c.principal)}</b></div><div class="mrc1-row"><span>Өмнө олгосон / нэмэгдсэн хүү</span><b>${money(c.h.total)}</b></div>${c.ready?`<div class="mrc1-row"><span>Цуцлалтаар зөвшөөрөгдөх нийт хүү</span><b>${money(c.allowed)}</b></div><div class="mrc1-row"><span>Хүүгийн тохируулга</span><b>${c.adjust>=0?'+ ':'− '}${money(Math.abs(c.adjust))}</b></div><div class="mrc1-row"><span>Цуцлалтын шимтгэл</span><b>− ${money(c.fee)}</b></div><div class="mrc1-row"><span>Хүлээн авах урьдчилсан дүн</span><b>${money(c.receive)}</b></div>`:`<div class="mrc2-warn">${esc(c.reason)} Иймээс эцсийн хүлээн авах дүнг одоогоор таамаглахгүй.</div>`}${c.detail.length?`<div class="mrc1-note">${c.detail.map(x=>`${esc(x.label)}: ${money(x.amount)} · ${x.held} хоног · ${num(x.rate)}% → ${money(x.interest)}`).join('<br>')}</div>`:''}${bad?`<div class="mrc2-warn">Үндсэн мөнгөний түүх ${money(c.lotTotal)}, ангилсан үндсэн мөнгө ${money(c.principal)} байна. Зөрүү: ${money(Math.abs(c.diff))}. Бодит цуцлалтыг батлахаас өмнө шалгана.</div>`:`<div class="mrc2-ok">Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд ангилсан үндсэн мөнгөтэй таарч байна.</div>`}</div>`}
+function result(a,end){const c=calculate(a,end),bad=Math.abs(c.diff)>1;return `<div class="mrc1-card"><div class="mrc1-title">Бодит цуцлалтын урьдчилсан тооцоо</div><div class="mrc1-row"><span>Цуцлах огноо</span><b>${esc(ymd(end))}</b></div><div class="mrc1-row"><span>Хүү бодох үндсэн мөнгө</span><b>${money(c.principal)}</b></div><div class="mrc1-row"><span>Өмнө олгосон / нэмэгдсэн хүү</span><b>${money(c.h.total)}</b></div>${c.ready?`<div class="mrc1-row"><span>Цуцлалтаар зөвшөөрөгдөх нийт хүү</span><b>${money(c.allowed)}</b></div><div class="mrc1-row"><span>Хүүгийн тохируулга</span><b>${c.adjust>=0?'+ ':'− '}${money(Math.abs(c.adjust))}</b></div><div class="mrc1-row"><span>Цуцлалтын шимтгэл</span><b>− ${money(c.fee)}</b></div><div class="mrc1-row"><span>Хүлээн авах урьдчилсан дүн</span><b>${money(c.receive)}</b></div>`:`<div class="mrc2-warn">${esc(c.reason)} Иймээс эцсийн хүлээн авах дүнг одоогоор таамаглахгүй.</div>`}${c.detail.length?`<div class="mrc1-note">${c.detail.map(x=>`${esc(x.label)}: ${money(x.amount)} · ${x.held} хоног · ${num(x.rate)}% → ${money(x.interest)}`).join('<br>')}</div>`:''}${bad?`<div class="mrc2-warn">Үндсэн мөнгөний түүх ${money(c.lotTotal)}, ангилсан үндсэн мөнгө ${money(c.principal)} байна. Зөрүү: ${money(Math.abs(c.diff))}. Бодит цуцлалтыг батлахаас өмнө шалгана.</div>`:`<div class="mrc2-ok">Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд ангилсан үндсэн мөнгөтэй таарч байна.</div>`}</div>`}
 function mountCalc(id){const modal=document.getElementById('mongo-savings-cancel-stage1');if(!modal||modal.querySelector('#mrc2b-date'))return;const a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>String(x.id)===String(id));if(!a)return;const cards=modal.querySelectorAll('.mrc1-card');if(!cards.length)return;const box=document.createElement('div');box.className='mrc2b-date-card';box.innerHTML=`<div class="mrc1-title">Цуцлах огноо</div><input id="mrc2b-date" class="fi" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="mrc2b-result"></div>`;cards[0].insertAdjacentElement('afterend',box);const input=box.querySelector('#mrc2b-date'),out=box.querySelector('#mrc2b-result');const go=()=>{const d=date(input.value);out.innerHTML=d?result(a,d):''};input.addEventListener('change',go);go()}
 function compactRows(root=document){for(const cancel of root.querySelectorAll('.mongo-cancel-btn')){if(cancel.closest('.mongo-savings-action-row-v2b'))continue;let interest=null;let n=cancel.nextElementSibling;for(let i=0;n&&i<6;i++,n=n.nextElementSibling){if(n.classList?.contains('mongo-savings-interest-income-v13')||n.classList?.contains('mongo-savings-interest-income-v9')){interest=n;break}}if(!interest)continue;const row=document.createElement('div');row.className='mongo-savings-action-row-v2b';cancel.parentNode.insertBefore(row,cancel);row.append(cancel,interest)}}
 document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-btn button');if(!b)return;const raw=b.getAttribute('onclick')||'';const m=raw.match(/openMongoSavingsCancelV1\(['"]([^'"]+)/);if(m)setTimeout(()=>mountCalc(m[1]),30)},true);
