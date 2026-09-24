@@ -18580,24 +18580,34 @@ window.openMongoSavingsCancelV1=function(id){
 
 
 
-<!-- Möngö PHONE TEST Stage 4 — actual savings cancellation confirmation/settlement. -->
+<!-- Möngö PHONE TEST Stage 4 V20 — safe actual savings cancellation.
+     App-owned 7-language confirmation/success dialog, duplicate guard,
+     exact balance-out guard. Existing ledger/cloud/restore logic preserved. -->
 <style id="mongo-real-cancel-stage4-style">
 #mongo-savings-cancel-stage1 .mrc4-settle{border:1px solid rgba(73,176,182,.24);border-radius:15px;padding:12px;margin-top:12px;background:rgba(73,176,182,.045);box-sizing:border-box}
 #mongo-savings-cancel-stage1 .mrc4-settle .fi{width:100%;box-sizing:border-box}
 #mongo-savings-cancel-stage1 .mrc4-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 #mongo-savings-cancel-stage1 .mrc4-summary{font-size:13px;line-height:1.5;margin-top:10px;padding:10px;border-radius:12px;background:rgba(73,176,182,.08)}
+
+#mrc4-app-dialog{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(17,24,39,.52);box-sizing:border-box}
+#mrc4-app-dialog .mrc4-dialog-card{width:min(92vw,430px);max-height:82vh;overflow:auto;background:#fff;border-radius:24px;padding:20px;box-shadow:0 24px 70px rgba(17,24,39,.24);box-sizing:border-box;color:#374151}
+#mrc4-app-dialog .mrc4-dialog-title{font-size:19px;font-weight:900;line-height:1.3;margin-bottom:10px}
+#mrc4-app-dialog .mrc4-dialog-body{font-size:14px;line-height:1.55;white-space:pre-line}
+#mrc4-app-dialog .mrc4-dialog-summary{margin-top:12px;padding:12px;border-radius:15px;background:rgba(73,176,182,.09);line-height:1.6}
+#mrc4-app-dialog .mrc4-dialog-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+#mrc4-app-dialog .mrc4-dialog-actions .btn{min-height:46px}
 </style>
 <script id="mongo-real-cancel-stage4-script">
 (function(){
 'use strict';
 const L={
-mn:{title:'Бодит цуцлалтыг баталгаажуулах',dest:'Хүлээн авах данс',noDest:'Хүлээн авах данс алга',confirm:'Цуцлалтыг баталгаажуулах',need:'Бодит цуцлалтыг батлахын өмнө тооцоо бүрэн, үлдэгдлийн тулгалт зөрүүгүй байх шаардлагатай.',receive:'Хүлээн авах',adjust:'Хүүгийн тохируулга',fee:'Цуцлалтын шимтгэл',ask:n=>`${n} хадгаламжийг цуцлах уу?`,real:'Энэ үйлдэл данс, гүйлгээ, төсөвт бодит өөрчлөлт хийнэ.',saveErr:'Хадгалах үед алдаа гарлаа. Дахин шалгана уу.',ok:(n)=>`Хадгаламж амжилттай цуцлагдлаа. ${n} хүлээн авах данс руу шилжлээ.`,left:n=>`Цуцлалт хадгалагдсан боловч үлдэгдэл ${n} байна. Дахин шалгана уу.`,interest:'Цуцлалтын хүү',claw:'Хүүгийн буцаан тохируулга',cancel:'Хадгаламж цуцлалт',cancelFee:'Хадгаламж цуцлалтын шимтгэл',bankFee:'Банкны шимтгэл',other:'Бусад зарлага',interestIncome:'Хүүгийн орлого'},
-en:{title:'Confirm actual termination',dest:'Receiving account',noDest:'No receiving account available',confirm:'Confirm termination',need:'Before confirming the actual termination, the calculation must be complete and the balance reconciliation must have no difference.',receive:'Amount to receive',adjust:'Interest adjustment',fee:'Termination fee',ask:n=>`Terminate ${n}?`,real:'This action will make real changes to accounts, transactions, and budgets.',saveErr:'An error occurred while saving. Please check again.',ok:n=>`The deposit was terminated successfully. ${n} was transferred to the receiving account.`,left:n=>`The termination was saved, but a balance of ${n} remains. Please check again.`,interest:'Termination interest',claw:'Interest clawback adjustment',cancel:'Deposit termination',cancelFee:'Deposit termination fee',bankFee:'Bank fee',other:'Other expense',interestIncome:'Interest income'},
-zh:{title:'确认实际提前终止',dest:'收款账户',noDest:'没有可用的收款账户',confirm:'确认提前终止',need:'确认实际提前终止前，计算必须完整且余额核对无差额。',receive:'预计到账',adjust:'利息调整',fee:'提前终止手续费',ask:n=>`确定提前终止 ${n} 吗？`,real:'此操作将实际更改账户、交易和预算。',saveErr:'保存时发生错误，请重新检查。',ok:n=>`存款已成功提前终止，${n} 已转入收款账户。`,left:n=>`提前终止已保存，但仍有 ${n} 余额，请重新检查。`,interest:'提前终止利息',claw:'利息返还调整',cancel:'存款提前终止',cancelFee:'存款提前终止手续费',bankFee:'银行手续费',other:'其他支出',interestIncome:'利息收入'},
-ja:{title:'実際の解約を確認',dest:'受取口座',noDest:'受取口座がありません',confirm:'解約を確定',need:'実際の解約を確定する前に、計算が完了し残高照合の差額がないことが必要です。',receive:'受取額',adjust:'利息調整',fee:'解約手数料',ask:n=>`${n} を解約しますか？`,real:'この操作は口座、取引、予算に実際の変更を行います。',saveErr:'保存中にエラーが発生しました。もう一度確認してください。',ok:n=>`預金を正常に解約しました。${n} を受取口座へ振り替えました。`,left:n=>`解約は保存されましたが、残高 ${n} が残っています。再確認してください。`,interest:'解約利息',claw:'利息返還調整',cancel:'預金解約',cancelFee:'預金解約手数料',bankFee:'銀行手数料',other:'その他支出',interestIncome:'利息収入'},
-ko:{title:'실제 중도해지 확인',dest:'입금 받을 계좌',noDest:'입금 받을 계좌가 없습니다',confirm:'중도해지 확정',need:'실제 중도해지를 확정하기 전에 계산이 완료되고 잔액 대사가 일치해야 합니다.',receive:'받을 금액',adjust:'이자 조정',fee:'중도해지 수수료',ask:n=>`${n} 예금을 중도해지할까요?`,real:'이 작업은 계좌, 거래 및 예산에 실제 변경을 적용합니다.',saveErr:'저장 중 오류가 발생했습니다. 다시 확인해 주세요.',ok:n=>`예금이 성공적으로 중도해지되었습니다. ${n}이 입금 받을 계좌로 이체되었습니다.`,left:n=>`중도해지는 저장되었지만 ${n}의 잔액이 남아 있습니다. 다시 확인해 주세요.`,interest:'중도해지 이자',claw:'이자 반환 조정',cancel:'예금 중도해지',cancelFee:'예금 중도해지 수수료',bankFee:'은행 수수료',other:'기타 지출',interestIncome:'이자 수입'},
-ru:{title:'Подтвердить фактическое расторжение',dest:'Счёт получения',noDest:'Нет доступного счёта получения',confirm:'Подтвердить расторжение',need:'Перед фактическим расторжением расчёт должен быть завершён, а сверка остатка — без расхождений.',receive:'К получению',adjust:'Корректировка процентов',fee:'Комиссия за расторжение',ask:n=>`Расторгнуть вклад «${n}»?`,real:'Это действие внесёт реальные изменения в счета, операции и бюджет.',saveErr:'При сохранении произошла ошибка. Проверьте ещё раз.',ok:n=>`Вклад успешно расторгнут. ${n} переведено на счёт получения.`,left:n=>`Расторжение сохранено, но остался баланс ${n}. Проверьте ещё раз.`,interest:'Проценты при расторжении',claw:'Корректировка возврата процентов',cancel:'Расторжение вклада',cancelFee:'Комиссия за расторжение вклада',bankFee:'Банковская комиссия',other:'Прочие расходы',interestIncome:'Процентный доход'},
-de:{title:'Tatsächliche Kündigung bestätigen',dest:'Empfangskonto',noDest:'Kein Empfangskonto verfügbar',confirm:'Kündigung bestätigen',need:'Vor der tatsächlichen Kündigung muss die Berechnung vollständig sein und die Saldenabstimmung darf keine Differenz aufweisen.',receive:'Auszahlungsbetrag',adjust:'Zinsanpassung',fee:'Kündigungsgebühr',ask:n=>`${n} kündigen?`,real:'Diese Aktion ändert Konten, Transaktionen und Budgets tatsächlich.',saveErr:'Beim Speichern ist ein Fehler aufgetreten. Bitte erneut prüfen.',ok:n=>`Die Einlage wurde erfolgreich gekündigt. ${n} wurde auf das Empfangskonto übertragen.`,left:n=>`Die Kündigung wurde gespeichert, aber ein Restbetrag von ${n} verbleibt. Bitte erneut prüfen.`,interest:'Kündigungszins',claw:'Zinsrückbuchung',cancel:'Einlagenkündigung',cancelFee:'Kündigungsgebühr',bankFee:'Bankgebühr',other:'Sonstige Ausgabe',interestIncome:'Zinseinnahmen'}
+mn:{title:'Бодит цуцлалтыг баталгаажуулах',dest:'Хүлээн авах данс',noDest:'Хүлээн авах данс алга',confirm:'Цуцлалтыг баталгаажуулах',need:'Бодит цуцлалтыг батлахын өмнө тооцоо бүрэн, үлдэгдлийн тулгалт зөрүүгүй байх шаардлагатай.',receive:'Хүлээн авах',adjust:'Хүүгийн тохируулга',fee:'Цуцлалтын шимтгэл',ask:n=>`${n} хадгаламжийг цуцлах уу?`,real:'Энэ үйлдэл данс, гүйлгээ, төсөвт бодит өөрчлөлт хийнэ.',saveErr:'Хадгалах үед алдаа гарлаа. Дахин шалгана уу.',ok:(n)=>`Хадгаламж амжилттай цуцлагдлаа. ${n} хүлээн авах данс руу шилжлээ.`,left:n=>`Цуцлалт хадгалагдсан боловч үлдэгдэл ${n} байна. Дахин шалгана уу.`,interest:'Цуцлалтын хүү',claw:'Хүүгийн буцаан тохируулга',cancel:'Хадгаламж цуцлалт',cancelFee:'Хадгаламж цуцлалтын шимтгэл',bankFee:'Банкны шимтгэл',other:'Бусад зарлага',interestIncome:'Хүүгийн орлого',back:'Буцах',done:'Ойлголоо',already:'Энэ хадгаламж аль хэдийн цуцлагдсан байна.'},
+en:{title:'Confirm actual termination',dest:'Receiving account',noDest:'No receiving account available',confirm:'Confirm termination',need:'Before confirming the actual termination, the calculation must be complete and the balance reconciliation must have no difference.',receive:'Amount to receive',adjust:'Interest adjustment',fee:'Termination fee',ask:n=>`Terminate ${n}?`,real:'This action will make real changes to accounts, transactions, and budgets.',saveErr:'An error occurred while saving. Please check again.',ok:n=>`The deposit was terminated successfully. ${n} was transferred to the receiving account.`,left:n=>`The termination was saved, but a balance of ${n} remains. Please check again.`,interest:'Termination interest',claw:'Interest clawback adjustment',cancel:'Deposit termination',cancelFee:'Deposit termination fee',bankFee:'Bank fee',other:'Other expense',interestIncome:'Interest income',back:'Back',done:'Done',already:'This deposit has already been terminated.'},
+zh:{title:'确认实际提前终止',dest:'收款账户',noDest:'没有可用的收款账户',confirm:'确认提前终止',need:'确认实际提前终止前，计算必须完整且余额核对无差额。',receive:'预计到账',adjust:'利息调整',fee:'提前终止手续费',ask:n=>`确定提前终止 ${n} 吗？`,real:'此操作将实际更改账户、交易和预算。',saveErr:'保存时发生错误，请重新检查。',ok:n=>`存款已成功提前终止，${n} 已转入收款账户。`,left:n=>`提前终止已保存，但仍有 ${n} 余额，请重新检查。`,interest:'提前终止利息',claw:'利息返还调整',cancel:'存款提前终止',cancelFee:'存款提前终止手续费',bankFee:'银行手续费',other:'其他支出',interestIncome:'利息收入',back:'返回',done:'知道了',already:'该存款已提前终止。'},
+ja:{title:'実際の解約を確認',dest:'受取口座',noDest:'受取口座がありません',confirm:'解約を確定',need:'実際の解約を確定する前に、計算が完了し残高照合の差額がないことが必要です。',receive:'受取額',adjust:'利息調整',fee:'解約手数料',ask:n=>`${n} を解約しますか？`,real:'この操作は口座、取引、予算に実際の変更を行います。',saveErr:'保存中にエラーが発生しました。もう一度確認してください。',ok:n=>`預金を正常に解約しました。${n} を受取口座へ振り替えました。`,left:n=>`解約は保存されましたが、残高 ${n} が残っています。再確認してください。`,interest:'解約利息',claw:'利息返還調整',cancel:'預金解約',cancelFee:'預金解約手数料',bankFee:'銀行手数料',other:'その他支出',interestIncome:'利息収入',back:'戻る',done:'完了',already:'この預金はすでに解約されています。'},
+ko:{title:'실제 중도해지 확인',dest:'입금 받을 계좌',noDest:'입금 받을 계좌가 없습니다',confirm:'중도해지 확정',need:'실제 중도해지를 확정하기 전에 계산이 완료되고 잔액 대사가 일치해야 합니다.',receive:'받을 금액',adjust:'이자 조정',fee:'중도해지 수수료',ask:n=>`${n} 예금을 중도해지할까요?`,real:'이 작업은 계좌, 거래 및 예산에 실제 변경을 적용합니다.',saveErr:'저장 중 오류가 발생했습니다. 다시 확인해 주세요.',ok:n=>`예금이 성공적으로 중도해지되었습니다. ${n}이 입금 받을 계좌로 이체되었습니다.`,left:n=>`중도해지는 저장되었지만 ${n}의 잔액이 남아 있습니다. 다시 확인해 주세요.`,interest:'중도해지 이자',claw:'이자 반환 조정',cancel:'예금 중도해지',cancelFee:'예금 중도해지 수수료',bankFee:'은행 수수료',other:'기타 지출',interestIncome:'이자 수입',back:'뒤로',done:'확인',already:'이 예금은 이미 중도해지되었습니다.'},
+ru:{title:'Подтвердить фактическое расторжение',dest:'Счёт получения',noDest:'Нет доступного счёта получения',confirm:'Подтвердить расторжение',need:'Перед фактическим расторжением расчёт должен быть завершён, а сверка остатка — без расхождений.',receive:'К получению',adjust:'Корректировка процентов',fee:'Комиссия за расторжение',ask:n=>`Расторгнуть вклад «${n}»?`,real:'Это действие внесёт реальные изменения в счета, операции и бюджет.',saveErr:'При сохранении произошла ошибка. Проверьте ещё раз.',ok:n=>`Вклад успешно расторгнут. ${n} переведено на счёт получения.`,left:n=>`Расторжение сохранено, но остался баланс ${n}. Проверьте ещё раз.`,interest:'Проценты при расторжении',claw:'Корректировка возврата процентов',cancel:'Расторжение вклада',cancelFee:'Комиссия за расторжение вклада',bankFee:'Банковская комиссия',other:'Прочие расходы',interestIncome:'Процентный доход',back:'Назад',done:'Готово',already:'Этот вклад уже расторгнут.'},
+de:{title:'Tatsächliche Kündigung bestätigen',dest:'Empfangskonto',noDest:'Kein Empfangskonto verfügbar',confirm:'Kündigung bestätigen',need:'Vor der tatsächlichen Kündigung muss die Berechnung vollständig sein und die Saldenabstimmung darf keine Differenz aufweisen.',receive:'Auszahlungsbetrag',adjust:'Zinsanpassung',fee:'Kündigungsgebühr',ask:n=>`${n} kündigen?`,real:'Diese Aktion ändert Konten, Transaktionen und Budgets tatsächlich.',saveErr:'Beim Speichern ist ein Fehler aufgetreten. Bitte erneut prüfen.',ok:n=>`Die Einlage wurde erfolgreich gekündigt. ${n} wurde auf das Empfangskonto übertragen.`,left:n=>`Die Kündigung wurde gespeichert, aber ein Restbetrag von ${n} verbleibt. Bitte erneut prüfen.`,interest:'Kündigungszins',claw:'Zinsrückbuchung',cancel:'Einlagenkündigung',cancelFee:'Kündigungsgebühr',bankFee:'Bankgebühr',other:'Sonstige Ausgabe',interestIncome:'Zinseinnahmen',back:'Zurück',done:'Fertig',already:'Diese Einlage wurde bereits gekündigt.'}
 };
 const T=()=>L[(typeof lang==='string'&&L[lang])?lang:'mn'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18624,6 +18634,26 @@ function readCalc(a){
   const ov=ai?{entered:raw!=='',amount:typeof parseAmt==='function'?parseAmt(raw):n(raw.replace(/[^0-9.-]/g,''))}:null;
   return{date:api.ymd(d),calc:api.calculate(a,d,ov)};
 }
+
+function appDialog({title,body='',summary='',confirmText='',cancelText='',single=false}){
+ return new Promise(resolve=>{
+  document.getElementById('mrc4-app-dialog')?.remove();
+  const d=document.createElement('div');d.id='mrc4-app-dialog';
+  d.innerHTML=`<div class="mrc4-dialog-card" role="dialog" aria-modal="true">
+   <div class="mrc4-dialog-title">${esc(title)}</div>
+   <div class="mrc4-dialog-body">${esc(body)}</div>
+   ${summary?`<div class="mrc4-dialog-summary">${summary}</div>`:''}
+   <div class="mrc4-dialog-actions">
+    ${single?'':`<button class="btn btn-sm" id="mrc4-dialog-cancel">${esc(cancelText)}</button>`}
+    <button class="btn btn-p" id="mrc4-dialog-ok">${esc(confirmText)}</button>
+   </div></div>`;
+  document.body.appendChild(d);
+  const finish=v=>{d.remove();resolve(v)};
+  d.querySelector('#mrc4-dialog-ok').onclick=()=>finish(true);
+  const cb=d.querySelector('#mrc4-dialog-cancel');if(cb)cb.onclick=()=>finish(false);
+  d.addEventListener('click',e=>{if(e.target===d&&!single)finish(false)});
+ });
+}
 function mount(id){
  const modal=document.getElementById('mongo-savings-cancel-stage1');if(!modal||modal.querySelector('#mrc4-settle'))return;
  const a=account(id),api=window.MongoRealCancellationStage3;if(!a||!api)return;
@@ -18636,16 +18666,22 @@ function mount(id){
  box.querySelector('#mrc4-confirm').addEventListener('click',async()=>{
    const z=T(),r=readCalc(a),destId=box.querySelector('#mrc4-dest').value;if(!r||!r.calc.ready||Math.abs(r.calc.diff)>1||!destId)return;
    const c=r.calc,msg=`${z.ask(a.name)}\n\n${z.receive}: ${M(c.receive)}\n${z.adjust}: ${c.adjust>=0?'+':'−'} ${M(Math.abs(c.adjust))}\n${z.fee}: ${M(c.fee)}\n\n${z.real}`;
-   if(!confirm(msg))return;
+   if(a.active===false||a.status==='cancelled'){await appDialog({title:z.title,body:z.already,confirmText:z.done,single:true});return}
+   const approved=await appDialog({title:z.title,body:z.ask(a.name),summary:`${esc(z.receive)}: <b>${M(c.receive)}</b><br>${esc(z.adjust)}: <b>${c.adjust>=0?'+':'−'} ${M(Math.abs(c.adjust))}</b><br>${esc(z.fee)}: <b>${M(c.fee)}</b><br><br>${esc(z.real)}`,confirmText:z.confirm,cancelText:z.back});
+   if(!approved)return;
+   const beforeBalance=Math.round(typeof accountBalance==='function'?accountBalance(a.id):c.h.current);
+   const expectedOut=Math.round(Math.max(0,-c.adjust)+Math.max(0,c.fee)+Math.max(0,c.receive));
+   if(Math.abs(beforeBalance-expectedOut)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
    const now=new Date().toISOString(),cancelId=uid('cancel');
    if(c.adjust>0.5){const meta=interestMeta(a);txns.unshift({id:uid('cancel_interest'),type:'income',desc:`${a.name} · ${z.interest}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.adjust),date:r.date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId:a.linkedGoalId||a.goalId||null,savingsCancellationId:cancelId,createdAt:now});}
    if(c.adjust<-0.5)accountTransfers.push({id:uid('interest_adjustment'),fromId:a.id,toId:null,amount:Math.round(Math.abs(c.adjust)),date:r.date,purpose:'interest_adjustment',targetId:null,description:`${a.name} · ${z.claw}`,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    if(c.fee>0.5){const meta=bankFeeMeta();txns.unshift({id:uid('cancel_fee'),type:'expense',desc:`${a.name} · ${z.cancelFee}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.fee),date:r.date,accountId:a.id,savingsCancellationFee:true,savingsAccountId:a.id,savingsCancellationId:cancelId,createdAt:now});}
    if(c.receive>0.5)accountTransfers.push({id:uid('cancel_transfer'),fromId:a.id,toId:destId,amount:Math.round(c.receive),date:r.date,purpose:'internal',targetId:null,description:`${a.name} · ${z.cancel}`,savingsCancellation:true,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    a.active=false;a.status='cancelled';a.cancelledAt=now;a.cancelledDate=r.date;a.cancellationId=cancelId;a.cancellationReceiveAccountId=destId;a.cancellationReceiveAmount=Math.round(c.receive);a.cancellationAllowedInterest=Math.round(c.allowed);a.cancellationPriorInterest=Math.round(c.h.total);a.cancellationInterestAdjustment=Math.round(c.adjust);a.cancellationFee=Math.round(c.fee);
-   try{if(typeof saveData==='function')await saveData();}catch(e){console.error('Savings cancellation save failed',e);alert(z.saveErr);return}
+   try{if(typeof saveData==='function')await saveData();}catch(e){console.error('Savings cancellation save failed',e);await appDialog({title:z.title,body:z.saveErr,confirmText:z.done,single:true});return}
    modal.remove();try{if(typeof rAll==='function')rAll();if(typeof rGoals==='function')rGoals();if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof uDash==='function')uDash();if(typeof renderMoneyAccounts==='function')renderMoneyAccounts()}catch(e){console.warn(e)}
-   const left=typeof accountBalance==='function'?Math.round(accountBalance(a.id)):0;alert(left===0?z.ok(M(c.receive)):z.left(M(left)));
+   const left=typeof accountBalance==='function'?Math.round(accountBalance(a.id)):0;
+   await appDialog({title:z.title,body:left===0?z.ok(M(c.receive)):z.left(M(left)),confirmText:z.done,single:true});
  });
 }
 document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-btn button');if(!b)return;const raw=b.getAttribute('onclick')||'',m=raw.match(/openMongoSavingsCancelV1\(['"]([^'"]+)/);if(m)setTimeout(()=>mount(m[1]),80)},true);
