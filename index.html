@@ -18738,6 +18738,18 @@ function mount(id){
    if(c.fee>0.5){const meta=bankFeeMeta();txns.unshift({id:uid('cancel_fee'),type:'expense',desc:`${a.name} · ${z.cancelFee}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.fee),date:r.date,accountId:a.id,savingsCancellationFee:true,savingsAccountId:a.id,savingsCancellationId:cancelId,createdAt:now});}
    if(c.receive>0.5)accountTransfers.push({id:uid('cancel_transfer'),fromId:a.id,toId:destId,amount:Math.round(c.receive),date:r.date,purpose:'internal',targetId:null,description:`${a.name} · ${z.cancel}`,savingsCancellation:true,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    a.active=false;a.status='cancelled';a.cancelledAt=now;a.cancelledDate=r.date;a.cancellationId=cancelId;a.cancellationReceiveAccountId=destId;a.cancellationReceiveAmount=Math.round(c.receive);a.cancellationAllowedInterest=Math.round(c.allowed);a.cancellationPriorInterest=Math.round(c.h.total);a.cancellationInterestAdjustment=Math.round(c.adjust);a.cancellationFee=Math.round(c.fee);
+   // V24: cancelling a real savings account also archives its linked savings goal.
+   // Keep the goal and all historical budget/transaction data; only its lifecycle becomes archived.
+   const linkedGoalId=a.linkedGoalId||a.goalId||null;
+   const linkedGoal=(goals||[]).find(g=>String(g?.id)===String(linkedGoalId));
+   if(linkedGoal){
+     linkedGoal.archivedAt=linkedGoal.archivedAt||now;
+     linkedGoal.archiveReason=linkedGoal.archiveReason||'savings_account_cancelled';
+     linkedGoal.lifecycleHistory=Array.isArray(linkedGoal.lifecycleHistory)?linkedGoal.lifecycleHistory:[];
+     if(!linkedGoal.lifecycleHistory.some(h=>h?.type==='savings_account_cancelled'&&String(h?.cancellationId)===String(cancelId))){
+       linkedGoal.lifecycleHistory.push({type:'savings_account_cancelled',accountId:a.id,accountName:a.name,cancellationId:cancelId,date:r.date,createdAt:now});
+     }
+   }
    try{if(typeof saveData==='function')await saveData();}catch(e){console.error('Savings cancellation save failed',e);await appDialog({title:z.title,body:z.saveErr,confirmText:z.done,single:true});return}
    modal.remove();try{if(typeof rAll==='function')rAll();if(typeof rGoals==='function')rGoals();if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof uDash==='function')uDash();if(typeof renderMoneyAccounts==='function')renderMoneyAccounts()}catch(e){console.warn(e)}
    const left=typeof accountBalance==='function'?Math.round(accountBalance(a.id)):0;
@@ -18749,6 +18761,15 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 </script>
 
 
+
+<script id="mongo-v24-cancel-archives-linked-goal-marker">
+/* V24 PHONE TEST
+   Real savings cancellation now archives the linked goal.
+   No goal/budget/transaction history is deleted.
+   Existing MongoArchive.goalActive/goalArchived logic then excludes it from active goal selectors.
+*/
+window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
