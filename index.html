@@ -2489,21 +2489,21 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 </style>
 
 
-<style id="mongo-closed-accounts-v22-style">
-#accountsList .mongo-closed-archive{margin-top:18px}
-#accountsList .mongo-closed-head,#accountsList .mongo-closed-year,#accountsList .mongo-closed-month{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;background:transparent;color:#374151;text-align:left;box-sizing:border-box}
-#accountsList .mongo-closed-head{padding:10px 2px;font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
-#accountsList .mongo-closed-year{padding:12px 14px;margin-top:8px;border:1px solid rgba(73,176,182,.18);border-radius:16px;font-size:15px;font-weight:850;background:rgba(73,176,182,.035)}
-#accountsList .mongo-closed-month{padding:10px 14px 8px;font-size:14px;font-weight:800}
-#accountsList .mongo-closed-chevron{font-size:12px;transition:transform .18s ease}
-#accountsList details[open]>.mongo-closed-year .mongo-closed-chevron,#accountsList details[open]>.mongo-closed-month .mongo-closed-chevron{transform:rotate(180deg)}
-#accountsList .mongo-closed-items{display:grid;gap:10px;padding:4px 0 8px}
-#accountsList .mongo-closed-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid rgba(55,65,81,.08);border-radius:18px;background:rgba(255,255,255,.62);box-sizing:border-box}
-#accountsList .mongo-closed-main{min-width:0;display:flex;align-items:center;gap:12px}
-#accountsList .mongo-closed-icon{font-size:25px;flex:0 0 auto;opacity:.62}
-#accountsList .mongo-closed-name{font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#accountsList .mongo-closed-meta{font-size:12px;color:#6b7280;margin-top:3px}
-#accountsList .mongo-closed-amount{font-weight:850;white-space:nowrap;color:#6b7280}
+
+<!-- Möngö PHONE TEST V23: closed accounts archive integrated into the real renderMoneyAccounts() path.
+     7 languages; year > month grouping; cancellation reason/date; no financial logic changes. -->
+<style id="mongo-closed-accounts-v23-style">
+#account-list .closed-accounts-root{margin-top:18px}
+#account-list .closed-accounts-root summary{list-style:none}
+#account-list .closed-accounts-root summary::-webkit-details-marker{display:none}
+#account-list .closed-accounts-title,#account-list .closed-year-title,#account-list .closed-month-title{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;color:#374151}
+#account-list .closed-accounts-title{padding:8px 2px;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+#account-list .closed-year-title{margin-top:8px;padding:12px 14px;border:1px solid rgba(73,176,182,.18);border-radius:16px;background:rgba(73,176,182,.035);font-size:15px;font-weight:850}
+#account-list .closed-month-title{padding:10px 14px 7px;font-size:14px;font-weight:800}
+#account-list .closed-chevron{font-size:12px;transition:transform .18s ease}
+#account-list details[open]>.closed-accounts-title .closed-chevron,#account-list details[open]>.closed-year-title .closed-chevron,#account-list details[open]>.closed-month-title .closed-chevron{transform:rotate(180deg)}
+#account-list .closed-account-row{opacity:.62}
+#account-list .closed-account-row .account-meta{white-space:normal}
 </style>
 </head>
 <body>
@@ -8631,6 +8631,46 @@ ru:{title:'МОИ ДЕНЬГИ',add:'＋ Счёт',bank:'Банк',cash:'Нал�
 de:{title:'MEIN GELD',add:'＋ Konto',bank:'Bank',cash:'Bargeld',inactive:'Inaktiv',transfer:'Übertrag',transferNote:'Eine Übertragung ist weder Einnahme noch Ausgabe; das Geld wechselt nur das Konto.'}
 };return X[lang]||X.en;}
 
+
+function closedAccountText(){const X={
+mn:{closed:'Хаагдсан данс',month:n=>`${n}-р сар`,cancelled:'Цуцлагдсан',expired:'Хугацаа дууссан',inactive:'Идэвхгүй болгосон'},
+en:{closed:'Closed accounts',month:n=>new Date(2000,n-1,1).toLocaleString('en',{month:'long'}),cancelled:'Terminated',expired:'Matured',inactive:'Deactivated'},
+zh:{closed:'已关闭账户',month:n=>`${n}月`,cancelled:'已提前终止',expired:'已到期',inactive:'已停用'},
+ja:{closed:'閉鎖済み口座',month:n=>`${n}月`,cancelled:'解約済み',expired:'満期',inactive:'無効化'},
+ko:{closed:'종료된 계좌',month:n=>`${n}월`,cancelled:'중도해지',expired:'만기',inactive:'비활성화'},
+ru:{closed:'Закрытые счета',month:n=>new Date(2000,n-1,1).toLocaleString('ru',{month:'long'}),cancelled:'Расторгнут',expired:'Срок завершён',inactive:'Деактивирован'},
+de:{closed:'Geschlossene Konten',month:n=>new Date(2000,n-1,1).toLocaleString('de',{month:'long'}),cancelled:'Gekündigt',expired:'Fällig',inactive:'Deaktiviert'}
+};return X[lang]||X.en;}
+function closedAccountDate(a){
+ const raw=a?.cancelledDate||a?.closedDate||a?.cancelledAt||a?.updatedAt||a?.createdAt||a?.startDate||'';
+ const d=new Date(raw);return Number.isFinite(d.getTime())?d:new Date(0);
+}
+function closedAccountReason(a){
+ const T=closedAccountText(),v=String(a?.status||a?.closedReason||'').toLowerCase();
+ if(v==='cancelled'||a?.cancelledDate||a?.cancelledAt)return T.cancelled;
+ if(v==='matured'||v==='expired')return T.expired;
+ return T.inactive;
+}
+function closedAccountsHtml(inactive){
+ if(!inactive.length)return '';
+ const T=closedAccountText(),groups={};
+ inactive.slice().sort((a,b)=>closedAccountDate(b)-closedAccountDate(a)).forEach(a=>{
+   const d=closedAccountDate(a),y=d.getFullYear()||1970,m=d.getMonth()+1;
+   if(!groups[y])groups[y]={};if(!groups[y][m])groups[y][m]=[];groups[y][m].push(a);
+ });
+ const years=Object.keys(groups).sort((a,b)=>Number(b)-Number(a)).map(y=>{
+   const months=Object.keys(groups[y]).sort((a,b)=>Number(b)-Number(a)).map(m=>{
+     const items=groups[y][m].map(a=>{
+       const d=closedAccountDate(a),date=d.getTime()?d.toISOString().slice(0,10):'—';
+       return `<div class="account-row closed-account-row" onclick="showAccountDetail('${a.id}')"><div class="account-main"><span class="account-icon">${accountIcon(a)}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${accountTypeLabel(a)} · ${closedAccountReason(a)} · ${date}</div></div></div><div class="account-bal">${fmt(accountBalance(a.id))}</div></div>${accountInlineDetail(a)}`;
+     }).join('');
+     return `<details><summary class="closed-month-title"><span>${T.month(Number(m))} (${groups[y][m].length})</span><span class="closed-chevron">⌄</span></summary>${items}</details>`;
+   }).join('');
+   const count=Object.values(groups[y]).reduce((n,x)=>n+x.length,0);
+   return `<details><summary class="closed-year-title"><span>${y} (${count})</span><span class="closed-chevron">⌄</span></summary>${months}</details>`;
+ }).join('');
+ return `<details class="closed-accounts-root"><summary class="closed-accounts-title"><span>${T.closed} (${inactive.length})</span><span class="closed-chevron">⌄</span></summary>${years}</details>`;
+}
 function getDefaultAccountId(){return window.MongoAccounts.defaultAccountId(moneyAccounts);}
 function normalizeAccountType(t){return window.MongoAccounts.normalizeType(t);}
 function accountIcon(a){return normalizeAccountType(a.type)==='cash'?'💵':normalizeAccountType(a.type)==='savings'?'🐷':'🏦';}
@@ -8741,7 +8781,7 @@ function renderMoneyAccounts(){
     [groupLabels[1],active.filter(a=>normalizeAccountType(a.type)==='savings')]
   ];
   let html=groups.map(([label,arr])=>arr.length?`<div class="account-group-title">${label}</div>`+arr.map(a=>`<div class="account-row" onclick="showAccountDetail('${a.id}')"><div class="account-main"><span class="account-icon">${accountIcon(a)}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${accountTypeLabel(a)} · ${a.startDate||''}</div></div></div><div class="account-actions"><div class="account-bal">${fmt(accountBalance(a.id))}</div><button class="account-mini-btn" onclick="event.stopPropagation();showAccountDetail('${a.id}')">⋯</button></div></div>${accountInlineDetail(a)}`).join(''):'').join('');
-  if(inactive.length)html+=`<div class="account-group-title">${T.inactive}</div>`+inactive.map(a=>`<div class="account-row" style="opacity:.55" onclick="showAccountDetail('${a.id}')"><div class="account-main"><span class="account-icon">${accountIcon(a)}</span><div><div class="account-name">${a.name}</div><div class="account-meta">${accountTypeLabel(a)} · ${T.inactive}</div></div></div><div class="account-bal">${fmt(accountBalance(a.id))}</div></div>`).join('');
+  if(inactive.length)html+=closedAccountsHtml(inactive);
   el.innerHTML=html;renderAccountSelectors();renderTxnAccountFilter();renderDebtFundingAccounts();renderAssetTypeSelectors();
 }
 function toggleAccountAdd(){const e=document.getElementById('account-add-form');if(!e)return;e.style.display=e.style.display==='none'?'block':'none';const d=document.getElementById('account-start-date');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);}
@@ -18709,76 +18749,6 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 </script>
 
 
-<script id="mongo-closed-accounts-v22-script">
-(function(){
-'use strict';
-const X={
- mn:{closed:'Хаагдсан данс',month:n=>`${n}-р сар`,cancelled:'Цуцлагдсан',expired:'Хугацаа дууссан',inactive:'Идэвхгүй болгосон'},
- en:{closed:'Closed accounts',month:n=>new Date(2000,n-1,1).toLocaleString('en',{month:'long'}),cancelled:'Terminated',expired:'Matured',inactive:'Deactivated'},
- zh:{closed:'已关闭账户',month:n=>`${n}月`,cancelled:'已提前终止',expired:'已到期',inactive:'已停用'},
- ja:{closed:'閉鎖済み口座',month:n=>`${n}月`,cancelled:'解約済み',expired:'満期',inactive:'無効化'},
- ko:{closed:'종료된 계좌',month:n=>`${n}월`,cancelled:'중도해지',expired:'만기',inactive:'비활성화'},
- ru:{closed:'Закрытые счета',month:n=>new Date(2000,n-1,1).toLocaleString('ru',{month:'long'}),cancelled:'Расторгнут',expired:'Срок завершён',inactive:'Деактивирован'},
- de:{closed:'Geschlossene Konten',month:n=>new Date(2000,n-1,1).toLocaleString('de',{month:'long'}),cancelled:'Gekündigt',expired:'Fällig',inactive:'Deaktiviert'}
-};
-const q=()=>X[(typeof lang==='string'&&X[lang])?lang:'mn'];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=v=>typeof fmt==='function'?fmt(Math.round(Number(v)||0)):('₮'+Math.round(Number(v)||0).toLocaleString('en-US'));
-function reason(a){
- const z=q(),v=String(a?.status||a?.closedReason||'').toLowerCase();
- if(v==='cancelled'||a?.cancelledAt||a?.cancelledDate)return z.cancelled;
- if(v==='matured'||v==='expired')return z.expired;
- return z.inactive;
-}
-function closedDate(a){
- const raw=a?.cancelledDate||a?.closedDate||a?.cancelledAt||a?.updatedAt||a?.createdAt||a?.openedAt||a?.openingDate||'';
- const d=new Date(raw);return Number.isFinite(d.getTime())?d:new Date(0);
-}
-function archive(){
- const host=document.getElementById('accountsList');if(!host)return;
- host.querySelector('.mongo-closed-archive')?.remove();
- const oldHeading=[...host.querySelectorAll('h1,h2,h3,h4,h5,h6,div,p')].find(el=>el.children.length===0&&['ИДЭВХГҮЙ','INACTIVE'].includes((el.textContent||'').trim().toUpperCase()));
- if(oldHeading){
-   let x=oldHeading.nextElementSibling;
-   while(x && !/^H[1-6]$/.test(x.tagName) && !x.classList.contains('section-title')){const nx=x.nextElementSibling;x.remove();x=nx}
-   oldHeading.remove();
- }
- const arr=(Array.isArray(moneyAccounts)?moneyAccounts:[]).filter(a=>a&&a.active===false&&!a.legacy);
- if(!arr.length)return;
- arr.sort((a,b)=>closedDate(b)-closedDate(a));
- const groups={};
- for(const a of arr){const d=closedDate(a),y=d.getFullYear()||1970,m=(d.getMonth()+1)||1;(groups[y]??={})[m]??=[];(groups[y][m]).push(a)}
- const z=q(),root=document.createElement('div');root.className='mongo-closed-archive';
- root.innerHTML=`<button type="button" class="mongo-closed-head"><span>${esc(z.closed)} (${arr.length})</span><span>⌄</span></button><div class="mongo-closed-years" hidden></div>`;
- const years=root.querySelector('.mongo-closed-years');
- Object.keys(groups).sort((a,b)=>b-a).forEach(y=>{
-  const yd=document.createElement('details');const count=Object.values(groups[y]).reduce((n,a)=>n+a.length,0);
-  yd.innerHTML=`<summary class="mongo-closed-year"><span>${y} (${count})</span><span class="mongo-closed-chevron">⌄</span></summary><div></div>`;
-  const ybody=yd.lastElementChild;
-  Object.keys(groups[y]).sort((a,b)=>b-a).forEach(m=>{
-   const md=document.createElement('details');const items=groups[y][m];
-   md.innerHTML=`<summary class="mongo-closed-month"><span>${esc(z.month(Number(m)))} (${items.length})</span><span class="mongo-closed-chevron">⌄</span></summary><div class="mongo-closed-items"></div>`;
-   const ib=md.querySelector('.mongo-closed-items');
-   items.forEach(a=>{
-    const d=closedDate(a),ds=d.getTime()?d.toISOString().slice(0,10):'—';
-    const card=document.createElement('div');card.className='mongo-closed-card';
-    card.innerHTML=`<div class="mongo-closed-main"><div class="mongo-closed-icon">🐷</div><div style="min-width:0"><div class="mongo-closed-name">${esc(a.name||'')}</div><div class="mongo-closed-meta">${esc(reason(a))} · ${esc(ds)}</div></div></div><div class="mongo-closed-amount">${money(typeof accountBalance==='function'?accountBalance(a.id):0)}</div>`;
-    ib.appendChild(card);
-   });
-   ybody.appendChild(md);
-  });
-  years.appendChild(yd);
- });
- root.querySelector('.mongo-closed-head').onclick=()=>{years.hidden=!years.hidden};
- host.appendChild(root);
-}
-function run(){setTimeout(archive,40)}
-document.addEventListener('click',e=>{if(e.target.closest?.('[data-tab="finance"],#tabFinance,.nav-finance'))run()},true);
-const obs=new MutationObserver(()=>{if(!document.getElementById('accountsList')?.querySelector('.mongo-closed-archive'))run()});
-window.addEventListener('load',()=>{run();const h=document.getElementById('accountsList');if(h)obs.observe(h,{childList:true,subtree:false})});
-window.mongoClosedAccountsArchiveV22=archive;
-})();
-</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
