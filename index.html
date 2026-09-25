@@ -3932,6 +3932,8 @@ const CAT_LABELS={
   savings_cat:{mn:'Хуримтлал',en:'Savings',zh:'储蓄',ja:'貯蓄',ko:'저축',ru:'Сбережения',de:'Ersparnisse'},
   loan_cat:{mn:'Зээл',en:'Loan',zh:'贷款',ja:'ローン',ko:'대출',ru:'Кредит',de:'Kredit'},
   household:{mn:'Ахуйн хэрэглээ',en:'Household',zh:'家用',ja:'生活費',ko:'생활비',ru:'Быт',de:'Haushalt'},
+  bank_expense:{mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'},
+  bank_fee:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},
   other_exp:{mn:'Бусад',en:'Other',zh:'其他',ja:'その他',ko:'기타',ru:'Прочее',de:'Sonstiges'},
   vegs:{mn:'Хүнсний ногоо',en:'Vegetables',zh:'蔬菜',ja:'野菜',ko:'채소',ru:'Овощи',de:'Gemüse'},
   fruits:{mn:'Жимс',en:'Fruits',zh:'水果',ja:'果物',ko:'과일',ru:'Фрукты',de:'Obst'},
@@ -4001,8 +4003,8 @@ const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨�
 const ICOLS={stock:'#185FA5',crypto:'#BA7517',real:'#49b0b6',fund:'#1D9E75',bond:'#5F5E5A',gold:'#EF9F27',other:'#D4537E'};
 const IICONS={vehicle:'🚗',business_asset:'💼',stock:'📈',crypto:'🪙',real:'🏢',fund:'💼',bond:'📄',gold:'🥇',other:'💡'};
 const DEF_INC=new Set(['salary','bonus','business','other_inc']);
-const DEF_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
-const DEF_B_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
+const DEF_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
+const DEF_B_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
 const DEF_B_INC=new Set(['salary','bonus','business','asset_income_cat','other_inc']);
 const INVEST_CAT_KEY='invest_cat';
 
@@ -4135,6 +4137,7 @@ let expCats=[
   {key:'savings_cat',icon:'🏦',color:'#43A047'},
   {key:'loan_cat',icon:'💳',color:'#FFB300'},
   {key:'household',icon:'🛒',color:'#795548'},
+  {key:'bank_expense',icon:'🏦',color:'#64748B'},
   {key:'other_exp',icon:'💡',color:'#607D8B'}
 ];
 let bCatsExp=[
@@ -4149,6 +4152,7 @@ let bCatsExp=[
   {key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},
   {key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},
   {key:'household',icon:'🛒',color:'#795548',subs:[]},
+  {key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},
   {key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}
 ];
 let bCatsInc=[
@@ -7604,6 +7608,15 @@ function addBudgetCat(){
   inp.value='';rBList();saveData();
 }
 
+function removeBudgetCategorySynced(ci,cat){
+  const arr=getBCats(); const removed=arr[ci]; if(!removed)return;
+  arr.splice(ci,1);
+  // Budget is the source of ordinary transaction categories: remove the matching custom chip too.
+  const key=removed.key||null, name=cN(removed);
+  if(budgetType==='expense') expCats=expCats.filter(c=>key?(c.key!==key):(cN(c)!==name));
+  else incCats=incCats.filter(c=>key?(c.key!==key):(cN(c)!==name));
+  try{rCatSel();rTChips();}catch(_){ }
+}
 function rBList(){
   migrateInvestmentTypeLinks();
   const el=document.getElementById('b-cats-list');
@@ -7632,7 +7645,7 @@ function rBList(){
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--text2);min-width:50px">${L.total}:</span>
           <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
-          ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
+          ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){removeBudgetCategorySynced(${ci},cat);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
         ${(cat.subs||[]).map((sb,si)=>{const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
@@ -12097,7 +12110,7 @@ auth.onAuthStateChanged(async user=>{
         window.MONGO_LOCAL_DATA_UPDATED_AT='';
         incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
         expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-        bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+        bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
         bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5' ,subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
       }catch(e){ console.warn('Account isolation pre-reset failed',e); }
     }
@@ -12125,7 +12138,7 @@ auth.onAuthStateChanged(async user=>{
       lockedCats=new Set();
       incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
       expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
       bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
 
       // Тухайн хэрэглэгчийн өгөгдлийг ачаална
@@ -12612,7 +12625,7 @@ auth.onAuthStateChanged(async user=>{
     if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0;if(typeof moneyAccounts!=='undefined')moneyAccounts=[];if(typeof accountTransfers!=='undefined')accountTransfers=[];if(typeof moneyLedger!=='undefined')moneyLedger=[];if(typeof moneyLedgerRevision!=='undefined')moneyLedgerRevision=0;if(typeof moneyLedgerTombstones!=='undefined')moneyLedgerTombstones=[]; if(typeof lockedCats!=='undefined') lockedCats=new Set();
     if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
     if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-    if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+    if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
     if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
   }
   function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
@@ -18818,6 +18831,39 @@ if(changed){try{if(typeof saveData==='function')saveData();}catch(e){console.war
    Existing MongoArchive.goalActive/goalArchived logic then excludes it from active goal selectors.
 */
 window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
+</script>
+
+<script id="mongo-v29-bank-expense-category">
+/* V29 — system Bank expenses category + Bank fee subcategory.
+   Budget remains source-of-truth for ordinary custom expense categories. */
+(function(){
+'use strict';
+window.MONGO_BANK_EXPENSE_CATEGORY='V29';
+function ensure(){
+ if(typeof bCatsExp==='undefined'||typeof expCats==='undefined')return false;
+ let changed=false;
+ if(typeof CAT_LABELS!=='undefined'){
+  CAT_LABELS.bank_expense={mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'};
+  CAT_LABELS.bank_fee={mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'};
+ }
+ let bc=bCatsExp.find(c=>c&&c.key==='bank_expense');
+ if(!bc){bc={key:'bank_expense',icon:'🏦',color:'#64748B',subs:[]};bCatsExp.push(bc);changed=true;}
+ if(!Array.isArray(bc.subs))bc.subs=[];
+ if(!bc.subs.some(x=>x&&x.key==='bank_fee')){bc.subs.push({key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'});changed=true;}
+ if(!expCats.some(c=>c&&c.key==='bank_expense')){expCats.push({key:'bank_expense',icon:'🏦',color:'#64748B'});changed=true;}
+ // Remove orphaned custom transaction categories only when their matching Budget category no longer exists.
+ const sys=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
+ const budgetKeys=new Set(bCatsExp.map(c=>c&&c.key).filter(Boolean));
+ const budgetNames=new Set(bCatsExp.map(c=>{try{return cN(c)}catch(_){return c?.name||''}}).filter(Boolean));
+ const before=expCats.length;
+ expCats=expCats.filter(c=>{if(c&&c.key&&sys.has(c.key))return true;if(c&&c.key)return budgetKeys.has(c.key);let nm='';try{nm=cN(c)}catch(_){nm=c?.name||''}return !!nm&&budgetNames.has(nm)});
+ if(expCats.length!==before)changed=true;
+ try{if(typeof rCatSel==='function')rCatSel();if(typeof rTChips==='function')rTChips();if(typeof rBList==='function')rBList();}catch(_){ }
+ return changed;
+}
+window.MongoEnsureBankExpenseV29=ensure;
+setTimeout(()=>{const changed=ensure();if(changed){try{if(typeof saveData==='function')saveData();}catch(_){}}},900);
+})();
 </script>
 </body>
 </html>
