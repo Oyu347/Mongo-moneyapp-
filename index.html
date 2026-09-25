@@ -19119,3 +19119,150 @@ setTimeout(()=>{
 },1400);
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V33 — cancellation layout, live comma inputs, durable adjustment history, dynamic budget status -->
+<style id="mongo-v33-cancel-layout-safe">
+/* Scoped only to the real savings-cancellation modal. Long rule text may wrap;
+   monetary/date/rate values retain enough width to stay on one line on phone. */
+#mongo-savings-cancel-stage1 .mrc1-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(128px,48%)!important;
+  align-items:start!important;
+  column-gap:12px!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>span{
+  min-width:0!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>b{
+  min-width:0!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  text-align:right!important;
+  font-size:13px!important;
+  font-variant-numeric:tabular-nums;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>b.mongo-v33-compact-value{white-space:nowrap!important}
+</style>
+<script id="mongo-v33-cancel-input-history-budget">
+(function(){
+'use strict';
+window.MONGO_CANCEL_INPUT_HISTORY_BUDGET='V33';
+
+/* V32 snapshot semantics were not the intended product rule.
+   Planned/unplanned is deliberately dynamic: once a matching plan/budget is saved,
+   existing transactions become planned; if the budget is absent, they are unplanned. */
+try{
+  if(typeof isTxnBudgeted==='function' && isTxnBudgeted.__mongoDynamic){
+    isTxnBudgeted=isTxnBudgeted.__mongoDynamic;
+  }
+}catch(e){console.warn('V33 dynamic budget status restore skipped',e)}
+
+/* Preserve the special audit transaction type through local/cloud normalization.
+   The base security normalizer historically converted every non-income row to expense,
+   which could make a newly-created cancellation adjustment disappear/change meaning after save/reload. */
+try{
+  if(typeof secNormalizeData==='function' && !secNormalizeData.__mongoV33){
+    const baseNormalize=secNormalizeData;
+    const wrapped=function(data){
+      const clean=baseNormalize.apply(this,arguments);
+      if(clean&&Array.isArray(clean.txns)){
+        for(const t of clean.txns){
+          if(t&&t.savingsInterestAdjustment){
+            t.type='adjustment';
+            t.excludeFromBudget=true;
+            t.skipAccountBalance=true;
+          }
+        }
+      }
+      return clean;
+    };
+    wrapped.__mongoV33=true;
+    secNormalizeData=wrapped;
+  }
+}catch(e){console.warn('V33 adjustment persistence install skipped',e)}
+
+/* setupAmtInput originally expected an element id, while several newer savings flows
+   pass the INPUT element itself. Accept both forms and format while typing. */
+try{
+  const bindComma=function(target){
+    const el=(typeof target==='string')?document.getElementById(target):target;
+    if(!el||el.tagName!=='INPUT')return;
+    if(el.dataset.mongoV33Comma==='1')return;
+    el.dataset.mongoV33Comma='1';
+    el.dataset.amt='1';
+    const f=()=>{try{if(typeof applyCommaFmt==='function')applyCommaFmt(el)}catch(_){}};
+    el.addEventListener('input',f);
+    if(el.value)f();
+  };
+  window.MongoBindCommaV33=bindComma;
+  if(typeof setupAmtInput==='function'&&!setupAmtInput.__mongoV33){
+    const oldSetup=setupAmtInput;
+    const wrapped=function(target){
+      const el=(typeof target==='string')?document.getElementById(target):target;
+      if(typeof target==='string'){try{oldSetup.call(this,target)}catch(_){}}
+      bindComma(el);
+    };
+    wrapped.__mongoV33=true;
+    setupAmtInput=wrapped;
+  }
+  document.addEventListener('focusin',e=>{
+    const el=e.target;
+    if(!el||el.tagName!=='INPUT')return;
+    if(el.id==='mongo-si-v13-amount'||el.id==='mongo-si-v9-amount'||el.id==='mrc2b-bank-actual')bindComma(el);
+  },true);
+}catch(e){console.warn('V33 comma input install skipped',e)}
+
+function polishCancelModal(){
+  const modal=document.getElementById('mongo-savings-cancel-stage1');
+  if(!modal)return;
+  try{
+    ['mrc2b-bank-actual'].forEach(id=>window.MongoBindCommaV33?.(document.getElementById(id)));
+    modal.querySelectorAll('.mrc1-row>b').forEach(b=>{
+      const t=String(b.textContent||'').trim();
+      if(/^[+−-]?\s*[₮$€¥₽]?\s*[\d,]+(?:\.\d+)?(?:%|\s*(?:хоног|days|日|일|дн\.?|Tage))?$/.test(t)||/^\d{4}-\d{2}-\d{2}$/.test(t)) b.classList.add('mongo-v33-compact-value');
+      else b.classList.remove('mongo-v33-compact-value');
+    });
+  }catch(_){ }
+}
+
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('.mongo-cancel-btn button')) setTimeout(polishCancelModal,140);
+},true);
+document.addEventListener('input',e=>{
+  if(e.target?.id==='mrc2b-bank-actual')setTimeout(polishCancelModal,0);
+},true);
+
+/* Backfill/persist adjustment rows after authoritative data mount as well as after a
+   cancellation. No financial movement is created here; this is history visibility only. */
+function ensureAdjustmentHistory(){
+  let changed=false;
+  try{if(typeof window.MongoEnsureCancellationInterestClawbackV31==='function')changed=!!window.MongoEnsureCancellationInterestClawbackV31()}catch(_){ }
+  try{if(typeof window.MongoCancelInterestAdjustmentBackfill==='function')changed=!!window.MongoCancelInterestAdjustmentBackfill()||changed}catch(_){ }
+  if(changed){try{if(typeof saveData==='function')saveData()}catch(_){}}
+  try{if(typeof rRecent==='function')rRecent()}catch(_){ }
+  try{if(typeof rTxns==='function')rTxns()}catch(_){ }
+}
+window.MongoEnsureCancellationAdjustmentV33=ensureAdjustmentHistory;
+window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(ensureAdjustmentHistory,350));
+setTimeout(ensureAdjustmentHistory,1800);
+
+/* Budget save intentionally re-evaluates existing transaction badges immediately. */
+try{
+  if(typeof saveBudget==='function'&&!saveBudget.__mongoV33){
+    const oldSaveBudget=saveBudget;
+    const wrapped=function(){
+      const r=oldSaveBudget.apply(this,arguments);
+      setTimeout(()=>{try{rRecent();rTxns()}catch(_){ }},0);
+      return r;
+    };
+    wrapped.__mongoV33=true;
+    saveBudget=wrapped;
+  }
+}catch(e){console.warn('V33 budget refresh install skipped',e)}
+})();
+</script>
