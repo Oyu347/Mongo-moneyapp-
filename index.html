@@ -3940,6 +3940,18 @@ const CAT_LABELS={
 };
 
 const LANGS=window.MongoDictionaries.LANGS;
+  // V26: cancellation UI uses the app's existing central 7-language source.
+  const MONGO_CANCEL_CENTRAL_I18N={
+    mn:{cancelSavings:'Хадгаламж цуцлах',addInterest:'＋ Хүүгийн орлого',cancelledArchive:'Данс цуцлагдсан · Архив'},
+    en:{cancelSavings:'Terminate deposit',addInterest:'＋ Interest income',cancelledArchive:'Account terminated · Archive'},
+    zh:{cancelSavings:'提前终止存款',addInterest:'＋ 利息收入',cancelledArchive:'账户已终止 · 归档'},
+    ja:{cancelSavings:'預金を中途解約',addInterest:'＋ 利息収入',cancelledArchive:'口座解約済み · アーカイブ'},
+    ko:{cancelSavings:'예금 중도해지',addInterest:'＋ 이자 수입',cancelledArchive:'계좌 해지됨 · 보관함'},
+    ru:{cancelSavings:'Закрыть вклад',addInterest:'＋ Процентный доход',cancelledArchive:'Счёт закрыт · Архив'},
+    de:{cancelSavings:'Einlage kündigen',addInterest:'＋ Zinseinnahmen',cancelledArchive:'Konto gekündigt · Archiv'}
+  };
+  Object.keys(MONGO_CANCEL_CENTRAL_I18N).forEach(k=>Object.assign(LANGS[k]||(LANGS[k]={}),MONGO_CANCEL_CENTRAL_I18N[k]));
+
 
 const V27_PROFILE_LANGS={
   mn:{profile:'Профайл',profileTitle:'Миний профайл',profileAccount:'Тохиргоо',profileEmail:'Имэйл хаяг',profileLanguage:'Хэл',profileVersion:'Хувилбар',profileData:'Өгөгдөл',profileBackup:'Backup хийх',profileRestore:'Restore хийх',profileClear:'Өгөгдөл устгах',profileLogout:'Гарах',profileHelp:'Апп ашиглах заавар',helpIncome:'Орлого бүртгэх',helpIncomeA:'Гүйлгээ цэс рүү орж “Орлого”-ыг сонгоно. Орлогын төрлөө сонгосны дараа “Дэд ангилал сонгох” хэсгээс Төсөв цэсэнд тухайн орлогын ангилалд төлөвлөсөн дэд ангилалуудын жагсаалтыг нээнэ. Дэд ангиллаа сонгож, үнийн дүн болон огноогоо оруулаад “+” товчийг дарахад орлогын бүртгэл үүснэ.',helpExpense:'Зарлага бүртгэх',helpExpenseA:'Гүйлгээ цэс рүү орж “Зарлага”-ыг сонгоно. Зарлагын төрлөө сонгосны дараа “Дэд ангилал сонгох” хэсгээс Төсөв цэсэнд тухайн зарлагын ангилалд төлөвлөсөн дэд ангилалуудын жагсаалтыг нээнэ. Дэд ангиллаа сонгож, үнийн дүн болон огноогоо оруулаад “+” товчийг дарахад зарлагын бүртгэл үүснэ.',helpBudget:'Төсөв ашиглах',helpBudgetA:'Төсөв цэсэнд “Орлогын төлөвлөгөө” болон “Зардлын төсөв”-өө гаргана. “Орлогын төлөвлөгөө” хэсэгт орлогын төрлүүдийн ангилал бүрд дэд ангилал нэмж, нэр өгч, дүн төлөвлөж болно. “Зардлын төсөв” хэсэгт мөн зардлын ангилал бүрд дэд ангилал үүсгэн төсөвлөнө. Шинэ ангилал нэмэхдээ хүссэн дүрс, өнгөө сонгож болно. Möngö аппын Гүйлгээ цэс дэд ангиллуудаа Төсөв хэсгээс авдаг тул эхлээд Төсөв хэсгээ тохируулна уу.',helpSavings:'Хуримтлал үүсгэх',helpSavingsA:'Хуримтлал цэсийн “Миний хуримтлал” хэсэгт зорилтот хуримтлалууд үүсгэж, биелэлтийн явцаа харна. “Тооцоолуур” хэсэгт сар бүр тогтмол дүнгээр хуримтлуулахад эцэст нь хэд болохыг, эсвэл зорилтот дүнд хүрэхийн тулд сард хэдийг хуримтлуулах шаардлагатайг тооцоолно. “Өөртөө төл” хэсэгт орлого бүрээс хэдэн хувийг өөртөө хадгалж үлдэх болон ямар хуримтлалуудад хэрхэн хуваарилахаа тохируулна.',helpInvest:'Хөрөнгө бүртгэх',helpInvestA:'“Миний хөрөнгө” хэсэгт хийсэн хөрөнгө оруулалтаа шууд бүртгэж болно. Мөн Гүйлгээ цэсэнд хөрөнгө оруулалтын зориулалттай зарлагын гүйлгээ бүртгэхэд тухайн мэдээлэл Хөрөнгө хэсэгт автоматаар нэмэгдэнэ.',helpScore:'Санхүүгийн оноо',helpScoreA:'Санхүүгийн оноо нь мөнгөн урсгал, хуримтлал, өр, төсвийн гүйцэтгэлийн нийлбэр үнэлгээ юм.'},
@@ -4411,6 +4423,7 @@ function applyLang(){
   uDash(); // мөнгөн тэмдэгт шинэчлэгдэнэ
   updateBudgetTotal();
   ['inc','exp','gls','dbt','inv'].forEach(rDonut);
+  try{if(typeof renderMoneyAccounts==='function')renderMoneyAccounts();}catch(e){}
 }
 
 function rInvSel(id){
@@ -12484,43 +12497,8 @@ auth.onAuthStateChanged(async user=>{
   }
   function saveMeta(meta){ try{ localStorage.setItem(uidKey(META_KEY_PREFIX), JSON.stringify(Object.assign({updatedAt:nowIso()},meta||{}))); }catch(e){} }
 
-  
-  // V24 CLOUD TIMING DIAGNOSTIC ONLY.
-  // Measures status dwell time and cloud write duration. Does not change save/queue behavior.
-  window.MONGO_CLOUD_TIMING_DIAG = window.MONGO_CLOUD_TIMING_DIAG || {
-    installedAt: Date.now(), lastStatusAt: Date.now(), lastStatus: '', events: [], writes: []
-  };
-  function mongoCloudDiagEvent(kind, data){
-    try{
-      const d=window.MONGO_CLOUD_TIMING_DIAG;
-      d.events.push(Object.assign({at:Date.now(),kind:kind},data||{}));
-      if(d.events.length>80)d.events.splice(0,d.events.length-80);
-    }catch(e){}
-  }
-
   function updateSyncStatus(status, detail){
-    try{
-      const d=window.MONGO_CLOUD_TIMING_DIAG, now=Date.now();
-      const next=status||syncStatus;
-      if(d && next!==d.lastStatus){
-        const prev=d.lastStatus||'';
-        if((next==='waiting'||next==='pending') && (prev===''||prev==='synced'||prev==='offline'||prev==='error')) d.syncCycleStartedAt=now;
-        mongoCloudDiagEvent('status',{from:prev,to:next,dwellMs:now-(d.lastStatusAt||now),detail:detail||''});
-        d.lastStatus=next; d.lastStatusAt=now;
-      }
-    }catch(e){}
     syncStatus=status||syncStatus;
-    try{
-      const d=window.MONGO_CLOUD_TIMING_DIAG;
-      if(d && syncStatus==='synced' && d.events && d.events.length){
-        const transitions=d.events.filter(x=>x&&x.kind==='status');
-        const last=transitions[transitions.length-1];
-        if(last && last.to==='synced'){
-          const totalMs=Math.max(0,Date.now()-(d.syncCycleStartedAt||d.installedAt||Date.now()));
-          window.MONGO_CLOUD_LAST_SYNC_SECONDS=(totalMs/1000).toFixed(1);
-        }
-      }
-    }catch(e){}
     const el=document.getElementById('mongo-sync-status');
     const dot=document.getElementById('mongo-sync-dot');
     const txt=document.getElementById('mongo-sync-text');
@@ -12533,10 +12511,7 @@ auth.onAuthStateChanged(async user=>{
       waiting:{label:{mn:'Sync бэлдэж байна',en:'Preparing sync',zh:'准备同步',ja:'同期準備中',ko:'동기화 준비 중',ru:'Подготовка синхронизации',de:'Sync wird vorbereitet'},icon:'●',cls:'waiting'}
     };
     const m=map[syncStatus]||map.waiting; const l=(typeof lang!=='undefined'?lang:'mn');
-    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt){
-      txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
-      if(syncStatus==='synced' && window.MONGO_CLOUD_LAST_SYNC_SECONDS) txt.textContent+=' · '+window.MONGO_CLOUD_LAST_SYNC_SECONDS+' сек';
-    }
+    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt)txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
   }
 
   function ensureSyncStatusUI(){
@@ -12557,34 +12532,6 @@ auth.onAuthStateChanged(async user=>{
       else bar.appendChild(el);
     }
     updateSyncStatus(navigator.onLine?'waiting':'offline');
-    try{
-      if(el && !el.dataset.mongoCloudDiagTap){
-        el.dataset.mongoCloudDiagTap='1';
-        el.addEventListener('click',function(){
-          try{
-            const d=window.MONGO_CLOUD_TIMING_DIAG||{};
-            const now=Date.now(), ev=(d.events||[]).slice(-8);
-            const lastWrite=(d.writes||[]).slice(-1)[0];
-            const status=d.lastStatus||syncStatus||'';
-            const dwell=Math.max(0,now-(d.lastStatusAt||now));
-            const lines=[
-              'Cloud timing diagnostic',
-              'Status: '+status+' · '+(dwell/1000).toFixed(1)+'s',
-              lastWrite?('Last write: '+(lastWrite.durationMs/1000).toFixed(1)+'s · '+(lastWrite.paths||[]).join('+')):'Last write: —',
-              'Queue: '+(getQueue?getQueue().length:'—'),
-              '',
-              ...ev.map(x=>{
-                if(x.kind==='status')return (x.from||'—')+' → '+x.to+' · '+((x.dwellMs||0)/1000).toFixed(1)+'s';
-                if(x.kind==='write-start')return 'write start · '+(x.reason||'');
-                if(x.kind==='write-ok')return 'write ok · '+((x.durationMs||0)/1000).toFixed(1)+'s';
-                return x.kind||'event';
-              })
-            ];
-            alert(lines.join('\n'));
-          }catch(e){ alert('Cloud timing diagnostic unavailable'); }
-        });
-      }
-    }catch(e){}
   }
 
   function serializeBudgetCats(list){
@@ -12756,8 +12703,6 @@ auth.onAuthStateChanged(async user=>{
     return value;
   }
   async function writeCloud(data,reason,expectedUid,options){
-    const __mongoDiagWriteStart=Date.now();
-    try{ mongoCloudDiagEvent('write-start',{reason:reason||'auto'}); }catch(e){}
     const isClearTombstone=reason==='clear-tombstone';
     const isExplicitRestore=!!(options&&options.explicitRestore);
     if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
@@ -12851,12 +12796,6 @@ auth.onAuthStateChanged(async user=>{
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
     saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
     saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
-    try{
-      const d=window.MONGO_CLOUD_TIMING_DIAG;
-      const row={at:Date.now(),reason:reason||'auto',durationMs:Date.now()-__mongoDiagWriteStart,paths:savedPaths.slice()};
-      if(d){d.writes.push(row);if(d.writes.length>30)d.writes.shift();}
-      mongoCloudDiagEvent('write-ok',row);
-    }catch(e){}
     return {ok:true,paths:savedPaths,partial:false};
   }
 
@@ -16300,9 +16239,12 @@ const TXT={
 const q=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
 function archiveBox(root,cards,label){if(!root||!cards.length)return;const d=document.createElement('details');d.className='mongo-archive-box';d.innerHTML=`<summary><span>${q().done} <span class="mongo-archive-badge">${cards.length}</span></span></summary><div class="mongo-archive-list"></div>`;const box=d.querySelector('.mongo-archive-list');cards.forEach(c=>box.appendChild(c));root.appendChild(d);}
 function mark(card,label){if(!card)return;const title=card.querySelector('.mongo-object-title');if(title&&!title.querySelector('.mongo-archive-badge'))title.insertAdjacentHTML('beforeend',`<span class="mongo-archive-badge">✓ ${label}</span>`);}
-function wrapGoals(){if(typeof window.rGoals!=='function'||window.rGoals.__archiveWrapped)return;const base=window.rGoals;function next(){base();const root=document.getElementById('goals-list');if(!root||!Array.isArray(goals)||!window.MongoArchive)return;const ordered=typeof goalsByProgress==='function'?goalsByProgress():goals.slice();const cards=[...root.children].filter(x=>x.classList.contains('inv-card'));const archived=[];ordered.forEach((g,i)=>{if(window.MongoArchive.goalArchived?window.MongoArchive.goalArchived(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved):window.MongoArchive.goalCompleted(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved)){mark(cards[i],g.archiveReason==='goal_switched'?({
+function wrapGoals(){if(typeof window.rGoals!=='function'||window.rGoals.__archiveWrapped)return;const base=window.rGoals;function next(){base();const root=document.getElementById('goals-list');if(!root||!Array.isArray(goals)||!window.MongoArchive)return;const ordered=typeof goalsByProgress==='function'?goalsByProgress():goals.slice();const cards=[...root.children].filter(x=>x.classList.contains('inv-card'));const archived=[];ordered.forEach((g,i)=>{if(window.MongoArchive.goalArchived?window.MongoArchive.goalArchived(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved):window.MongoArchive.goalCompleted(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved)){
+ const __central=(window.MongoDictionaries?.LANGS?.[(typeof lang!=='undefined'?lang:'mn')]||window.MongoDictionaries?.LANGS?.mn||{});
+ const __label=g.archiveReason==='savings_account_cancelled'?(__central.cancelledArchive||'Данс цуцлагдсан · Архив'):(g.archiveReason==='goal_switched'?({
 mn:'Зорилгоо сольсон',en:'Goal changed',zh:'已更换目标',ja:'目標を変更',ko:'목표 변경',ru:'Цель изменена',de:'Ziel gewechselt'
-}[lang]||'Goal changed'):q().goal);archived.push(cards[i]);}});archiveBox(root,archived,q().goal);}next.__archiveWrapped=true;window.rGoals=next;}
+}[lang]||'Goal changed'):q().goal);
+ mark(cards[i],__label);archived.push(cards[i]);}});archiveBox(root,archived,q().goal);}next.__archiveWrapped=true;window.rGoals=next;}
 function wrapDebts(){if(typeof window.rDebts!=='function'||window.rDebts.__archiveWrapped)return;const base=window.rDebts;function next(){base();const root=document.getElementById('debts-list');if(!root||!Array.isArray(debts)||!window.MongoArchive)return;const ordered=[...debts].sort((a,b)=>(a.active===false)-(b.active===false));const cards=[...root.children].filter(x=>x.classList.contains('inv-card'));const archived=[];ordered.forEach((d,i)=>{const rem=typeof getDebtRemaining==='function'?getDebtRemaining(d):d.remaining;if(window.MongoArchive.debtCompleted(d,rem)){mark(cards[i],q().debt);archived.push(cards[i]);}});archiveBox(root,archived,q().debt);}next.__archiveWrapped=true;window.rDebts=next;}
 window.setInvestGroupArchived=function(key,value){const now=new Date().toISOString();(invests||[]).filter(x=>investGroupKey(x)===key).forEach(x=>{if(value)x.archivedAt=now;else delete x.archivedAt;});saveData();rAll();rDonut('inv');uDash();};
 function wrapInvests(){if(typeof window.rInvests!=='function'||window.rInvests.__archiveWrapped)return;const base=window.rInvests;function next(){base();const root=document.getElementById('invest-list');if(!root||!Array.isArray(invests)||!window.MongoArchive)return;const groups=getInvestGroups().sort((a,b)=>b.current-a.current),cards=[...root.children].filter(x=>x.classList.contains('inv-card')),archived=[];groups.forEach((g,i)=>{const card=cards[i];if(!card)return;const safe=String(g.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'");const isArchived=window.MongoArchive.assetGroupArchived(g);const actions=card.querySelector('.portfolio-group-head>div:last-child');if(actions&&!actions.querySelector('.mongo-archive-action'))actions.insertAdjacentHTML('beforeend',`<button class="btn btn-sm mongo-archive-action" onclick="${isArchived?`setInvestGroupArchived('${safe}',false)`:`if(confirm(qArchive()))setInvestGroupArchived('${safe}',true)`}">${isArchived?q().restore:q().archive}</button>`);if(isArchived){mark(card,q().asset);archived.push(card);}});archiveBox(root,archived,q().asset);}next.__archiveWrapped=true;window.rInvests=next;}
@@ -18268,7 +18210,8 @@ const oldDetail=accountInlineDetail;
 accountInlineDetail=function(a){
  const base=oldDetail(a);
  if(String(expandedMoneyAccountId)!==String(a.id)||typ(a)!=='savings'||a.depositTermType!=='term'||!a.allowsEarlyTermination)return base;
- return base+`<div class="mongo-cancel-btn"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsCancelV1('${a.id}')">Хадгаламж цуцлах</button></div>`;
+ const __cl=(window.MongoDictionaries?.LANGS?.[(typeof lang!=='undefined'?lang:'mn')]||window.MongoDictionaries?.LANGS?.mn||{});
+ return base+`<div class="mongo-cancel-btn"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsCancelV1('${a.id}')">${__cl.cancelSavings||'Хадгаламж цуцлах'}</button></div>`;
 };
 })();
 </script>
@@ -18547,7 +18490,8 @@ accountInlineDetail=function(a){
   /* V13 only restores the action for interest credited to the savings itself.
      External payout remains owned by the tested V9/V12 flow. */
   if(html.includes('openMongoSavingsDepositInterestV13'))return html;
-  return html+`<div class="mongo-savings-interest-income-v13"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsDepositInterestV13('${esc13(a.id)}')">＋ Хүүгийн орлого</button></div>`;
+  const __il=(window.MongoDictionaries?.LANGS?.[(typeof lang!=='undefined'?lang:'mn')]||window.MongoDictionaries?.LANGS?.mn||{});
+   return html+`<div class="mongo-savings-interest-income-v13"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsDepositInterestV13('${esc13(a.id)}')">${__il.addInterest||'＋ Хүүгийн орлого'}</button></div>`;
 };
 })();
 </script>
@@ -18843,6 +18787,9 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
    Existing MongoArchive.goalActive/goalArchived logic then excludes it from active goal selectors.
 */
 window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
+</script>
+<script id="mongo-cancel-central-i18n-v26-marker">
+window.MONGO_CANCEL_CENTRAL_I18N_V26='V26';
 </script>
 </body>
 </html>
