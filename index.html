@@ -18628,7 +18628,7 @@ window.openMongoSavingsCancelV1=function(id){
  const q=T(),trs=transferRows(a),start=a.startDate||a.openingDate||a.createdDate||a.date||'';
  const m=document.createElement('div');m.id='mongo-savings-cancel-stage1';m.className='loan-modal-backdrop';
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900">${esc(q.title)} · ${esc(a.name||'')}</div><div class="mrc1-note">${esc(q.note)}</div>
- <div class="mrc1-card"><div class="mrc1-title">${esc(q.preview)}</div><div class="mrc1-row"><span>${esc(q.account)}</span><b>${esc(a.name||'')}</b></div><div class="mrc1-row"><span>${esc(q.balance)}</span><b>${money(bal(a))}</b></div><div class="mrc1-row"><span>${esc(q.start)}</span><b>${esc(dateOnly(start))}</b></div><div class="mrc1-row"><span>${esc(q.rate)}</span><b>${n(a.annualInterestRate||a.interestRate)}%</b></div><div class="mrc1-row"><span>${esc(q.rule)}</span><b>${esc(ruleName(a.earlyTerminationRule,q))}</b></div><div class="mrc1-row"><span>${esc(q.fee)}</span><b>${money(a.earlyTerminationFee)}</b></div></div>
+ <div class="mrc1-card"><div class="mrc1-title">${esc(q.preview)}</div><div class="mrc1-row"><span>${esc(q.account)}</span><b>${esc(a.name||'')}</b></div><div class="mrc1-row"><span>${esc(q.balance)}</span><b>${money(bal(a))}</b></div><div class="mrc1-row"><span>${esc(q.start)}</span><b>${esc(dateOnly(start))}</b></div><div class="mrc1-row"><span>${esc(q.rate)}</span><b>${n(a.annualInterestRate||a.interestRate)}%</b></div><div class="mrc1-row mrc1-rule-row"><span>${esc(q.rule)}</span><b>${esc(ruleName(a.earlyTerminationRule,q))}</b></div><div class="mrc1-row"><span>${esc(q.fee)}</span><b>${money(a.earlyTerminationFee)}</b></div></div>
  ${reconcile(a,q)}
  ${interestClassify(a,q)}
  <div class="mrc1-card"><div class="mrc1-title">${esc(q.transfers)}</div>${trs.length?trs.map(x=>`<div class="mrc1-transfer"><span>${esc(dateOnly(x.date))}</span><b>${money(x.amount)}</b></div>`).join(''):`<div class="mrc1-note">${esc(q.none)}</div>`}</div>
@@ -18797,6 +18797,23 @@ window.MONGO_CANCEL_CENTRAL_I18N_V26='V26';
 #mongo-savings-cancel-stage1 .mrc1-row>b{white-space:nowrap;flex:0 0 auto;max-width:46%;overflow-wrap:normal;word-break:normal}
 </style>
 <script id="mongo-cancel-v27-marker">window.MONGO_CANCEL_CENTRAL_I18N_V27='V27';</script>
+
+<style id="mongo-cancel-rule-wrap-v28">
+/* V28: only the long cancellation-rule value may wrap inside its own card. */
+#mongo-savings-cancel-stage1 .mrc1-rule-row{align-items:flex-start}
+#mongo-savings-cancel-stage1 .mrc1-rule-row>span{flex:0 0 42%;min-width:0}
+#mongo-savings-cancel-stage1 .mrc1-rule-row>b{
+  flex:1 1 58%;
+  min-width:0;
+  max-width:58%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  text-align:right;
+  line-height:1.35;
+}
+</style>
+<script id="mongo-cancel-rule-wrap-v28-marker">window.MONGO_CANCEL_RULE_WRAP_V28='V28';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
