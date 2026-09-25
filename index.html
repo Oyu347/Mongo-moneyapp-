@@ -18946,3 +18946,66 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 const mo=new MutationObserver(()=>compactRows());mo.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>compactRows(),0);setTimeout(()=>compactRows(),500);
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V30 — Expense category picker uses Budget as source of truth. -->
+<script id="mongo-v30-bank-expense-picker-fix">
+(function(){
+'use strict';
+window.MONGO_BANK_EXPENSE_PICKER_FIX='V30';
+const FLOW_KEYS=new Set(['loan_cat','savings_cat','invest_cat']);
+const SYSTEM_KEYS=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
+function cleanAndSync(){
+  if(typeof bCatsExp==='undefined'||typeof expCats==='undefined')return false;
+  let changed=false;
+  // Remove only malformed/orphan custom transaction categories. Budget remains source of truth.
+  const budgetCustomNames=new Set((bCatsExp||[]).filter(c=>c&&!c.key).map(c=>{try{return String(cN(c)||'').trim()}catch(_){return String(c.name||'').trim()}}).filter(Boolean));
+  const before=expCats.length;
+  expCats=expCats.filter(c=>{
+    if(!c)return false;
+    if(c.key)return SYSTEM_KEYS.has(c.key) || (bCatsExp||[]).some(b=>b&&b.key===c.key);
+    let nm='';try{nm=String(cN(c)||'').trim()}catch(_){nm=String(c.name||'').trim()}
+    return !!nm && budgetCustomNames.has(nm);
+  });
+  if(expCats.length!==before)changed=true;
+  // Mirror valid custom Budget categories into transaction metadata, without duplicates.
+  for(const b of (bCatsExp||[])){
+    if(!b||b.key)continue;
+    const nm=String((()=>{try{return cN(b)}catch(_){return b.name||''}})()||'').trim();
+    if(!nm)continue;
+    if(!expCats.some(c=>!c.key&&String((()=>{try{return cN(c)}catch(_){return c.name||''}})()||'').trim()===nm)){
+      expCats.push({name:nm,icon:b.icon||'💡',color:b.color||'#607D8B'});changed=true;
+    }
+  }
+  return changed;
+}
+// Final expense picker source: Budget categories, excluding dedicated system flows.
+// This makes Bank expenses/Bank fee visible immediately and prevents deleted/orphan rows reappearing.
+const priorGCats=gCats;
+gCats=function(){
+  if(curType!=='expense')return priorGCats();
+  cleanAndSync();
+  const seen=new Set(),out=[];
+  for(const c of (Array.isArray(bCatsExp)?bCatsExp:[])){
+    if(!c||FLOW_KEYS.has(c.key))continue;
+    let nm='';try{nm=String(cN(c)||'').trim()}catch(_){nm=String(c.name||c.key||'').trim()}
+    if(!nm)continue;
+    const id=c.key?'k:'+c.key:'n:'+nm.toLocaleLowerCase();
+    if(seen.has(id))continue;seen.add(id);
+    out.push(c);
+  }
+  return out;
+};
+function refresh(){
+  const changed=cleanAndSync();
+  try{if(typeof rCatSel==='function')rCatSel();if(typeof rTChips==='function')rTChips();}catch(_){ }
+  if(changed){try{if(typeof saveData==='function')saveData();}catch(_){ }}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,1200),{once:true});
+else setTimeout(refresh,1200);
+window.addEventListener('pageshow',()=>setTimeout(refresh,250));
+// Language changes only need a one-shot re-render; no DOM observer is used.
+try{if(typeof setLang==='function'&&!setLang.__mongoV30){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(refresh,0);return r};setLang.__mongoV30=true;}}catch(_){ }
+window.MongoExpenseCategoryV30={refresh,cleanAndSync};
+})();
+</script>
