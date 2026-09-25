@@ -19009,3 +19009,113 @@ try{if(typeof setLang==='function'&&!setLang.__mongoV30){const old=setLang;setLa
 window.MongoExpenseCategoryV30={refresh,cleanAndSync};
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V32 — cancellation amount layout + reliable clawback activity + plan-status snapshot -->
+<style id="mongo-v32-cancel-amount-nowrap">
+/* Scoped only to the real savings-cancellation modal. Keep monetary values on one line. */
+#mongo-savings-cancel-stage1 .mrc1-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) max-content!important;
+  align-items:start!important;
+  column-gap:10px!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>span{min-width:0!important;overflow-wrap:anywhere}
+#mongo-savings-cancel-stage1 .mrc1-row>b{
+  min-width:0!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  font-size:clamp(11px,3.15vw,13px)!important;
+  font-variant-numeric:tabular-nums;
+}
+</style>
+<script id="mongo-v32-cancel-history-budget-status">
+(function(){
+'use strict';
+window.MONGO_CANCEL_UI_BUDGET_STATUS='V32';
+
+/* 1) Interest clawback is a transfer-ledger economic adjustment.
+      Build its visible activity directly from that source, so it cannot disappear
+      merely because a generic transaction normalizer ignores type=adjustment. */
+try{
+  const baseUnified=(typeof unifiedActivities==='function')?unifiedActivities:null;
+  if(baseUnified&&!baseUnified.__mongoV32){
+    const wrapped=function(){
+      const base=baseUnified.apply(this,arguments)||[];
+      const seen=new Set(base.filter(x=>x&&x.savingsInterestAdjustment).map(x=>String(x.sourceTransferId||'')));
+      const extra=(Array.isArray(accountTransfers)?accountTransfers:[]).filter(tr=>tr&&tr.purpose==='interest_adjustment'&&Number(tr.amount)>0&&!seen.has(String(tr.id||''))).map(tr=>({
+        id:'activity_'+String(tr.id||''),
+        type:'adjustment',
+        desc:tr.description||'Хүүгийн буцаан тохируулга',
+        catName:'Хүүгийн буцаан тохируулга',
+        amount:Math.round(Number(tr.amount)||0),
+        date:tr.date,
+        accountId:tr.fromId||null,
+        savingsInterestAdjustment:true,
+        excludeFromBudget:true,
+        skipAccountBalance:true,
+        sourceTransferId:tr.id,
+        savingsCancellationId:tr.savingsCancellationId||null,
+        createdAt:tr.createdAt||tr.updatedAt||null
+      }));
+      return base.concat(extra);
+    };
+    wrapped.__mongoV32=true;
+    unifiedActivities=wrapped;
+  }
+}catch(e){console.warn('V32 clawback activity install skipped',e)}
+
+/* 2) A transaction's "planned/unplanned" badge describes the plan state when the
+      transaction was created. Once captured, later editing the plan/budget amount
+      must not rewrite that historical label. */
+try{
+  const dynamicBudgeted=(typeof isTxnBudgeted==='function')?isTxnBudgeted:null;
+  if(dynamicBudgeted&&!dynamicBudgeted.__mongoV32){
+    const wrapped=function(t){
+      if(t&&typeof t.budgetedAtCreation==='boolean')return t.budgetedAtCreation;
+      return dynamicBudgeted.apply(this,arguments);
+    };
+    wrapped.__mongoV32=true;
+    wrapped.__mongoDynamic=dynamicBudgeted;
+    isTxnBudgeted=wrapped;
+  }
+}catch(e){console.warn('V32 budget status install skipped',e)}
+
+/* Capture the snapshot only for genuinely new rows at their first save.
+   This avoids guessing the historical state of old transactions. */
+try{
+  const baseSave=(typeof saveData==='function')?saveData:null;
+  if(baseSave&&!baseSave.__mongoV32){
+    const wrapped=function(){
+      try{
+        const now=Date.now();
+        const dyn=isTxnBudgeted&&isTxnBudgeted.__mongoDynamic;
+        if(typeof dyn==='function'&&Array.isArray(txns)){
+          for(const t of txns){
+            if(!t||typeof t.budgetedAtCreation==='boolean'||t.savingsInterestAdjustment)continue;
+            const ts=Date.parse(t.createdAt||'');
+            /* Most ordinary entry paths do not carry createdAt. For those, capture
+               only when the row has just been inserted at the front during this session. */
+            const freshByTime=Number.isFinite(ts)&&Math.abs(now-ts)<15000;
+            const freshCancellation=!!t.savingsCancellationId&&(!ts||freshByTime);
+            if(freshByTime||freshCancellation){
+              try{t.budgetedAtCreation=!!dyn(t)}catch(_){}
+            }
+          }
+        }
+      }catch(_){}
+      return baseSave.apply(this,arguments);
+    };
+    wrapped.__mongoV32=true;
+    saveData=wrapped;
+  }
+}catch(e){console.warn('V32 save snapshot install skipped',e)}
+
+/* Refresh views once after Cloud/local data have mounted. */
+setTimeout(()=>{
+  try{if(typeof rRecent==='function')rRecent()}catch(_){}
+  try{if(typeof rTxns==='function')rTxns()}catch(_){}
+},1400);
+})();
+</script>
