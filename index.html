@@ -12503,11 +12503,24 @@ auth.onAuthStateChanged(async user=>{
       const d=window.MONGO_CLOUD_TIMING_DIAG, now=Date.now();
       const next=status||syncStatus;
       if(d && next!==d.lastStatus){
-        mongoCloudDiagEvent('status',{from:d.lastStatus||'',to:next,dwellMs:now-(d.lastStatusAt||now),detail:detail||''});
+        const prev=d.lastStatus||'';
+        if((next==='waiting'||next==='pending') && (prev===''||prev==='synced'||prev==='offline'||prev==='error')) d.syncCycleStartedAt=now;
+        mongoCloudDiagEvent('status',{from:prev,to:next,dwellMs:now-(d.lastStatusAt||now),detail:detail||''});
         d.lastStatus=next; d.lastStatusAt=now;
       }
     }catch(e){}
     syncStatus=status||syncStatus;
+    try{
+      const d=window.MONGO_CLOUD_TIMING_DIAG;
+      if(d && syncStatus==='synced' && d.events && d.events.length){
+        const transitions=d.events.filter(x=>x&&x.kind==='status');
+        const last=transitions[transitions.length-1];
+        if(last && last.to==='synced'){
+          const totalMs=Math.max(0,Date.now()-(d.syncCycleStartedAt||d.installedAt||Date.now()));
+          window.MONGO_CLOUD_LAST_SYNC_SECONDS=(totalMs/1000).toFixed(1);
+        }
+      }
+    }catch(e){}
     const el=document.getElementById('mongo-sync-status');
     const dot=document.getElementById('mongo-sync-dot');
     const txt=document.getElementById('mongo-sync-text');
@@ -12520,7 +12533,10 @@ auth.onAuthStateChanged(async user=>{
       waiting:{label:{mn:'Sync бэлдэж байна',en:'Preparing sync',zh:'准备同步',ja:'同期準備中',ko:'동기화 준비 중',ru:'Подготовка синхронизации',de:'Sync wird vorbereitet'},icon:'●',cls:'waiting'}
     };
     const m=map[syncStatus]||map.waiting; const l=(typeof lang!=='undefined'?lang:'mn');
-    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt)txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
+    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt){
+      txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
+      if(syncStatus==='synced' && window.MONGO_CLOUD_LAST_SYNC_SECONDS) txt.textContent+=' · '+window.MONGO_CLOUD_LAST_SYNC_SECONDS+' сек';
+    }
   }
 
   function ensureSyncStatusUI(){
