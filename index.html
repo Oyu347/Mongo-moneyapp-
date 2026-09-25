@@ -12484,7 +12484,29 @@ auth.onAuthStateChanged(async user=>{
   }
   function saveMeta(meta){ try{ localStorage.setItem(uidKey(META_KEY_PREFIX), JSON.stringify(Object.assign({updatedAt:nowIso()},meta||{}))); }catch(e){} }
 
+  
+  // V24 CLOUD TIMING DIAGNOSTIC ONLY.
+  // Measures status dwell time and cloud write duration. Does not change save/queue behavior.
+  window.MONGO_CLOUD_TIMING_DIAG = window.MONGO_CLOUD_TIMING_DIAG || {
+    installedAt: Date.now(), lastStatusAt: Date.now(), lastStatus: '', events: [], writes: []
+  };
+  function mongoCloudDiagEvent(kind, data){
+    try{
+      const d=window.MONGO_CLOUD_TIMING_DIAG;
+      d.events.push(Object.assign({at:Date.now(),kind:kind},data||{}));
+      if(d.events.length>80)d.events.splice(0,d.events.length-80);
+    }catch(e){}
+  }
+
   function updateSyncStatus(status, detail){
+    try{
+      const d=window.MONGO_CLOUD_TIMING_DIAG, now=Date.now();
+      const next=status||syncStatus;
+      if(d && next!==d.lastStatus){
+        mongoCloudDiagEvent('status',{from:d.lastStatus||'',to:next,dwellMs:now-(d.lastStatusAt||now),detail:detail||''});
+        d.lastStatus=next; d.lastStatusAt=now;
+      }
+    }catch(e){}
     syncStatus=status||syncStatus;
     const el=document.getElementById('mongo-sync-status');
     const dot=document.getElementById('mongo-sync-dot');
@@ -12519,6 +12541,34 @@ auth.onAuthStateChanged(async user=>{
       else bar.appendChild(el);
     }
     updateSyncStatus(navigator.onLine?'waiting':'offline');
+    try{
+      if(el && !el.dataset.mongoCloudDiagTap){
+        el.dataset.mongoCloudDiagTap='1';
+        el.addEventListener('click',function(){
+          try{
+            const d=window.MONGO_CLOUD_TIMING_DIAG||{};
+            const now=Date.now(), ev=(d.events||[]).slice(-8);
+            const lastWrite=(d.writes||[]).slice(-1)[0];
+            const status=d.lastStatus||syncStatus||'';
+            const dwell=Math.max(0,now-(d.lastStatusAt||now));
+            const lines=[
+              'Cloud timing diagnostic',
+              'Status: '+status+' · '+(dwell/1000).toFixed(1)+'s',
+              lastWrite?('Last write: '+(lastWrite.durationMs/1000).toFixed(1)+'s · '+(lastWrite.paths||[]).join('+')):'Last write: —',
+              'Queue: '+(getQueue?getQueue().length:'—'),
+              '',
+              ...ev.map(x=>{
+                if(x.kind==='status')return (x.from||'—')+' → '+x.to+' · '+((x.dwellMs||0)/1000).toFixed(1)+'s';
+                if(x.kind==='write-start')return 'write start · '+(x.reason||'');
+                if(x.kind==='write-ok')return 'write ok · '+((x.durationMs||0)/1000).toFixed(1)+'s';
+                return x.kind||'event';
+              })
+            ];
+            alert(lines.join('\n'));
+          }catch(e){ alert('Cloud timing diagnostic unavailable'); }
+        });
+      }
+    }catch(e){}
   }
 
   function serializeBudgetCats(list){
@@ -12690,6 +12740,8 @@ auth.onAuthStateChanged(async user=>{
     return value;
   }
   async function writeCloud(data,reason,expectedUid,options){
+    const __mongoDiagWriteStart=Date.now();
+    try{ mongoCloudDiagEvent('write-start',{reason:reason||'auto'}); }catch(e){}
     const isClearTombstone=reason==='clear-tombstone';
     const isExplicitRestore=!!(options&&options.explicitRestore);
     if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
@@ -12783,6 +12835,12 @@ auth.onAuthStateChanged(async user=>{
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
     saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
     saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    try{
+      const d=window.MONGO_CLOUD_TIMING_DIAG;
+      const row={at:Date.now(),reason:reason||'auto',durationMs:Date.now()-__mongoDiagWriteStart,paths:savedPaths.slice()};
+      if(d){d.writes.push(row);if(d.writes.length>30)d.writes.shift();}
+      mongoCloudDiagEvent('write-ok',row);
+    }catch(e){}
     return {ok:true,paths:savedPaths,partial:false};
   }
 
@@ -18770,132 +18828,6 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 */
 window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
 </script>
-
-<!-- Möngö PHONE TEST V25 — cancellation i18n + cancelled-account goal archive reason.
-     UI-only localization/status patch. No financial, cloud, restore, budget or settlement arithmetic changed. -->
-<script id="mongo-v25-cancel-i18n-goal-reason">
-(function(){
-'use strict';
-const D={
- mn:{
-  cancelBtn:'Хадгаламж цуцлах',interestBtn:'＋ Хүүгийн орлого',cancelledGoal:'Данс цуцлагдсан · Архив',
-  cancelDate:'Цуцлах огноо',preview:'Бодит цуцлалтын урьдчилсан тооцоо',principal:'Хүү бодох үндсэн мөнгө',
-  prior:'Өмнө олгосон / нэмэгдсэн хүү',allowed:'Цуцлалтаар зөвшөөрөгдөх нийт хүү',adjust:'Хүүгийн тохируулга',
-  fee:'Цуцлалтын шимтгэл',receive:'Хүлээн авах урьдчилсан дүн',opening:'Эхний үлдэгдэл',additional:'Нэмэлт шилжүүлэг',
-  bankActual:'Банкны бодит нийт хүү (₮)',bankPlaceholder:'Банкнаас өгсөн бодит нийт хүүг оруулна',
-  bankNote:'Энэ дүн зөвхөн урьдчилсан цуцлалтын тооцоонд ашиглагдана. Данс, гүйлгээ, төсөвт өөрчлөлт хийхгүй.',
-  match:'Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд ангилсан үндсэн мөнгөтэй таарч байна.'
- },
- en:{
-  cancelBtn:'Terminate deposit',interestBtn:'＋ Interest income',cancelledGoal:'Account terminated · Archived',
-  cancelDate:'Termination date',preview:'Actual termination preview',principal:'Principal used for interest',
-  prior:'Interest previously paid / credited',allowed:'Total interest allowed on termination',adjust:'Interest adjustment',
-  fee:'Termination fee',receive:'Estimated amount to receive',opening:'Opening balance',additional:'Additional transfer',
-  bankActual:'Bank actual total interest',bankPlaceholder:'Enter the bank-provided actual total interest',
-  bankNote:'This amount is used only for the termination preview. It does not change accounts, transactions, or budgets.',
-  match:'Opening principal and additional transfers match the classified principal.'
- },
- zh:{
-  cancelBtn:'提前终止存款',interestBtn:'＋ 利息收入',cancelledGoal:'账户已终止 · 已归档',
-  cancelDate:'提前终止日期',preview:'实际提前终止预览',principal:'计息本金',
-  prior:'此前已支付 / 计入的利息',allowed:'提前终止允许的总利息',adjust:'利息调整',
-  fee:'提前终止手续费',receive:'预计到账金额',opening:'期初余额',additional:'追加转入',
-  bankActual:'银行实际总利息',bankPlaceholder:'输入银行提供的实际总利息',
-  bankNote:'此金额仅用于提前终止预览，不会更改账户、交易或预算。',
-  match:'期初本金和追加转入与分类本金一致。'
- },
- ja:{
-  cancelBtn:'預金を解約',interestBtn:'＋ 利息収入',cancelledGoal:'口座解約 · アーカイブ',
-  cancelDate:'解約日',preview:'実際の解約プレビュー',principal:'利息計算の元本',
-  prior:'以前に支払済み / 加算済みの利息',allowed:'解約時に認められる利息合計',adjust:'利息調整',
-  fee:'解約手数料',receive:'受取予定額',opening:'開始残高',additional:'追加振替',
-  bankActual:'銀行の実際の利息合計',bankPlaceholder:'銀行が提示した実際の利息合計を入力',
-  bankNote:'この金額は解約プレビューにのみ使用され、口座・取引・予算は変更されません。',
-  match:'開始元本と追加振替は分類された元本と一致しています。'
- },
- ko:{
-  cancelBtn:'예금 중도해지',interestBtn:'＋ 이자 수입',cancelledGoal:'계좌 해지 · 보관',
-  cancelDate:'중도해지일',preview:'실제 중도해지 미리보기',principal:'이자 계산 원금',
-  prior:'이전에 지급 / 적립된 이자',allowed:'중도해지 시 인정되는 총이자',adjust:'이자 조정',
-  fee:'중도해지 수수료',receive:'예상 수령액',opening:'기초 잔액',additional:'추가 이체',
-  bankActual:'은행 실제 총이자',bankPlaceholder:'은행이 제시한 실제 총이자를 입력',
-  bankNote:'이 금액은 중도해지 미리보기에만 사용되며 계좌, 거래, 예산은 변경하지 않습니다.',
-  match:'기초 원금과 추가 이체가 분류된 원금과 일치합니다.'
- },
- ru:{
-  cancelBtn:'Расторгнуть вклад',interestBtn:'＋ Процентный доход',cancelledGoal:'Счёт закрыт · Архив',
-  cancelDate:'Дата расторжения',preview:'Предварительный расчёт расторжения',principal:'Основная сумма для процентов',
-  prior:'Ранее выплаченные / начисленные проценты',allowed:'Допустимые проценты при расторжении',adjust:'Корректировка процентов',
-  fee:'Комиссия за расторжение',receive:'Предварительно к получению',opening:'Начальный остаток',additional:'Дополнительный перевод',
-  bankActual:'Фактические проценты банка',bankPlaceholder:'Введите фактическую общую сумму процентов банка',
-  bankNote:'Эта сумма используется только для предварительного расчёта и не меняет счета, операции или бюджет.',
-  match:'Начальная сумма и дополнительные переводы совпадают с классифицированной основной суммой.'
- },
- de:{
-  cancelBtn:'Sparanlage kündigen',interestBtn:'＋ Zinseinnahmen',cancelledGoal:'Konto gekündigt · Archiviert',
-  cancelDate:'Kündigungsdatum',preview:'Vorschau der tatsächlichen Kündigung',principal:'Zinsberechtigter Kapitalbetrag',
-  prior:'Bereits gezahlte / gutgeschriebene Zinsen',allowed:'Bei Kündigung zulässige Gesamtzinsen',adjust:'Zinsanpassung',
-  fee:'Kündigungsgebühr',receive:'Voraussichtlicher Auszahlungsbetrag',opening:'Anfangssaldo',additional:'Zusätzliche Überweisung',
-  bankActual:'Tatsächliche Gesamtzinsen der Bank',bankPlaceholder:'Tatsächliche Gesamtzinsen der Bank eingeben',
-  bankNote:'Dieser Betrag wird nur für die Kündigungsvorschau verwendet und ändert keine Konten, Transaktionen oder Budgets.',
-  match:'Anfangskapital und zusätzliche Überweisungen stimmen mit dem klassifizierten Kapital überein.'
- }
-};
-const current=()=>D[(typeof lang!=='undefined'&&D[lang])?lang:'mn'];
-const MN=D.mn;
-const keys=['cancelDate','preview','principal','prior','allowed','adjust','fee','receive','opening','additional','bankActual','bankNote','match'];
-function translateText(root){
- const q=current();
- root.querySelectorAll?.('.mongo-cancel-btn button').forEach(b=>b.textContent=q.cancelBtn);
- root.querySelectorAll?.('.mongo-savings-interest-income-v13 button,.mongo-savings-interest-income-v9 button').forEach(b=>b.textContent=q.interestBtn);
- const modal=root.querySelector?.('#mongo-savings-cancel-stage1') || (root.id==='mongo-savings-cancel-stage1'?root:null);
- if(modal){
-   const walker=document.createTreeWalker(modal,NodeFilter.SHOW_TEXT);
-   const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
-   nodes.forEach(n=>{
-     const raw=n.nodeValue, s=raw.trim(); if(!s)return;
-     for(const k of keys){
-       if(s===MN[k]){ n.nodeValue=raw.replace(s,q[k]); break; }
-     }
-   });
-   const inp=modal.querySelector('#mrc2b-bank-actual');
-   if(inp) inp.placeholder=q.bankPlaceholder;
- }
-}
-function fixArchivedGoalBadges(){
- if(!Array.isArray(window.goals))return;
- const q=current();
- const names=new Set(window.goals.filter(g=>g&&g.archiveReason==='savings_account_cancelled').map(g=>String(g.name||'').trim()).filter(Boolean));
- if(!names.size)return;
- document.querySelectorAll('#goals-list .inv-card,#goal-list .goal-card,#goal-list .inv-card').forEach(card=>{
-   const txt=card.textContent||'';
-   if(![...names].some(n=>txt.includes(n)))return;
-   const badge=card.querySelector('.mongo-archive-badge');
-   if(badge)badge.textContent='✓ '+q.cancelledGoal;
- });
-}
-let busy=false;
-function apply(){
- if(busy)return; busy=true;
- try{translateText(document);fixArchivedGoalBadges();}finally{busy=false}
-}
-const mo=new MutationObserver(()=>{if(!busy)queueMicrotask(apply)});
-if(document.documentElement)mo.observe(document.documentElement,{childList:true,subtree:true});
-document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));
-window.addEventListener('pageshow',()=>setTimeout(apply,0));
-document.addEventListener('click',()=>setTimeout(apply,50),true);
-try{
- if(typeof window.setLang==='function'&&!window.setLang.__mongoV25I18n){
-   const old=window.setLang;
-   window.setLang=function(){const r=old.apply(this,arguments);setTimeout(apply,30);return r};
-   window.setLang.__mongoV25I18n=true;
- }
-}catch(_){}
-setTimeout(apply,0);setTimeout(apply,800);
-window.MONGO_CANCEL_I18N_GOAL_REASON='V25';
-})();
-</script>
-
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
