@@ -4289,6 +4289,9 @@ function isTxnBudgeted(t){
 
 // Txn grouped by month
 function txnsByMonth(){
+  // V28: data may arrive from Cloud after the late patch first ran.
+  // Backfill immediately before rendering so legacy cancellation adjustments appear too.
+  try{if(typeof window.MongoCancelInterestAdjustmentBackfill==='function')window.MongoCancelInterestAdjustmentBackfill();}catch(e){console.warn('interest adjustment history backfill skipped',e)}
   const groups={};
   [...txns].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{
     const ym=t.date?t.date.substring(0,7):'';
@@ -8961,6 +8964,15 @@ function uDash(){
 }
 
 function tRow(t,del){
+  // V28: savings-cancellation interest clawback is an audit-only row.
+  // It must be visible in transaction history, but never count as income/expense/budget
+  // and never move an account balance a second time.
+  if(t&&t.savingsInterestAdjustment){
+    const acc=moneyAccounts.find(a=>String(a.id)===String(t.accountId));
+    const accountChip=acc?`<span style="font-size:10px;color:var(--text2);margin-left:4px">🏦 ${acc.name}</span>`:'';
+    const label=t.catName||'Хүүгийн буцаан тохируулга';
+    return`<div class="list-item"><div class="il"><div class="txn-main-line"><span class="lbl1">${t.desc||label}</span></div><div class="txn-meta-line"><span class="lbl2"><span>↩</span> <span style="color:var(--text2)">${label}</span>${accountChip} · ${t.date||''}</span></div></div><div class="ir"><span class="amt amt-e">-${fmt(Number(t.amount)||0)}</span></div></div>`;
+  }
   const ci=getCatInfo(t.catName,t.type);
   const iv=t.type==='expense'&&expCats.find(c=>cN(c)===t.catName&&isInv(c));
   const isAuto=!!(t.autoPaySelf||iv||t.autoAdded);
@@ -18769,12 +18781,12 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 
 
 <script id="mongo-v27-cancel-interest-adjustment-history">
-/* V27 — cancellation interest clawback audit row.
+/* V28 — cancellation interest clawback audit row.
    Financial effect remains ONLY in accountTransfers(purpose=interest_adjustment).
    The txns row is history-only: type=adjustment, excluded from budget/account balance. */
 (function(){
 'use strict';
-window.MONGO_CANCEL_INTEREST_ADJUSTMENT_HISTORY='V27';
+window.MONGO_CANCEL_INTEREST_ADJUSTMENT_HISTORY='V28';
 function backfill(){
   if(typeof accountTransfers==='undefined'||!Array.isArray(accountTransfers)||typeof txns==='undefined'||!Array.isArray(txns))return false;
   let changed=false;
@@ -18794,18 +18806,9 @@ function backfill(){
   }
   return changed;
 }
-const originalTRow=window.tRow;
-if(typeof originalTRow==='function'){
-  window.tRow=function(t,del){
-    if(!t?.savingsInterestAdjustment)return originalTRow(t,del);
-    const acc=(typeof moneyAccounts!=='undefined'&&Array.isArray(moneyAccounts)?moneyAccounts:[]).find(a=>String(a.id)===String(t.accountId));
-    const accountChip=acc?`<span style="font-size:10px;color:var(--text2);margin-left:4px">🏦 ${String(acc.name||'')}</span>`:'';
-    const amount=typeof fmt==='function'?fmt(Number(t.amount)||0):String(Math.round(Number(t.amount)||0));
-    return `<div class="list-item"><div class="il"><div class="txn-main-line"><span class="lbl1">${String(t.desc||'')}</span></div><div class="txn-meta-line"><span class="lbl2"><span>↩</span> <span style="color:var(--text2)">${String(t.catName||'Хүүгийн буцаан тохируулга')}</span>${accountChip} · ${String(t.date||'')}</span></div></div><div class="ir"><span class="amt amt-e">-${amount}</span></div></div>`;
-  };
-}
+window.MongoCancelInterestAdjustmentBackfill=backfill;
 const changed=backfill();
-if(changed){try{if(typeof saveData==='function')saveData();}catch(e){console.warn('V27 audit backfill save skipped',e)}}
+if(changed){try{if(typeof saveData==='function')saveData();}catch(e){console.warn('V28 audit backfill save skipped',e)}}
 })();
 </script>
 <script id="mongo-v24-cancel-archives-linked-goal-marker">
