@@ -3933,6 +3933,7 @@ const CAT_LABELS={
   loan_cat:{mn:'Зээл',en:'Loan',zh:'贷款',ja:'ローン',ko:'대출',ru:'Кредит',de:'Kredit'},
   household:{mn:'Ахуйн хэрэглээ',en:'Household',zh:'家用',ja:'生活費',ko:'생활비',ru:'Быт',de:'Haushalt'},
   other_exp:{mn:'Бусад',en:'Other',zh:'其他',ja:'その他',ko:'기타',ru:'Прочее',de:'Sonstiges'},
+  bank_expense:{mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'},
   vegs:{mn:'Хүнсний ногоо',en:'Vegetables',zh:'蔬菜',ja:'野菜',ko:'채소',ru:'Овощи',de:'Gemüse'},
   fruits:{mn:'Жимс',en:'Fruits',zh:'水果',ja:'果物',ko:'과일',ru:'Фрукты',de:'Obst'},
   meat:{mn:'Мах/загас',en:'Meat/Fish',zh:'肉/鱼',ja:'肉/魚',ko:'육류',ru:'Мясо',de:'Fleisch'},
@@ -9155,10 +9156,14 @@ function rTxns(){
 
 function matchTxnCat(t,catNm,txnType){
   if(t.type!==txnType)return false;
-  // catKey байвал key-ээр, үгүй бол catName-ээр тохируулна
+  // V27: catKey байвал transaction/budget category-г key-ээр шууд холбоно.
+  // Budget-only/system category (ж. bank_expense) expCats-д байхгүй үед
+  // display name руу унаж бодит дүн 0 болохоос хамгаална.
   if(t.catKey){
     const cats=txnType==='income'?incCats:expCats;
-    const catObj=cats.find(c=>cN(c)===catNm);
+    const budgetCats=txnType==='income'?bCatsInc:bCatsExp;
+    const catObj=cats.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm)
+      ||budgetCats.find(c=>cN(c)===catNm||c.key===catNm||c.name===catNm);
     if(catObj&&catObj.key) return t.catKey===catObj.key;
   }
   return t.catName===catNm;
@@ -18776,6 +18781,7 @@ window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
    No financial, cloud, cancellation, budget, or transaction arithmetic changed. */
 window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 </script>
+<script>window.MONGO_BANK_EXPENSE_KEY_FIX='V27';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
