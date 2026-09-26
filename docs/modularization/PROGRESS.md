@@ -105,3 +105,16 @@ Record exact commits, tests actually performed, unresolved risks and exact next 
 - Commits: Cloud barrier policy `5ad1ad79e53b8d3a37421691df37794134d37e02`; strict runtime clear/verify `a3788eefd12ccd325010e1813e45cd14c82015fb`; regression coverage `a0e463ef4faa553a361115abfc1b27669e6d7ac7`.
 - Local Node regression passed: active barrier blocks stale data, verified five-mirror clear succeeds, partial clear rejects, and stale mirrors fail verification.
 - Remaining requirement: wait for GitHub Actions on the branch head, then wire the verified Phase 2 driver contract into a new phone checkpoint. Do not reuse the V44.12.8 reset checkpoint and do not modify `main`.
+
+## Phone working checkpoint — 2026-09-26
+- Current PHONE-PASS baseline for the active single-file app work: `Mongo-PHONE-TEST-SAVINGS-INTEREST-I18N-SAFE-V36.html`.
+- V37 transaction-history patch is DISCARDED / DO NOT USE. The apparent missing older transactions were caused by the Transactions date filter; V36 already shows 2026 → month groups correctly under `Бүгд / All`.
+- Closed savings cancellation regression fixed and phone-confirmed before V36: legacy cancelled account `Ком` now closes at ₮0; the erroneous -₮200,000 duplicate/non-cash interest-adjustment effect is removed; closed accounts no longer show `Хадгаламж цуцлах` or `+ Хүүгийн орлого` actions; financial consistency indicator returned to ✓.
+- Real cancellation flow phone-confirmed: principal settlement, allowed-interest adjustment, bank fee, receiving-account movement and linked-goal archive remain separate. Principal transfer is not income; cancellation fee is bank expense; interest clawback/adjustment must not be double-counted as a second cash outflow.
+- Bank expense mapping phone-confirmed: internal key `bank_expense` displays as localized Bank expense and cancellation fees contribute to its budget actual without changing the internal key.
+- Savings interest entry V34→V36: `+ Хүүгийн орлого / + Interest income` prefills a calculated amount from current savings balance + contract annual rate + payout frequency, but the user may edit it to the bank's actual credited amount before Save. This is a preview/prefill workflow, not unattended automatic posting.
+- V36 i18n PHONE PASS for the savings action buttons and Interest income modal. Preserve mn/en/zh/ja/ko/ru/de and do not restore the earlier whole-document MutationObserver translation patch.
+- Transaction history behavior: preserve existing year/month collapsible grouping. Older interest-income entries are visible when the date filter is `Бүгд / All`; do not reimplement this behavior.
+- Regression rule for every next phone patch: start from V36 unless a newer version is explicitly PHONE PASS; preserve Cloud serialization/restore safety, closed-account fixes, cancellation rules, linked-goal archive, bank-expense mapping, seven-language savings UI, interest prefill, and Transactions year/month grouping.
+- Avoid patch stacking. If a patch fails, return to the last PHONE-PASS baseline and port only the required fix; remove failed diagnostic/migration patches rather than carrying them forward.
+
