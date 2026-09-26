@@ -18785,60 +18785,7 @@ window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 <script>window.MONGO_BANK_EXPENSE_KEY_FIX='V27';</script>
 
 
-<!-- Möngö PHONE TEST V35 — scoped render-time i18n for savings cancellation / interest actions and V34 interest modal. No observers. -->
-<script id="mongo-savings-interest-i18n-safe-v35">
-(function(){
-'use strict';
-window.MONGO_SAVINGS_INTEREST_I18N_SAFE='V35';
-const D={
- mn:{cancel:'Хадгаламж цуцлах',interest:'+ Хүүгийн орлого',title:'Хүүгийн орлого',depositNote:n=>`Энэ хүү ${n} дансанд өөрт нь нэмэгдэж, хүүгийн орлогоор бүртгэгдэнэ.`,externalNote:'Хүү хадгаламжийн дансанд нэмэгдэхгүй, сонгосон дансанд орлогоор бүртгэгдэнэ.',calc:'Тооцоолсон хүү',month:'сар',quarter:'улирал',year:'жил',term:'хугацаа',actualHelp:'Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.',actual:'Банкнаас бодитоор орсон хүү',date:'Хүү орсон огноо',receive:'Хүлээн авах данс',close:'Болих',save:'Хадгалах'},
- en:{cancel:'Terminate deposit',interest:'+ Interest income',title:'Interest income',depositNote:n=>`This interest is added to ${n} and recorded as interest income.`,externalNote:'The interest is not added to the savings account; it is recorded as income in the selected account.',calc:'Calculated interest',month:'month',quarter:'quarter',year:'year',term:'term',actualHelp:'If the amount actually credited by the bank differs, you can edit the amount below.',actual:'Interest actually credited by bank',date:'Interest credited date',receive:'Receiving account',close:'Cancel',save:'Save'},
- zh:{cancel:'提前支取存款',interest:'+ 利息收入',title:'利息收入',depositNote:n=>`该利息将加入${n}账户，并记录为利息收入。`,externalNote:'利息不会加入存款账户，而是作为收入记入所选账户。',calc:'计算利息',month:'月',quarter:'季度',year:'年',term:'期限',actualHelp:'如果银行实际入账金额不同，可在下方修改。',actual:'银行实际入账利息',date:'利息入账日期',receive:'收款账户',close:'取消',save:'保存'},
- ja:{cancel:'定期預金を中途解約',interest:'+ 利息収入',title:'利息収入',depositNote:n=>`この利息は${n}口座に加算され、利息収入として記録されます。`,externalNote:'利息は預金口座には加算されず、選択した口座の収入として記録されます。',calc:'計算利息',month:'月',quarter:'四半期',year:'年',term:'期間',actualHelp:'銀行の実際の入金額が異なる場合は、下の金額を修正できます。',actual:'銀行が実際に入金した利息',date:'利息入金日',receive:'受取口座',close:'キャンセル',save:'保存'},
- ko:{cancel:'예금 중도 해지',interest:'+ 이자 수입',title:'이자 수입',depositNote:n=>`이 이자는 ${n} 계좌에 추가되고 이자 수입으로 기록됩니다.`,externalNote:'이자는 예금 계좌에 추가되지 않고 선택한 계좌의 수입으로 기록됩니다.',calc:'계산된 이자',month:'월',quarter:'분기',year:'년',term:'기간',actualHelp:'은행에서 실제 입금된 금액이 다르면 아래 금액을 수정할 수 있습니다.',actual:'은행 실제 입금 이자',date:'이자 입금일',receive:'수령 계좌',close:'취소',save:'저장'},
- ru:{cancel:'Досрочно закрыть вклад',interest:'+ Процентный доход',title:'Процентный доход',depositNote:n=>`Эти проценты добавляются на счёт ${n} и учитываются как процентный доход.`,externalNote:'Проценты не добавляются на вклад, а учитываются как доход на выбранном счёте.',calc:'Рассчитанные проценты',month:'месяц',quarter:'квартал',year:'год',term:'срок',actualHelp:'Если фактически зачисленная банком сумма отличается, её можно изменить ниже.',actual:'Фактически зачисленные банком проценты',date:'Дата зачисления процентов',receive:'Счёт получения',close:'Отмена',save:'Сохранить'},
- de:{cancel:'Festgeld vorzeitig kündigen',interest:'+ Zinsertrag',title:'Zinsertrag',depositNote:n=>`Dieser Zins wird dem Konto ${n} gutgeschrieben und als Zinsertrag erfasst.`,externalNote:'Der Zins wird nicht dem Sparkonto gutgeschrieben, sondern als Ertrag auf dem ausgewählten Konto erfasst.',calc:'Berechneter Zins',month:'Monat',quarter:'Quartal',year:'Jahr',term:'Laufzeit',actualHelp:'Wenn der tatsächlich von der Bank gutgeschriebene Betrag abweicht, kann er unten geändert werden.',actual:'Tatsächlich gutgeschriebener Bankzins',date:'Zinsgutschrift am',receive:'Empfangskonto',close:'Abbrechen',save:'Speichern'}
-};
-function q(){return D[(typeof lang==='string'&&D[lang])?lang:'mn']}
-function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function bal(a){try{return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
-function expected(a,dateStr){const b=bal(a),r=Math.max(0,Number(a.annualInterestRate)||0)/100,f=a.interestFrequency||'monthly';if(!(b>0&&r>0))return 0;if(f==='quarterly')return Math.round(b*r/4);if(f==='yearly')return Math.round(b*r);if(f==='maturity'||a.interestMode==='maturity'){const st=new Date(String(a.startDate||'')+'T12:00:00'),ed=new Date(String(dateStr||a.maturityDate||'')+'T12:00:00');if(!Number.isNaN(st.getTime())&&!Number.isNaN(ed.getTime())&&ed>=st){return Math.round(b*r*Math.max(0,Math.round((ed-st)/86400000))/365)}}return Math.round(b*r/12)}
-function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
-function period(a,x){return a.interestFrequency==='quarterly'?x.quarter:a.interestFrequency==='yearly'?x.year:(a.interestFrequency==='maturity'||a.interestMode==='maturity')?x.term:x.month}
-function note(a,amt,x){return `<div class="mongo-interest-auto-v34"><b>${x.calc}: ${money(amt)}</b><br>${money(bal(a))} × ${Number(a.annualInterestRate)||0}% · ${x.period||period(a,x)}<br>${x.actualHelp}</div>`}
-function setup(id,amt){const el=document.getElementById(id);if(!el)return;el.value=String(Math.round(amt));try{if(typeof setupAmtInput==='function')setupAmtInput(el)}catch(_){}}
 
-/* Translate only the savings-account inline HTML at render time. */
-const baseDetail=accountInlineDetail;
-accountInlineDetail=function(a){
- let html=baseDetail(a),x=q();
- if(typ(a)!=='savings')return html;
- return html.replace(/>Хадгаламж цуцлах<\/button>/g,`>${x.cancel}</button>`)
-            .replace(/>＋?\s*Хүүгийн орлого<\/button>/g,`>${x.interest}</button>`)
-            .replace(/>\+\s*Хүүгийн орлого<\/button>/g,`>${x.interest}</button>`);
-};
-
-window.openMongoSavingsDepositInterestV13=function(id){
- const a=(moneyAccounts||[]).find(v=>String(v.id)===String(id));
- if(!a||typ(a)!=='savings'||!(a.interestMode==='compound'||(!a.interestMode&&a.earlyTerminationInterestMethod==='deposit')))return;
- document.getElementById('mongo-savings-interest-income-v13')?.remove();
- const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today),m=document.createElement('div');m.id='mongo-savings-interest-income-v13';m.className='loan-modal-backdrop';
- m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.depositNote(esc(a.name||''))}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v13-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v13-date" type="date" value="${today}"><label>${x.receive}</label><input class="fi" value="${esc(a.name||'')}" disabled><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc(a.id)}')">${x.save}</button></div></div>`;
- document.body.appendChild(m);setup('mongo-si-v13-amount',amt);
-};
-window.openMongoSavingsExternalInterestV9=function(id){
- const a=(moneyAccounts||[]).find(v=>String(v.id)===String(id));
- if(!a||typ(a)!=='savings'||!(a.interestMode==='payout'||(!a.interestMode&&a.earlyTerminationInterestMethod==='external')))return;
- document.getElementById('mongo-savings-interest-income-v9')?.remove();
- const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today);const ids=[a.interestReceiveAccountId,a.interestPayoutAccountId,a.interestAccountId].filter(Boolean);let dest=ids.find(v=>(moneyAccounts||[]).some(y=>String(y.id)===String(v)))||'';if(!dest&&typeof getDefaultAccountId==='function')dest=getDefaultAccountId()||'';
- const opts=(moneyAccounts||[]).filter(v=>v.active!==false&&typ(v)!=='savings').map(v=>`<option value="${esc(v.id)}"${String(v.id)===String(dest)?' selected':''}>${esc(v.name||'')}</option>`).join('');
- const m=document.createElement('div');m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
- m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.externalNote}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>${x.receive}</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">${x.save}</button></div></div>`;
- document.body.appendChild(m);setup('mongo-si-v9-amount',amt);
-};
-})();
-</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -19033,6 +18980,61 @@ window.openMongoSavingsExternalInterestV9=function(id){
   const m=document.createElement('div');m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
   m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">Хүүгийн орлого · ${esc(a.name||'')}</div><div class="flow-only-note">Хүү хадгаламжийн дансанд нэмэгдэхгүй, сонгосон дансанд орлогоор бүртгэгдэнэ.</div>${note(a,amt)}<label>Банкнаас бодитоор орсон хүү</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>Хүү орсон огноо</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>Хүлээн авах данс</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">Болих</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">Хадгалах</button></div></div>`;
   document.body.appendChild(m);setupAmount('mongo-si-v9-amount',amt);
+};
+})();
+</script>
+
+<!-- Möngö PHONE TEST V36 — scoped render-time i18n for savings cancellation / interest actions and V34 interest modal. No observers. -->
+<script id="mongo-savings-interest-i18n-safe-v35">
+(function(){
+'use strict';
+window.MONGO_SAVINGS_INTEREST_I18N_SAFE='V36';
+const D={
+ mn:{cancel:'Хадгаламж цуцлах',interest:'+ Хүүгийн орлого',title:'Хүүгийн орлого',depositNote:n=>`Энэ хүү ${n} дансанд өөрт нь нэмэгдэж, хүүгийн орлогоор бүртгэгдэнэ.`,externalNote:'Хүү хадгаламжийн дансанд нэмэгдэхгүй, сонгосон дансанд орлогоор бүртгэгдэнэ.',calc:'Тооцоолсон хүү',month:'сар',quarter:'улирал',year:'жил',term:'хугацаа',actualHelp:'Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.',actual:'Банкнаас бодитоор орсон хүү',date:'Хүү орсон огноо',receive:'Хүлээн авах данс',close:'Болих',save:'Хадгалах'},
+ en:{cancel:'Terminate deposit',interest:'+ Interest income',title:'Interest income',depositNote:n=>`This interest is added to ${n} and recorded as interest income.`,externalNote:'The interest is not added to the savings account; it is recorded as income in the selected account.',calc:'Calculated interest',month:'month',quarter:'quarter',year:'year',term:'term',actualHelp:'If the amount actually credited by the bank differs, you can edit the amount below.',actual:'Interest actually credited by bank',date:'Interest credited date',receive:'Receiving account',close:'Cancel',save:'Save'},
+ zh:{cancel:'提前支取存款',interest:'+ 利息收入',title:'利息收入',depositNote:n=>`该利息将加入${n}账户，并记录为利息收入。`,externalNote:'利息不会加入存款账户，而是作为收入记入所选账户。',calc:'计算利息',month:'月',quarter:'季度',year:'年',term:'期限',actualHelp:'如果银行实际入账金额不同，可在下方修改。',actual:'银行实际入账利息',date:'利息入账日期',receive:'收款账户',close:'取消',save:'保存'},
+ ja:{cancel:'定期預金を中途解約',interest:'+ 利息収入',title:'利息収入',depositNote:n=>`この利息は${n}口座に加算され、利息収入として記録されます。`,externalNote:'利息は預金口座には加算されず、選択した口座の収入として記録されます。',calc:'計算利息',month:'月',quarter:'四半期',year:'年',term:'期間',actualHelp:'銀行の実際の入金額が異なる場合は、下の金額を修正できます。',actual:'銀行が実際に入金した利息',date:'利息入金日',receive:'受取口座',close:'キャンセル',save:'保存'},
+ ko:{cancel:'예금 중도 해지',interest:'+ 이자 수입',title:'이자 수입',depositNote:n=>`이 이자는 ${n} 계좌에 추가되고 이자 수입으로 기록됩니다.`,externalNote:'이자는 예금 계좌에 추가되지 않고 선택한 계좌의 수입으로 기록됩니다.',calc:'계산된 이자',month:'월',quarter:'분기',year:'년',term:'기간',actualHelp:'은행에서 실제 입금된 금액이 다르면 아래 금액을 수정할 수 있습니다.',actual:'은행 실제 입금 이자',date:'이자 입금일',receive:'수령 계좌',close:'취소',save:'저장'},
+ ru:{cancel:'Досрочно закрыть вклад',interest:'+ Процентный доход',title:'Процентный доход',depositNote:n=>`Эти проценты добавляются на счёт ${n} и учитываются как процентный доход.`,externalNote:'Проценты не добавляются на вклад, а учитываются как доход на выбранном счёте.',calc:'Рассчитанные проценты',month:'месяц',quarter:'квартал',year:'год',term:'срок',actualHelp:'Если фактически зачисленная банком сумма отличается, её можно изменить ниже.',actual:'Фактически зачисленные банком проценты',date:'Дата зачисления процентов',receive:'Счёт получения',close:'Отмена',save:'Сохранить'},
+ de:{cancel:'Festgeld vorzeitig kündigen',interest:'+ Zinsertrag',title:'Zinsertrag',depositNote:n=>`Dieser Zins wird dem Konto ${n} gutgeschrieben und als Zinsertrag erfasst.`,externalNote:'Der Zins wird nicht dem Sparkonto gutgeschrieben, sondern als Ertrag auf dem ausgewählten Konto erfasst.',calc:'Berechneter Zins',month:'Monat',quarter:'Quartal',year:'Jahr',term:'Laufzeit',actualHelp:'Wenn der tatsächlich von der Bank gutgeschriebene Betrag abweicht, kann er unten geändert werden.',actual:'Tatsächlich gutgeschriebener Bankzins',date:'Zinsgutschrift am',receive:'Empfangskonto',close:'Abbrechen',save:'Speichern'}
+};
+function q(){return D[(typeof lang==='string'&&D[lang])?lang:'mn']}
+function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function bal(a){try{return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
+function expected(a,dateStr){const b=bal(a),r=Math.max(0,Number(a.annualInterestRate)||0)/100,f=a.interestFrequency||'monthly';if(!(b>0&&r>0))return 0;if(f==='quarterly')return Math.round(b*r/4);if(f==='yearly')return Math.round(b*r);if(f==='maturity'||a.interestMode==='maturity'){const st=new Date(String(a.startDate||'')+'T12:00:00'),ed=new Date(String(dateStr||a.maturityDate||'')+'T12:00:00');if(!Number.isNaN(st.getTime())&&!Number.isNaN(ed.getTime())&&ed>=st){return Math.round(b*r*Math.max(0,Math.round((ed-st)/86400000))/365)}}return Math.round(b*r/12)}
+function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
+function period(a,x){return a.interestFrequency==='quarterly'?x.quarter:a.interestFrequency==='yearly'?x.year:(a.interestFrequency==='maturity'||a.interestMode==='maturity')?x.term:x.month}
+function note(a,amt,x){return `<div class="mongo-interest-auto-v34"><b>${x.calc}: ${money(amt)}</b><br>${money(bal(a))} × ${Number(a.annualInterestRate)||0}% · ${x.period||period(a,x)}<br>${x.actualHelp}</div>`}
+function setup(id,amt){const el=document.getElementById(id);if(!el)return;el.value=String(Math.round(amt));try{if(typeof setupAmtInput==='function')setupAmtInput(el)}catch(_){}}
+
+/* Translate only the savings-account inline HTML at render time. */
+const baseDetail=accountInlineDetail;
+accountInlineDetail=function(a){
+ let html=baseDetail(a),x=q();
+ if(typ(a)!=='savings')return html;
+ return html.replace(/>Хадгаламж цуцлах<\/button>/g,`>${x.cancel}</button>`)
+            .replace(/>＋?\s*Хүүгийн орлого<\/button>/g,`>${x.interest}</button>`)
+            .replace(/>\+\s*Хүүгийн орлого<\/button>/g,`>${x.interest}</button>`);
+};
+
+window.openMongoSavingsDepositInterestV13=function(id){
+ const a=(moneyAccounts||[]).find(v=>String(v.id)===String(id));
+ if(!a||typ(a)!=='savings'||!(a.interestMode==='compound'||(!a.interestMode&&a.earlyTerminationInterestMethod==='deposit')))return;
+ document.getElementById('mongo-savings-interest-income-v13')?.remove();
+ const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today),m=document.createElement('div');m.id='mongo-savings-interest-income-v13';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.depositNote(esc(a.name||''))}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v13-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v13-date" type="date" value="${today}"><label>${x.receive}</label><input class="fi" value="${esc(a.name||'')}" disabled><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc(a.id)}')">${x.save}</button></div></div>`;
+ document.body.appendChild(m);setup('mongo-si-v13-amount',amt);
+};
+window.openMongoSavingsExternalInterestV9=function(id){
+ const a=(moneyAccounts||[]).find(v=>String(v.id)===String(id));
+ if(!a||typ(a)!=='savings'||!(a.interestMode==='payout'||(!a.interestMode&&a.earlyTerminationInterestMethod==='external')))return;
+ document.getElementById('mongo-savings-interest-income-v9')?.remove();
+ const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today);const ids=[a.interestReceiveAccountId,a.interestPayoutAccountId,a.interestAccountId].filter(Boolean);let dest=ids.find(v=>(moneyAccounts||[]).some(y=>String(y.id)===String(v)))||'';if(!dest&&typeof getDefaultAccountId==='function')dest=getDefaultAccountId()||'';
+ const opts=(moneyAccounts||[]).filter(v=>v.active!==false&&typ(v)!=='savings').map(v=>`<option value="${esc(v.id)}"${String(v.id)===String(dest)?' selected':''}>${esc(v.name||'')}</option>`).join('');
+ const m=document.createElement('div');m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.externalNote}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>${x.receive}</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">${x.save}</button></div></div>`;
+ document.body.appendChild(m);setup('mongo-si-v9-amount',amt);
 };
 })();
 </script>
