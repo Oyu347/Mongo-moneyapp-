@@ -3932,8 +3932,6 @@ const CAT_LABELS={
   savings_cat:{mn:'Хуримтлал',en:'Savings',zh:'储蓄',ja:'貯蓄',ko:'저축',ru:'Сбережения',de:'Ersparnisse'},
   loan_cat:{mn:'Зээл',en:'Loan',zh:'贷款',ja:'ローン',ko:'대출',ru:'Кредит',de:'Kredit'},
   household:{mn:'Ахуйн хэрэглээ',en:'Household',zh:'家用',ja:'生活費',ko:'생활비',ru:'Быт',de:'Haushalt'},
-  bank_expense:{mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'},
-  bank_fee:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},
   other_exp:{mn:'Бусад',en:'Other',zh:'其他',ja:'その他',ko:'기타',ru:'Прочее',de:'Sonstiges'},
   vegs:{mn:'Хүнсний ногоо',en:'Vegetables',zh:'蔬菜',ja:'野菜',ko:'채소',ru:'Овощи',de:'Gemüse'},
   fruits:{mn:'Жимс',en:'Fruits',zh:'水果',ja:'果物',ko:'과일',ru:'Фрукты',de:'Obst'},
@@ -4003,8 +4001,8 @@ const V27_LANG_NAMES={mn:'🇲🇳 Монгол',en:'🇬🇧 English',zh:'🇨�
 const ICOLS={stock:'#185FA5',crypto:'#BA7517',real:'#49b0b6',fund:'#1D9E75',bond:'#5F5E5A',gold:'#EF9F27',other:'#D4537E'};
 const IICONS={vehicle:'🚗',business_asset:'💼',stock:'📈',crypto:'🪙',real:'🏢',fund:'💼',bond:'📄',gold:'🥇',other:'💡'};
 const DEF_INC=new Set(['salary','bonus','business','other_inc']);
-const DEF_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
-const DEF_B_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
+const DEF_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
+const DEF_B_EXP=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','other_exp']);
 const DEF_B_INC=new Set(['salary','bonus','business','asset_income_cat','other_inc']);
 const INVEST_CAT_KEY='invest_cat';
 
@@ -4137,7 +4135,6 @@ let expCats=[
   {key:'savings_cat',icon:'🏦',color:'#43A047'},
   {key:'loan_cat',icon:'💳',color:'#FFB300'},
   {key:'household',icon:'🛒',color:'#795548'},
-  {key:'bank_expense',icon:'🏦',color:'#64748B'},
   {key:'other_exp',icon:'💡',color:'#607D8B'}
 ];
 let bCatsExp=[
@@ -4152,7 +4149,6 @@ let bCatsExp=[
   {key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},
   {key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},
   {key:'household',icon:'🛒',color:'#795548',subs:[]},
-  {key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},
   {key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}
 ];
 let bCatsInc=[
@@ -4293,9 +4289,6 @@ function isTxnBudgeted(t){
 
 // Txn grouped by month
 function txnsByMonth(){
-  // V28: data may arrive from Cloud after the late patch first ran.
-  // Backfill immediately before rendering so legacy cancellation adjustments appear too.
-  try{if(typeof window.MongoCancelInterestAdjustmentBackfill==='function')window.MongoCancelInterestAdjustmentBackfill();}catch(e){console.warn('interest adjustment history backfill skipped',e)}
   const groups={};
   [...txns].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{
     const ym=t.date?t.date.substring(0,7):'';
@@ -7608,15 +7601,6 @@ function addBudgetCat(){
   inp.value='';rBList();saveData();
 }
 
-function removeBudgetCategorySynced(ci,cat){
-  const arr=getBCats(); const removed=arr[ci]; if(!removed)return;
-  arr.splice(ci,1);
-  // Budget is the source of ordinary transaction categories: remove the matching custom chip too.
-  const key=removed.key||null, name=cN(removed);
-  if(budgetType==='expense') expCats=expCats.filter(c=>key?(c.key!==key):(cN(c)!==name));
-  else incCats=incCats.filter(c=>key?(c.key!==key):(cN(c)!==name));
-  try{rCatSel();rTChips();}catch(_){ }
-}
 function rBList(){
   migrateInvestmentTypeLinks();
   const el=document.getElementById('b-cats-list');
@@ -7645,7 +7629,7 @@ function rBList(){
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--text2);min-width:50px">${L.total}:</span>
           <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
-          ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){removeBudgetCategorySynced(${ci},cat);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
+          ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
         ${(cat.subs||[]).map((sb,si)=>{const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
@@ -8977,15 +8961,6 @@ function uDash(){
 }
 
 function tRow(t,del){
-  // V28: savings-cancellation interest clawback is an audit-only row.
-  // It must be visible in transaction history, but never count as income/expense/budget
-  // and never move an account balance a second time.
-  if(t&&t.savingsInterestAdjustment){
-    const acc=moneyAccounts.find(a=>String(a.id)===String(t.accountId));
-    const accountChip=acc?`<span style="font-size:10px;color:var(--text2);margin-left:4px">🏦 ${acc.name}</span>`:'';
-    const label=t.catName||'Хүүгийн буцаан тохируулга';
-    return`<div class="list-item"><div class="il"><div class="txn-main-line"><span class="lbl1">${t.desc||label}</span></div><div class="txn-meta-line"><span class="lbl2"><span>↩</span> <span style="color:var(--text2)">${label}</span>${accountChip} · ${t.date||''}</span></div></div><div class="ir"><span class="amt amt-e">-${fmt(Number(t.amount)||0)}</span></div></div>`;
-  }
   const ci=getCatInfo(t.catName,t.type);
   const iv=t.type==='expense'&&expCats.find(c=>cN(c)===t.catName&&isInv(c));
   const isAuto=!!(t.autoPaySelf||iv||t.autoAdded);
@@ -12110,7 +12085,7 @@ auth.onAuthStateChanged(async user=>{
         window.MONGO_LOCAL_DATA_UPDATED_AT='';
         incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
         expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-        bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+        bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
         bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5' ,subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
       }catch(e){ console.warn('Account isolation pre-reset failed',e); }
     }
@@ -12138,7 +12113,7 @@ auth.onAuthStateChanged(async user=>{
       lockedCats=new Set();
       incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
       expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+      bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
       bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
 
       // Тухайн хэрэглэгчийн өгөгдлийг ачаална
@@ -12625,7 +12600,7 @@ auth.onAuthStateChanged(async user=>{
     if(typeof txns!=='undefined') txns=[]; if(typeof goals!=='undefined') goals=[]; if(typeof debts!=='undefined') debts=[]; if(typeof invests!=='undefined') invests=[]; if(typeof budgets!=='undefined') budgets={}; if(typeof openingBalance!=='undefined') openingBalance=0;if(typeof moneyAccounts!=='undefined')moneyAccounts=[];if(typeof accountTransfers!=='undefined')accountTransfers=[];if(typeof moneyLedger!=='undefined')moneyLedger=[];if(typeof moneyLedgerRevision!=='undefined')moneyLedgerRevision=0;if(typeof moneyLedgerTombstones!=='undefined')moneyLedgerTombstones=[]; if(typeof lockedCats!=='undefined') lockedCats=new Set();
     if(typeof incCats!=='undefined') incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
     if(typeof expCats!=='undefined') expCats=[{key:'food',icon:'🍽️',color:'#F4511E'},{key:'transport',icon:'🚗',color:'#FB8C00'},{key:'housing',icon:'🏠',color:'#00ACC1'},{key:'education',icon:'📚',color:'#3F51B5'},{key:'health',icon:'💊',color:'#E91E63'},{key:'fun',icon:'🎉',color:'#9C27B0'},{key:'clothes',icon:'👗',color:'#7CB342'},{key:'invest_cat',icon:'📈',color:'#5E35B1'},{key:'savings_cat',icon:'🏦',color:'#43A047'},{key:'loan_cat',icon:'💳',color:'#FFB300'},{key:'household',icon:'🛒',color:'#795548'},{key:'other_exp',icon:'💡',color:'#607D8B'}];
-    if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'bank_expense',icon:'🏦',color:'#64748B',subs:[{key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'}]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
+    if(typeof bCatsExp!=='undefined') bCatsExp=[{key:'food',icon:'🍽️',color:'#f4511e',subs:[{key:'vegs',color:'#43a047'},{key:'fruits',color:'#7cb342'},{key:'meat',color:'#f4511e'},{key:'bread',color:'#fb8c00'}]},{key:'transport',icon:'🚗',color:'#FB8C00',subs:[]},{key:'housing',icon:'🏠',color:'#00ACC1',subs:[]},{key:'education',icon:'📚',color:'#3F51B5',subs:[]},{key:'health',icon:'💊',color:'#E91E63',subs:[]},{key:'fun',icon:'🎉',color:'#9C27B0',subs:[]},{key:'clothes',icon:'👗',color:'#7CB342',subs:[]},{key:'invest_cat',icon:'📈',color:'#5E35B1',subs:[]},{key:'savings_cat',icon:'🏦',color:'#43A047',subs:[]},{key:'loan_cat',icon:'💳',color:'#FFB300',subs:[]},{key:'household',icon:'🛒',color:'#795548',subs:[]},{key:'other_exp',icon:'💡',color:'#607D8B',subs:[]}];
     if(typeof bCatsInc!=='undefined') bCatsInc=[{key:'salary',icon:'💰',color:'#43a047',subs:[]},{key:'bonus',icon:'🎁',color:'#00acc1',subs:[]},{key:'business',icon:'💼',color:'#1e88e5',subs:[]},{...assetIncomeDefaultCat(),subs:[]},{key:'other_inc',icon:'📈',color:'#546e7a',subs:[]}];
   }
   function migrateSub(ssub){ if(!ssub)return null; if(ssub.name&&!ssub.names){const migrated=Object.assign({},ssub,{names:{mn:ssub.name}}); if(!migrated.key)migrated.key='custom_'+Math.random().toString(36).slice(2); delete migrated.name; return migrated;} return ssub; }
@@ -15118,11 +15093,11 @@ select.fi{touch-action:pan-y;cursor:pointer}
 <script id="mongo-v4398-central-transaction-core">
 (function(){
   'use strict';
-  const BUILD='V44.02 · CANCEL-AUDIT-V34',MAX_ROWS=5000;
+  const BUILD='V44.02',MAX_ROWS=5000;
   const ledgerKey=()=>`mongo_transaction_ledger_v4398_${window._authUid||'guest'}`;
   const resetBarrierActive=()=>{const uid=window._authUid||'guest';try{if(window.MONGO_HARD_RESET_ACTIVE)return true;const barrier=localStorage.getItem(`mongo_clear_barrier_${uid}`);if(!barrier)return false;const data=JSON.parse(localStorage.getItem(getDBKey())||'{}');return !((data.txns||[]).length||(data.accountTransfers||[]).length||(data.moneyLedger||[]).length||(data.debts||[]).length||(data.goals||[]).length||(data.invests||[]).length);}catch(e){return !!window.MONGO_HARD_RESET_ACTIVE;}};
   const clone=v=>JSON.parse(JSON.stringify(v));
-  const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense'||t.savingsInterestAdjustment===true)&&!t.loanPaymentId&&t.id!=null;
+  const isMoneyTxn=t=>!!t&&(t.type==='income'||t.type==='expense')&&!t.loanPaymentId&&t.id!=null;
   function readLedger(){
     try{const v=JSON.parse(localStorage.getItem(ledgerKey())||'[]');return Array.isArray(v)?v.filter(isMoneyTxn):[];}catch(e){return [];}
   }
@@ -15206,7 +15181,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     const inc=source.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0);
     // Keep the three visible totals mutually exclusive. Loan interest belongs
     // inside the full Loan payment box and must not inflate Expense again.
-    const exp=source.filter(t=>t.type==='expense'&&!t.savingsInterestAdjustment).reduce((s,t)=>s+(Number(t.amount)||0),0);
+    const exp=source.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0);
     const loan=source.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0);
     el.innerHTML=`<div class="txn-sum-box"><div class="txn-sum-lbl">${T.inc}</div><div class="txn-sum-val txn-sum-in">+${fmt(inc)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${T.exp}</div><div class="txn-sum-val txn-sum-out">-${fmt(exp)}</div></div><div class="txn-sum-box"><div class="txn-sum-lbl">${loanLabel()}</div><div class="txn-sum-val txn-sum-transfer">-${fmt(loan)}</div></div>`;
   }
@@ -15216,7 +15191,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     if(searchIsVisible())source=source.filter(coreSearchMatch);renderSummary(source);
     if(!source.length){el.innerHTML=`<div class="txn-search-empty">${L.notxn}</div>`;return;}
     const groups={};source.sort((a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||rowTime(b)-rowTime(a)).forEach(t=>{const ym=dateKey(t.date).slice(0,7);(groups[ym]||(groups[ym]=[])).push(t);});let html='';
-    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),out=items.filter(t=>t.type==='expense'&&!t.savingsInterestAdjustment).reduce((s,t)=>s+(Number(t.amount)||0),0)+items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(out)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
+    Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(ym=>{const p=ym.split('-'),items=groups[ym],inc=items.filter(t=>t.type==='income').reduce((s,t)=>s+(Number(t.amount)||0),0),out=items.filter(t=>t.type==='expense').reduce((s,t)=>s+(Number(t.amount)||0),0)+items.filter(t=>t._loanActivity).reduce((s,t)=>s+(Number(t.amount)||0),0),id='tg_'+ym.replace('-','_');html+=`<div class="month-hdr" onclick="tglGroup('${id}')"><div class="month-hdr-left"><span style="width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block"></span><span class="month-hdr-lbl">${L.months?L.months[parseInt(p[1])-1]:ym} ${p[0]}</span><span class="month-hdr-sum">+${fmt(inc)} / -${fmt(out)}</span></div><span id="arr_${id}">▾</span></div><div id="${id}">${items.map(t=>tRow(t,true)).join('')}</div><div style="margin-bottom:8px"></div>`;});el.innerHTML=html;
   };
   rRecent=function(){
     const el=document.getElementById('recent-list');if(!el)return;const source=moneyActivities().sort((a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||rowTime(b)-rowTime(a));
@@ -16240,20 +16215,20 @@ global.MongoArchive=Object.freeze({goalCompleted,goalArchived,goalActive,debtCom
 (()=>{
 'use strict';
 const TXT={
- mn:{done:'Дууссан / Архив',goal:'Зорилго биелсэн',debt:'Төлөгдөж дууссан',asset:'Архивласан',archive:'Архивлах',restore:'Буцаах',archiveQ:'Энэ хөрөнгийг архивлах уу? Өгөгдөл устахгүй.'},
- en:{done:'Completed / Archive',goal:'Goal completed',debt:'Paid off',asset:'Archived',archive:'Archive',restore:'Restore',archiveQ:'Archive this asset? No data will be deleted.'},
- zh:{done:'已完成 / 归档',goal:'目标已完成',debt:'已还清',asset:'已归档',archive:'归档',restore:'恢复',archiveQ:'归档此资产？不会删除任何数据。'},
- ja:{done:'完了 / アーカイブ',goal:'目標達成',debt:'完済',asset:'アーカイブ済み',archive:'アーカイブ',restore:'戻す',archiveQ:'この資産をアーカイブしますか？データは削除されません。'},
- ko:{done:'완료 / 보관함',goal:'목표 달성',debt:'상환 완료',asset:'보관됨',archive:'보관',restore:'복원',archiveQ:'이 자산을 보관할까요? 데이터는 삭제되지 않습니다.'},
- ru:{done:'Завершено / Архив',goal:'Цель достигнута',debt:'Погашено',asset:'В архиве',archive:'В архив',restore:'Вернуть',archiveQ:'Переместить актив в архив? Данные не будут удалены.'},
- de:{done:'Erledigt / Archiv',goal:'Ziel erreicht',debt:'Abbezahlt',asset:'Archiviert',archive:'Archivieren',restore:'Wiederherstellen',archiveQ:'Diesen Vermögenswert archivieren? Es werden keine Daten gelöscht.'}
+ mn:{done:'Дууссан / Архив',goal:'Зорилго биелсэн',cancelledAccount:'Данс цуцлагдсан · Архив',debt:'Төлөгдөж дууссан',asset:'Архивласан',archive:'Архивлах',restore:'Буцаах',archiveQ:'Энэ хөрөнгийг архивлах уу? Өгөгдөл устахгүй.'},
+ en:{done:'Completed / Archive',goal:'Goal completed',cancelledAccount:'Account cancelled · Archive',debt:'Paid off',asset:'Archived',archive:'Archive',restore:'Restore',archiveQ:'Archive this asset? No data will be deleted.'},
+ zh:{done:'已完成 / 归档',goal:'目标已完成',cancelledAccount:'账户已取消 · 归档',debt:'已还清',asset:'已归档',archive:'归档',restore:'恢复',archiveQ:'归档此资产？不会删除任何数据。'},
+ ja:{done:'完了 / アーカイブ',goal:'目標達成',cancelledAccount:'口座解約 · アーカイブ',debt:'完済',asset:'アーカイブ済み',archive:'アーカイブ',restore:'戻す',archiveQ:'この資産をアーカイブしますか？データは削除されません。'},
+ ko:{done:'완료 / 보관함',goal:'목표 달성',cancelledAccount:'계좌 해지 · 보관함',debt:'상환 완료',asset:'보관됨',archive:'보관',restore:'복원',archiveQ:'이 자산을 보관할까요? 데이터는 삭제되지 않습니다.'},
+ ru:{done:'Завершено / Архив',goal:'Цель достигнута',cancelledAccount:'Счёт закрыт · Архив',debt:'Погашено',asset:'В архиве',archive:'В архив',restore:'Вернуть',archiveQ:'Переместить актив в архив? Данные не будут удалены.'},
+ de:{done:'Erledigt / Archiv',goal:'Ziel erreicht',cancelledAccount:'Konto gekündigt · Archiv',debt:'Abbezahlt',asset:'Archiviert',archive:'Archivieren',restore:'Wiederherstellen',archiveQ:'Diesen Vermögenswert archivieren? Es werden keine Daten gelöscht.'}
 };
 const q=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
 function archiveBox(root,cards,label){if(!root||!cards.length)return;const d=document.createElement('details');d.className='mongo-archive-box';d.innerHTML=`<summary><span>${q().done} <span class="mongo-archive-badge">${cards.length}</span></span></summary><div class="mongo-archive-list"></div>`;const box=d.querySelector('.mongo-archive-list');cards.forEach(c=>box.appendChild(c));root.appendChild(d);}
 function mark(card,label){if(!card)return;const title=card.querySelector('.mongo-object-title');if(title&&!title.querySelector('.mongo-archive-badge'))title.insertAdjacentHTML('beforeend',`<span class="mongo-archive-badge">✓ ${label}</span>`);}
 function wrapGoals(){if(typeof window.rGoals!=='function'||window.rGoals.__archiveWrapped)return;const base=window.rGoals;function next(){base();const root=document.getElementById('goals-list');if(!root||!Array.isArray(goals)||!window.MongoArchive)return;const ordered=typeof goalsByProgress==='function'?goalsByProgress():goals.slice();const cards=[...root.children].filter(x=>x.classList.contains('inv-card'));const archived=[];ordered.forEach((g,i)=>{if(window.MongoArchive.goalArchived?window.MongoArchive.goalArchived(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved):window.MongoArchive.goalCompleted(g,typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):g.saved)){mark(cards[i],g.archiveReason==='goal_switched'?({
 mn:'Зорилгоо сольсон',en:'Goal changed',zh:'已更换目标',ja:'目標を変更',ko:'목표 변경',ru:'Цель изменена',de:'Ziel gewechselt'
-}[lang]||'Goal changed'):q().goal);archived.push(cards[i]);}});archiveBox(root,archived,q().goal);}next.__archiveWrapped=true;window.rGoals=next;}
+}[lang]||'Goal changed'):(g.archiveReason==='savings_account_cancelled'?q().cancelledAccount:q().goal));archived.push(cards[i]);}});archiveBox(root,archived,q().goal);}next.__archiveWrapped=true;window.rGoals=next;}
 function wrapDebts(){if(typeof window.rDebts!=='function'||window.rDebts.__archiveWrapped)return;const base=window.rDebts;function next(){base();const root=document.getElementById('debts-list');if(!root||!Array.isArray(debts)||!window.MongoArchive)return;const ordered=[...debts].sort((a,b)=>(a.active===false)-(b.active===false));const cards=[...root.children].filter(x=>x.classList.contains('inv-card'));const archived=[];ordered.forEach((d,i)=>{const rem=typeof getDebtRemaining==='function'?getDebtRemaining(d):d.remaining;if(window.MongoArchive.debtCompleted(d,rem)){mark(cards[i],q().debt);archived.push(cards[i]);}});archiveBox(root,archived,q().debt);}next.__archiveWrapped=true;window.rDebts=next;}
 window.setInvestGroupArchived=function(key,value){const now=new Date().toISOString();(invests||[]).filter(x=>investGroupKey(x)===key).forEach(x=>{if(value)x.archivedAt=now;else delete x.archivedAt;});saveData();rAll();rDonut('inv');uDash();};
 function wrapInvests(){if(typeof window.rInvests!=='function'||window.rInvests.__archiveWrapped)return;const base=window.rInvests;function next(){base();const root=document.getElementById('invest-list');if(!root||!Array.isArray(invests)||!window.MongoArchive)return;const groups=getInvestGroups().sort((a,b)=>b.current-a.current),cards=[...root.children].filter(x=>x.classList.contains('inv-card')),archived=[];groups.forEach((g,i)=>{const card=cards[i];if(!card)return;const safe=String(g.key).replace(/\\/g,'\\\\').replace(/'/g,"\\'");const isArchived=window.MongoArchive.assetGroupArchived(g);const actions=card.querySelector('.portfolio-group-head>div:last-child');if(actions&&!actions.querySelector('.mongo-archive-action'))actions.insertAdjacentHTML('beforeend',`<button class="btn btn-sm mongo-archive-action" onclick="${isArchived?`setInvestGroupArchived('${safe}',false)`:`if(confirm(qArchive()))setInvestGroupArchived('${safe}',true)`}">${isArchived?q().restore:q().archive}</button>`);if(isArchived){mark(card,q().asset);archived.push(card);}});archiveBox(root,archived,q().asset);}next.__archiveWrapped=true;window.rInvests=next;}
@@ -16809,7 +16784,7 @@ function sync(prefix){const term=document.getElementById(prefix+'-deposit-term-t
 function read(prefix){return {depositTermType:document.getElementById(prefix+'-deposit-term-type')?.value==='term'?'term':'demand',allowsAdditionalDeposits:!!document.getElementById(prefix+'-allows-extra')?.checked,allowsEarlyTermination:!!document.getElementById(prefix+'-allows-early')?.checked,earlyTerminationRule:document.getElementById(prefix+'-early-rule')?.value||'all_reduced',earlyTerminationRate:Math.max(0,Number(document.getElementById(prefix+'-early-rate')?.value)||0),earlyTerminationFee:Math.max(0,typeof parseAmt==='function'?parseAmt(document.getElementById(prefix+'-early-fee')?.value):Number(document.getElementById(prefix+'-early-fee')?.value)||0),earlyTerminationStages:readStages(prefix),earlyTerminationThresholdDays:Math.max(0,Number(document.getElementById(prefix+'-threshold-days')?.value)||0),earlyTerminationThresholdBeforeRate:Math.max(0,Number(document.getElementById(prefix+'-threshold-before')?.value)||0),earlyTerminationThresholdAfterRate:Math.max(0,Number(document.getElementById(prefix+'-threshold-after')?.value)||0),earlyTerminationContractRate:Math.max(0,Number(document.getElementById(prefix+'-interest-rate')?.value)||0),earlyTerminationInterestMethod:(document.getElementById(prefix+'-interest-mode')?.value==='payout'?'external':'deposit'),earlyTerminationUseBankActual:!!document.getElementById(prefix+'-use-bank-actual')?.checked,earlyTerminationBankActualInterest:Math.max(0,typeof parseAmt==='function'?parseAmt(document.getElementById(prefix+'-bank-actual-interest')?.value):Number(document.getElementById(prefix+'-bank-actual-interest')?.value)||0),interestReceiveAccountId:String(document.getElementById(prefix+'-interest-account')?.value||''),interestPayoutAccountId:String(document.getElementById(prefix+'-interest-account')?.value||'')};}
 function applyMeta(a,m){if(!a||!m)return;Object.assign(a,m);if(m.depositTermType!=='term'){a.allowsEarlyTermination=false;a.earlyTerminationRate=0;a.earlyTerminationFee=0;} }
 function installNew(){if(document.getElementById('account-interest-fields'))ensure('account',{});}
-const baseAdd=addMoneyAccount;addMoneyAccount=function(){const ids=new Set((moneyAccounts||[]).map(a=>String(a.id))),isSavings=document.getElementById('account-type')?.value==='savings',m=isSavings?read('account'):null;baseAdd();if(isSavings){const a=(moneyAccounts||[]).find(x=>!ids.has(String(x.id)));if(a){applyMeta(a,m);saveData();renderMoneyAccounts();}}setTimeout(()=>ensure('account',{}),0);};
+const baseAdd=addMoneyAccount;addMoneyAccount=function(){const ids=new Set((moneyAccounts||[]).map(a=>String(a.id))),isSavings=document.getElementById('account-type')?.value==='savings',m=isSavings?read('account'):null;baseAdd();const created=(moneyAccounts||[]).find(x=>!ids.has(String(x.id)));if(isSavings&&created){applyMeta(created,m);saveData();renderMoneyAccounts();}if(created){const form=document.getElementById('account-add-form');if(form)form.style.display='none';}setTimeout(()=>ensure('account',{}),0);};
 const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){
   await baseEdit(id);
   const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
@@ -18759,13 +18734,7 @@ function mount(id){
    if(Math.abs(beforeBalance-expectedOut)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
    const now=new Date().toISOString(),cancelId=uid('cancel');
    if(c.adjust>0.5){const meta=interestMeta(a);txns.unshift({id:uid('cancel_interest'),type:'income',desc:`${a.name} · ${z.interest}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.adjust),date:r.date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId:a.linkedGoalId||a.goalId||null,savingsCancellationId:cancelId,createdAt:now});}
-   if(c.adjust<-0.5){
-     const adjId=uid('interest_adjustment'),adjAmount=Math.round(Math.abs(c.adjust)),adjDesc=`${a.name} · ${z.claw}`;
-     // Economic effect lives in accountTransfers so the savings-account balance is reduced once.
-     accountTransfers.push({id:adjId,fromId:a.id,toId:null,amount:adjAmount,date:r.date,purpose:'interest_adjustment',targetId:null,description:adjDesc,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
-     // Audit/history row only: NOT income/expense, NOT budget, NOT a second account-balance movement.
-     txns.unshift({id:`audit_${adjId}`,type:'adjustment',desc:adjDesc,catKey:'savings_interest_adjustment',catName:z.claw,subcatKey:null,subcatName:null,amount:adjAmount,date:r.date,accountId:a.id,savingsInterestAdjustment:true,excludeFromBudget:true,skipAccountBalance:true,sourceTransferId:adjId,savingsCancellationId:cancelId,createdAt:now});
-   }
+   if(c.adjust<-0.5)accountTransfers.push({id:uid('interest_adjustment'),fromId:a.id,toId:null,amount:Math.round(Math.abs(c.adjust)),date:r.date,purpose:'interest_adjustment',targetId:null,description:`${a.name} · ${z.claw}`,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    if(c.fee>0.5){const meta=bankFeeMeta();txns.unshift({id:uid('cancel_fee'),type:'expense',desc:`${a.name} · ${z.cancelFee}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.fee),date:r.date,accountId:a.id,savingsCancellationFee:true,savingsAccountId:a.id,savingsCancellationId:cancelId,createdAt:now});}
    if(c.receive>0.5)accountTransfers.push({id:uid('cancel_transfer'),fromId:a.id,toId:destId,amount:Math.round(c.receive),date:r.date,purpose:'internal',targetId:null,description:`${a.name} · ${z.cancel}`,savingsCancellation:true,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    a.active=false;a.status='cancelled';a.cancelledAt=now;a.cancelledDate=r.date;a.cancellationId=cancelId;a.cancellationReceiveAccountId=destId;a.cancellationReceiveAmount=Math.round(c.receive);a.cancellationAllowedInterest=Math.round(c.allowed);a.cancellationPriorInterest=Math.round(c.h.total);a.cancellationInterestAdjustment=Math.round(c.adjust);a.cancellationFee=Math.round(c.fee);
@@ -18793,37 +18762,6 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-
 
 
 
-<script id="mongo-v27-cancel-interest-adjustment-history">
-/* V28 — cancellation interest clawback audit row.
-   Financial effect remains ONLY in accountTransfers(purpose=interest_adjustment).
-   The txns row is history-only: type=adjustment, excluded from budget/account balance. */
-(function(){
-'use strict';
-window.MONGO_CANCEL_INTEREST_ADJUSTMENT_HISTORY='V28';
-function backfill(){
-  if(typeof accountTransfers==='undefined'||!Array.isArray(accountTransfers)||typeof txns==='undefined'||!Array.isArray(txns))return false;
-  let changed=false;
-  for(const tr of accountTransfers){
-    if(!tr||tr.purpose!=='interest_adjustment'||!(Number(tr.amount)>0))continue;
-    const sourceId=String(tr.id||'');
-    if(txns.some(t=>t&&t.savingsInterestAdjustment&&String(t.sourceTransferId||'')===sourceId))continue;
-    txns.push({
-      id:'audit_'+sourceId,type:'adjustment',desc:tr.description||'Хүүгийн буцаан тохируулга',
-      catKey:'savings_interest_adjustment',catName:'Хүүгийн буцаан тохируулга',subcatKey:null,subcatName:null,
-      amount:Math.round(Number(tr.amount)||0),date:tr.date,accountId:tr.fromId||null,
-      savingsInterestAdjustment:true,excludeFromBudget:true,skipAccountBalance:true,
-      sourceTransferId:tr.id,savingsCancellationId:tr.savingsCancellationId||null,
-      createdAt:tr.createdAt||tr.updatedAt||new Date().toISOString()
-    });
-    changed=true;
-  }
-  return changed;
-}
-window.MongoCancelInterestAdjustmentBackfill=backfill;
-const changed=backfill();
-if(changed){try{if(typeof saveData==='function')saveData();}catch(e){console.warn('V28 audit backfill save skipped',e)}}
-})();
-</script>
 <script id="mongo-v24-cancel-archives-linked-goal-marker">
 /* V24 PHONE TEST
    Real savings cancellation now archives the linked goal.
@@ -18832,40 +18770,13 @@ if(changed){try{if(typeof saveData==='function')saveData();}catch(e){console.war
 */
 window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
 </script>
-
-<script id="mongo-v29-bank-expense-category">
-/* V29 — system Bank expenses category + Bank fee subcategory.
-   Budget remains source-of-truth for ordinary custom expense categories. */
-(function(){
-'use strict';
-window.MONGO_BANK_EXPENSE_CATEGORY='V29';
-function ensure(){
- if(typeof bCatsExp==='undefined'||typeof expCats==='undefined')return false;
- let changed=false;
- if(typeof CAT_LABELS!=='undefined'){
-  CAT_LABELS.bank_expense={mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'};
-  CAT_LABELS.bank_fee={mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'};
- }
- let bc=bCatsExp.find(c=>c&&c.key==='bank_expense');
- if(!bc){bc={key:'bank_expense',icon:'🏦',color:'#64748B',subs:[]};bCatsExp.push(bc);changed=true;}
- if(!Array.isArray(bc.subs))bc.subs=[];
- if(!bc.subs.some(x=>x&&x.key==='bank_fee')){bc.subs.push({key:'bank_fee',names:{mn:'Банкны шимтгэл',en:'Bank fee',zh:'银行手续费',ja:'銀行手数料',ko:'은행 수수료',ru:'Банковская комиссия',de:'Bankgebühr'},color:'#64748B'});changed=true;}
- if(!expCats.some(c=>c&&c.key==='bank_expense')){expCats.push({key:'bank_expense',icon:'🏦',color:'#64748B'});changed=true;}
- // Remove orphaned custom transaction categories only when their matching Budget category no longer exists.
- const sys=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
- const budgetKeys=new Set(bCatsExp.map(c=>c&&c.key).filter(Boolean));
- const budgetNames=new Set(bCatsExp.map(c=>{try{return cN(c)}catch(_){return c?.name||''}}).filter(Boolean));
- const before=expCats.length;
- expCats=expCats.filter(c=>{if(c&&c.key&&sys.has(c.key))return true;if(c&&c.key)return budgetKeys.has(c.key);let nm='';try{nm=cN(c)}catch(_){nm=c?.name||''}return !!nm&&budgetNames.has(nm)});
- if(expCats.length!==before)changed=true;
- try{if(typeof rCatSel==='function')rCatSel();if(typeof rTChips==='function')rTChips();if(typeof rBList==='function')rBList();}catch(_){ }
- return changed;
-}
-window.MongoEnsureBankExpenseV29=ensure;
-setTimeout(()=>{const changed=ensure();if(changed){try{if(typeof saveData==='function')saveData();}catch(_){}}},900);
-})();
+<script id="mongo-v26-account-collapse-archive-reason-marker">
+/* V26 PHONE TEST: successful account creation collapses only #account-add-form;
+   cancelled savings-linked goals keep history but show an archive-reason badge.
+   No financial, cloud, cancellation, budget, or transaction arithmetic changed. */
+window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 </script>
-\n</body>
+</body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
 
@@ -18944,342 +18855,5 @@ window.MongoRealCancellationStage3={calculate,date,ymd,num,money,history,lots};
 function compactRows(root=document){for(const cancel of root.querySelectorAll('.mongo-cancel-btn')){if(cancel.closest('.mongo-savings-action-row-v2b'))continue;let interest=null;let n=cancel.nextElementSibling;for(let i=0;n&&i<6;i++,n=n.nextElementSibling){if(n.classList?.contains('mongo-savings-interest-income-v13')||n.classList?.contains('mongo-savings-interest-income-v9')){interest=n;break}}if(!interest)continue;const row=document.createElement('div');row.className='mongo-savings-action-row-v2b';cancel.parentNode.insertBefore(row,cancel);row.append(cancel,interest)}}
 document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-btn button');if(!b)return;const raw=b.getAttribute('onclick')||'';const m=raw.match(/openMongoSavingsCancelV1\(['"]([^'"]+)/);if(m)setTimeout(()=>mountCalc(m[1]),30)},true);
 const mo=new MutationObserver(()=>compactRows());mo.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>compactRows(),0);setTimeout(()=>compactRows(),500);
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V30 — Expense category picker uses Budget as source of truth. -->
-<script id="mongo-v30-bank-expense-picker-fix">
-(function(){
-'use strict';
-window.MONGO_BANK_EXPENSE_PICKER_FIX='V30';
-const FLOW_KEYS=new Set(['loan_cat','savings_cat','invest_cat']);
-const SYSTEM_KEYS=new Set(['food','transport','housing','education','health','fun','clothes','invest_cat','savings_cat','loan_cat','household','bank_expense','other_exp']);
-function cleanAndSync(){
-  if(typeof bCatsExp==='undefined'||typeof expCats==='undefined')return false;
-  let changed=false;
-  // Remove only malformed/orphan custom transaction categories. Budget remains source of truth.
-  const budgetCustomNames=new Set((bCatsExp||[]).filter(c=>c&&!c.key).map(c=>{try{return String(cN(c)||'').trim()}catch(_){return String(c.name||'').trim()}}).filter(Boolean));
-  const before=expCats.length;
-  expCats=expCats.filter(c=>{
-    if(!c)return false;
-    if(c.key)return SYSTEM_KEYS.has(c.key) || (bCatsExp||[]).some(b=>b&&b.key===c.key);
-    let nm='';try{nm=String(cN(c)||'').trim()}catch(_){nm=String(c.name||'').trim()}
-    return !!nm && budgetCustomNames.has(nm);
-  });
-  if(expCats.length!==before)changed=true;
-  // Mirror valid custom Budget categories into transaction metadata, without duplicates.
-  for(const b of (bCatsExp||[])){
-    if(!b||b.key)continue;
-    const nm=String((()=>{try{return cN(b)}catch(_){return b.name||''}})()||'').trim();
-    if(!nm)continue;
-    if(!expCats.some(c=>!c.key&&String((()=>{try{return cN(c)}catch(_){return c.name||''}})()||'').trim()===nm)){
-      expCats.push({name:nm,icon:b.icon||'💡',color:b.color||'#607D8B'});changed=true;
-    }
-  }
-  return changed;
-}
-// Final expense picker source: Budget categories, excluding dedicated system flows.
-// This makes Bank expenses/Bank fee visible immediately and prevents deleted/orphan rows reappearing.
-const priorGCats=gCats;
-gCats=function(){
-  if(curType!=='expense')return priorGCats();
-  cleanAndSync();
-  const seen=new Set(),out=[];
-  for(const c of (Array.isArray(bCatsExp)?bCatsExp:[])){
-    if(!c||FLOW_KEYS.has(c.key))continue;
-    let nm='';try{nm=String(cN(c)||'').trim()}catch(_){nm=String(c.name||c.key||'').trim()}
-    if(!nm)continue;
-    const id=c.key?'k:'+c.key:'n:'+nm.toLocaleLowerCase();
-    if(seen.has(id))continue;seen.add(id);
-    out.push(c);
-  }
-  return out;
-};
-function refresh(){
-  const changed=cleanAndSync();
-  try{if(typeof rCatSel==='function')rCatSel();if(typeof rTChips==='function')rTChips();}catch(_){ }
-  if(changed){try{if(typeof saveData==='function')saveData();}catch(_){ }}
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,1200),{once:true});
-else setTimeout(refresh,1200);
-window.addEventListener('pageshow',()=>setTimeout(refresh,250));
-// Language changes only need a one-shot re-render; no DOM observer is used.
-try{if(typeof setLang==='function'&&!setLang.__mongoV30){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(refresh,0);return r};setLang.__mongoV30=true;}}catch(_){ }
-window.MongoExpenseCategoryV30={refresh,cleanAndSync};
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V32 — cancellation amount layout + reliable clawback activity + plan-status snapshot -->
-<style id="mongo-v32-cancel-amount-nowrap">
-/* Scoped only to the real savings-cancellation modal. Keep monetary values on one line. */
-#mongo-savings-cancel-stage1 .mrc1-row{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) max-content!important;
-  align-items:start!important;
-  column-gap:10px!important;
-}
-#mongo-savings-cancel-stage1 .mrc1-row>span{min-width:0!important;overflow-wrap:anywhere}
-#mongo-savings-cancel-stage1 .mrc1-row>b{
-  min-width:0!important;
-  white-space:nowrap!important;
-  overflow-wrap:normal!important;
-  word-break:normal!important;
-  font-size:clamp(11px,3.15vw,13px)!important;
-  font-variant-numeric:tabular-nums;
-}
-</style>
-<script id="mongo-v32-cancel-history-budget-status">
-(function(){
-'use strict';
-window.MONGO_CANCEL_UI_BUDGET_STATUS='V32';
-
-/* 1) Interest clawback is a transfer-ledger economic adjustment.
-      Build its visible activity directly from that source, so it cannot disappear
-      merely because a generic transaction normalizer ignores type=adjustment. */
-try{
-  const baseUnified=(typeof unifiedActivities==='function')?unifiedActivities:null;
-  if(baseUnified&&!baseUnified.__mongoV32){
-    const wrapped=function(){
-      const base=baseUnified.apply(this,arguments)||[];
-      const seen=new Set(base.filter(x=>x&&x.savingsInterestAdjustment).map(x=>String(x.sourceTransferId||'')));
-      const extra=(Array.isArray(accountTransfers)?accountTransfers:[]).filter(tr=>tr&&tr.purpose==='interest_adjustment'&&Number(tr.amount)>0&&!seen.has(String(tr.id||''))).map(tr=>({
-        id:'activity_'+String(tr.id||''),
-        type:'adjustment',
-        desc:tr.description||'Хүүгийн буцаан тохируулга',
-        catName:'Хүүгийн буцаан тохируулга',
-        amount:Math.round(Number(tr.amount)||0),
-        date:tr.date,
-        accountId:tr.fromId||null,
-        savingsInterestAdjustment:true,
-        excludeFromBudget:true,
-        skipAccountBalance:true,
-        sourceTransferId:tr.id,
-        savingsCancellationId:tr.savingsCancellationId||null,
-        createdAt:tr.createdAt||tr.updatedAt||null
-      }));
-      return base.concat(extra);
-    };
-    wrapped.__mongoV32=true;
-    unifiedActivities=wrapped;
-  }
-}catch(e){console.warn('V32 clawback activity install skipped',e)}
-
-/* 2) A transaction's "planned/unplanned" badge describes the plan state when the
-      transaction was created. Once captured, later editing the plan/budget amount
-      must not rewrite that historical label. */
-try{
-  const dynamicBudgeted=(typeof isTxnBudgeted==='function')?isTxnBudgeted:null;
-  if(dynamicBudgeted&&!dynamicBudgeted.__mongoV32){
-    const wrapped=function(t){
-      if(t&&typeof t.budgetedAtCreation==='boolean')return t.budgetedAtCreation;
-      return dynamicBudgeted.apply(this,arguments);
-    };
-    wrapped.__mongoV32=true;
-    wrapped.__mongoDynamic=dynamicBudgeted;
-    isTxnBudgeted=wrapped;
-  }
-}catch(e){console.warn('V32 budget status install skipped',e)}
-
-/* Capture the snapshot only for genuinely new rows at their first save.
-   This avoids guessing the historical state of old transactions. */
-try{
-  const baseSave=(typeof saveData==='function')?saveData:null;
-  if(baseSave&&!baseSave.__mongoV32){
-    const wrapped=function(){
-      try{
-        const now=Date.now();
-        const dyn=isTxnBudgeted&&isTxnBudgeted.__mongoDynamic;
-        if(typeof dyn==='function'&&Array.isArray(txns)){
-          for(const t of txns){
-            if(!t||typeof t.budgetedAtCreation==='boolean'||t.savingsInterestAdjustment)continue;
-            const ts=Date.parse(t.createdAt||'');
-            /* Most ordinary entry paths do not carry createdAt. For those, capture
-               only when the row has just been inserted at the front during this session. */
-            const freshByTime=Number.isFinite(ts)&&Math.abs(now-ts)<15000;
-            const freshCancellation=!!t.savingsCancellationId&&(!ts||freshByTime);
-            if(freshByTime||freshCancellation){
-              try{t.budgetedAtCreation=!!dyn(t)}catch(_){}
-            }
-          }
-        }
-      }catch(_){}
-      return baseSave.apply(this,arguments);
-    };
-    wrapped.__mongoV32=true;
-    saveData=wrapped;
-  }
-}catch(e){console.warn('V32 save snapshot install skipped',e)}
-
-/* Refresh views once after Cloud/local data have mounted. */
-setTimeout(()=>{
-  try{if(typeof rRecent==='function')rRecent()}catch(_){}
-  try{if(typeof rTxns==='function')rTxns()}catch(_){}
-},1400);
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V33 — cancellation layout, live comma inputs, durable adjustment history, dynamic budget status -->
-<style id="mongo-v33-cancel-layout-safe">
-/* Scoped only to the real savings-cancellation modal. Long rule text may wrap;
-   monetary/date/rate values retain enough width to stay on one line on phone. */
-#mongo-savings-cancel-stage1 .mrc1-row{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) minmax(128px,48%)!important;
-  align-items:start!important;
-  column-gap:12px!important;
-}
-#mongo-savings-cancel-stage1 .mrc1-row>span{
-  min-width:0!important;
-  overflow-wrap:normal!important;
-  word-break:normal!important;
-}
-#mongo-savings-cancel-stage1 .mrc1-row>b{
-  min-width:0!important;
-  max-width:100%!important;
-  white-space:normal!important;
-  overflow-wrap:normal!important;
-  word-break:normal!important;
-  text-align:right!important;
-  font-size:13px!important;
-  font-variant-numeric:tabular-nums;
-}
-#mongo-savings-cancel-stage1 .mrc1-row>b.mongo-v33-compact-value{white-space:nowrap!important}
-</style>
-<script id="mongo-v33-cancel-input-history-budget">
-(function(){
-'use strict';
-window.MONGO_CANCEL_INPUT_HISTORY_BUDGET='V33';
-
-/* V32 snapshot semantics were not the intended product rule.
-   Planned/unplanned is deliberately dynamic: once a matching plan/budget is saved,
-   existing transactions become planned; if the budget is absent, they are unplanned. */
-try{
-  if(typeof isTxnBudgeted==='function' && isTxnBudgeted.__mongoDynamic){
-    isTxnBudgeted=isTxnBudgeted.__mongoDynamic;
-  }
-}catch(e){console.warn('V33 dynamic budget status restore skipped',e)}
-
-/* Preserve the special audit transaction type through local/cloud normalization.
-   The base security normalizer historically converted every non-income row to expense,
-   which could make a newly-created cancellation adjustment disappear/change meaning after save/reload. */
-try{
-  if(typeof secNormalizeData==='function' && !secNormalizeData.__mongoV33){
-    const baseNormalize=secNormalizeData;
-    const wrapped=function(data){
-      const clean=baseNormalize.apply(this,arguments);
-      if(clean&&Array.isArray(clean.txns)){
-        for(const t of clean.txns){
-          if(t&&t.savingsInterestAdjustment){
-            t.type='adjustment';
-            t.excludeFromBudget=true;
-            t.skipAccountBalance=true;
-          }
-        }
-      }
-      return clean;
-    };
-    wrapped.__mongoV33=true;
-    secNormalizeData=wrapped;
-  }
-}catch(e){console.warn('V33 adjustment persistence install skipped',e)}
-
-/* setupAmtInput originally expected an element id, while several newer savings flows
-   pass the INPUT element itself. Accept both forms and format while typing. */
-try{
-  const bindComma=function(target){
-    const el=(typeof target==='string')?document.getElementById(target):target;
-    if(!el||el.tagName!=='INPUT')return;
-    if(el.dataset.mongoV33Comma==='1')return;
-    el.dataset.mongoV33Comma='1';
-    el.dataset.amt='1';
-    const f=()=>{try{if(typeof applyCommaFmt==='function')applyCommaFmt(el)}catch(_){}};
-    el.addEventListener('input',f);
-    if(el.value)f();
-  };
-  window.MongoBindCommaV33=bindComma;
-  if(typeof setupAmtInput==='function'&&!setupAmtInput.__mongoV33){
-    const oldSetup=setupAmtInput;
-    const wrapped=function(target){
-      const el=(typeof target==='string')?document.getElementById(target):target;
-      if(typeof target==='string'){try{oldSetup.call(this,target)}catch(_){}}
-      bindComma(el);
-    };
-    wrapped.__mongoV33=true;
-    setupAmtInput=wrapped;
-  }
-  document.addEventListener('focusin',e=>{
-    const el=e.target;
-    if(!el||el.tagName!=='INPUT')return;
-    if(el.id==='mongo-si-v13-amount'||el.id==='mongo-si-v9-amount'||el.id==='mrc2b-bank-actual')bindComma(el);
-  },true);
-}catch(e){console.warn('V33 comma input install skipped',e)}
-
-function polishCancelModal(){
-  const modal=document.getElementById('mongo-savings-cancel-stage1');
-  if(!modal)return;
-  try{
-    ['mrc2b-bank-actual'].forEach(id=>window.MongoBindCommaV33?.(document.getElementById(id)));
-    modal.querySelectorAll('.mrc1-row>b').forEach(b=>{
-      const t=String(b.textContent||'').trim();
-      if(/^[+−-]?\s*[₮$€¥₽]?\s*[\d,]+(?:\.\d+)?(?:%|\s*(?:хоног|days|日|일|дн\.?|Tage))?$/.test(t)||/^\d{4}-\d{2}-\d{2}$/.test(t)) b.classList.add('mongo-v33-compact-value');
-      else b.classList.remove('mongo-v33-compact-value');
-    });
-  }catch(_){ }
-}
-
-document.addEventListener('click',e=>{
-  if(e.target.closest?.('.mongo-cancel-btn button')) setTimeout(polishCancelModal,140);
-},true);
-document.addEventListener('input',e=>{
-  if(e.target?.id==='mrc2b-bank-actual')setTimeout(polishCancelModal,0);
-},true);
-
-/* Backfill/persist adjustment rows after authoritative data mount as well as after a
-   cancellation. No financial movement is created here; this is history visibility only. */
-function ensureAdjustmentHistory(){
-  let changed=false;
-  try{if(typeof window.MongoEnsureCancellationInterestClawbackV31==='function')changed=!!window.MongoEnsureCancellationInterestClawbackV31()}catch(_){ }
-  try{if(typeof window.MongoCancelInterestAdjustmentBackfill==='function')changed=!!window.MongoCancelInterestAdjustmentBackfill()||changed}catch(_){ }
-  if(changed){try{if(typeof saveData==='function')saveData()}catch(_){}}
-  try{if(typeof rRecent==='function')rRecent()}catch(_){ }
-  try{if(typeof rTxns==='function')rTxns()}catch(_){ }
-}
-window.MongoEnsureCancellationAdjustmentV33=ensureAdjustmentHistory;
-window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(ensureAdjustmentHistory,350));
-setTimeout(ensureAdjustmentHistory,1800);
-
-/* Budget save intentionally re-evaluates existing transaction badges immediately. */
-try{
-  if(typeof saveBudget==='function'&&!saveBudget.__mongoV33){
-    const oldSaveBudget=saveBudget;
-    const wrapped=function(){
-      const r=oldSaveBudget.apply(this,arguments);
-      setTimeout(()=>{try{rRecent();rTxns()}catch(_){ }},0);
-      return r;
-    };
-    wrapped.__mongoV33=true;
-    saveBudget=wrapped;
-  }
-}catch(e){console.warn('V33 budget refresh install skipped',e)}
-})();
-</script>
-
-<script id="mongo-v34-cancellation-adjustment-visible">
-(function(){
-'use strict';
-window.MONGO_CANCEL_ADJUSTMENT_VISIBLE='V34';
-function refreshCancellationAdjustments(){
-  let changed=false;
-  try{if(typeof window.MongoCancelInterestAdjustmentBackfill==='function')changed=!!window.MongoCancelInterestAdjustmentBackfill()}catch(e){console.warn('V34 cancellation adjustment backfill skipped',e)}
-  if(changed){try{if(typeof saveData==='function')saveData()}catch(e){console.warn('V34 cancellation adjustment save skipped',e)}}
-  try{if(typeof rRecent==='function')rRecent()}catch(_){}
-  try{if(typeof rTxns==='function')rTxns()}catch(_){}
-}
-window.MongoRefreshCancellationAdjustmentsV34=refreshCancellationAdjustments;
-setTimeout(refreshCancellationAdjustments,1600);
-window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(refreshCancellationAdjustments,250));
 })();
 </script>
