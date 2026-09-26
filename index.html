@@ -2506,6 +2506,32 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 #account-list .closed-account-row .account-meta{white-space:normal}
 </style>
 <!-- Möngö PHONE TEST V28 — cancellation confirmation precheck: reconcile current balance against receive + fee - signed interest adjustment. Positive termination interest is credited before settlement; negative adjustment is clawed back. Financial posting logic unchanged. -->
+
+<style id="mongo-v41-text-wrap-fix">
+/* V41 PHONE TEST — UI only.
+   Keep numeric/date/percent values intact, but allow descriptive text values
+   (e.g. cancellation rule names) to wrap inside the card. */
+#mongo-savings-cancel-stage1 .mrc1-row > :last-child:not(.mrc-v38-nowrap),
+#mongo-savings-cancel-stage1 .mrc1-row span:last-child:not(.mrc-v38-nowrap),
+#mongo-savings-cancel-stage1 .mrc1-row b:last-child:not(.mrc-v38-nowrap) {
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  min-width: 0 !important;
+  max-width: 58% !important;
+}
+#mongo-savings-cancel-stage1 .mrc-v38-nowrap {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
+  max-width: none !important;
+}
+</style>
+<script id="mongo-v41-text-wrap-marker">
+window.MONGO_CANCEL_TEXT_WRAP_FIX = 'V41';
+</script>
+
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
