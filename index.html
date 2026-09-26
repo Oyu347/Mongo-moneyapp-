@@ -18502,13 +18502,25 @@ accountInlineDetail=function(a){
 #mongo-savings-cancel-stage1 .mrc1-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:7px}
 #mongo-savings-cancel-stage1 .mrc1-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--border)}
 #mongo-savings-cancel-stage1 .mrc1-row:last-child{border-bottom:0}
-#mongo-savings-cancel-stage1 .mrc1-row span{min-width:0;overflow-wrap:break-word}
-#mongo-savings-cancel-stage1 .mrc1-row b{
-  text-align:right;
-  white-space:nowrap;
+#mongo-savings-cancel-stage1 .mrc1-row span{
+  min-width:0;
+  flex:1 1 48%;
   overflow-wrap:normal;
   word-break:normal;
+}
+#mongo-savings-cancel-stage1 .mrc1-row b{
+  min-width:0;
+  max-width:58%;
+  flex:0 1 auto;
+  text-align:right;
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+}
+#mongo-savings-cancel-stage1 .mrc1-row b.mrc-v38-nowrap{
+  white-space:nowrap;
   flex:0 0 auto;
+  max-width:none;
 }
 #mongo-savings-cancel-stage1 .mrc1-note{font-size:12px;line-height:1.45;color:var(--muted);margin-top:9px}
 #mongo-savings-cancel-stage1 .mrc1-transfer{display:grid;grid-template-columns:1fr auto;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px}
@@ -18796,6 +18808,28 @@ window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 
 
 
+
+<!-- Möngö PHONE TEST V38 — cancellation row layout refinement. UI only. -->
+<script id="mongo-real-cancel-v38-layout">
+(function(){
+'use strict';
+function mark(){
+  const root=document.getElementById('mongo-savings-cancel-stage1');
+  if(!root)return;
+  root.querySelectorAll('.mrc1-row b').forEach(function(el){
+    const s=(el.textContent||'').trim();
+    const numeric=/^[+\-−]?\s*₮?[\d,.]+(?:\s*%)?$/.test(s) ||
+                  /^\d{4}[-./]\d{2}[-./]\d{2}$/.test(s) ||
+                  /^\d+(?:[.,]\d+)?%$/.test(s);
+    el.classList.toggle('mrc-v38-nowrap',numeric);
+  });
+}
+const mo=new MutationObserver(mark);
+mo.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',function(){setTimeout(mark,0)},true);
+setTimeout(mark,0);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
