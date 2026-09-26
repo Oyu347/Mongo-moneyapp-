@@ -37,3 +37,17 @@ For every module:
 Storage Phase 1 → Core / unified ledger → Accounts → Transactions.
 
 Do not jump ahead merely because code is nearby in `index.html`. Preserve dependency order and working behavior.
+
+## Active phone-work sequence — 2026-09-26
+
+Current baseline: `Mongo-PHONE-TEST-SAVINGS-INTEREST-I18N-SAFE-V36.html` (PHONE PASS). V37 is discarded.
+
+Next work:
+1. Continue savings/real-cancellation validation from V36 one bounded change at a time.
+2. Preserve the interest-income prefill + user correction flow; later decide/implement scheduled automatic interest posting separately.
+3. Return to Savings → early-termination calculator and restore the missing Rule 2 staged-condition UI only after the real-account flow remains stable.
+4. Keep 7-language coverage in every new savings/account UI change.
+5. Before promoting any new baseline, regression-check Cloud safety, closed-account ₮0 state/actions, cancellation accounting, linked-goal archive, bank-expense budget mapping, savings i18n, interest prefill, and Transactions year/month grouping under All.
+
+Do not revive discarded V37 or failed V31/V32-style migration/diagnostic patches. Port only proven behavior from the last PHONE-PASS baseline.
+
