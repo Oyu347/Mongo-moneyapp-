@@ -18493,13 +18493,23 @@ accountInlineDetail=function(a){
 
 
 <!-- Möngö PHONE TEST — Real savings cancellation Stage 1: actual-source preview only. -->
+<!-- Möngö PHONE TEST V37 — savings cancellation amount nowrap.
+     UI-only: monetary/result values in the real cancellation modal stay on one line
+     across all four early-termination rule variants. Financial logic unchanged. -->
 <style id="mongo-real-cancel-stage1-style">
 #mongo-savings-cancel-stage1 .loan-modal{max-height:88vh;overflow:auto}
 #mongo-savings-cancel-stage1 .mrc1-card{border:1px solid rgba(73,176,182,.20);border-radius:15px;padding:12px;margin-top:12px;background:rgba(73,176,182,.035);box-sizing:border-box}
 #mongo-savings-cancel-stage1 .mrc1-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:7px}
 #mongo-savings-cancel-stage1 .mrc1-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--border)}
 #mongo-savings-cancel-stage1 .mrc1-row:last-child{border-bottom:0}
-#mongo-savings-cancel-stage1 .mrc1-row b{text-align:right;overflow-wrap:anywhere}
+#mongo-savings-cancel-stage1 .mrc1-row span{min-width:0;overflow-wrap:break-word}
+#mongo-savings-cancel-stage1 .mrc1-row b{
+  text-align:right;
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal;
+  flex:0 0 auto;
+}
 #mongo-savings-cancel-stage1 .mrc1-note{font-size:12px;line-height:1.45;color:var(--muted);margin-top:9px}
 #mongo-savings-cancel-stage1 .mrc1-transfer{display:grid;grid-template-columns:1fr auto;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px}
 #mongo-savings-cancel-stage1 .mrc1-transfer:last-child{border-bottom:0}
