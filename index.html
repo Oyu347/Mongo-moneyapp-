@@ -8698,12 +8698,7 @@ function ensureMoneyAccounts(){
 }
 function accountBalanceRaw(id){const a=moneyAccounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.openingBalance)||0;
   txns.forEach(t=>{if(t.accountId===id&&!t.skipAccountBalance&&!t.autoPaySelf)v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0);});
-  accountTransfers.forEach(t=>{
-    // V31: cancellation interest adjustment is an economic classification, not a second cash movement.
-    // The final savingsCancellation transfer already moves the actual settlement cash.
-    if(t&&t.purpose==='interest_adjustment'&&t.savingsCancellationId)return;
-    if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;
-  });
+  accountTransfers.forEach(t=>{if(t.fromId===id)v-=Number(t.amount)||0;if(t.toId===id)v+=Number(t.amount)||0;});
   debts.forEach(d=>{if(d.fundingMode==='existing'&&d.fundingAccountId===id)v+=Number(d.fundingAmount)||0;debtPayments(d).forEach(p=>{if(p.accountId===id)v-=Number(p.total)||0;});});
   return v;}
 function accountBalance(id){return accountBalanceRaw(id);}
@@ -18745,7 +18740,7 @@ function mount(id){
    if(Math.abs(beforeBalance-expectedBefore)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
    const now=new Date().toISOString(),cancelId=uid('cancel');
    if(c.adjust>0.5){const meta=interestMeta(a);txns.unshift({id:uid('cancel_interest'),type:'income',desc:`${a.name} · ${z.interest}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.adjust),date:r.date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId:a.linkedGoalId||a.goalId||null,savingsCancellationId:cancelId,createdAt:now});}
-   if(c.adjust<-0.5)accountTransfers.push({id:uid('interest_adjustment'),fromId:a.id,toId:null,amount:Math.round(Math.abs(c.adjust)),date:r.date,purpose:'interest_adjustment',targetId:null,description:`${a.name} · ${z.claw}`,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
+   if(c.adjust<-0.5)txns.unshift({id:uid('interest_adjustment_audit'),type:'adjustment',desc:`${a.name} · ${z.claw}`,catKey:'savings_interest_adjustment',catName:z.claw,subcatKey:null,subcatName:null,amount:Math.round(Math.abs(c.adjust)),date:r.date,accountId:a.id,savingsAccountId:a.id,savingsInterestAdjustment:true,excludeFromBudget:true,skipAccountBalance:true,savingsCancellationId:cancelId,createdAt:now});
    if(c.fee>0.5){const meta=bankFeeMeta();txns.unshift({id:uid('cancel_fee'),type:'expense',desc:`${a.name} · ${z.cancelFee}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.fee),date:r.date,accountId:a.id,savingsCancellationFee:true,savingsAccountId:a.id,savingsCancellationId:cancelId,createdAt:now});}
    if(c.receive>0.5)accountTransfers.push({id:uid('cancel_transfer'),fromId:a.id,toId:destId,amount:Math.round(c.receive),date:r.date,purpose:'internal',targetId:null,description:`${a.name} · ${z.cancel}`,savingsCancellation:true,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    a.active=false;a.status='cancelled';a.cancelledAt=now;a.cancelledDate=r.date;a.cancellationId=cancelId;a.cancellationReceiveAccountId=destId;a.cancellationReceiveAmount=Math.round(c.receive);a.cancellationAllowedInterest=Math.round(c.allowed);a.cancellationPriorInterest=Math.round(c.h.total);a.cancellationInterestAdjustment=Math.round(c.adjust);a.cancellationFee=Math.round(c.fee);
@@ -18788,7 +18783,7 @@ window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
 window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 </script>
 <script>window.MONGO_BANK_EXPENSE_KEY_FIX='V27';</script>
-\n<script id="mongo-v31-closed-cancel-noncash-fix">\n/* V31 PHONE TEST\n   1) Cancellation interest_adjustment is non-cash and no longer changes account balance.\n   2) Closed/cancelled savings accounts remain inspectable but cannot show active cancellation/interest actions.\n   No transaction, transfer, budget, goal or cloud record is deleted. */\n(function(){\n'use strict';\nwindow.MONGO_CLOSED_CANCEL_NONCASH_FIX='V31';\nif(typeof accountInlineDetail==='function'){\n  const before=accountInlineDetail;\n  accountInlineDetail=function(a){\n    const html=before(a);\n    if(!a || (a.active!==false && String(a.status||'').toLowerCase()!=='cancelled')) return html;\n    const tpl=document.createElement('template');\n    tpl.innerHTML=html;\n    tpl.content.querySelectorAll('.mongo-cancel-btn,.mongo-savings-interest-income-v13,.mongo-savings-interest-income-v9,.mongo-savings-action-row-v2b,.interest-account-panel').forEach(el=>el.remove());\n    return tpl.innerHTML;\n  };\n}\n})();\n</script>\n</body>
+</body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
 
@@ -18867,5 +18862,71 @@ window.MongoRealCancellationStage3={calculate,date,ymd,num,money,history,lots};
 function compactRows(root=document){for(const cancel of root.querySelectorAll('.mongo-cancel-btn')){if(cancel.closest('.mongo-savings-action-row-v2b'))continue;let interest=null;let n=cancel.nextElementSibling;for(let i=0;n&&i<6;i++,n=n.nextElementSibling){if(n.classList?.contains('mongo-savings-interest-income-v13')||n.classList?.contains('mongo-savings-interest-income-v9')){interest=n;break}}if(!interest)continue;const row=document.createElement('div');row.className='mongo-savings-action-row-v2b';cancel.parentNode.insertBefore(row,cancel);row.append(cancel,interest)}}
 document.addEventListener('click',e=>{const b=e.target.closest?.('.mongo-cancel-btn button');if(!b)return;const raw=b.getAttribute('onclick')||'';const m=raw.match(/openMongoSavingsCancelV1\(['"]([^'"]+)/);if(m)setTimeout(()=>mountCalc(m[1]),30)},true);
 const mo=new MutationObserver(()=>compactRows());mo.observe(document.documentElement,{childList:true,subtree:true});setTimeout(()=>compactRows(),0);setTimeout(()=>compactRows(),500);
+})();
+</script>
+
+
+<script id="mongo-v33-closed-cancel-clean-fix">
+(function(){
+'use strict';
+/* V33 — surgical cleanup only.
+   1) Repair the exact legacy cancellation artifact: a closed/cancelled savings account
+      has an orphan outgoing transfer (no destination) whose amount equals the recorded
+      negative cancellationInterestAdjustment on the cancellation date.
+   2) Closed/cancelled savings accounts are history-only: do not render Cancel / Interest actions.
+   No global input/CSS/cloud/budget rules are changed. */
+window.MONGO_CLOSED_CANCEL_CLEAN_FIX='V33';
+const S=v=>String(v??'');
+const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+const closed=a=>!!a&&(a.active===false||S(a.status).toLowerCase()==='cancelled');
+const savings=a=>{try{return typeof normalizeAccountType==='function'?normalizeAccountType(a?.type)==='savings':S(a?.type).toLowerCase()==='savings'}catch(_){return S(a?.type).toLowerCase()==='savings'}};
+function exactLegacyArtifact(tr,a){
+  if(!tr||!a||!closed(a)||!savings(a))return false;
+  const adj=N(a.cancellationInterestAdjustment);
+  if(!(adj<-.5))return false;
+  if(S(tr.fromId)!==S(a.id))return false;
+  if(S(tr.toId).trim()!=='')return false;
+  if(Math.abs(N(tr.amount)-Math.abs(adj))>1)return false;
+  const cd=S(a.cancelledDate||a.cancellationDate||'').slice(0,10);
+  const td=S(tr.date||'').slice(0,10);
+  if(cd&&td&&cd!==td)return false;
+  return true;
+}
+async function repair(){
+  try{
+    if(!Array.isArray(moneyAccounts)||!Array.isArray(accountTransfers))return;
+    const ids=new Set();
+    for(const a of moneyAccounts){
+      if(!closed(a)||!savings(a))continue;
+      for(const tr of accountTransfers)if(exactLegacyArtifact(tr,a))ids.add(S(tr.id));
+    }
+    if(!ids.size)return;
+    accountTransfers=accountTransfers.filter(tr=>!ids.has(S(tr?.id)));
+    /* saveData rebuilds the unified ledger from the authoritative views, so the stale
+       balance-changing transfer is removed from both the view and ledger. */
+    if(typeof saveData==='function')await saveData();
+    try{if(typeof rAll==='function')rAll()}catch(_){}
+    try{if(typeof renderMoneyAccounts==='function')renderMoneyAccounts()}catch(_){}
+    try{if(typeof uDash==='function')uDash()}catch(_){}
+    window.MONGO_V33_REPAIRED_LEGACY_CANCEL_TRANSFERS=[...ids];
+  }catch(e){console.warn('V33 closed cancellation repair skipped',e)}
+}
+/* Final renderer guard: preserve history/details, but a closed savings account cannot
+   be cancelled again or receive a new interest-entry action. */
+if(typeof accountInlineDetail==='function'){
+  const base=accountInlineDetail;
+  accountInlineDetail=function(a){
+    let html=base.apply(this,arguments);
+    if(!closed(a)||!savings(a))return html;
+    html=html.replace(/<div class="mongo-cancel-btn">[\s\S]*?<\/div>/g,'');
+    html=html.replace(/<div class="mongo-savings-interest-income-v(?:9|13)">[\s\S]*?<\/div>/g,'');
+    return html;
+  };
+}
+/* Run after local state is available, and once more after an authoritative cloud load.
+   The predicate is exact and idempotent, so unrelated transfers are never touched. */
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(repair,1400),{once:true});
+else setTimeout(repair,1400);
+window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(repair,350));
 })();
 </script>
