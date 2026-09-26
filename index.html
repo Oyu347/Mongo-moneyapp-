@@ -2506,6 +2506,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 #account-list .closed-account-row .account-meta{white-space:normal}
 </style>
 <!-- Möngö PHONE TEST V28 — cancellation confirmation precheck: reconcile current balance against receive + fee - signed interest adjustment. Positive termination interest is credited before settlement; negative adjustment is clawed back. Financial posting logic unchanged. -->
+<!-- Möngö PHONE TEST V30 — diagnostic only: closed negative savings account breakdown; no financial data mutation. -->
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -15625,7 +15626,34 @@ select.fi{touch-action:pan-y;cursor:pointer}
     if(typeof ensureUnifiedMoneyLedger==='function')ensureUnifiedMoneyLedger(true);
     const q=T(),issues=[],accountIds=new Set((moneyAccounts||[]).map(a=>String(a.id))),paymentIds=new Set();let paymentCount=0;
     duplicateIds(txns,q.txn,issues);duplicateIds(accountTransfers,q.transfer,issues);duplicateIds(debts,q.loan,issues);duplicateIds(moneyAccounts,q.account,issues);
-    (moneyAccounts||[]).forEach(a=>{const bal=Number(accountBalance(a.id));if(!Number.isFinite(bal))issues.push(`${q.account} · ${a.name}: үлдэгдэл буруу`);if(bal<-.001)issues.push(`${q.account} · ${a.name}: сөрөг үлдэгдэл ${fmt(bal)}`);});
+    (moneyAccounts||[]).forEach(a=>{
+      const bal=Number(accountBalance(a.id));
+      if(!Number.isFinite(bal))issues.push(`${q.account} · ${a.name}: үлдэгдэл буруу`);
+      if(bal<-.001){
+        if(a?.active===false||String(a?.status||'').toLowerCase()==='cancelled'){
+          const aid=String(a.id);
+          let txnIn=0,txnOut=0,trIn=0,trOut=0,cancelTransfer=0,cancelFee=0,cancelInterest=0,cancelAdjust=0;
+          (txns||[]).forEach(t=>{
+            if(String(t?.accountId||'')!==aid)return;
+            const n=Number(t?.amount)||0;
+            if(t?.type==='income')txnIn+=n;
+            if(t?.type==='expense')txnOut+=n;
+            if(t?.savingsCancellationFee)cancelFee+=n;
+            if(t?.savingsCancellationId&&t?.type==='income')cancelInterest+=n;
+          });
+          (accountTransfers||[]).forEach(t=>{
+            const n=Number(t?.amount)||0;
+            if(String(t?.toId||'')===aid)trIn+=n;
+            if(String(t?.fromId||'')===aid)trOut+=n;
+            if(t?.savingsCancellation&&String(t?.fromId||'')===aid)cancelTransfer+=n;
+            if(t?.purpose==='interest_adjustment'&&String(t?.fromId||'')===aid)cancelAdjust+=n;
+          });
+          issues.push(`${q.account} · ${a.name}: сөрөг үлдэгдэл ${fmt(bal)} | Хаалтын онош: эхний ${fmt(Number(a.openingBalance)||0)}, орлого +${fmt(txnIn)}, зарлага -${fmt(txnOut)}, орсон шилжүүлэг +${fmt(trIn)}, гарсан шилжүүлэг -${fmt(trOut)}, цуцлалтын шилжүүлэг ${fmt(cancelTransfer)}, цуцлалтын хүү ${fmt(cancelInterest)}, шимтгэл ${fmt(cancelFee)}, хүүгийн буцаалт ${fmt(cancelAdjust)}`);
+        }else{
+          issues.push(`${q.account} · ${a.name}: сөрөг үлдэгдэл ${fmt(bal)}`);
+        }
+      }
+    });
     (txns||[]).forEach(t=>{if(!['income','expense'].includes(t?.type))return;if(!(Number(t.amount)>0))issues.push(`${q.txn} · ${t.desc||t.id}: дүн буруу`);if(!validDate(t.date))issues.push(`${q.txn} · ${t.desc||t.id}: огноо буруу`);if(t.accountId&&!accountIds.has(String(t.accountId)))issues.push(`${q.txn} · ${t.desc||t.id}: данс олдсонгүй`);});
     (accountTransfers||[]).forEach(t=>{if(!(Number(t.amount)>0))issues.push(`${q.transfer}: дүн буруу`);if(!validDate(t.date))issues.push(`${q.transfer}: огноо буруу`);if(t.fromId&&t.toId&&String(t.fromId)===String(t.toId))issues.push(`${q.transfer}: эхлэх ба очих данс ижил`);if(t.fromId&&!accountIds.has(String(t.fromId)))issues.push(`${q.transfer}: эхлэх данс олдсонгүй`);if(t.toId&&!accountIds.has(String(t.toId)))issues.push(`${q.transfer}: очих данс олдсонгүй`);});
     (debts||[]).forEach(d=>{
