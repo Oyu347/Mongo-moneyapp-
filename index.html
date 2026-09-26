@@ -19089,3 +19089,35 @@ if(typeof baseOpenExternal40==='function')window.openMongoSavingsExternalInteres
 };
 })();
 </script>
+
+<!-- Möngö PHONE TEST V41 — refresh already-rendered savings interest receiver selects before custom picker opens. -->
+<script id="mongo-v41-interest-receiver-refresh">
+(function(){
+'use strict';
+window.MONGO_INTEREST_RECEIVER_REFRESH='V41';
+function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function ok(a,excludeId){return !!a&&a.active!==false&&!a.legacy&&String(a.id)!==String(excludeId||'')&&['checking','cash'].includes(typ(a))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function ownerId(sel){
+ if(sel.id==='edit-interest-account')return String(typeof editingMoneyAccountId!=='undefined'?editingMoneyAccountId:'');
+ if(sel.id==='edit-interest-receive-account-v7')return String(typeof editingMoneyAccountId!=='undefined'?editingMoneyAccountId:'');
+ return '';
+}
+function refresh(sel){
+ if(!sel)return;
+ const exclude=ownerId(sel), old=String(sel.value||'');
+ const list=(Array.isArray(moneyAccounts)?moneyAccounts:[]).filter(a=>ok(a,exclude));
+ const keep=list.some(a=>String(a.id)===old)?old:'';
+ sel.innerHTML=list.map(a=>`<option value="${esc(a.id)}"${String(a.id)===keep?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc(a.name||'Данс')}</option>`).join('');
+ if(!keep&&list[0])sel.value=String(list[0].id);
+}
+function isReceiver(sel){return !!sel&&['account-interest-account','edit-interest-account','edit-interest-receive-account-v7'].includes(sel.id)}
+function refreshAll(){document.querySelectorAll('#account-interest-account,#edit-interest-account,#edit-interest-receive-account-v7').forEach(refresh)}
+/* Important: the app replaces native selects with its own picker. Refresh BEFORE that picker reads options. */
+document.addEventListener('pointerdown',e=>{const sel=e.target&&e.target.closest?e.target.closest('select'):null;if(isReceiver(sel))refresh(sel)},true);
+document.addEventListener('click',e=>{const sel=e.target&&e.target.closest?e.target.closest('select'):null;if(isReceiver(sel))refresh(sel)},true);
+document.addEventListener('change',e=>{if(e.target&&['account-interest-mode','edit-interest-mode'].includes(e.target.id))setTimeout(refreshAll,0)},true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,0));else setTimeout(refreshAll,0);
+setTimeout(refreshAll,250);setTimeout(refreshAll,800);
+})();
+</script>
