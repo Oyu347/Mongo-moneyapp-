@@ -172,8 +172,25 @@ At the end of each development cycle report briefly:
 
 The Möngö Project Manager Agent should use `CURRENT_WORK.md` first, then this workbook and the active branch journal. It may recommend the next task but must not silently redefine the verified baseline or override the safety/approval rules above.
 
+## 13. DAILY CONTINUITY CHECK — REQUIRED
+
+To prevent completed work from being lost between chats, perform a daily continuity closeout around **23:00 Asia/Ulaanbaatar (Mongolia time)** whenever Möngö development work occurred that day.
+
+Daily closeout checklist:
+1. Review the day's meaningful code changes, phone tests, decisions, failures, discarded patches, and confirmed results.
+2. Confirm the latest explicit evidence state: PHONE PASS / PHONE FAIL / NEEDS TEST / CLOSED / INTERRUPTED / INCIDENT.
+3. Update the active branch journal / `docs/modularization/PROGRESS.md` with meaningful completed work and evidence that is not already recorded.
+4. Update `development-modular:docs/CURRENT_WORK.md` whenever the active branch, PHONE baseline, current target, status, return point, or exact next step changed materially.
+5. Preserve the last user-confirmed PHONE baseline. Never promote an untested file merely because it is newer.
+6. Record discarded/failed versions clearly so a future chat does not resume from them.
+7. End with one exact next action so a new chat can continue without reconstructing history.
+8. If no meaningful Möngö development work occurred that day, do not manufacture an update or move the pointer.
+
+This is an **agent working rule**, not a background scheduler guarantee. Whenever a development session ends before 23:00, also perform the same continuity closeout before handoff if there is a risk the chat may end or switch.
+
 ---
 
 Last initialized: 2026-09-04
 Startup continuity pointer added: 2026-09-12
+Daily continuity closeout rule added: 2026-09-26
 Status: ACTIVE — CURRENT_WORK navigation required.
