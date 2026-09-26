@@ -2505,6 +2505,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 #account-list .closed-account-row{opacity:.62}
 #account-list .closed-account-row .account-meta{white-space:normal}
 </style>
+<!-- Möngö PHONE TEST V28 — cancellation confirmation precheck: reconcile current balance against receive + fee - signed interest adjustment. Positive termination interest is credited before settlement; negative adjustment is clawed back. Financial posting logic unchanged. -->
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -18734,9 +18735,12 @@ function mount(id){
    if(a.active===false||a.status==='cancelled'){await appDialog({title:z.title,body:z.already,confirmText:z.done,single:true});return}
    const approved=await appDialog({title:z.title,body:z.ask(a.name),summary:`${esc(z.receive)}: <b>${M(c.receive)}</b><br>${esc(z.adjust)}: <b>${c.adjust>=0?'+':'−'} ${M(Math.abs(c.adjust))}</b><br>${esc(z.fee)}: <b>${M(c.fee)}</b><br><br>${esc(z.real)}`,confirmText:z.confirm,cancelText:z.back});
    if(!approved)return;
-   const beforeBalance=Math.round(typeof accountBalance==='function'?accountBalance(a.id):c.h.current);
-   const expectedOut=Math.round(Math.max(0,-c.adjust)+Math.max(0,c.fee)+Math.max(0,c.receive));
-   if(Math.abs(beforeBalance-expectedOut)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
+   // V29: use the same principal/history reconciliation that the visible preview already passed.
+   // Do not reconstruct the pre-cancellation balance from receive/fee/adjustment: that
+   // settlement algebra can diverge from the preview through rounding/classification.
+   const beforeBalance=Math.round(typeof accountBalance==='function'?accountBalance(a.id):(c.principal+c.h.compound));
+   const reconciledBefore=Math.round(c.principal+c.h.compound);
+   if(!c.ready||Math.abs(c.diff)>1||!Number.isFinite(beforeBalance)||Math.abs(beforeBalance-reconciledBefore)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
    const now=new Date().toISOString(),cancelId=uid('cancel');
    if(c.adjust>0.5){const meta=interestMeta(a);txns.unshift({id:uid('cancel_interest'),type:'income',desc:`${a.name} · ${z.interest}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.adjust),date:r.date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId:a.linkedGoalId||a.goalId||null,savingsCancellationId:cancelId,createdAt:now});}
    if(c.adjust<-0.5)accountTransfers.push({id:uid('interest_adjustment'),fromId:a.id,toId:null,amount:Math.round(Math.abs(c.adjust)),date:r.date,purpose:'interest_adjustment',targetId:null,description:`${a.name} · ${z.claw}`,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
@@ -18782,6 +18786,8 @@ window.MONGO_CANCEL_ARCHIVES_LINKED_GOAL='V24';
 window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 </script>
 <script>window.MONGO_BANK_EXPENSE_KEY_FIX='V27';</script>
+
+<script id="mongo-v29-cancel-confirm-precheck-marker">window.MONGO_CANCEL_CONFIRM_PRECHECK='V29';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
