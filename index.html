@@ -18930,3 +18930,53 @@ else setTimeout(repair,1400);
 window.addEventListener('mongo:cloud-load-complete',()=>setTimeout(repair,350));
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V34 — savings interest expected amount auto-prefill; actual bank amount remains editable. -->
+<style id="mongo-savings-interest-auto-v34-style">
+.mongo-interest-auto-v34{margin:10px 0;padding:12px 14px;border:1px solid rgba(73,176,182,.24);border-radius:14px;background:rgba(73,176,182,.07);font-size:13px;line-height:1.45;color:#4b5563}
+.mongo-interest-auto-v34 b{color:#374151}
+</style>
+<script id="mongo-savings-interest-auto-v34">
+(function(){
+'use strict';
+window.MONGO_SAVINGS_INTEREST_AUTO_PREFILL='V34';
+function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function bal(a){try{return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
+function expected(a,dateStr){
+  const b=bal(a), r=Math.max(0,Number(a.annualInterestRate)||0)/100, f=a.interestFrequency||'monthly';
+  if(!(b>0&&r>0))return 0;
+  if(f==='quarterly')return Math.round(b*r/4);
+  if(f==='yearly')return Math.round(b*r);
+  if(f==='maturity'||a.interestMode==='maturity'){
+    const st=new Date(String(a.startDate||'')+'T12:00:00'), ed=new Date(String(dateStr||a.maturityDate||'')+'T12:00:00');
+    if(!Number.isNaN(st.getTime())&&!Number.isNaN(ed.getTime())&&ed>=st){const days=Math.max(0,Math.round((ed-st)/86400000));return Math.round(b*r*days/365)}
+  }
+  return Math.round(b*r/12);
+}
+function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
+function note(a,amt){return `<div class="mongo-interest-auto-v34"><b>Тооцоолсон хүү: ${money(amt)}</b><br>${money(bal(a))} × ${Number(a.annualInterestRate)||0}% · ${a.interestFrequency==='quarterly'?'улирал':a.interestFrequency==='yearly'?'жил':(a.interestFrequency==='maturity'||a.interestMode==='maturity')?'хугацаа':'сар'}<br>Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.</div>`}
+function setupAmount(id,amt){const el=document.getElementById(id);if(!el)return;el.value=String(Math.round(amt));try{if(typeof setupAmtInput==='function')setupAmtInput(el)}catch(_){} }
+window.openMongoSavingsDepositInterestV13=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!a||typ(a)!=='savings'||!(a.interestMode==='compound'||(!a.interestMode&&a.earlyTerminationInterestMethod==='deposit')))return;
+  document.getElementById('mongo-savings-interest-income-v13')?.remove();
+  const today=new Date().toISOString().slice(0,10), amt=expected(a,today), m=document.createElement('div');m.id='mongo-savings-interest-income-v13';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">Хүүгийн орлого · ${esc(a.name||'')}</div><div class="flow-only-note">Энэ хүү ${esc(a.name||'хадгаламж')} дансанд өөрт нь нэмэгдэж, хүүгийн орлогоор бүртгэгдэнэ.</div>${note(a,amt)}<label>Банкнаас бодитоор орсон хүү</label><input class="fi" id="mongo-si-v13-amount" inputmode="decimal"><label>Хүү орсон огноо</label><input class="fi" id="mongo-si-v13-date" type="date" value="${today}"><label>Хүлээн авах данс</label><input class="fi" value="${esc(a.name||'')}" disabled><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">Болих</button><button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc(a.id)}')">Хадгалах</button></div></div>`;
+  document.body.appendChild(m);setupAmount('mongo-si-v13-amount',amt);
+};
+window.openMongoSavingsExternalInterestV9=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!a||typ(a)!=='savings'||!(a.interestMode==='payout'||(!a.interestMode&&a.earlyTerminationInterestMethod==='external')))return;
+  document.getElementById('mongo-savings-interest-income-v9')?.remove();
+  const today=new Date().toISOString().slice(0,10), amt=expected(a,today);
+  const ids=[a.interestReceiveAccountId,a.interestPayoutAccountId,a.interestAccountId].filter(Boolean);let dest=ids.find(x=>(moneyAccounts||[]).some(y=>String(y.id)===String(x)))||'';
+  if(!dest&&typeof getDefaultAccountId==='function')dest=getDefaultAccountId()||'';
+  const opts=(moneyAccounts||[]).filter(x=>x.active!==false&&typ(x)!=='savings').map(x=>`<option value="${esc(x.id)}"${String(x.id)===String(dest)?' selected':''}>${esc(x.name||'')}</option>`).join('');
+  const m=document.createElement('div');m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
+  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">Хүүгийн орлого · ${esc(a.name||'')}</div><div class="flow-only-note">Хүү хадгаламжийн дансанд нэмэгдэхгүй, сонгосон дансанд орлогоор бүртгэгдэнэ.</div>${note(a,amt)}<label>Банкнаас бодитоор орсон хүү</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>Хүү орсон огноо</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>Хүлээн авах данс</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">Болих</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">Хадгалах</button></div></div>`;
+  document.body.appendChild(m);setupAmount('mongo-si-v9-amount',amt);
+};
+})();
+</script>
