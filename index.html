@@ -18787,6 +18787,51 @@ window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 
 
 <script id="mongo-v39-compound-cancel-lots-marker">window.MONGO_COMPOUND_CANCEL_LOTS='V39';</script>
+
+<script id="mongo-v43-demand-savings-interest-mode" data-phone-test="V43">
+(function(){
+'use strict';
+const LABELS={
+  mn:'Хүү тооцохгүй',
+  en:'No interest calculation',
+  zh:'不计息',
+  ja:'利息を計算しない',
+  ko:'이자 계산 안 함',
+  ru:'Не начислять проценты',
+  de:'Keine Zinsberechnung'
+};
+function currentLang(){return (typeof lang==='string'&&LABELS[lang])?lang:'mn';}
+function apply(prefix){
+  const type=document.getElementById(prefix+'-deposit-term-type');
+  const mode=document.getElementById(prefix+'-interest-mode');
+  if(!type||!mode)return;
+  const demand=type.value==='demand';
+  const maturity=[...mode.options].find(o=>o.value==='maturity');
+  const none=[...mode.options].find(o=>o.value==='none');
+  if(none) none.textContent=LABELS[currentLang()];
+  if(maturity){
+    maturity.hidden=demand;
+    maturity.disabled=demand;
+  }
+  // A demand savings account has no maturity date. If the user switches an
+  // existing form from term+maturity to demand, move to the normal
+  // interest-bearing savings mode rather than silently keeping an invalid mode.
+  if(demand&&mode.value==='maturity'){
+    mode.value='compound';
+    mode.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+}
+function applyAll(){apply('account');apply('edit');}
+document.addEventListener('change',function(e){
+  if(e.target&&(/-(deposit-term-type|interest-mode)$/).test(e.target.id||'')) setTimeout(applyAll,0);
+},true);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(applyAll,700));
+const mo=new MutationObserver(()=>applyAll());
+mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(applyAll,1200);
+window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V43';
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
