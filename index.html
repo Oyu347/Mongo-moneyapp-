@@ -18887,6 +18887,62 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(placeAll,100));
 setTimeout(placeAll,200);setTimeout(placeAll,800);
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V47 — deposit type single-source visibility fix.
+     UI wiring only: show Deposit type only for Savings, keep one live selector,
+     and remove stale duplicate selector after contract re-renders.
+     No save/calculation/interest/cancellation arithmetic changed. -->
+<script id="mongo-v47-deposit-type-visibility-script">
+(function(){
+'use strict';
+window.MONGO_DEPOSIT_TYPE_VISIBILITY='V47';
+function typeSelect(prefix){
+  return document.getElementById(prefix==='account'?'account-type':'account-edit-type');
+}
+function reconcile(prefix){
+  const interest=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');
+  if(!interest)return;
+  let host=document.getElementById(prefix+'-deposit-type-position-v45');
+  if(!host){
+    host=document.createElement('div');
+    host.id=prefix+'-deposit-type-position-v45';
+    host.className='mongo-v45-deposit-type-position';
+    interest.parentNode.insertBefore(host,interest);
+  } else if(host.nextElementSibling!==interest){
+    interest.parentNode.insertBefore(host,interest);
+  }
+  const matches=[...document.querySelectorAll('[id="'+prefix+'-deposit-term-type"]')];
+  if(matches.length){
+    /* The newest contract render is the last matching control in DOM order. */
+    const live=matches[matches.length-1];
+    const field=live.parentElement;
+    if(field&&field.parentElement!==host) host.replaceChildren(field);
+    [...document.querySelectorAll('[id="'+prefix+'-deposit-term-type"]')].forEach(sel=>{
+      if(sel!==live){ const f=sel.parentElement; if(f&&f!==host&&f.parentElement)f.remove(); else if(f&&f.parentElement===host)f.remove(); }
+    });
+  }
+  const ty=typeSelect(prefix);
+  const isSavings=!!ty&&ty.value==='savings';
+  host.style.display=isSavings?'':'none';
+}
+function all(){reconcile('account');reconcile('edit');}
+function bindType(id){
+  const el=document.getElementById(id);if(!el||el.dataset.v47DepositType==='1')return;
+  el.dataset.v47DepositType='1';
+  el.addEventListener('change',()=>setTimeout(all,0));
+}
+let pending=false;
+const mo=new MutationObserver(()=>{
+  if(pending)return;pending=true;
+  requestAnimationFrame(()=>{pending=false;bindType('account-type');bindType('account-edit-type');all();});
+});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{bindType('account-type');bindType('account-edit-type');all();},120));
+setTimeout(()=>{bindType('account-type');bindType('account-edit-type');all();},250);
+setTimeout(all,900);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
