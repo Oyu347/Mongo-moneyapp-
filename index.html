@@ -18838,6 +18838,50 @@ setTimeout(applyAll,1200);
 window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V44';
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V45 — deposit type position only.
+     Move only the existing Deposit type control above Interest conditions.
+     Keep the same select/id/value/listeners and all financial/save/cancellation logic intact. -->
+<style id="mongo-v45-deposit-type-position-style">
+.mongo-v45-deposit-type-position{margin:12px 0;padding:12px;border:1px solid rgba(73,176,182,.18);border-radius:16px;background:rgba(73,176,182,.045);min-width:0;box-sizing:border-box}
+.mongo-v45-deposit-type-position>div{min-width:0}
+.mongo-v45-deposit-type-position label{display:block;margin-bottom:6px;line-height:1.35}
+.mongo-v45-deposit-type-position .fi{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+</style>
+<script id="mongo-v45-deposit-type-position-script">
+(function(){
+'use strict';
+window.MONGO_DEPOSIT_TYPE_POSITION='V45';
+function place(prefix){
+  const interest=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');
+  const contract=document.getElementById(prefix+'-term-contract');
+  const select=document.getElementById(prefix+'-deposit-term-type');
+  if(!interest||!contract||!select)return;
+  let host=document.getElementById(prefix+'-deposit-type-position-v45');
+  if(!host){
+    host=document.createElement('div');
+    host.id=prefix+'-deposit-type-position-v45';
+    host.className='mongo-v45-deposit-type-position';
+    interest.parentNode.insertBefore(host,interest);
+  } else if(host.nextElementSibling!==interest){
+    interest.parentNode.insertBefore(host,interest);
+  }
+  const field=select.parentElement;
+  if(field&&field.parentElement!==host)host.appendChild(field);
+}
+function placeAll(){place('account');place('edit');}
+let scheduled=false;
+const mo=new MutationObserver(()=>{
+  if(scheduled)return;
+  scheduled=true;
+  requestAnimationFrame(()=>{scheduled=false;placeAll();});
+});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(placeAll,100));
+setTimeout(placeAll,200);setTimeout(placeAll,800);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
