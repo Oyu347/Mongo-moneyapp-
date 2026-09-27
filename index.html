@@ -18787,7 +18787,6 @@ window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 
 
 <script id="mongo-v39-compound-cancel-lots-marker">window.MONGO_COMPOUND_CANCEL_LOTS='V39';</script>
-<script id="mongo-v42-interest-historical-balance-marker">window.MONGO_INTEREST_HISTORICAL_BALANCE="V42";</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -19004,18 +19003,10 @@ function q(){return D[(typeof lang==='string'&&D[lang])?lang:'mn']}
 function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function bal(a){try{return Math.max(0,Number(accountBalance(a.id))||0)}catch(_){return Math.max(0,Number(a.openingBalance)||0)}}
-function balAt(a,dateStr){
- const end=String(dateStr||''); if(!end)return bal(a);
- let v=Number(a.openingBalance)||0, aid=String(a.id||'');
- (txns||[]).forEach(t=>{if(String(t.date||'')>end||String(t.accountId||'')!==aid||t.skipAccountBalance||t.autoPaySelf)return;v+=(t.type==='income'?1:t.type==='expense'?-1:0)*(Number(t.amount)||0)});
- (accountTransfers||[]).forEach(t=>{if(String(t.date||'')>end)return;if(String(t.fromId||'')===aid)v-=Number(t.amount)||0;if(String(t.toId||'')===aid)v+=Number(t.amount)||0});
- (debts||[]).forEach(d=>{if(d.fundingMode==='existing'&&String(d.fundingAccountId||'')===aid&&String(d.startDate||String(d.createdAt||'').slice(0,10)||'')<=end)v+=Number(d.fundingAmount)||0;(typeof debtPayments==='function'?debtPayments(d):[]).forEach(x=>{if(String(x.date||'')<=end&&String(x.accountId||'')===aid)v-=Number(x.total)||0})});
- return Math.max(0,v);
-}
-function expected(a,dateStr){const b=balAt(a,dateStr),r=Math.max(0,Number(a.annualInterestRate)||0)/100,f=a.interestFrequency||'monthly';if(!(b>0&&r>0))return 0;if(f==='quarterly')return Math.round(b*r/4);if(f==='yearly')return Math.round(b*r);if(f==='maturity'||a.interestMode==='maturity'){const st=new Date(String(a.startDate||'')+'T12:00:00'),ed=new Date(String(dateStr||a.maturityDate||'')+'T12:00:00');if(!Number.isNaN(st.getTime())&&!Number.isNaN(ed.getTime())&&ed>=st){return Math.round(b*r*Math.max(0,Math.round((ed-st)/86400000))/365)}}return Math.round(b*r/12)}
+function expected(a,dateStr){const b=bal(a),r=Math.max(0,Number(a.annualInterestRate)||0)/100,f=a.interestFrequency||'monthly';if(!(b>0&&r>0))return 0;if(f==='quarterly')return Math.round(b*r/4);if(f==='yearly')return Math.round(b*r);if(f==='maturity'||a.interestMode==='maturity'){const st=new Date(String(a.startDate||'')+'T12:00:00'),ed=new Date(String(dateStr||a.maturityDate||'')+'T12:00:00');if(!Number.isNaN(st.getTime())&&!Number.isNaN(ed.getTime())&&ed>=st){return Math.round(b*r*Math.max(0,Math.round((ed-st)/86400000))/365)}}return Math.round(b*r/12)}
 function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
 function period(a,x){return a.interestFrequency==='quarterly'?x.quarter:a.interestFrequency==='yearly'?x.year:(a.interestFrequency==='maturity'||a.interestMode==='maturity')?x.term:x.month}
-function note(a,amt,x,dateStr){return `<div class="mongo-interest-auto-v34"><b>${x.calc}: ${money(amt)}</b><br>${money(balAt(a,dateStr))} × ${Number(a.annualInterestRate)||0}% · ${x.period||period(a,x)}<br>${x.actualHelp}</div>`}
+function note(a,amt,x){return `<div class="mongo-interest-auto-v34"><b>${x.calc}: ${money(amt)}</b><br>${money(bal(a))} × ${Number(a.annualInterestRate)||0}% · ${x.period||period(a,x)}<br>${x.actualHelp}</div>`}
 function setup(id,amt){const el=document.getElementById(id);if(!el)return;el.value=String(Math.round(amt));try{if(typeof setupAmtInput==='function')setupAmtInput(el)}catch(_){}}
 
 /* Translate only the savings-account inline HTML at render time. */
@@ -19033,8 +19024,8 @@ window.openMongoSavingsDepositInterestV13=function(id){
  if(!a||typ(a)!=='savings'||!(a.interestMode==='compound'||(!a.interestMode&&a.earlyTerminationInterestMethod==='deposit')))return;
  document.getElementById('mongo-savings-interest-income-v13')?.remove();
  const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today),m=document.createElement('div');m.id='mongo-savings-interest-income-v13';m.className='loan-modal-backdrop';
- m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.depositNote(esc(a.name||''))}</div>${note(a,amt,x,today)}<label>${x.actual}</label><input class="fi" id="mongo-si-v13-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v13-date" type="date" value="${today}"><label>${x.receive}</label><input class="fi" value="${esc(a.name||'')}" disabled><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc(a.id)}')">${x.save}</button></div></div>`;
- document.body.appendChild(m);setup('mongo-si-v13-amount',amt);const d13=document.getElementById('mongo-si-v13-date');if(d13)d13.addEventListener('change',()=>{const n=expected(a,d13.value);setup('mongo-si-v13-amount',n);const box=m.querySelector('.mongo-interest-auto-v34');if(box)box.outerHTML=note(a,n,x,d13.value)});
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.depositNote(esc(a.name||''))}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v13-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v13-date" type="date" value="${today}"><label>${x.receive}</label><input class="fi" value="${esc(a.name||'')}" disabled><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v13').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsDepositInterestV13('${esc(a.id)}')">${x.save}</button></div></div>`;
+ document.body.appendChild(m);setup('mongo-si-v13-amount',amt);
 };
 window.openMongoSavingsExternalInterestV9=function(id){
  const a=(moneyAccounts||[]).find(v=>String(v.id)===String(id));
@@ -19043,8 +19034,8 @@ window.openMongoSavingsExternalInterestV9=function(id){
  const x=q(),today=new Date().toISOString().slice(0,10),amt=expected(a,today);const ids=[a.interestReceiveAccountId,a.interestPayoutAccountId,a.interestAccountId].filter(Boolean);let dest=ids.find(v=>(moneyAccounts||[]).some(y=>String(y.id)===String(v)))||'';if(!dest&&typeof getDefaultAccountId==='function')dest=getDefaultAccountId()||'';
  const opts=(moneyAccounts||[]).filter(v=>v.active!==false&&typ(v)!=='savings').map(v=>`<option value="${esc(v.id)}"${String(v.id)===String(dest)?' selected':''}>${esc(v.name||'')}</option>`).join('');
  const m=document.createElement('div');m.id='mongo-savings-interest-income-v9';m.className='loan-modal-backdrop';
- m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.externalNote}</div>${note(a,amt,x,today)}<label>${x.actual}</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>${x.receive}</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">${x.save}</button></div></div>`;
- document.body.appendChild(m);setup('mongo-si-v9-amount',amt);const d9=document.getElementById('mongo-si-v9-date');if(d9)d9.addEventListener('change',()=>{const n=expected(a,d9.value);setup('mongo-si-v9-amount',n);const box=m.querySelector('.mongo-interest-auto-v34');if(box)box.outerHTML=note(a,n,x,d9.value)});
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${x.title} · ${esc(a.name||'')}</div><div class="flow-only-note">${x.externalNote}</div>${note(a,amt,x)}<label>${x.actual}</label><input class="fi" id="mongo-si-v9-amount" inputmode="decimal"><label>${x.date}</label><input class="fi" id="mongo-si-v9-date" type="date" value="${today}"><label>${x.receive}</label><select class="fi" id="mongo-si-v9-account">${opts}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('mongo-savings-interest-income-v9').remove()">${x.close}</button><button class="btn btn-p" onclick="saveMongoSavingsExternalInterestV9('${esc(a.id)}')">${x.save}</button></div></div>`;
+ document.body.appendChild(m);setup('mongo-si-v9-amount',amt);
 };
 })();
 </script>
@@ -19099,120 +19090,37 @@ if(typeof baseOpenExternal40==='function')window.openMongoSavingsExternalInteres
 })();
 </script>
 
-<!-- Möngö PHONE TEST V41 — refresh already-rendered savings interest receiver selects before custom picker opens. -->
-<script id="mongo-v41-interest-receiver-refresh">
-(function(){
-'use strict';
-window.MONGO_INTEREST_RECEIVER_REFRESH='V41';
-function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function ok(a,excludeId){return !!a&&a.active!==false&&!a.legacy&&String(a.id)!==String(excludeId||'')&&['checking','cash'].includes(typ(a))}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function ownerId(sel){
- if(sel.id==='edit-interest-account')return String(typeof editingMoneyAccountId!=='undefined'?editingMoneyAccountId:'');
- if(sel.id==='edit-interest-receive-account-v7')return String(typeof editingMoneyAccountId!=='undefined'?editingMoneyAccountId:'');
- return '';
+<!-- Möngö PHONE TEST V41 — cancellation mobile layout only.
+     Keep numeric values on one line while keeping every row/content inside its card.
+     Long labels may wrap. No financial/data/cancellation logic changed. -->
+<style id="mongo-v41-cancel-mobile-layout">
+#mongo-savings-cancel-stage1,
+#mongo-savings-cancel-stage1 .loan-modal,
+#mongo-savings-cancel-stage1 .mrc1-card,
+#mongo-savings-cancel-stage1 .mrc2b-date-card,
+#mongo-savings-cancel-stage1 .mrc4-settle{max-width:100%;box-sizing:border-box;min-width:0}
+#mongo-savings-cancel-stage1 .mrc1-row,
+#mongo-savings-cancel-stage1 .mrc1-transfer{display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;align-items:start!important;column-gap:10px!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+#mongo-savings-cancel-stage1 .mrc1-row>span,
+#mongo-savings-cancel-stage1 .mrc1-transfer>span{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important}
+#mongo-savings-cancel-stage1 .mrc1-row>b,
+#mongo-savings-cancel-stage1 .mrc1-transfer>b{min-width:0!important;max-width:100%!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;text-align:right!important;justify-self:end!important}
+#mongo-savings-cancel-stage1 .mrc1-note,
+#mongo-savings-cancel-stage1 .mrc2-warn,
+#mongo-savings-cancel-stage1 .mrc2-ok,
+#mongo-savings-cancel-stage1 .mrc4-summary{max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;word-break:normal!important}
+#mongo-savings-cancel-stage1 input,
+#mongo-savings-cancel-stage1 select,
+#mongo-savings-cancel-stage1 button{max-width:100%;box-sizing:border-box}
+@media (max-width:420px){
+ #mongo-savings-cancel-stage1 .loan-modal{padding-left:14px!important;padding-right:14px!important}
+ #mongo-savings-cancel-stage1 .mrc1-card,
+ #mongo-savings-cancel-stage1 .mrc2b-date-card,
+ #mongo-savings-cancel-stage1 .mrc4-settle{padding-left:11px!important;padding-right:11px!important}
+ #mongo-savings-cancel-stage1 .mrc1-row,
+ #mongo-savings-cancel-stage1 .mrc1-transfer{column-gap:8px!important}
+ #mongo-savings-cancel-stage1 .mrc1-row>b,
+ #mongo-savings-cancel-stage1 .mrc1-transfer>b{font-size:0.96em}
 }
-function refresh(sel){
- if(!sel)return;
- const exclude=ownerId(sel), old=String(sel.value||'');
- const list=(Array.isArray(moneyAccounts)?moneyAccounts:[]).filter(a=>ok(a,exclude));
- const keep=list.some(a=>String(a.id)===old)?old:'';
- sel.innerHTML=list.map(a=>`<option value="${esc(a.id)}"${String(a.id)===keep?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc(a.name||'Данс')}</option>`).join('');
- if(!keep&&list[0])sel.value=String(list[0].id);
-}
-function isReceiver(sel){return !!sel&&['account-interest-account','edit-interest-account','edit-interest-receive-account-v7'].includes(sel.id)}
-function refreshAll(){document.querySelectorAll('#account-interest-account,#edit-interest-account,#edit-interest-receive-account-v7').forEach(refresh)}
-/* Important: the app replaces native selects with its own picker. Refresh BEFORE that picker reads options. */
-document.addEventListener('pointerdown',e=>{const sel=e.target&&e.target.closest?e.target.closest('select'):null;if(isReceiver(sel))refresh(sel)},true);
-document.addEventListener('click',e=>{const sel=e.target&&e.target.closest?e.target.closest('select'):null;if(isReceiver(sel))refresh(sel)},true);
-document.addEventListener('change',e=>{if(e.target&&['account-interest-mode','edit-interest-mode'].includes(e.target.id))setTimeout(refreshAll,0)},true);
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,0));else setTimeout(refreshAll,0);
-setTimeout(refreshAll,250);setTimeout(refreshAll,800);
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V44 — separate-account interest: one interest period only, daily weighted principal balance.
-     Interest paid to another account never compounds into the savings balance.
-     New principal deposits/transfers to savings participate from their actual transaction date.
-     Scope: external payout interest preview/prefill only; cancellation/save semantics unchanged. -->
-<script id="mongo-v44-interest-separate-account-period">
-(function(){
-'use strict';
-window.MONGO_INTEREST_SEPARATE_ACCOUNT_PERIOD='V44';
-const DAY=86400000,S=v=>String(v??''),N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
-function d(v){const x=new Date(S(v).slice(0,10)+'T12:00:00');return Number.isNaN(+x)?null:x}
-function ymd(x){return x?`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`:''}
-function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
-function openDate(a){return d(a.startDate||a.openingDate||a.createdDate||a.date)}
-function balanceAt(a,dateStr){
- const end=S(dateStr).slice(0,10),aid=S(a.id);let v=N(a.openingBalance);
- (Array.isArray(txns)?txns:[]).forEach(t=>{if(S(t.date).slice(0,10)>end||S(t.accountId)!==aid||t.skipAccountBalance||t.autoPaySelf)return;v+=(t.type==='income'?1:t.type==='expense'?-1:0)*N(t.amount)});
- (Array.isArray(accountTransfers)?accountTransfers:[]).forEach(t=>{if(S(t.date).slice(0,10)>end)return;if(S(t.fromId)===aid)v-=N(t.amount);if(S(t.toId)===aid)v+=N(t.amount)});
- (Array.isArray(debts)?debts:[]).forEach(x=>{if(x.fundingMode==='existing'&&S(x.fundingAccountId)===aid&&S(x.startDate||S(x.createdAt).slice(0,10)).slice(0,10)<=end)v+=N(x.fundingAmount);try{(typeof debtPayments==='function'?debtPayments(x):[]).forEach(p=>{if(S(p.date).slice(0,10)<=end&&S(p.accountId)===aid)v-=N(p.total)})}catch(_){}});
- return Math.max(0,v);
-}
-function prevMonthSameDay(end){
- const y=end.getFullYear(),m=end.getMonth(),day=end.getDate();
- const last=new Date(y,m,0,12,0,0).getDate();
- return new Date(y,m-1,Math.min(day,last),12,0,0);
-}
-function periodStart(a,end){
- let start=prevMonthSameDay(end),opened=openDate(a);
- if(opened&&opened>start)start=opened;
- return start;
-}
-function calc(a,endStr){
- const end=d(endStr);if(!end)return {amount:0};const start=periodStart(a,end),rate=Math.max(0,N(a.annualInterestRate))/100;
- if(!start||end<=start||!(rate>0))return {amount:0,start,end,days:0,balanceDays:0};
- let balanceDays=0,days=0;
- for(let cur=new Date(start);cur<end;cur=new Date(cur.getTime()+DAY)){balanceDays+=balanceAt(a,ymd(cur));days++}
- return {amount:Math.round(balanceDays*rate/365),start,end,days,balanceDays};
-}
-function patch(a){
- const modal=document.getElementById('mongo-savings-interest-income-v9'),dateEl=document.getElementById('mongo-si-v9-date'),amountEl=document.getElementById('mongo-si-v9-amount');
- if(!modal||!dateEl||!amountEl)return;
- const box=modal.querySelector('.mongo-interest-auto-v34');if(!box)return;
- function render(){
-  const c=calc(a,dateEl.value),avg=c.days?c.balanceDays/c.days:0;
-  amountEl.value=String(c.amount||0);try{amountEl.dispatchEvent(new Event('input',{bubbles:true}))}catch(_){}
-  box.innerHTML=`<b>Тооцоолсон хүү: ${money(c.amount||0)}</b><br>${ymd(c.start)} → ${ymd(c.end)} · ${c.days||0} хоног<br>Өдрийн жигнэсэн дундаж үндсэн үлдэгдэл: ${money(avg)} · ${N(a.annualInterestRate)}% / 365<br>Хүү нь сонгосон өөр дансанд орно. Хадгаламжид шинээр нэмсэн үндсэн мөнгө орсон өдрөөсөө дараагийн хүүд оролцоно. Өмнө өөр дансанд авсан хүү хадгаламжийн суурь дүнд нэмэгдэхгүй.<br>Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.`;
- }
- dateEl.addEventListener('change',()=>setTimeout(render,0));render();
-}
-const base=window.openMongoSavingsExternalInterestV9;
-if(typeof base==='function')window.openMongoSavingsExternalInterestV9=function(id){const r=base.apply(this,arguments),a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>S(x.id)===S(id));if(a&&typ(a)==='savings')setTimeout(()=>patch(a),0);return r};
-})();
-</script>
-
-<!-- Möngö PHONE TEST V45 — display-sync only.
-     Keeps V44 calculation unchanged. Forces the visible calculated-interest card
-     and editable actual-interest field to render from the same V44 result. -->
-<script id="mongo-v45-interest-display-sync">
-(function(){
-'use strict';
-window.MONGO_INTEREST_DISPLAY_SYNC='V45';
-function sync45(){
-  const modal=document.getElementById('mongo-savings-interest-income-v9');
-  const amount=document.getElementById('mongo-si-v9-amount');
-  if(!modal||!amount)return;
-  const box=modal.querySelector('.mongo-interest-auto-v34');
-  if(!box)return;
-  const update=()=>{
-    const raw=String(amount.value||'').replace(/[^\d.-]/g,'');
-    const n=Math.round(Number(raw)||0);
-    const fmt=(typeof fmtMoney==='function')?fmtMoney(n):('₮'+n.toLocaleString());
-    const b=box.querySelector('b');
-    if(b)b.textContent='Тооцоолсон хүү: '+fmt;
-  };
-  amount.addEventListener('input',update);
-  setTimeout(update,0);
-}
-document.addEventListener('change',e=>{
-  if(e.target&&e.target.id==='mongo-si-v9-date')setTimeout(sync45,20);
-},true);
-const obs=new MutationObserver(()=>{if(document.getElementById('mongo-savings-interest-income-v9'))setTimeout(sync45,20)});
-obs.observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
+</style>
+<script id="mongo-v41-cancel-mobile-layout-marker">window.MONGO_CANCEL_MOBILE_LAYOUT='V41';</script>
