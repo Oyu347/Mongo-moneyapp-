@@ -18943,6 +18943,94 @@ setTimeout(()=>{bindType('account-type');bindType('account-edit-type');all();},2
 setTimeout(all,900);
 })();
 </script>
+
+<!-- Möngö PHONE TEST V48 — restore cancellation-condition visibility after moving Deposit type.
+     UI state sync only. The upper Deposit type remains the single live selector.
+     No save/data/interest/cancellation arithmetic is changed. -->
+<script id="mongo-v48-deposit-cancel-visibility-script">
+(function(){
+'use strict';
+window.MONGO_DEPOSIT_CANCEL_VISIBILITY='V48';
+
+function accountType(prefix){
+  return document.getElementById(prefix==='account'?'account-type':'account-edit-type');
+}
+
+function syncContract(prefix){
+  const ty=accountType(prefix);
+  const isSavings=!!ty && ty.value==='savings';
+
+  const host=document.getElementById(prefix+'-deposit-type-position-v45');
+  if(host) host.style.display=isSavings?'':'none';
+
+  const contract=document.getElementById(prefix+'-term-contract');
+  if(!contract) return;
+
+  /* For non-savings accounts the whole savings-contract block must stay hidden. */
+  contract.style.display=isSavings?'':'none';
+  if(!isSavings) return;
+
+  const depositType=document.getElementById(prefix+'-deposit-term-type');
+  const isTerm=!!depositType && depositType.value==='term';
+
+  const termOnly=document.getElementById(prefix+'-term-only');
+  if(termOnly) termOnly.classList.toggle('show',isTerm);
+
+  const earlyCheck=document.getElementById(prefix+'-allows-early');
+  const early=!!earlyCheck?.checked;
+  const earlyFields=document.getElementById(prefix+'-early-fields');
+  if(earlyFields) earlyFields.classList.toggle('show',isTerm && early);
+
+  const rule=document.getElementById(prefix+'-early-rule')?.value || 'all_reduced';
+  document.getElementById(prefix+'-stage-box')?.classList.toggle('show',isTerm && early && rule==='staged');
+  document.getElementById(prefix+'-threshold-box')?.classList.toggle('show',isTerm && early && rule==='threshold');
+  document.getElementById(prefix+'-bank-actual-box')?.classList.toggle('show',isTerm && early && rule==='bank_actual');
+
+  const rate=document.getElementById(prefix+'-early-rate')?.parentElement;
+  if(rate) rate.style.display=(rule==='staged'||rule==='threshold'||rule==='bank_actual')?'none':'';
+
+  const actualWrap=document.getElementById(prefix+'-bank-actual-interest-wrap');
+  if(actualWrap){
+    actualWrap.style.display=document.getElementById(prefix+'-use-bank-actual')?.checked?'':'none';
+  }
+
+  /* Maturity belongs only to term deposits. */
+  const maturity=document.getElementById(prefix+'-maturity')?.parentElement;
+  if(maturity) maturity.style.display=isTerm?'':'none';
+}
+
+function syncAll(){
+  syncContract('account');
+  syncContract('edit');
+}
+
+document.addEventListener('change',function(e){
+  const id=e.target?.id||'';
+  if(
+    id==='account-type' || id==='account-edit-type' ||
+    /-(deposit-term-type|allows-early|early-rule|use-bank-actual)$/.test(id)
+  ){
+    setTimeout(syncAll,0);
+  }
+},true);
+
+let scheduled=false;
+const mo=new MutationObserver(function(){
+  if(scheduled)return;
+  scheduled=true;
+  requestAnimationFrame(function(){
+    scheduled=false;
+    syncAll();
+  });
+});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+
+document.addEventListener('DOMContentLoaded',()=>setTimeout(syncAll,180));
+setTimeout(syncAll,300);
+setTimeout(syncAll,1000);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
