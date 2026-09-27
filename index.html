@@ -19124,3 +19124,101 @@ if(typeof baseOpenExternal40==='function')window.openMongoSavingsExternalInteres
 }
 </style>
 <script id="mongo-v41-cancel-mobile-layout-marker">window.MONGO_CANCEL_MOBILE_LAYOUT='V41';</script>
+
+
+<!-- Möngö PHONE TEST V42 — adaptive cancellation rows.
+     Supersedes V41 layout only: labels wrap by words, numeric values stay intact,
+     and values drop to a right-aligned next line when horizontal space is insufficient.
+     Applies across all cancellation-rule preview/reconciliation/calculation rows.
+     No financial/data/cancellation arithmetic changed. -->
+<style id="mongo-v42-cancel-adaptive-layout">
+#mongo-savings-cancel-stage1 .mrc1-row,
+#mongo-savings-cancel-stage1 .mrc1-transfer{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:flex-start!important;
+  gap:6px 10px!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>span,
+#mongo-savings-cancel-stage1 .mrc1-transfer>span{
+  flex:1 1 210px!important;
+  min-width:0!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:keep-all!important;
+  hyphens:none!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>b,
+#mongo-savings-cancel-stage1 .mrc1-transfer>b{
+  flex:0 1 auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin-left:auto!important;
+  text-align:right!important;
+  justify-self:auto!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:keep-all!important;
+  hyphens:none!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-row>b.mrc-v42-value,
+#mongo-savings-cancel-stage1 .mrc1-transfer>b.mrc-v42-value{
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  max-width:100%!important;
+}
+#mongo-savings-cancel-stage1 .mrc1-title,
+#mongo-savings-cancel-stage1 .mrc1-note,
+#mongo-savings-cancel-stage1 .mrc2-warn,
+#mongo-savings-cancel-stage1 .mrc2-ok,
+#mongo-savings-cancel-stage1 .mrc4-summary,
+#mongo-savings-cancel-stage1 label{
+  max-width:100%!important;
+  min-width:0!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+  word-break:keep-all!important;
+  hyphens:none!important;
+}
+@media (max-width:420px){
+ #mongo-savings-cancel-stage1 .mrc1-row>span,
+ #mongo-savings-cancel-stage1 .mrc1-transfer>span{flex-basis:190px!important}
+ #mongo-savings-cancel-stage1 .mrc1-row>b,
+ #mongo-savings-cancel-stage1 .mrc1-transfer>b{font-size:1em!important}
+}
+</style>
+<script id="mongo-v42-cancel-adaptive-layout-script">
+(function(){
+'use strict';
+window.MONGO_CANCEL_ADAPTIVE_LAYOUT='V42';
+function isCompactValue42(text){
+  const t=String(text||'').replace(/\s+/g,' ').trim();
+  if(!t) return false;
+  /* Currency, signed currency, date, percent, numeric range/arrow values only. */
+  return /^(?:[+−-]?\s*₮\s*[\d,.]+|[\d]{4}[-./][\d]{1,2}[-./][\d]{1,2}|[+−-]?\s*[\d,.]+\s*%|[+−-]?\s*[\d,.]+\s*%\s*→\s*[+−-]?\s*[\d,.]+\s*%|[+−-]?\s*[\d,.]+)$/.test(t);
+}
+function mark42(root){
+  const scope=root&&root.querySelectorAll?root:document;
+  scope.querySelectorAll('#mongo-savings-cancel-stage1 .mrc1-row>b, #mongo-savings-cancel-stage1 .mrc1-transfer>b').forEach(el=>{
+    el.classList.toggle('mrc-v42-value',isCompactValue42(el.textContent));
+  });
+}
+mark42(document);
+const obs=new MutationObserver(ms=>{
+  let relevant=false;
+  for(const m of ms){
+    const n=m.target&&m.target.nodeType===1?m.target:m.target&&m.target.parentElement;
+    if(n&&(n.id==='mongo-savings-cancel-stage1'||n.closest?.('#mongo-savings-cancel-stage1'))){relevant=true;break}
+  }
+  if(relevant) mark42(document);
+});
+obs.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+})();
+</script>
