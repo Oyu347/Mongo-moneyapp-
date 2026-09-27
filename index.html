@@ -18840,7 +18840,7 @@ window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V44';
 </script>
 
 
-<!-- Möngö PHONE TEST V45 — deposit type position only.
+<!-- Möngö PHONE TEST V46 — deposit type position + duplicate prevention.
      Move only the existing Deposit type control above Interest conditions.
      Keep the same select/id/value/listeners and all financial/save/cancellation logic intact. -->
 <style id="mongo-v45-deposit-type-position-style">
@@ -18852,7 +18852,7 @@ window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V44';
 <script id="mongo-v45-deposit-type-position-script">
 (function(){
 'use strict';
-window.MONGO_DEPOSIT_TYPE_POSITION='V45';
+window.MONGO_DEPOSIT_TYPE_POSITION='V46';
 function place(prefix){
   const interest=document.getElementById(prefix==='account'?'account-interest-fields':'edit-interest-fields');
   const contract=document.getElementById(prefix+'-term-contract');
@@ -18868,7 +18868,12 @@ function place(prefix){
     interest.parentNode.insertBefore(host,interest);
   }
   const field=select.parentElement;
-  if(field&&field.parentElement!==host)host.appendChild(field);
+  // The contract block can be re-rendered after the control was moved.
+  // Keep only the newest live field in the upper host so a stale moved copy
+  // cannot remain beside a newly rendered duplicate.
+  if(field&&(field.parentElement!==host||host.children.length!==1||host.firstElementChild!==field)){
+    host.replaceChildren(field);
+  }
 }
 function placeAll(){place('account');place('edit');}
 let scheduled=false;
