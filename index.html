@@ -19185,3 +19185,34 @@ const base=window.openMongoSavingsExternalInterestV9;
 if(typeof base==='function')window.openMongoSavingsExternalInterestV9=function(id){const r=base.apply(this,arguments),a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>S(x.id)===S(id));if(a&&typ(a)==='savings')setTimeout(()=>patch(a),0);return r};
 })();
 </script>
+
+<!-- Möngö PHONE TEST V45 — display-sync only.
+     Keeps V44 calculation unchanged. Forces the visible calculated-interest card
+     and editable actual-interest field to render from the same V44 result. -->
+<script id="mongo-v45-interest-display-sync">
+(function(){
+'use strict';
+window.MONGO_INTEREST_DISPLAY_SYNC='V45';
+function sync45(){
+  const modal=document.getElementById('mongo-savings-interest-income-v9');
+  const amount=document.getElementById('mongo-si-v9-amount');
+  if(!modal||!amount)return;
+  const box=modal.querySelector('.mongo-interest-auto-v34');
+  if(!box)return;
+  const update=()=>{
+    const raw=String(amount.value||'').replace(/[^\d.-]/g,'');
+    const n=Math.round(Number(raw)||0);
+    const fmt=(typeof fmtMoney==='function')?fmtMoney(n):('₮'+n.toLocaleString());
+    const b=box.querySelector('b');
+    if(b)b.textContent='Тооцоолсон хүү: '+fmt;
+  };
+  amount.addEventListener('input',update);
+  setTimeout(update,0);
+}
+document.addEventListener('change',e=>{
+  if(e.target&&e.target.id==='mongo-si-v9-date')setTimeout(sync45,20);
+},true);
+const obs=new MutationObserver(()=>{if(document.getElementById('mongo-savings-interest-income-v9'))setTimeout(sync45,20)});
+obs.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
