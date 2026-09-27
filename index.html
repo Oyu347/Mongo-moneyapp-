@@ -18788,7 +18788,7 @@ window.MONGO_ACCOUNT_AUTO_COLLAPSE_ARCHIVE_REASON='V26';
 
 <script id="mongo-v39-compound-cancel-lots-marker">window.MONGO_COMPOUND_CANCEL_LOTS='V39';</script>
 
-<script id="mongo-v43-demand-savings-interest-mode" data-phone-test="V43">
+<script id="mongo-v44-demand-savings-interest-mode" data-phone-test="V44">
 (function(){
 'use strict';
 const LABELS={
@@ -18808,10 +18808,11 @@ function apply(prefix){
   const demand=type.value==='demand';
   const maturity=[...mode.options].find(o=>o.value==='maturity');
   const none=[...mode.options].find(o=>o.value==='none');
-  if(none) none.textContent=LABELS[currentLang()];
+  const wantedNoneLabel=LABELS[currentLang()];
+  if(none && none.textContent!==wantedNoneLabel) none.textContent=wantedNoneLabel;
   if(maturity){
-    maturity.hidden=demand;
-    maturity.disabled=demand;
+    if(maturity.hidden!==demand) maturity.hidden=demand;
+    if(maturity.disabled!==demand) maturity.disabled=demand;
   }
   // A demand savings account has no maturity date. If the user switches an
   // existing form from term+maturity to demand, move to the normal
@@ -18826,10 +18827,15 @@ document.addEventListener('change',function(e){
   if(e.target&&(/-(deposit-term-type|interest-mode)$/).test(e.target.id||'')) setTimeout(applyAll,0);
 },true);
 document.addEventListener('DOMContentLoaded',()=>setTimeout(applyAll,700));
-const mo=new MutationObserver(()=>applyAll());
+let v44Scheduled=false;
+const mo=new MutationObserver(()=>{
+  if(v44Scheduled)return;
+  v44Scheduled=true;
+  requestAnimationFrame(()=>{v44Scheduled=false;applyAll();});
+});
 mo.observe(document.documentElement,{childList:true,subtree:true});
 setTimeout(applyAll,1200);
-window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V43';
+window.MONGO_DEMAND_SAVINGS_INTEREST_MODE='V44';
 })();
 </script>
 </body>
