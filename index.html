@@ -19130,3 +19130,70 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 setTimeout(refreshAll,250);setTimeout(refreshAll,800);
 })();
 </script>
+
+
+<!-- Möngö PHONE TEST V43 — external savings interest uses daily weighted historical balance.
+     Scope: Interest condition "paid to separate account" preview/prefill only.
+     Period starts at the latest previously recorded payout-interest date, otherwise savings start date.
+     No cancellation/accounting/save semantics changed. -->
+<script id="mongo-v43-interest-daily-weighted">
+(function(){
+'use strict';
+window.MONGO_INTEREST_DAILY_WEIGHTED='V43';
+const DAY=86400000;
+const S=v=>String(v??'');
+const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+function d(v){const x=new Date(S(v).slice(0,10)+'T12:00:00');return Number.isNaN(+x)?null:x}
+function ymd(x){return x?`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`:''}
+function typ(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function money(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(v)):'₮'+Math.round(v).toLocaleString()}catch(_){return '₮'+Math.round(v).toLocaleString()}}
+function startDate(a){return d(a.startDate||a.openingDate||a.createdDate||a.date)}
+function balanceAt(a,dateStr){
+ const end=S(dateStr).slice(0,10); if(!end)return Math.max(0,N(a.openingBalance));
+ let v=N(a.openingBalance),aid=S(a.id);
+ (Array.isArray(txns)?txns:[]).forEach(t=>{if(S(t.date).slice(0,10)>end||S(t.accountId)!==aid||t.skipAccountBalance||t.autoPaySelf)return;v+=(t.type==='income'?1:t.type==='expense'?-1:0)*N(t.amount)});
+ (Array.isArray(accountTransfers)?accountTransfers:[]).forEach(t=>{if(S(t.date).slice(0,10)>end)return;if(S(t.fromId)===aid)v-=N(t.amount);if(S(t.toId)===aid)v+=N(t.amount)});
+ (Array.isArray(debts)?debts:[]).forEach(x=>{if(x.fundingMode==='existing'&&S(x.fundingAccountId)===aid&&S(x.startDate||S(x.createdAt).slice(0,10)).slice(0,10)<=end)v+=N(x.fundingAmount);try{(typeof debtPayments==='function'?debtPayments(x):[]).forEach(p=>{if(S(p.date).slice(0,10)<=end&&S(p.accountId)===aid)v-=N(p.total)})}catch(_){}});
+ return Math.max(0,v);
+}
+function previousPayoutDate(a,end){
+ const aid=S(a.id),endS=ymd(end); let best=null;
+ for(const t of (Array.isArray(txns)?txns:[])){
+   if(S(t.savingsAccountId)!==aid||t.type!=='income'||t.interestMode!=='payout')continue;
+   const td=d(t.date); if(!td||ymd(td)>=endS)continue;
+   if(!best||td>best)best=td;
+ }
+ return best||startDate(a);
+}
+function calc(a,endStr){
+ const end=d(endStr),start=previousPayoutDate(a,end);const rate=Math.max(0,N(a.annualInterestRate))/100;
+ if(!end||!start||end<=start||!(rate>0))return {amount:0,start,end,days:0,balanceDays:0};
+ let balanceDays=0,days=0;
+ /* Each calendar day earns interest on the balance already present that day.
+    Using the previous calendar date prevents a transfer dated tomorrow from leaking backward. */
+ for(let cur=new Date(start.getTime());cur<end;cur=new Date(cur.getTime()+DAY)){
+   balanceDays+=balanceAt(a,ymd(cur));days++;
+ }
+ return {amount:Math.round(balanceDays*rate/365),start,end,days,balanceDays};
+}
+function patchModal(a){
+ const modal=document.getElementById('mongo-savings-interest-income-v9');if(!modal)return;
+ const dateEl=document.getElementById('mongo-si-v9-date'),amountEl=document.getElementById('mongo-si-v9-amount'),box=modal.querySelector('.mongo-interest-auto-v34');
+ if(!dateEl||!amountEl||!box)return;
+ function render(){
+   const c=calc(a,dateEl.value),avg=c.days?c.balanceDays/c.days:0;
+   amountEl.value=String(c.amount);try{amountEl.dispatchEvent(new Event('input',{bubbles:true}))}catch(_){}
+   box.innerHTML=`<b>Тооцоолсон хүү: ${money(c.amount)}</b><br>${ymd(c.start)} → ${ymd(c.end)} · ${c.days} хоног<br>Өдрийн жигнэсэн дундаж үлдэгдэл: ${money(avg)} · ${N(a.annualInterestRate)}% / 365<br>Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.`;
+ }
+ /* V42 listener may run first; this listener deliberately runs after it and becomes final preview. */
+ dateEl.addEventListener('change',()=>setTimeout(render,0));
+ render();
+}
+const base=window.openMongoSavingsExternalInterestV9;
+if(typeof base==='function')window.openMongoSavingsExternalInterestV9=function(id){
+ const r=base.apply(this,arguments),a=(Array.isArray(moneyAccounts)?moneyAccounts:[]).find(x=>S(x.id)===S(id));
+ if(a&&typ(a)==='savings')setTimeout(()=>patchModal(a),0);
+ return r;
+};
+})();
+</script>
