@@ -118,3 +118,15 @@ Record exact commits, tests actually performed, unresolved risks and exact next 
 - Regression rule for every next phone patch: start from V36 unless a newer version is explicitly PHONE PASS; preserve Cloud serialization/restore safety, closed-account fixes, cancellation rules, linked-goal archive, bank-expense mapping, seven-language savings UI, interest prefill, and Transactions year/month grouping.
 - Avoid patch stacking. If a patch fails, return to the last PHONE-PASS baseline and port only the required fix; remove failed diagnostic/migration patches rather than carrying them forward.
 
+
+## Demand savings PHONE + FORMULA checkpoint — 2026-09-29
+- New user-confirmed phone/formula baseline for the active demand-savings work: `Mongo-PHONE-TEST-SAVINGS-OUT-DATE-V49.html`.
+- V45B demand-savings UI PHONE PASS: demand deposits hide term-only interest-mode/receiver/maturity/cancellation-rule UI; keep annual rate, interest frequency, linked goal, additional-deposit permission and money-withdrawal permission.
+- V47A preview-card placement PHONE PASS. V47 failed to mount and is discarded.
+- V48 real-data preview PHONE PASS: estimated interest reads opening balance, dated inbound/outbound transfers and balance-affecting interest-income entries without writing money or transactions.
+- V49 PHONE PASS: Savings → Transfer from savings now includes a selectable date (defaults to today) and saves that selected date into the transfer record; seven-language date label preserved.
+- V49 FORMULA PASS on Android: opening ₮20,000; +₮100,000 (05-08); +₮150,000 (06-19); -₮10,000 (07-15); +₮350,000 (07-30); +₮1,000,000 (08-19); -₮456,000 (09-29) produced closing principal ₮1,154,000 and estimated 6% interest ₮15,762 for 04-10→09-29 using the current 365-day dated-balance convention.
+- Compound-interest chain PHONE + FORMULA PASS: actual interest-income entries ₮5,770 (05-11), ₮5,799 (06-11), ₮5,828 (07-11), ₮5,857 (08-11), ₮5,886 (09-11) total ₮29,140; closing balance becomes ₮1,183,140 and estimated accrued interest becomes ₮16,146. The credited interest is included in later balance segments, so the compound principle works.
+- Preview remains estimate-only: do not auto-post interest, do not mutate balance, and treat the bank's actual credited interest as source of truth via the existing Interest income action.
+- Known separate issue discovered during testing: editing a savings account opening balance can leave linked savings-goal/history amounts stale. Do not mix that repair into the interest-cycle patch.
+- Next exact bounded task: V50 should change the demand-savings preview from lifetime accrued interest to the relevant monthly interest cycle while preserving V49 financial behavior. First version remains display-only; no automatic Interest income posting and no schema/Firebase changes.
