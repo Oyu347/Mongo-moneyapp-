@@ -1,26 +1,27 @@
 # Möngö Current Work
 
-Updated: 2026-09-26
+Updated: 2026-09-29
 Branch: `development-modular`
 
-## Current PHONE baseline
-`Mongo-PHONE-TEST-SAVINGS-INTEREST-I18N-SAFE-V36.html`
+## Current PHONE + FORMULA baseline
+`Mongo-PHONE-TEST-SAVINGS-OUT-DATE-V49.html`
 
-V36 is the last user-confirmed phone baseline. Do not continue from V37: V37 is discarded because Transactions already shows older year/month groups when the filter is `Бүгд / All`.
+V49 is the latest user-confirmed baseline for the active demand-savings work. Preserve V36 and all later explicitly passed savings/cancellation/i18n behavior; do not promote an untested newer file.
 
-## Preserve — already PHONE PASS
-- Cloud serialization/restore safety and financial consistency checks.
-- Cancelled savings accounts close at ₮0; legacy `Ком` -₮200,000 regression is fixed.
-- Closed savings accounts do not show Terminate deposit / Interest income actions.
-- Real cancellation keeps principal transfer, interest adjustment/clawback and bank fee accounting separate; no duplicate cash effect.
-- `bank_expense` internal key displays as localized Bank expense and fee actuals flow to budget.
-- Linked savings goal archives when its savings account is cancelled, with cancellation-specific archive reason rather than “goal achieved”.
-- Savings Interest income action prefills calculated interest and allows user correction to actual bank credited amount before saving.
-- Savings action buttons + Interest income modal have 7-language render-time i18n (mn/en/zh/ja/ko/ru/de), without whole-document MutationObserver translation.
-- Transactions keeps year → month collapsible history; older entries appear under `Бүгд / All`.
+## Preserve — V49 confirmed
+- Demand-deposit UI: no term-only interest-condition/receiver/maturity/early-cancellation-rule fields; annual rate, interest frequency, linked goal and deposit/withdraw permissions remain.
+- Estimated-interest card reads real dated balance changes but is display-only; it does not create transactions or mutate balances.
+- Savings-out modal has a selectable date, defaults to today, stores the chosen transfer date, and retains seven-language label support.
+- Dated opening balance + inbound/outbound transfers formula is PHONE + FORMULA PASS at 6%/365: closing principal ₮1,154,000 and estimate ₮15,762 for the tested 04/10–09/29 history.
+- Actual Interest income entries are added to the savings balance and become part of later interest-bearing balance segments. Tested five credits totaling ₮29,140: closing balance ₮1,183,140; estimate ₮16,146. Compound chain PHONE + FORMULA PASS.
+- Bank actual credited interest remains source of truth and is recorded through the existing Interest income action. Do not auto-post calculated interest.
+- Preserve all earlier cancellation/accounting, bank-expense, linked-goal archive, Cloud safety, transaction grouping and 7-language savings behavior already PHONE PASS.
+
+## Known separate issue
+Editing a savings account opening balance can leave the linked savings-goal/history amount stale. Keep this separate from the demand-interest-cycle work.
 
 ## Next exact work
-Continue from V36 only. Validate the remaining real savings cancellation scenarios without changing already-passed accounting/i18n behavior. After that, return to Savings → early-termination calculator: its Rule 2 “Үе шаттай хүү бодох” shell is visible but staged-condition fields are missing and must be restored.
+Create V50 from the V49 PHONE + FORMULA baseline. Change only the demand-deposit preview period from lifetime accrued interest to the relevant monthly interest cycle. Keep it display-only: no automatic Interest income transaction, no balance mutation, no Firebase/schema change. Then Android PHONE + FORMULA test before promotion.
 
 ## Working rule
-One bounded change → Android phone test → PHONE PASS → only then promote the baseline. Failed patches are discarded/cleaned rather than stacked. Every new file must regression-check the preserved items above.
+One bounded change → Android phone test → explicit PHONE PASS → only then promote the baseline. Failed patches are discarded/cleaned rather than stacked.
