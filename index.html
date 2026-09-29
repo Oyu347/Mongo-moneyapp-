@@ -16660,16 +16660,16 @@ if(document.readyState==='loading'){
 (()=>{
 'use strict';
 const Q={
-mn:{action:'Хуримтлалаас шилжүүлэх',title:'Хуримтлалаас шилжүүлэх',to:'Хүлээн авах данс',amount:'Дүн',cancel:'Болих',send:'Шилжүүлэх',confirm:'Энэ шилжүүлгийг хийх үү? Зарлага үүсэхгүй, нийт мөнгө өөрчлөгдөхгүй.',bad:'Дүн болон дансаа шалгана уу.',none:'Хүлээн авах боломжтой харилцах эсвэл бэлэн мөнгөний данс алга.',insufficient:'Хуримтлалын үлдэгдэл хүрэлцэхгүй байна.'},
-en:{action:'Transfer from savings',title:'Transfer from savings',to:'Destination account',amount:'Amount',cancel:'Cancel',send:'Transfer',confirm:'Make this transfer? It is not an expense and total money will not change.',bad:'Check the amount and account.',none:'No eligible checking or cash account.',insufficient:'The savings balance is insufficient.'},
-zh:{action:'从储蓄转出',title:'从储蓄转出',to:'收款账户',amount:'金额',cancel:'取消',send:'转账',confirm:'确认转账吗？这不是支出，总资金不会改变。',bad:'请检查金额和账户。',none:'没有可用的活期或现金账户。',insufficient:'储蓄余额不足。'},
-ja:{action:'貯蓄から振替',title:'貯蓄から振替',to:'振替先口座',amount:'金額',cancel:'キャンセル',send:'振替',confirm:'振替しますか？支出ではなく、総資金は変わりません。',bad:'金額と口座を確認してください。',none:'利用可能な普通預金または現金口座がありません。',insufficient:'貯蓄残高が不足しています。'},
-ko:{action:'저축에서 이체',title:'저축에서 이체',to:'받는 계좌',amount:'금액',cancel:'취소',send:'이체',confirm:'이체할까요? 지출이 아니며 총자금은 변하지 않습니다.',bad:'금액과 계좌를 확인하세요.',none:'사용 가능한 입출금 또는 현금 계좌가 없습니다.',insufficient:'저축 잔액이 부족합니다.'},
-ru:{action:'Перевести из накоплений',title:'Перевод из накоплений',to:'Счёт получателя',amount:'Сумма',cancel:'Отмена',send:'Перевести',confirm:'Выполнить перевод? Это не расход, общая сумма денег не изменится.',bad:'Проверьте сумму и счёт.',none:'Нет доступного расчётного или наличного счёта.',insufficient:'Недостаточно средств в накоплениях.'},
-de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.',insufficient:'Das Sparguthaben reicht nicht aus.'}
+mn:{action:'Хуримтлалаас шилжүүлэх',title:'Хуримтлалаас шилжүүлэх',to:'Хүлээн авах данс',amount:'Дүн',date:'Огноо',cancel:'Болих',send:'Шилжүүлэх',confirm:'Энэ шилжүүлгийг хийх үү? Зарлага үүсэхгүй, нийт мөнгө өөрчлөгдөхгүй.',bad:'Дүн болон дансаа шалгана уу.',none:'Хүлээн авах боломжтой харилцах эсвэл бэлэн мөнгөний данс алга.',insufficient:'Хуримтлалын үлдэгдэл хүрэлцэхгүй байна.'},
+en:{action:'Transfer from savings',title:'Transfer from savings',to:'Destination account',amount:'Amount',date:'Date',cancel:'Cancel',send:'Transfer',confirm:'Make this transfer? It is not an expense and total money will not change.',bad:'Check the amount and account.',none:'No eligible checking or cash account.',insufficient:'The savings balance is insufficient.'},
+zh:{action:'从储蓄转出',title:'从储蓄转出',to:'收款账户',amount:'金额',date:'日期',cancel:'取消',send:'转账',confirm:'确认转账吗？这不是支出，总资金不会改变。',bad:'请检查金额和账户。',none:'没有可用的活期或现金账户。',insufficient:'储蓄余额不足。'},
+ja:{action:'貯蓄から振替',title:'貯蓄から振替',to:'振替先口座',amount:'金額',date:'日付',cancel:'キャンセル',send:'振替',confirm:'振替しますか？支出ではなく、総資金は変わりません。',bad:'金額と口座を確認してください。',none:'利用可能な普通預金または現金口座がありません。',insufficient:'貯蓄残高が不足しています。'},
+ko:{action:'저축에서 이체',title:'저축에서 이체',to:'받는 계좌',amount:'금액',date:'날짜',cancel:'취소',send:'이체',confirm:'이체할까요? 지출이 아니며 총자금은 변하지 않습니다.',bad:'금액과 계좌를 확인하세요.',none:'사용 가능한 입출금 또는 현금 계좌가 없습니다.',insufficient:'저축 잔액이 부족합니다.'},
+ru:{action:'Перевести из накоплений',title:'Перевод из накоплений',to:'Счёт получателя',amount:'Сумма',date:'Дата',cancel:'Отмена',send:'Перевести',confirm:'Выполнить перевод? Это не расход, общая сумма денег не изменится.',bad:'Проверьте сумму и счёт.',none:'Нет доступного расчётного или наличного счёта.',insufficient:'Недостаточно средств в накоплениях.'},
+de:{action:'Aus Sparen übertragen',title:'Aus Sparen übertragen',to:'Zielkonto',amount:'Betrag',date:'Datum',cancel:'Abbrechen',send:'Übertragen',confirm:'Übertragung durchführen? Dies ist keine Ausgabe und der Gesamtbetrag bleibt gleich.',bad:'Bitte Betrag und Konto prüfen.',none:'Kein verfügbares Giro- oder Bargeldkonto.',insufficient:'Das Sparguthaben reicht nicht aus.'}
 };
 window.savingsOutTextV36=()=>Q[(typeof lang!=='undefined'&&lang)||'mn']||Q.en;
-window.MONGO_SAVINGS_OUT_VERSION='V37';
+window.MONGO_SAVINGS_OUT_VERSION='V49';
 /* V35 account-detail renderer still calls this name; keep a compatibility alias. */
 window.savingsOutTextV35=window.savingsOutTextV36;
 const S=v=>String(v??''),N=v=>Number(v)||0,esc=v=>S(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -16709,6 +16709,7 @@ window.openSavingsOutV36=window.openSavingsOutV35=function(id){
  m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${esc(q.title)} · ${esc(a.name)}</div>
  <div style="font-size:12px;font-weight:800;margin-bottom:4px">${esc(q.to)}</div><select class="fi" id="savings-out-v36-to">${dest.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${fmt(bal(x))}</option>`).join('')}</select>
  <div style="font-size:12px;font-weight:800;margin:10px 0 4px">${esc(q.amount)}</div><input class="fi" id="savings-out-v36-amount" inputmode="decimal" data-amt="1">
+ <div style="font-size:12px;font-weight:800;margin:10px 0 4px">${esc(q.date)}</div><input class="fi" id="savings-out-v36-date" type="date" value="${new Date().toISOString().slice(0,10)}">
  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="savings-out-v36-cancel">${esc(q.cancel)}</button><button class="btn btn-p" id="savings-out-v36-save">${esc(q.send)}</button></div></div>`;
  document.body.appendChild(m);
  try{setupAmtInput(document.getElementById('savings-out-v36-amount'))}catch(_){}
@@ -16716,11 +16717,12 @@ window.openSavingsOutV36=window.openSavingsOutV35=function(id){
  document.getElementById('savings-out-v36-save').onclick=async()=>{
    const amount=Math.round(parseAmt(document.getElementById('savings-out-v36-amount').value)||0);
    const toId=document.getElementById('savings-out-v36-to').value;
-   if(!(amount>0)||!toId){notify(q.bad);return}
+   const transferDate=document.getElementById('savings-out-v36-date')?.value||new Date().toISOString().slice(0,10);
+   if(!(amount>0)||!toId||!/^\d{4}-\d{2}-\d{2}$/.test(transferDate)){notify(q.bad);return}
    if(amount>bal(a)+.001){notify(q.insufficient);return}
    if(!(await ask(q.confirm)))return;
    const made=window.MongoTransactions.makeTransfer({
-     fromId:a.id,toId,amount,date:new Date().toISOString().slice(0,10),
+     fromId:a.id,toId,amount,date:transferDate,
      purpose:'savings_withdrawal',targetId:linkedGoalId(a)
    });
    if(!made?.ok){notify(q.bad);return}
