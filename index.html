@@ -19253,15 +19253,47 @@ function eventsFor(a,end){
  return out;
 }
 function calc(a){
- const start=D(a.startDate||a.openingDate||a.createdDate||a.date);
+ const accountStart=D(a.startDate||a.openingDate||a.createdDate||a.date);
  const today=D(new Date().toISOString().slice(0,10));
- if(!start||!today)return null;
- const end=new Date(+today+DAY); // PHONE TEST convention: include today.
+ if(!accountStart||!today)return null;
+ const end=new Date(+today+DAY); // include today, same convention as V48/V49.
  const engine=window.MongoDemandInterestPreviewV46?.calculate;
  if(typeof engine!=='function')return null;
  const rate=Math.max(0,N(a.annualInterestRate||a.interestRate));
- const r=engine({openingBalance:Math.max(0,N(a.openingBalance)),annualRate:rate,startDate:key(start),endDate:key(end),events:eventsFor(a,end)});
- return {result:r,rate,start,today};
+ const allEvents=eventsFor(a,end);
+
+ /* V50: current monthly interest cycle starts at the latest actual compound
+    interest credit. If no interest has been credited yet, use account start.
+    Rebuild the balance immediately before that cycle boundary, then let the
+    cycle-start interest credit itself enter as a dated event. */
+ const id=String(a.id);
+ const credits=(Array.isArray(txns)?txns:[])
+   .filter(t=>String(t.accountId)===id &&
+              String(t.savingsAccountId||'')===id &&
+              t.type==='income' &&
+              t.interestMode==='compound' &&
+              D(t.date) && D(t.date)<=today)
+   .sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+ const lastCredit=credits.length?D(credits[credits.length-1].date):null;
+ const cycleStart=(lastCredit && lastCredit>=accountStart)?lastCredit:accountStart;
+
+ let cycleOpening=Math.max(0,N(a.openingBalance));
+ for(const e of allEvents){
+   const dt=D(e.date);
+   if(dt && dt<cycleStart)cycleOpening=Math.max(0,cycleOpening+N(e.amount));
+ }
+ const cycleEvents=allEvents.filter(e=>{
+   const dt=D(e.date);
+   return dt && dt>=cycleStart && dt<end;
+ });
+ const r=engine({
+   openingBalance:cycleOpening,
+   annualRate:rate,
+   startDate:key(cycleStart),
+   endDate:key(end),
+   events:cycleEvents
+ });
+ return {result:r,rate,start:cycleStart,today,accountStart,cycleOpening};
 }
 function card(a){
  if((a.depositTermType||'demand')!=='demand')return '';
@@ -19270,8 +19302,8 @@ function card(a){
   <div class="ttl">Тооцоолсон хүү</div>
   <div class="row"><span>Одоогийн үлдэгдэл</span><b>${money(typeof accountBalance==='function'?accountBalance(a.id):x.result.closingPrincipal)}</b></div>
   <div class="row"><span>Жилийн хүү</span><b>${x.rate}%</b></div>
-  <div class="row"><span>Хуримтлагдсан хүү</span><b>${money(x.result.roundedInterest)}</b></div>
-  <div class="row"><span>Тооцсон хугацаа</span><b>${md(x.start)}–${md(x.today)}</b></div>
+  <div class="row"><span>Энэ мөчлөгийн хүү</span><b>${money(x.result.roundedInterest)}</b></div>
+  <div class="row"><span>Хүүний мөчлөг</span><b>${md(x.start)}–${md(x.today)}</b></div>
   <div class="note">Урьдчилсан тооцоо. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.</div>
  </div>`;
 }
@@ -19291,6 +19323,15 @@ if(typeof base==='function'&&!base.__demandRealV48){
  accountInlineDetail=wrapped;
 }
 })();
+</script>
+
+
+<!-- Möngö PHONE TEST V50 — demand savings current monthly interest cycle.
+     Display-only. No automatic interest posting, balance mutation, Firebase or schema change.
+     Cycle starts at latest actual compound-interest credit; otherwise account start. -->
+<script id="mongo-demand-monthly-cycle-v50">
+window.MONGO_DEMAND_MONTHLY_CYCLE='V50';
+console.info('[Möngö V50] demand monthly-cycle preview enabled; display only.');
 </script>
 
 </body>
