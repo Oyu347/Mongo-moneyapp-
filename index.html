@@ -19032,117 +19032,82 @@ setTimeout(syncAll,1000);
 </script>
 
 
-<!-- Möngö PHONE TEST V44A — hide "No interest" from new/edit savings UI.
-     UI-only compatibility patch:
-     - Keeps legacy interestMode='none' support in data/runtime.
-     - Removes 'none' from the selectable Interest condition list.
-     - If an old/stale form currently has 'none' selected, moves the form to
-       'compound' before user interaction.
-     - Does not change saved historical records or financial calculations. -->
-<script id="mongo-v44a-hide-no-interest-option" data-phone-test="V44A">
+<!-- Möngö V45 PHONE TEST: demand-savings UI only. No interest formula changes. -->
+<style id="mongo-v45-demand-ui-style">
+.v45-demand-hidden{display:none!important}
+.v45-demand-note{font-size:11px;line-height:1.45;color:var(--muted);margin-top:8px}
+</style>
+<script id="mongo-v45-demand-ui-marker">
 (function(){
 'use strict';
-window.MONGO_HIDE_NO_INTEREST_OPTION='V44A';
-
-function reconcile(prefix){
-  const mode=document.getElementById(prefix+'-interest-mode');
-  if(!mode)return;
-
-  const none=[...mode.options].find(o=>o.value==='none');
-  if(none){
-    none.hidden=true;
-    none.disabled=true;
-  }
-
-  if(mode.value==='none'){
-    const fallback=[...mode.options].find(o=>o.value==='compound' && !o.disabled);
-    if(fallback){
-      mode.value='compound';
-      mode.dispatchEvent(new Event('change',{bubbles:true}));
-    }
-  }
+window.MONGO_DEMAND_SAVINGS_UI='V45';
+const T={
+ mn:{withdraw:'Мөнгө гаргах боломжтой',freq:'Хүү олгох давтамж',note:'Хүүг тухайн хадгаламжид нэмнэ. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.'},
+ en:{withdraw:'Withdrawals allowed',freq:'Interest payment frequency',note:'Interest is added to this savings account. Record the interest actually credited by the bank using “Interest income”.'},
+ zh:{withdraw:'允许取款',freq:'付息频率',note:'利息计入此储蓄账户。请通过“利息收入”记录银行实际入账的利息。'},
+ ja:{withdraw:'引き出し可能',freq:'利息支払頻度',note:'利息はこの預金口座に加算されます。銀行から実際に入金された利息は「利息収入」で記録します。'},
+ ko:{withdraw:'출금 가능',freq:'이자 지급 주기',note:'이자는 이 저축계좌에 더해집니다. 은행에서 실제 입금된 이자는 “이자 수입”으로 기록합니다.'},
+ ru:{withdraw:'Снятие средств разрешено',freq:'Периодичность выплаты процентов',note:'Проценты зачисляются на этот сберегательный счёт. Фактически начисленные банком проценты укажите как «Процентный доход».'},
+ de:{withdraw:'Auszahlungen erlaubt',freq:'Zinsgutschrift-Häufigkeit',note:'Die Zinsen werden diesem Sparkonto gutgeschrieben. Tatsächlich von der Bank gutgeschriebene Zinsen als „Zinsertrag“ erfassen.'}
+};
+function q(){const l=(typeof lang==='string'?lang:'en');return T[l]||T.en;}
+function demand(prefix){return document.getElementById(prefix+'-deposit-term-type')?.value!=='term';}
+function parentOf(id){return document.getElementById(id)?.parentElement||null;}
+function enhance(prefix,a){
+ const contract=document.getElementById(prefix+'-term-contract'); if(!contract)return;
+ let w=document.getElementById(prefix+'-allows-withdrawals');
+ if(!w){
+   const extra=document.getElementById(prefix+'-allows-extra')?.closest('.v381-check');
+   if(extra){
+     const box=document.createElement('div');box.className='v381-check v45-withdraw-row';
+     const checked=(a&&typeof a.allowsWithdrawals==='boolean')?a.allowsWithdrawals:true;
+     box.innerHTML='<input type="checkbox" id="'+prefix+'-allows-withdrawals"'+(checked?' checked':'')+'><label for="'+prefix+'-allows-withdrawals"></label>';
+     extra.insertAdjacentElement('afterend',box); w=box.querySelector('input');
+   }
+ }
+ const wl=document.querySelector('label[for="'+prefix+'-allows-withdrawals"]');if(wl)wl.textContent=q().withdraw;
+ let note=contract.querySelector('.v45-demand-note');if(!note){note=document.createElement('div');note.className='v45-demand-note';contract.appendChild(note);} note.textContent=q().note;
+ sync(prefix);
 }
-
-function reconcileAll(){
-  reconcile('account');
-  reconcile('edit');
+function sync(prefix){
+ const isDemand=demand(prefix);
+ const mode=parentOf(prefix+'-interest-mode'), recv=parentOf(prefix+'-interest-account'), mat=parentOf(prefix+'-maturity');
+ if(mode)mode.classList.toggle('v45-demand-hidden',isDemand);
+ if(recv)recv.classList.toggle('v45-demand-hidden',isDemand);
+ if(mat&&isDemand)mat.classList.add('v45-demand-hidden'); else if(mat)mat.classList.remove('v45-demand-hidden');
+ const freq=document.getElementById(prefix+'-interest-frequency'); const fl=freq?.parentElement?.querySelector('label');
+ if(fl&&isDemand)fl.textContent=q().freq;
+ const n=document.querySelector('#'+prefix+'-term-contract .v45-demand-note');if(n)n.style.display=isDemand?'':'none';
+ const wd=document.getElementById(prefix+'-allows-withdrawals')?.closest('.v381-check');if(wd)wd.style.display=isDemand?'':'none';
+ if(isDemand){const m=document.getElementById(prefix+'-interest-mode');if(m)m.value='compound';}
 }
-
-document.addEventListener('DOMContentLoaded',()=>setTimeout(reconcileAll,100));
-document.addEventListener('change',function(e){
-  if(e.target && /-(deposit-term-type|interest-mode)$/.test(e.target.id||'')){
-    setTimeout(reconcileAll,0);
-  }
-},true);
-
-let scheduled=false;
-const mo=new MutationObserver(()=>{
-  if(scheduled)return;
-  scheduled=true;
-  requestAnimationFrame(()=>{
-    scheduled=false;
-    reconcileAll();
-  });
-});
-mo.observe(document.documentElement,{childList:true,subtree:true});
-
-setTimeout(reconcileAll,200);
-setTimeout(reconcileAll,800);
+function currentAccountForEdit(){
+ const id=(typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null);
+ return (window.moneyAccounts||moneyAccounts||[]).find(a=>String(a.id)===String(id))||null;
+}
+function refresh(){
+ const arr=(typeof moneyAccounts!=='undefined'?moneyAccounts:[]);
+ enhance('account',{}); enhance('edit',currentAccountForEdit()||{});
+ ['account','edit'].forEach(p=>{const sel=document.getElementById(p+'-deposit-term-type');if(sel&&!sel.dataset.v45){sel.dataset.v45='1';sel.addEventListener('change',()=>setTimeout(()=>{enhance(p,p==='edit'?currentAccountForEdit()||{}:{});sync(p)},0));}});
+}
+const oldAdd=window.addMoneyAccount;
+if(typeof oldAdd==='function')window.addMoneyAccount=function(){
+ const allow=document.getElementById('account-allows-withdrawals')?.checked!==false;
+ const before=new Set((moneyAccounts||[]).map(a=>String(a.id))); const r=oldAdd.apply(this,arguments);
+ const a=(moneyAccounts||[]).find(x=>!before.has(String(x.id))); if(a&&a.type==='savings'){a.allowsWithdrawals=allow;if(a.depositTermType!=='term'){a.interestMode='compound';a.interestAccountId=null;}saveData();renderMoneyAccounts();}
+ setTimeout(refresh,20);return r;
+};
+const oldEdit=window.editMoneyAccount;
+if(typeof oldEdit==='function')window.editMoneyAccount=async function(id){
+ const r=await oldEdit.apply(this,arguments);setTimeout(()=>{
+   const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));enhance('edit',a||{});
+   const btn=document.getElementById('account-edit-save');if(btn&&!btn.dataset.v45){btn.dataset.v45='1';const prev=btn.onclick;btn.onclick=async function(ev){const allow=document.getElementById('edit-allows-withdrawals')?.checked!==false;const dem=demand('edit');const rr=prev?await prev.call(this,ev):undefined;if(a&&a.type==='savings'){a.allowsWithdrawals=allow;if(dem){a.interestMode='compound';a.interestAccountId=null;}saveData();renderMoneyAccounts();}return rr;};}
+ },140);return r;
+};
+const mo=new MutationObserver(()=>refresh());mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(refresh,120);
 })();
 </script>
-
-
-<!-- Möngö PHONE TEST V44B — remove legacy "none" option from the live selector.
-     UI-only:
-     - removes option[value="none"] from account/edit interest selectors
-     - keeps runtime/data compatibility code for historical records untouched
-     - no financial/cancellation formulas changed -->
-<script id="mongo-v44b-remove-no-interest-live-option" data-phone-test="V44B">
-(function(){
-'use strict';
-window.MONGO_REMOVE_NO_INTEREST_LIVE_OPTION='V44B';
-
-function clean(prefix){
-  const mode=document.getElementById(prefix+'-interest-mode');
-  if(!mode)return;
-
-  if(mode.value==='none'){
-    const fallback=[...mode.options].find(o=>o.value==='compound');
-    if(fallback){
-      mode.value='compound';
-      mode.dispatchEvent(new Event('change',{bubbles:true}));
-    }
-  }
-
-  [...mode.options].filter(o=>o.value==='none').forEach(o=>o.remove());
-}
-
-function cleanAll(){
-  clean('account');
-  clean('edit');
-}
-
-document.addEventListener('DOMContentLoaded',()=>setTimeout(cleanAll,50));
-document.addEventListener('click',()=>setTimeout(cleanAll,0),true);
-document.addEventListener('change',()=>setTimeout(cleanAll,0),true);
-
-let queued=false;
-const mo=new MutationObserver(()=>{
-  if(queued)return;
-  queued=true;
-  requestAnimationFrame(()=>{
-    queued=false;
-    cleanAll();
-  });
-});
-mo.observe(document.documentElement,{childList:true,subtree:true});
-
-setTimeout(cleanAll,150);
-setTimeout(cleanAll,600);
-setTimeout(cleanAll,1500);
-})();
-</script>
-
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
