@@ -19216,6 +19216,81 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,150));
 })();
 </script>
 
+
+<style id="mongo-demand-real-v48-style">
+.mongo-demand-real-v48{margin:10px 0;padding:14px;border:1px solid rgba(73,176,182,.22);border-radius:14px;background:#f8fbfb;color:#374151}
+.mongo-demand-real-v48 .ttl{font-weight:800;margin-bottom:9px}
+.mongo-demand-real-v48 .row{display:flex;justify-content:space-between;gap:12px;margin:5px 0}
+.mongo-demand-real-v48 .note{font-size:12px;color:#6b7280;line-height:1.45;margin-top:9px}
+</style>
+<script id="mongo-demand-real-v48">
+(function(){
+'use strict';
+window.MONGO_DEMAND_REAL_DATA='V48';
+const DAY=86400000;
+const N=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
+const D=v=>{const x=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+x)?null:x};
+const key=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';
+const md=d=>d?`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`:'';
+const money=v=>typeof fmt==='function'?fmt(Math.round(N(v))):'₮'+Math.round(N(v)).toLocaleString('en-US');
+
+function eventsFor(a,end){
+ const id=String(a.id), out=[];
+ for(const t of (Array.isArray(accountTransfers)?accountTransfers:[])){
+   const dt=D(t.date); if(!dt||dt>end)continue;
+   if(String(t.toId)===id)out.push({date:key(dt),amount:Math.abs(N(t.amount))});
+   if(String(t.fromId)===id)out.push({date:key(dt),amount:-Math.abs(N(t.amount))});
+ }
+ for(const t of (Array.isArray(txns)?txns:[])){
+   if(String(t.accountId)!==id||t.skipAccountBalance||t.autoPaySelf)continue;
+   const dt=D(t.date); if(!dt||dt>end)continue;
+   const amount=Math.abs(N(t.amount));
+   if(t.type==='income')out.push({date:key(dt),amount});
+   else if(t.type==='expense')out.push({date:key(dt),amount:-amount});
+ }
+ return out;
+}
+function calc(a){
+ const start=D(a.startDate||a.openingDate||a.createdDate||a.date);
+ const today=D(new Date().toISOString().slice(0,10));
+ if(!start||!today)return null;
+ const end=new Date(+today+DAY); // PHONE TEST convention: include today.
+ const engine=window.MongoDemandInterestPreviewV46?.calculate;
+ if(typeof engine!=='function')return null;
+ const rate=Math.max(0,N(a.annualInterestRate||a.interestRate));
+ const r=engine({openingBalance:Math.max(0,N(a.openingBalance)),annualRate:rate,startDate:key(start),endDate:key(end),events:eventsFor(a,end)});
+ return {result:r,rate,start,today};
+}
+function card(a){
+ if((a.depositTermType||'demand')!=='demand')return '';
+ const x=calc(a); if(!x)return '';
+ return `<div class="mongo-demand-real-v48">
+  <div class="ttl">Тооцоолсон хүү</div>
+  <div class="row"><span>Одоогийн үлдэгдэл</span><b>${money(typeof accountBalance==='function'?accountBalance(a.id):x.result.closingPrincipal)}</b></div>
+  <div class="row"><span>Жилийн хүү</span><b>${x.rate}%</b></div>
+  <div class="row"><span>Хуримтлагдсан хүү</span><b>${money(x.result.roundedInterest)}</b></div>
+  <div class="row"><span>Тооцсон хугацаа</span><b>${md(x.start)}–${md(x.today)}</b></div>
+  <div class="note">Урьдчилсан тооцоо. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.</div>
+ </div>`;
+}
+window.MongoDemandRealV48={eventsFor,calc,card};
+
+const base=window.accountInlineDetail;
+if(typeof base==='function'&&!base.__demandRealV48){
+ const wrapped=function(a){
+   const html=base(a);
+   if(String(typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:'')!==String(a?.id))return html;
+   if((typeof normalizeAccountType==='function'?normalizeAccountType(a?.type):a?.type)!=='savings')return html;
+   if((a?.depositTermType||'demand')!=='demand')return html;
+   return html+card(a);
+ };
+ wrapped.__demandRealV48=true;
+ window.accountInlineDetail=wrapped;
+ accountInlineDetail=wrapped;
+}
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
