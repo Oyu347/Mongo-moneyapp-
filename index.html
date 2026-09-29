@@ -7973,7 +7973,10 @@ function renderTransferTarget(){
       const goalIsActive=window.MongoArchive?.goalActive
         ?!!window.MongoArchive.goalActive(g,saved)
         :!(g.archivedAt||g.completedAt);
-      return goalIsActive&&active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id));
+      // V51: the transfer target follows the ACTIVE savings account.
+      // A linked goal may carry stale completed/archive metadata after account edits,
+      // but an active savings account must remain available for Add to savings.
+      return active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id));
     });
     tar.innerHTML=linkedGoals.map(g=>`<option value="${g.id}">🎯 ${g.name} · ${fmt(getGoalEffectiveSaved(g))}</option>`).join('');
     if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Холбогдсон хуримтлал эхлээд үүсгэнэ үү':'Create a linked savings goal first'}</option>`;
@@ -19333,6 +19336,11 @@ if(typeof base==='function'&&!base.__demandRealV48){
 window.MONGO_DEMAND_MONTHLY_CYCLE='V50';
 console.info('[Möngö V50] demand monthly-cycle preview enabled; display only.');
 </script>
+
+
+<!-- Möngö PHONE TEST V51 — active savings accounts remain selectable in Add to savings.
+     UI target-filter only: no balance, interest, transfer arithmetic, cloud, or schema changes. -->
+<script id="mongo-v51-active-savings-target-marker">window.MONGO_ACTIVE_SAVINGS_TARGETS='V51';</script>
 
 </body>
 </html>
