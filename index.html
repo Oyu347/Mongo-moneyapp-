@@ -19032,7 +19032,7 @@ setTimeout(syncAll,1000);
 </script>
 
 
-<!-- Möngö V45A — demand savings UI only, safe phone-test patch.
+<!-- Möngö V45B — demand savings UI only, safe phone-test patch.
      No global MutationObserver. No financial calculation/data logic changed. -->
 <style id="mongo-v45a-demand-ui-style">
 .v45a-hidden{display:none!important}
@@ -19041,7 +19041,7 @@ setTimeout(syncAll,1000);
 <script id="mongo-v45a-demand-ui-script">
 (function(){
 'use strict';
-window.MONGO_DEMAND_SAVINGS_UI='V45A';
+window.MONGO_DEMAND_SAVINGS_UI='V45B';
 const TXT={
  mn:{withdraw:'Мөнгө гаргах боломжтой',freq:'Хүү олгох давтамж',note:'Хүүг тухайн хадгаламжид нэмнэ. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.'},
  en:{withdraw:'Withdrawals allowed',freq:'Interest payment frequency',note:'Interest is added to this savings account. Record the interest actually credited by the bank using “Interest income”.'},
@@ -19065,6 +19065,11 @@ function apply(p){
  if(mode)mode.classList.toggle('v45a-hidden',demand);
  if(recv)recv.classList.toggle('v45a-hidden',demand);
  if(maturity)maturity.classList.toggle('v45a-hidden',demand);
+
+ // V45B: the legacy note describes early cancellation and is not applicable
+ // to demand savings. Keep it unchanged for term deposits.
+ const legacyNote=contract.querySelector('.v381-note');
+ if(legacyNote)legacyNote.style.display=demand?'none':'';
 
  const freq=document.getElementById(p+'-interest-frequency');
  const freqLabel=freq && freq.parentElement ? freq.parentElement.querySelector('label') : null;
