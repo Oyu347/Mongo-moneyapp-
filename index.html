@@ -19119,7 +19119,7 @@ setTimeout(applyAll,250);
 <script id="mongo-demand-interest-preview-v46">
 (function(){
 'use strict';
-window.MONGO_DEMAND_INTEREST_PREVIEW='V46';
+window.MONGO_DEMAND_INTEREST_PREVIEW='V47';
 
 const DAY=86400000;
 const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
@@ -19164,6 +19164,19 @@ function calculate({openingBalance=0, annualRate=0, startDate, endDate, events=[
 }
 
 window.MongoDemandInterestPreviewV46={calculate};
+function v47money(v){try{if(typeof fmt==='function')return fmt(Math.round(n(v)));}catch(_){}return '₮'+Math.round(n(v)).toLocaleString('en-US')}
+function v47ymd(x){const z=d(x);if(!z)return '';return String(z.getMonth()+1).padStart(2,'0')+'/'+String(z.getDate()).padStart(2,'0')}
+function cardHTML(result,rate,startDate,endDate){
+ const end=d(endDate),shownEnd=end?new Date(+end-DAY):null;
+ return `<div class="mongo-demand-preview-v47" style="margin-top:12px;padding:14px;border:1px solid #d9eeee;border-radius:14px;background:#f8fbfb">
+ <div style="font-weight:800;color:#374151;margin-bottom:9px">Тооцоолсон хүү</div>
+ <div style="display:flex;justify-content:space-between;gap:12px;margin:5px 0"><span>Одоогийн үлдэгдэл</span><b>${v47money(result.closingPrincipal)}</b></div>
+ <div style="display:flex;justify-content:space-between;gap:12px;margin:5px 0"><span>Жилийн хүү</span><b>${n(rate)}%</b></div>
+ <div style="display:flex;justify-content:space-between;gap:12px;margin:5px 0"><span>Хуримтлагдсан хүү</span><b>${v47money(result.roundedInterest)}</b></div>
+ <div style="display:flex;justify-content:space-between;gap:12px;margin:5px 0"><span>Тооцсон хугацаа</span><b>${v47ymd(startDate)}–${shownEnd?v47ymd(shownEnd):''}</b></div>
+ <div style="font-size:12px;color:#6b7280;line-height:1.45;margin-top:9px">Урьдчилсан тооцоо. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.</div></div>`;
+}
+window.MongoDemandInterestPreviewV47={calculate,cardHTML};
 
 // Built-in non-writing verification case:
 // 1,000,000 on 04/10; +500,000 on 04/20; -300,000 on 04/25;
@@ -19172,7 +19185,19 @@ const check=calculate({
  openingBalance:1000000,annualRate:6,startDate:'2026-04-10',endDate:'2026-05-01',
  events:[{date:'2026-04-20',amount:500000},{date:'2026-04-25',amount:-300000}]
 });
-console.info('[Möngö V46] demand-interest preview only; no financial writes.',check);
+console.info('[Möngö V47] demand-interest preview only; no financial writes.',check);
+function mountV47(){
+ if(document.getElementById('mongo-demand-v47-test-card'))return;
+ const type=document.getElementById('account-savings-type');
+ if(!type||String(type.value)!=='demand')return;
+ const contract=type.closest('.v381-contract')||type.parentElement?.parentElement;
+ if(!contract)return;
+ const box=document.createElement('div');box.id='mongo-demand-v47-test-card';
+ box.innerHTML=cardHTML(check,6,'2026-04-10','2026-05-01');contract.appendChild(box);
+}
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='account-savings-type'){const old=document.getElementById('mongo-demand-v47-test-card');if(old)old.remove();setTimeout(mountV47,0)}});
+document.addEventListener('click',()=>setTimeout(mountV47,0));
+document.addEventListener('DOMContentLoaded',()=>setTimeout(mountV47,100));
 })();
 </script>
 
