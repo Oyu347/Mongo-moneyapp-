@@ -19091,6 +19091,58 @@ setTimeout(reconcileAll,800);
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V44B — remove legacy "none" option from the live selector.
+     UI-only:
+     - removes option[value="none"] from account/edit interest selectors
+     - keeps runtime/data compatibility code for historical records untouched
+     - no financial/cancellation formulas changed -->
+<script id="mongo-v44b-remove-no-interest-live-option" data-phone-test="V44B">
+(function(){
+'use strict';
+window.MONGO_REMOVE_NO_INTEREST_LIVE_OPTION='V44B';
+
+function clean(prefix){
+  const mode=document.getElementById(prefix+'-interest-mode');
+  if(!mode)return;
+
+  if(mode.value==='none'){
+    const fallback=[...mode.options].find(o=>o.value==='compound');
+    if(fallback){
+      mode.value='compound';
+      mode.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  }
+
+  [...mode.options].filter(o=>o.value==='none').forEach(o=>o.remove());
+}
+
+function cleanAll(){
+  clean('account');
+  clean('edit');
+}
+
+document.addEventListener('DOMContentLoaded',()=>setTimeout(cleanAll,50));
+document.addEventListener('click',()=>setTimeout(cleanAll,0),true);
+document.addEventListener('change',()=>setTimeout(cleanAll,0),true);
+
+let queued=false;
+const mo=new MutationObserver(()=>{
+  if(queued)return;
+  queued=true;
+  requestAnimationFrame(()=>{
+    queued=false;
+    cleanAll();
+  });
+});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+
+setTimeout(cleanAll,150);
+setTimeout(cleanAll,600);
+setTimeout(cleanAll,1500);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
