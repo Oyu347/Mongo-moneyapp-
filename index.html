@@ -19032,16 +19032,17 @@ setTimeout(syncAll,1000);
 </script>
 
 
-<!-- Möngö V45 PHONE TEST: demand-savings UI only. No interest formula changes. -->
-<style id="mongo-v45-demand-ui-style">
-.v45-demand-hidden{display:none!important}
-.v45-demand-note{font-size:11px;line-height:1.45;color:var(--muted);margin-top:8px}
+<!-- Möngö V45A — demand savings UI only, safe phone-test patch.
+     No global MutationObserver. No financial calculation/data logic changed. -->
+<style id="mongo-v45a-demand-ui-style">
+.v45a-hidden{display:none!important}
+.v45a-demand-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f4fbfb;color:#4b5563;font-size:12px;line-height:1.45}
 </style>
-<script id="mongo-v45-demand-ui-marker">
+<script id="mongo-v45a-demand-ui-script">
 (function(){
 'use strict';
-window.MONGO_DEMAND_SAVINGS_UI='V45';
-const T={
+window.MONGO_DEMAND_SAVINGS_UI='V45A';
+const TXT={
  mn:{withdraw:'Мөнгө гаргах боломжтой',freq:'Хүү олгох давтамж',note:'Хүүг тухайн хадгаламжид нэмнэ. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.'},
  en:{withdraw:'Withdrawals allowed',freq:'Interest payment frequency',note:'Interest is added to this savings account. Record the interest actually credited by the bank using “Interest income”.'},
  zh:{withdraw:'允许取款',freq:'付息频率',note:'利息计入此储蓄账户。请通过“利息收入”记录银行实际入账的利息。'},
@@ -19050,64 +19051,65 @@ const T={
  ru:{withdraw:'Снятие средств разрешено',freq:'Периодичность выплаты процентов',note:'Проценты зачисляются на этот сберегательный счёт. Фактически начисленные банком проценты укажите как «Процентный доход».'},
  de:{withdraw:'Auszahlungen erlaubt',freq:'Zinsgutschrift-Häufigkeit',note:'Die Zinsen werden diesem Sparkonto gutgeschrieben. Tatsächlich von der Bank gutgeschriebene Zinsen als „Zinsertrag“ erfassen.'}
 };
-function q(){const l=(typeof lang==='string'?lang:'en');return T[l]||T.en;}
-function demand(prefix){return document.getElementById(prefix+'-deposit-term-type')?.value!=='term';}
-function parentOf(id){return document.getElementById(id)?.parentElement||null;}
-function enhance(prefix,a){
- const contract=document.getElementById(prefix+'-term-contract'); if(!contract)return;
- let w=document.getElementById(prefix+'-allows-withdrawals');
- if(!w){
-   const extra=document.getElementById(prefix+'-allows-extra')?.closest('.v381-check');
-   if(extra){
-     const box=document.createElement('div');box.className='v381-check v45-withdraw-row';
-     const checked=(a&&typeof a.allowsWithdrawals==='boolean')?a.allowsWithdrawals:true;
-     box.innerHTML='<input type="checkbox" id="'+prefix+'-allows-withdrawals"'+(checked?' checked':'')+'><label for="'+prefix+'-allows-withdrawals"></label>';
-     extra.insertAdjacentElement('afterend',box); w=box.querySelector('input');
+function tr(){let l=(typeof lang==='string'?lang:'mn');return TXT[l]||TXT.mn}
+function row(id){const e=document.getElementById(id);return e?e.parentElement:null}
+function isDemand(p){const e=document.getElementById(p+'-deposit-term-type');return !!e && e.value!=='term'}
+function apply(p){
+ const contract=document.getElementById(p+'-term-contract');
+ if(!contract)return;
+ const demand=isDemand(p);
+
+ const mode=row(p+'-interest-mode');
+ const recv=row(p+'-interest-account');
+ const maturity=row(p+'-maturity');
+ if(mode)mode.classList.toggle('v45a-hidden',demand);
+ if(recv)recv.classList.toggle('v45a-hidden',demand);
+ if(maturity)maturity.classList.toggle('v45a-hidden',demand);
+
+ const freq=document.getElementById(p+'-interest-frequency');
+ const freqLabel=freq && freq.parentElement ? freq.parentElement.querySelector('label') : null;
+ if(freqLabel && demand && freqLabel.textContent!==tr().freq) freqLabel.textContent=tr().freq;
+
+ const extra=document.getElementById(p+'-allows-extra');
+ let withdraw=document.getElementById(p+'-allows-withdrawals-v45a');
+ if(extra && !withdraw){
+   const erow=extra.closest('.v381-check') || extra.parentElement;
+   if(erow){
+     const box=document.createElement('div');
+     box.className='v381-check v45a-withdraw-row';
+     box.innerHTML='<input type="checkbox" id="'+p+'-allows-withdrawals-v45a" checked><label for="'+p+'-allows-withdrawals-v45a">'+tr().withdraw+'</label>';
+     erow.insertAdjacentElement('afterend',box);
+     withdraw=box.querySelector('input');
    }
  }
- const wl=document.querySelector('label[for="'+prefix+'-allows-withdrawals"]');if(wl)wl.textContent=q().withdraw;
- let note=contract.querySelector('.v45-demand-note');if(!note){note=document.createElement('div');note.className='v45-demand-note';contract.appendChild(note);} note.textContent=q().note;
- sync(prefix);
+ const wrow=withdraw ? (withdraw.closest('.v381-check') || withdraw.parentElement) : null;
+ if(wrow)wrow.style.display=demand?'':'none';
+
+ let note=contract.querySelector('.v45a-demand-note');
+ if(!note){
+   note=document.createElement('div');
+   note.className='v45a-demand-note';
+   contract.appendChild(note);
+ }
+ if(note.textContent!==tr().note)note.textContent=tr().note;
+ note.style.display=demand?'':'none';
+
+ if(demand){
+   const m=document.getElementById(p+'-interest-mode');
+   if(m)m.value='compound';
+ }
 }
-function sync(prefix){
- const isDemand=demand(prefix);
- const mode=parentOf(prefix+'-interest-mode'), recv=parentOf(prefix+'-interest-account'), mat=parentOf(prefix+'-maturity');
- if(mode)mode.classList.toggle('v45-demand-hidden',isDemand);
- if(recv)recv.classList.toggle('v45-demand-hidden',isDemand);
- if(mat&&isDemand)mat.classList.add('v45-demand-hidden'); else if(mat)mat.classList.remove('v45-demand-hidden');
- const freq=document.getElementById(prefix+'-interest-frequency'); const fl=freq?.parentElement?.querySelector('label');
- if(fl&&isDemand)fl.textContent=q().freq;
- const n=document.querySelector('#'+prefix+'-term-contract .v45-demand-note');if(n)n.style.display=isDemand?'':'none';
- const wd=document.getElementById(prefix+'-allows-withdrawals')?.closest('.v381-check');if(wd)wd.style.display=isDemand?'':'none';
- if(isDemand){const m=document.getElementById(prefix+'-interest-mode');if(m)m.value='compound';}
-}
-function currentAccountForEdit(){
- const id=(typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null);
- return (window.moneyAccounts||moneyAccounts||[]).find(a=>String(a.id)===String(id))||null;
-}
-function refresh(){
- const arr=(typeof moneyAccounts!=='undefined'?moneyAccounts:[]);
- enhance('account',{}); enhance('edit',currentAccountForEdit()||{});
- ['account','edit'].forEach(p=>{const sel=document.getElementById(p+'-deposit-term-type');if(sel&&!sel.dataset.v45){sel.dataset.v45='1';sel.addEventListener('change',()=>setTimeout(()=>{enhance(p,p==='edit'?currentAccountForEdit()||{}:{});sync(p)},0));}});
-}
-const oldAdd=window.addMoneyAccount;
-if(typeof oldAdd==='function')window.addMoneyAccount=function(){
- const allow=document.getElementById('account-allows-withdrawals')?.checked!==false;
- const before=new Set((moneyAccounts||[]).map(a=>String(a.id))); const r=oldAdd.apply(this,arguments);
- const a=(moneyAccounts||[]).find(x=>!before.has(String(x.id))); if(a&&a.type==='savings'){a.allowsWithdrawals=allow;if(a.depositTermType!=='term'){a.interestMode='compound';a.interestAccountId=null;}saveData();renderMoneyAccounts();}
- setTimeout(refresh,20);return r;
-};
-const oldEdit=window.editMoneyAccount;
-if(typeof oldEdit==='function')window.editMoneyAccount=async function(id){
- const r=await oldEdit.apply(this,arguments);setTimeout(()=>{
-   const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));enhance('edit',a||{});
-   const btn=document.getElementById('account-edit-save');if(btn&&!btn.dataset.v45){btn.dataset.v45='1';const prev=btn.onclick;btn.onclick=async function(ev){const allow=document.getElementById('edit-allows-withdrawals')?.checked!==false;const dem=demand('edit');const rr=prev?await prev.call(this,ev):undefined;if(a&&a.type==='savings'){a.allowsWithdrawals=allow;if(dem){a.interestMode='compound';a.interestAccountId=null;}saveData();renderMoneyAccounts();}return rr;};}
- },140);return r;
-};
-const mo=new MutationObserver(()=>refresh());mo.observe(document.documentElement,{childList:true,subtree:true});
-setTimeout(refresh,120);
+function applyAll(){apply('account');apply('edit')}
+function later(){setTimeout(applyAll,0);setTimeout(applyAll,120);setTimeout(applyAll,350)}
+document.addEventListener('DOMContentLoaded',later);
+document.addEventListener('click',later,true);
+document.addEventListener('change',function(e){
+ if(e.target && (e.target.id==='account-deposit-term-type'||e.target.id==='edit-deposit-term-type'))later();
+},true);
+setTimeout(applyAll,250);
 })();
 </script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
