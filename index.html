@@ -19115,6 +19115,67 @@ setTimeout(applyAll,250);
 })();
 </script>
 
+
+<script id="mongo-demand-interest-preview-v46">
+(function(){
+'use strict';
+window.MONGO_DEMAND_INTEREST_PREVIEW='V46';
+
+const DAY=86400000;
+const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
+const d=v=>{const x=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+x)?null:x};
+const days=(a,b)=>a&&b?Math.max(0,Math.floor((b-a)/DAY)):0;
+
+/*
+ Pure preview engine.
+ events: [{date:'YYYY-MM-DD', amount:+deposit/-withdrawal}]
+ Convention for this PHONE TEST:
+ an event changes the balance from its event date.
+ No app state is mutated.
+*/
+function calculate({openingBalance=0, annualRate=0, startDate, endDate, events=[]}={}){
+  const start=d(startDate), end=d(endDate);
+  if(!start||!end||end<=start) return {interest:0,segments:[],days:0};
+  let balance=Math.max(0,n(openingBalance));
+  let cursor=start, interest=0;
+  const segments=[];
+  const ordered=(Array.isArray(events)?events:[])
+    .map(x=>({date:d(x.date),amount:n(x.amount),rawDate:x.date}))
+    .filter(x=>x.date&&x.date>=start&&x.date<end)
+    .sort((a,b)=>a.date-b.date);
+
+  for(const e of ordered){
+    const held=days(cursor,e.date);
+    if(held>0){
+      const i=balance*n(annualRate)/100*held/365;
+      segments.push({from:cursor,to:e.date,balance,days:held,interest:i});
+      interest+=i;
+    }
+    balance=Math.max(0,balance+e.amount);
+    cursor=e.date;
+  }
+  const held=days(cursor,end);
+  if(held>0){
+    const i=balance*n(annualRate)/100*held/365;
+    segments.push({from:cursor,to:end,balance,days:held,interest:i});
+    interest+=i;
+  }
+  return {interest,roundedInterest:Math.round(interest),segments,days:days(start,end),closingPrincipal:balance};
+}
+
+window.MongoDemandInterestPreviewV46={calculate};
+
+// Built-in non-writing verification case:
+// 1,000,000 on 04/10; +500,000 on 04/20; -300,000 on 04/25;
+// 6% p.a.; preview through 05/01 (end date exclusive).
+const check=calculate({
+ openingBalance:1000000,annualRate:6,startDate:'2026-04-10',endDate:'2026-05-01',
+ events:[{date:'2026-04-20',amount:500000},{date:'2026-04-25',amount:-300000}]
+});
+console.info('[Möngö V46] demand-interest preview only; no financial writes.',check);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
