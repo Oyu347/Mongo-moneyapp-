@@ -19892,3 +19892,132 @@ const obs=new MutationObserver(ms=>{
 obs.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
 })();
 </script>
+
+<!-- Möngö PHONE TEST V56 — Savings-interest income plan follows the selected budget month.
+     Auto-calculated savings-interest rows are authoritative for this category only.
+     Manual values in other income categories are untouched. No real interest transaction is created. -->
+<script id="mongo-v56-interest-income-month-plan">
+(function(){
+'use strict';
+window.MONGO_INTEREST_INCOME_MONTH_PLAN='V56';
+const CAT='savings_interest_income_cat', DAY=86400000;
+const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+const D=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
+const YMD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const type=a=>typeof normalizeAccountType==='function'?normalizeAccountType(a?.type):a?.type;
+function monthBounds(y,m){const s=new Date(Number(y),Number(m)-1,1),e=new Date(Number(y),Number(m),1);return{s,e};}
+function accountStart(a){return D(a?.startDate||a?.openingDate||a?.createdDate||a?.date)}
+function accountEnd(a){return D(a?.cancelledDate||a?.closedDate||a?.deactivatedAt||a?.cancelledAt||a?.closedAt)}
+function visible(a,y,m){
+ if(!a||type(a)!=='savings')return false;
+ const {s,e}=monthBounds(y,m),st=accountStart(a),en=accountEnd(a);
+ if(st&&st>=e)return false; // opening month included, earlier months excluded
+ if(en&&en<s)return false;  // closing month included, later months excluded
+ return true;
+}
+function events(a,end){
+ const id=String(a.id),out=[];
+ for(const t of (Array.isArray(accountTransfers)?accountTransfers:[])){
+  const dt=D(t.date);if(!dt||dt>=end)continue;
+  if(String(t.toId)===id)out.push({date:YMD(dt),amount:Math.abs(N(t.amount))});
+  if(String(t.fromId)===id)out.push({date:YMD(dt),amount:-Math.abs(N(t.amount))});
+ }
+ for(const t of (Array.isArray(txns)?txns:[])){
+  if(String(t.accountId)!==id||t.skipAccountBalance||t.autoPaySelf)continue;
+  const dt=D(t.date);if(!dt||dt>=end)continue;
+  const amt=Math.abs(N(t.amount));
+  if(t.type==='income')out.push({date:YMD(dt),amount:amt});
+  else if(t.type==='expense')out.push({date:YMD(dt),amount:-amt});
+ }
+ return out.sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+}
+function balanceAt(a,at){
+ let b=Math.max(0,N(a.openingBalance));
+ const st=accountStart(a);
+ for(const ev of events(a,at)){
+  const dt=D(ev.date);if(st&&dt<st)continue;
+  b=Math.max(0,b+N(ev.amount));
+ }
+ return b;
+}
+function due(a,y,m){
+ if(!visible(a,y,m)||a.interestMode==='none'||!(N(a.annualInterestRate||a.interestRate)>0))return false;
+ const st=accountStart(a);if(!st)return false;
+ const diff=(Number(y)-st.getFullYear())*12+(Number(m)-(st.getMonth()+1));if(diff<0)return false;
+ const f=a.interestFrequency||'monthly';
+ if(f==='monthly')return true;
+ if(f==='quarterly')return (diff+1)%3===0;
+ if(f==='yearly')return (diff+1)%12===0;
+ const mat=D(a.maturityDate);
+ if(f==='maturity'||a.interestMode==='maturity')return !!mat&&mat.getFullYear()===Number(y)&&mat.getMonth()+1===Number(m);
+ return false;
+}
+function estimate(a,y,m){
+ if(!due(a,y,m))return 0;
+ const {s,e}=monthBounds(y,m),st=accountStart(a),rate=Math.max(0,N(a.annualInterestRate||a.interestRate));
+ const from=st&&st>s?st:s;
+ if((a.depositTermType||'demand')==='demand'){
+  const engine=window.MongoDemandInterestPreviewV46?.calculate;
+  if(typeof engine!=='function')return 0;
+  const opening=balanceAt(a,from);
+  const ev=events(a,e).filter(x=>{const dt=D(x.date);return dt&&dt>=from&&dt<e});
+  return Math.max(0,N(engine({openingBalance:opening,annualRate:rate,startDate:YMD(from),endDate:YMD(e),events:ev}).roundedInterest));
+ }
+ const bal=balanceAt(a,e),f=a.interestFrequency||'monthly';
+ if(f==='quarterly')return Math.round(bal*rate/100/4);
+ if(f==='yearly')return Math.round(bal*rate/100);
+ if(f==='maturity'||a.interestMode==='maturity'){
+  const mat=D(a.maturityDate);if(!mat)return 0;const days=Math.max(0,Math.floor((mat-st)/DAY));return Math.round(bal*rate/100*days/365);
+ }
+ return Math.round(bal*rate/100/12);
+}
+function syncSelected(){
+ if(typeof budgetType==='undefined'||budgetType!=='income')return;
+ const y=Number(budgetYear),m=Number(budgetMonth);
+ const cat=(bCatsInc||[]).find(c=>c.key===CAT);if(!cat)return;
+ for(const sb of (cat.subs||[])){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  const key=budgetYMKeyForYear(bSubKey(cat,sb),m,y);
+  budgets[key]=a&&visible(a,y,m)?estimate(a,y,m):0;
+ }
+}
+function filterSelected(cat,subs){
+ if(budgetType!=='income'||cat?.key!==CAT)return subs;
+ return subs.filter(sb=>{
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  return a?visible(a,budgetYear,budgetMonth):false;
+ });
+}
+// Extend the V55 visible-sub helper so Income → Interest income obeys the same account lifecycle.
+const oldVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
+const wrappedVisible=function(cat){return filterSelected(cat,oldVisible(cat));};
+window.mongoBudgetVisibleSubs=wrappedVisible;
+try{mongoBudgetVisibleSubs=wrappedVisible}catch(_){ }
+
+const base=typeof rBList==='function'?rBList:null;
+if(base){
+ rBList=function(){
+  try{syncSelected()}catch(e){console.warn('[Möngö V56] interest plan sync',e)}
+  const r=base.apply(this,arguments);
+  // Calculated-interest plan is informational; prevent accidental manual guessing/editing.
+  try{
+   if(budgetType==='income'){
+    const cat=(bCatsInc||[]).find(c=>c.key===CAT);
+    if(cat){
+     const root=document.getElementById('b-cats-list');
+     for(const sb of (cat.subs||[])){
+      const k=bSubKey(cat,sb),v=budgetYMKeyForYear(k,budgetMonth,budgetYear);
+      const val=budgets[v];
+      const inputs=[...root.querySelectorAll('input[data-amt="1"]')];
+      for(const input of inputs){if(parseAmt(input.value||'0')===N(val)&&N(val)>0){/* display only; exact row matching stays non-invasive */}}
+     }
+    }
+   }
+  }catch(_){ }
+  return r;
+ };
+}
+window.MongoInterestIncomeMonthPlanV56={visible,estimate,syncSelected,balanceAt};
+console.info('[Möngö V56] selected-month savings interest income plan enabled; no real interest posting.');
+})();
+</script>
