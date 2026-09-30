@@ -9504,7 +9504,7 @@ function rGoals(){
             ${manualSaved>0?`<span style="font-size:10px;color:var(--text2)">✏️ ${fmt(manualSaved)}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm" onclick="openGoalEditV53(${g.id})" aria-label="Зорилго засах">✎</button><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
       </div>
       <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
         <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
@@ -19342,7 +19342,56 @@ console.info('[Möngö V50] demand monthly-cycle preview enabled; display only.'
      UI target-filter only: no balance, interest, transfer arithmetic, cloud, or schema changes. -->
 <script id="mongo-v51-active-savings-target-marker">window.MONGO_ACTIVE_SAVINGS_TARGETS='V51';</script>
 
-\n\n<!-- Möngö PHONE TEST V52 — keep a linked savings goal's opening/manual base in sync when the account opening balance is corrected.\n     Bounded fix only: no transfer arithmetic, interest calculation, Firebase schema, or historical transaction mutation. -->\n<script id="mongo-v52-opening-goal-sync">\n(function(){\n'use strict';\nwindow.MONGO_OPENING_GOAL_SYNC='V52';\nconst priorEdit=window.editMoneyAccount||editMoneyAccount;\nconst sameMoney=(a,b)=>Math.round(Number(a)||0)===Math.round(Number(b)||0);\nfunction linkedGoalFor(a){\n  const id=a?.linkedGoalId??a?.goalId??null;\n  return (goals||[]).find(g=>String(g?.id)===String(id))||null;\n}\nconst wrapped=async function(id){\n  const a=(moneyAccounts||[]).find(x=>String(x?.id)===String(id));\n  const beforeOpening=Math.max(0,Math.round(Number(a?.openingBalance)||0));\n  const beforeGoal=linkedGoalFor(a);\n  const beforeGoalBase=beforeGoal?Math.max(0,Math.round(Number(beforeGoal.saved)||0)):null;\n  const result=await priorEdit.apply(this,arguments);\n  setTimeout(()=>{\n    const button=document.getElementById('account-edit-save');\n    if(!a||!button||button.__mongoV52GoalSync)return;\n    const priorSave=button.onclick;\n    button.onclick=async function(event){\n      const oldOpening=Math.max(0,Math.round(Number(a.openingBalance)||0));\n      const oldGoal=linkedGoalFor(a);\n      const oldGoalBase=oldGoal?Math.max(0,Math.round(Number(oldGoal.saved)||0)):null;\n      const r=typeof priorSave==='function'?await priorSave.call(this,event):undefined;\n      const newOpening=Math.max(0,Math.round(Number(a.openingBalance)||0));\n      if(newOpening!==oldOpening){\n        const g=linkedGoalFor(a)||oldGoal;\n        // A goal created together with this savings account stores the account's\n        // opening balance in goal.saved. Only move that base when it still equals\n        // the old opening amount; deposits, withdrawals and interest remain in\n        // their existing dated records and are never rewritten here.\n        if(g && oldGoal && String(g.id)===String(oldGoal.id) && sameMoney(oldGoalBase,oldOpening)){\n          g.saved=newOpening;\n          try{saveData();}catch(e){console.error('[Möngö V52] goal opening sync save failed',e);}\n          try{rGoals();rBList();rBProg();renderMoneyAccounts();uDash();}catch(e){}\n        }\n      }\n      return r;\n    };\n    button.__mongoV52GoalSync=true;\n  },90);\n  return result;\n};\nwrapped.__mongoV52GoalSync=true;\nwindow.editMoneyAccount=wrapped;\neditMoneyAccount=wrapped;\nconsole.info('[Möngö V52] opening balance ↔ linked goal base sync enabled.');\n})();\n</script>\n</body>
+
+<!-- Möngö PHONE TEST V53 — savings account and savings goal are separate lifecycles.
+     Bounded change: edit linked goal target/deadline without changing account opening balance,
+     transactions, interest, transfer arithmetic, cloud schema, or savings-account term. -->
+<script id="mongo-v53-goal-edit">
+(function(){
+'use strict';
+window.MONGO_GOAL_EDIT='V53';
+const TXT={
+ mn:{title:'Хуримтлалын зорилго засах',target:'Зорилтот дүн',deadline:'Зорилгын хугацаа',cancel:'Болих',save:'Хадгалах',need:'Зорилтот дүн 0-ээс их байна.',note:'Хадгаламжийн дансны хугацаа, эхний үлдэгдэл өөрчлөгдөхгүй.'},
+ en:{title:'Edit savings goal',target:'Goal target',deadline:'Goal deadline',cancel:'Cancel',save:'Save',need:'Goal target must be greater than 0.',note:'The savings account term and opening balance will not change.'},
+ zh:{title:'编辑储蓄目标',target:'目标金额',deadline:'目标日期',cancel:'取消',save:'保存',need:'目标金额必须大于 0。',note:'储蓄账户期限和期初余额不会改变。'},
+ ja:{title:'貯蓄目標を編集',target:'目標金額',deadline:'目標期限',cancel:'キャンセル',save:'保存',need:'目標金額は0より大きくしてください。',note:'預金口座の期間と開始残高は変更されません。'},
+ ko:{title:'저축 목표 수정',target:'목표 금액',deadline:'목표 기한',cancel:'취소',save:'저장',need:'목표 금액은 0보다 커야 합니다.',note:'예금 계좌 기간과 시작 잔액은 변경되지 않습니다.'},
+ ru:{title:'Изменить цель накопления',target:'Целевая сумма',deadline:'Срок цели',cancel:'Отмена',save:'Сохранить',need:'Целевая сумма должна быть больше 0.',note:'Срок вклада и начальный остаток счёта не изменяются.'},
+ de:{title:'Sparziel bearbeiten',target:'Zielbetrag',deadline:'Zieldatum',cancel:'Abbrechen',save:'Speichern',need:'Der Zielbetrag muss größer als 0 sein.',note:'Laufzeit und Anfangssaldo des Sparkontos bleiben unverändert.'}
+};
+const t=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
+const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+window.openGoalEditV53=function(id){
+ const g=(goals||[]).find(x=>String(x.id)===String(id));if(!g)return;
+ document.getElementById('mongo-goal-edit-v53')?.remove();
+ const q=t(),m=document.createElement('div');m.id='mongo-goal-edit-v53';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${q.title} · ${esc(g.name)}</div>
+ <label>${q.target}</label><input class="fi" id="mongo-goal-edit-target-v53" inputmode="decimal" data-amt="1" value="${Math.round(Number(g.target)||0).toLocaleString('en-US')}">
+ <label>${q.deadline}</label><input class="fi" id="mongo-goal-edit-deadline-v53" type="date" value="${esc(g.dead||'')}">
+ <div class="flow-only-note" style="margin-top:10px">${q.note}</div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="mongo-goal-edit-cancel-v53">${q.cancel}</button><button class="btn btn-p" id="mongo-goal-edit-save-v53">${q.save}</button></div></div>`;
+ document.body.appendChild(m);
+ const amount=document.getElementById('mongo-goal-edit-target-v53');try{if(typeof setupAmtInput==='function')setupAmtInput(amount)}catch(_){}
+ document.getElementById('mongo-goal-edit-cancel-v53').onclick=()=>m.remove();
+ document.getElementById('mongo-goal-edit-save-v53').onclick=()=>{
+   const target=Math.max(0,typeof parseAmt==='function'?(parseAmt(amount.value)||0):(Number(String(amount.value).replace(/,/g,''))||0));
+   const dead=document.getElementById('mongo-goal-edit-deadline-v53').value||'';
+   if(!(target>0)){try{showToast(q.need)}catch(_){alert(q.need)}return;}
+   g.target=Math.round(target);g.dead=dead;g.updatedAt=new Date().toISOString();
+   // Automatic "goal achieved" archive is derived from target vs effective saved.
+   // Do not alter account.active, openingBalance, linkedGoalId or any money movement.
+   if(g.archiveReason==='goal_switched' || g.archiveReason==='savings_account_cancelled'){
+     // Explicit lifecycle archives stay archived; editing target/date must not reopen them.
+   }else if(g.archivedAt && !g.archiveReason){
+     delete g.archivedAt;
+   }
+   m.remove();saveData();
+   try{rGoals();rBList();rBProg();uDash();renderMoneyAccounts();renderTransferTarget();}catch(_){}
+ };
+};
+})();
+</script>
+</body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
 
