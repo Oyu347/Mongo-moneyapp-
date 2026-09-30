@@ -9396,7 +9396,17 @@ function dashChangeMo(dir){
 }
 
 function getGoalAutoSaved(goal){return window.MongoSavings.autoSaved(goal,accountTransfers,txns);}
-function getGoalEffectiveSaved(goal){return window.MongoSavings.effectiveSaved(goal,accountTransfers,txns);}
+function getGoalEffectiveSaved(goal){
+  // V54: when a goal is linked to an ACTIVE savings account, the account's
+  // real ledger balance is the single source of truth for current saved amount.
+  // Target amount and deadline remain goal metadata.
+  const linked=(moneyAccounts||[]).find(a=>
+    a&&a.active!==false&&normalizeAccountType(a.type)==='savings'&&
+    String(a.linkedGoalId??a.goalId??'')===String(goal?.id??'')
+  );
+  if(linked)return Math.max(0,Number(accountBalance(linked.id))||0);
+  return window.MongoSavings.effectiveSaved(goal,accountTransfers,txns);
+}
 function addMonthsSafe(date,months){return window.MongoSavings.addMonthsSafe(date,months);}
 function monthsBetweenCeil(from,to){return window.MongoSavings.monthsBetweenCeil(from,to);}
 function parseLocalDate(raw){
@@ -19390,6 +19400,12 @@ window.openGoalEditV53=function(id){
  };
 };
 })();
+</script>
+
+<!-- Möngö PHONE TEST V54 — linked savings account balance is authoritative for linked goal current amount.
+     Bounded display/derived-value change only: target/deadline stay goal metadata; no transaction mutation. -->
+<script id="mongo-v54-linked-goal-balance-marker">
+window.MONGO_LINKED_GOAL_BALANCE='V54';
 </script>
 </body>
 </html>
