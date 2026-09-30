@@ -7603,6 +7603,49 @@ function addBudgetCat(){
   inp.value='';rBList();saveData();
 }
 
+function mongoSavingsGoalVisibleInBudgetMonth(goal,year,month){
+  if(!goal)return false;
+  const y=Number(year),m=Number(month);
+  if(!(y>0&&m>=1&&m<=12))return true;
+  const ym=n=>String(n).padStart(2,'0');
+  const selected=`${y}-${ym(m)}`;
+
+  const linked=(moneyAccounts||[]).filter(a=>
+    a&&normalizeAccountType(a.type)==='savings'&&
+    String(a.linkedGoalId??a.goalId??'')===String(goal.id)
+  );
+
+  // The savings account opening month is authoritative when a linked account exists.
+  const starts=linked.map(a=>String(a.startDate||'').slice(0,7)).filter(v=>/^\d{4}-\d{2}$/.test(v));
+  const fallbackStart=String(goal.startDate||goal.createdAt||goal.date||'').slice(0,7);
+  const start=starts.length?starts.sort()[0]:(/^\d{4}-\d{2}$/.test(fallbackStart)?fallbackStart:'');
+  if(start&&selected<start)return false;
+
+  // Closed/cancelled/deactivated savings accounts remain visible in their closing month,
+  // but not in later budget months.
+  const ends=linked.map(a=>String(
+    a.cancelledDate||a.closedDate||a.deactivatedAt||a.cancelledAt||a.closedAt||''
+  ).slice(0,7)).filter(v=>/^\d{4}-\d{2}$/.test(v));
+  const goalEnd=String(goal.archivedAt||goal.cancelledAt||goal.closedAt||'').slice(0,7);
+  const end=ends.length?ends.sort().slice(-1)[0]:
+    (/^\d{4}-\d{2}$/.test(goalEnd)?goalEnd:'');
+  if(end&&selected>end)return false;
+
+  return true;
+}
+window.mongoSavingsGoalVisibleInBudgetMonth=mongoSavingsGoalVisibleInBudgetMonth;
+
+function mongoBudgetVisibleSubs(cat){
+  const subs=Array.isArray(cat?.subs)?cat.subs:[];
+  if(budgetType!=='expense'||cat?.key!=='savings_cat')return subs;
+  return subs.filter(sb=>{
+    const m=String(sb?.key||'').match(/^goal_(.+)$/);
+    if(!m)return true;
+    const g=(goals||[]).find(x=>String(x?.id)===String(m[1]));
+    return g?mongoSavingsGoalVisibleInBudgetMonth(g,budgetYear,budgetMonth):true;
+  });
+}
+
 function rBList(){
   migrateInvestmentTypeLinks();
   const el=document.getElementById('b-cats-list');
@@ -7616,7 +7659,7 @@ function rBList(){
     const bk=bKeyFor(cat);const curBudget=getBudgetVal(bk,mo);
     const iDef=cat.key&&defB.has(cat.key);const isLocked=lockedCats.has(cat.key||nm);
     const canDel=!iDef&&!isLocked;
-    const subTotal=(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
+    const visibleSubs=mongoBudgetVisibleSubs(cat);const subTotal=visibleSubs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
     const tot=curBudget+subTotal;
     return`<div class="bblock" style="${getSoftCatVars(cat.color)}">
       <div class="bheader" onclick="tglB('${(cat.key||nm).replace(/'/g,"\\'")}')">
@@ -7633,7 +7676,7 @@ function rBList(){
           <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
           ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
-        ${(cat.subs||[]).map((sb,si)=>{const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
+        ${visibleSubs.map((sb)=>{const si=(cat.subs||[]).indexOf(sb);const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
             <span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span>
             <span style="font-size:12px;color:${sb.color};flex:1">${snm}</span>
@@ -14846,7 +14889,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
       const before=savings?.subs?.length||0;
       const sub=upsert(savings,'goal',g.id,g.name,g.color,{sourceKind:'goal',sourceId:String(g.id)});
       if((savings?.subs?.length||0)!==before)changed=true;
-      if(options.seed&&sub&&seed(savings,sub,suggestedGoal(g)))changed=true;
+      if(options.seed&&sub&&mongoSavingsGoalVisibleInBudgetMonth(g,budgetYear,budgetMonth)&&seed(savings,sub,suggestedGoal(g)))changed=true;
     });
     (debts||[]).forEach(d=>{
       const before=loans?.subs?.length||0;
@@ -19406,6 +19449,13 @@ window.openGoalEditV53=function(id){
      Bounded display/derived-value change only: target/deadline stay goal metadata; no transaction mutation. -->
 <script id="mongo-v54-linked-goal-balance-marker">
 window.MONGO_LINKED_GOAL_BALANCE='V54';
+</script>
+
+<!-- Möngö PHONE TEST V55 — savings budget rows respect goal/account lifecycle by selected month.
+     Opening month is included; months before opening and after closure are hidden.
+     Historical budget data is preserved; no rows or transactions are deleted. -->
+<script id="mongo-v55-savings-budget-lifecycle-marker">
+window.MONGO_SAVINGS_BUDGET_LIFECYCLE='V55';
 </script>
 </body>
 </html>
