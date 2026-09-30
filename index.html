@@ -19988,7 +19988,19 @@ function filterSelected(cat,subs){
  if(budgetType!=='income'||cat?.key!==CAT)return subs;
  return subs.filter(sb=>{
   const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
-  return a?visible(a,budgetYear,budgetMonth):false;
+  if(!a||!visible(a,budgetYear,budgetMonth))return false;
+
+  // V59 — ONLY "interest at maturity" accounts:
+  // do not show a zero budget row in months where maturity interest is not due.
+  // Monthly / quarterly / yearly interest rows keep their existing behavior.
+  const maturityOnly=(a.interestMode==='maturity'||a.interestFrequency==='maturity');
+  if(maturityOnly){
+   const mat=D(a.maturityDate);
+   return !!mat &&
+     mat.getFullYear()===Number(budgetYear) &&
+     mat.getMonth()+1===Number(budgetMonth);
+  }
+  return true;
  });
 }
 // Extend the V55 visible-sub helper so Income → Interest income obeys the same account lifecycle.
@@ -20022,6 +20034,7 @@ if(base){
 }
 window.MongoInterestIncomeMonthPlanV56={visible,estimate,syncSelected,balanceAt};
 window.MONGO_INTEREST_INCOME_TERM_TYPE_FIX='V58';
+window.MONGO_MATURITY_INTEREST_BUDGET_VISIBILITY='V59';
 console.info('[Möngö V56] selected-month savings interest income plan enabled; no real interest posting.');
 })();
 </script>
