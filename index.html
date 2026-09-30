@@ -19971,12 +19971,24 @@ function estimate(a,y,m){
  }
  return Math.round(bal*rate/100/12);
 }
+function accountForSub57(sb){
+ const direct=(moneyAccounts||[]).find(x=>String(x.id)===String(sb?.savingsAccountId));
+ if(direct)return direct;
+ // V57: older interest-income subcategories can exist without savingsAccountId.
+ // Recover only from the deterministic V14 key first, then exact displayed account name.
+ const byKey=(moneyAccounts||[]).find(x=>type(x)==='savings'&&('savings_interest_'+String(x.id||'').replace(/[^a-zA-Z0-9_-]/g,'_'))===String(sb?.key||''));
+ if(byKey){sb.savingsAccountId=String(byKey.id);return byKey}
+ const label=(typeof cN==='function'?cN(sb):'')||sb?.names?.mn||sb?.name||'';
+ const byName=(moneyAccounts||[]).filter(x=>type(x)==='savings'&&String(x.name||'')===String(label));
+ if(byName.length===1){sb.savingsAccountId=String(byName[0].id);return byName[0]}
+ return null;
+}
 function syncSelected(){
  if(typeof budgetType==='undefined'||budgetType!=='income')return;
  const y=Number(budgetYear),m=Number(budgetMonth);
  const cat=(bCatsInc||[]).find(c=>c.key===CAT);if(!cat)return;
  for(const sb of (cat.subs||[])){
-  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  const a=accountForSub57(sb);
   const key=budgetYMKeyForYear(bSubKey(cat,sb),m,y);
   budgets[key]=a&&visible(a,y,m)?estimate(a,y,m):0;
  }
@@ -19984,7 +19996,7 @@ function syncSelected(){
 function filterSelected(cat,subs){
  if(budgetType!=='income'||cat?.key!==CAT)return subs;
  return subs.filter(sb=>{
-  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  const a=accountForSub57(sb);
   return a?visible(a,budgetYear,budgetMonth):false;
  });
 }
@@ -20018,6 +20030,7 @@ if(base){
  };
 }
 window.MongoInterestIncomeMonthPlanV56={visible,estimate,syncSelected,balanceAt};
+window.MONGO_INTEREST_INCOME_LINK_REPAIR='V57';
 console.info('[Möngö V56] selected-month savings interest income plan enabled; no real interest posting.');
 })();
 </script>
