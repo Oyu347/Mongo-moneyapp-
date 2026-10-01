@@ -130,3 +130,27 @@ Record exact commits, tests actually performed, unresolved risks and exact next 
 - Preview remains estimate-only: do not auto-post interest, do not mutate balance, and treat the bank's actual credited interest as source of truth via the existing Interest income action.
 - Known separate issue discovered during testing: editing a savings account opening balance can leave linked savings-goal/history amounts stale. Do not mix that repair into the interest-cycle patch.
 - Next exact bounded task: V50 should change the demand-savings preview from lifetime accrued interest to the relevant monthly interest cycle while preserving V49 financial behavior. First version remains display-only; no automatic Interest income posting and no schema/Firebase changes.
+
+
+## Phone work recovery checkpoint — 2026-10-01
+
+This section reconstructs the missing continuity record from the retained phone-test evidence and local PHONE-TEST files. It does not promote an untested file.
+
+### Confirmed / preserved sequence
+- V50 `Mongo-PHONE-TEST-DEMAND-MONTHLY-CYCLE-V50.html`: demand-deposit estimated-interest preview moved to the relevant monthly cycle; display-only. PHONE + FORMULA behavior was confirmed before later work.
+- V51 `Mongo-PHONE-TEST-SAVINGS-ACTIVE-TARGETS-V51.html`: active savings accounts remain selectable as savings-transfer targets even when linked-goal metadata is stale. Later phone evidence confirmed the target picker and a real ₮10,000 savings transfer; the receiving savings balance/history updated and the transfer remained an internal movement.
+- V55 lifecycle behavior is preserved in the later files: savings-interest budget rows are excluded before the savings account opening month and after closure, while the opening/closing month remains eligible. Phone evidence on 2026-10-01 reconfirmed that January no longer showed later-opened savings accounts and the normal budget screen remained intact.
+- V56 selected-month interest-income plan behavior is preserved in V69: calculated savings interest is generated from the selected month/account data rather than manual guessing. Do not remove this block while repairing transaction classification.
+- V59 maturity-interest budget behavior: an account using “interest at maturity” is hidden from interim zero months and appears with calculated interest in its actual maturity month. PHONE PASS.
+- V60→V62 established required maturity date + Möngö modal + seven-language guard. Later V63→V65 rewrote the guard more narrowly around the actual account save paths; V69 contains the V65 guard. The exact intermediate V63/V64 evidence is not promoted separately.
+- V66→V69 investigated Transactions → savings-interest “Төсөвлөсөн / Төсөвлөөгүй” classification. V66 used a wrapper fallback; V67 moved matching into `isTxnBudgeted`; V68 accidentally dropped the V56 monthly-plan block and is therefore not a safe baseline; V69 restored V56/V59 behavior and matched ordinary savings-interest income against the transaction month/year and its persisted interest-income budget category/subcategory.
+- User phone evidence confirmed V69 had the intended “Төсөвлөсөн” result for savings-interest transactions while the pre-opening budget-row regression was also corrected. Treat V69 as the last known good checkpoint for this combined area.
+- No verified `V70` PHONE-TEST HTML is present in the recovered runtime files or continuity docs. Do not assume V70 exists or is a baseline.
+
+### Current regression / incident
+- On 2026-10-01 the currently opened app again showed ordinary savings-interest transactions as `Төсөвлөөгүй`, even though the user recalls and phone evidence confirms this was working on V69.
+- This is a regression against the V69 behavior, not permission to redesign the budget formula.
+- Preserve: V55 account lifecycle visibility, V56 calculated monthly interest plan, V59 maturity-month visibility, V65 seven-language maturity-date validation, V51 transfer behavior, and all earlier cancellation/accounting protections.
+
+### Exact next action
+Compare the currently served/tested file against `Mongo-PHONE-TEST-SAVINGS-INTEREST-BUDGET-MATCH-V69.html` specifically around `isTxnBudgeted` and the V56/V59 interest-plan blocks. Restore only the missing V69 classification behavior, then Android-test several months/accounts. Do not create/promote V70 until V69 state is recorded and the regression cause is identified.
