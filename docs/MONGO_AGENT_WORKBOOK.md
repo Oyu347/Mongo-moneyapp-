@@ -185,6 +185,11 @@ Daily closeout checklist:
 6. Record discarded/failed versions clearly so a future chat does not resume from them.
 7. End with one exact next action so a new chat can continue without reconstructing history.
 8. If no meaningful Möngö development work occurred that day, do not manufacture an update or move the pointer.
+9. **Do not wait for 23:00 to record a confirmed milestone.** Immediately after every explicit user PHONE PASS / PHONE FAIL, version promotion, discard, rollback, or material task switch, update the active journal and the current pointer before starting the next code change.
+10. The 23:00 closeout is a **reconciliation check**, not the primary save mechanism: compare the day's chat evidence against `PROGRESS.md` and both continuity pointers, and repair any missing Vxx result before handoff.
+11. Keep `docs/CURRENT_WORK.md` (canonical startup pointer) and `docs/modularization/CURRENT_WORK.md` synchronized whenever the current baseline/task/status changes. A stale disagreement between these two files is a continuity incident and must be corrected before new development.
+12. Before creating V(N+1), verify that V(N)'s state is written down. If not, stop and record it first. This prevents a later version from silently dropping a previously PHONE-PASS behavior.
+13. If an exact phone-test HTML file is local/conversation-only and cannot safely be committed, still record its exact filename/version, PHONE evidence, behavior changed, rollback point, and next action in GitHub continuity docs.
 
 This is an **agent working rule**, not a background scheduler guarantee. Whenever a development session ends before 23:00, also perform the same continuity closeout before handoff if there is a risk the chat may end or switch.
 
