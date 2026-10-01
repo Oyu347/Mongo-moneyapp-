@@ -4283,6 +4283,28 @@ function syncPrimaryCategoryColorsFromBudget(){
 function isTxnBudgeted(t){
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
+
+  /* V67: savings-interest transactions are planned when this savings account
+     has a positive auto interest plan for the transaction month.
+     This is classification only; actual amount may differ from the estimate. */
+  if(t.type==='income' && (t.savingsInterest===true || t.incomePurpose==='savings_interest') &&
+     t.savingsAccountId){
+    const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
+    if(a){
+      const mk=`${y}-${String(mo).padStart(2,'0')}`;
+      const autoPlan=Number(a.savingsInterestAutoPlan?.[mk]||0);
+      if(autoPlan>0)return true;
+      try{
+        const src=typeof ensureSavingsInterestBudgetSourceV14==='function'
+          ? ensureSavingsInterestBudgetSourceV14(a) : null;
+        if(src){
+          const plan=Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0);
+          if(plan>0)return true;
+        }
+      }catch(_){}
+    }
+  }
+
   const cats=t.type==='income'?bCatsInc:bCatsExp;
   const cat=cats.find(c=>(t.catKey&&c.key===t.catKey)||cN(c)===t.catName||c.key===t.catName||c.name===t.catName);
   if(!cat)return false;
@@ -19495,43 +19517,7 @@ document.addEventListener('click',function(e){
 })();
 </script>
 
-<!-- Möngö PHONE TEST V66 — savings-interest transaction budget matching.
-     Presentation/classification only. Does not alter transaction amount, account balance,
-     savings balance, interest formula, budget amount, Firebase schema, or cancellation math. -->
-<script id="mongo-v66-savings-interest-budget-match">
-(function(){
-'use strict';
-window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V66';
-const base=window.isTxnBudgeted;
-if(typeof base!=='function')return;
-
-window.isTxnBudgeted=function(t){
-  const normal=base.apply(this,arguments);
-  if(normal)return true;
-
-  // Only ordinary savings-interest income is eligible for this fallback.
-  // Cancellation adjustments/fees keep their existing classification.
-  if(!t || t.type!=='income' || !(t.savingsInterest || t.incomePurpose==='savings_interest') ||
-     !t.savingsAccountId || !t.date) return false;
-
-  const p=String(t.date).split('-'), y=Number(p[0]), m=Number(p[1]);
-  if(!y||!m)return false;
-  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
-  if(!a)return false;
-
-  try{
-    const src=(typeof ensureSavingsInterestBudgetSourceV14==='function')
-      ? ensureSavingsInterestBudgetSourceV14(a) : null;
-    if(!src?.cat || !src?.sub)return false;
-    // Planned means the account's own interest-income subcategory has a positive
-    // plan in the transaction month. Actual credited interest may differ from estimate.
-    return Number(getBudgetValForYear(bSubKey(src.cat,src.sub),m,y)||0)>0;
-  }catch(_){ return false; }
-};
-try{isTxnBudgeted=window.isTxnBudgeted}catch(_){}
-})();
-</script>
-
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V67';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
