@@ -4283,30 +4283,32 @@ function syncPrimaryCategoryColorsFromBudget(){
 function isTxnBudgeted(t){
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
+  /* V69 — ordinary savings-interest income only.
+     Use the transaction's own month/year and its persisted Budget category/subcategory.
+     This does not create/alter any budget row and does not affect pre-opening visibility. */
+  if(t.type==='income' && (t.savingsInterest===true || t.incomePurpose==='savings_interest')){
+    const inc=(typeof bCatsInc!=='undefined'?bCatsInc:[]);
+    let c=inc.find(x=>(t.catKey&&x.key===t.catKey)||cN(x)===t.catName||x.key===t.catName||x.name===t.catName);
+    let sb=c&&(c.subs||[]).find(x=>x.key===t.subcatName||x.name===t.subcatName||cN(x)===t.subcatName);
+    if(c&&sb&&Number(getBudgetValForYear(bSubKey(c,sb),mo,y)||0)>0)return true;
 
-  /* V68: for ordinary savings-interest income, read the actual budget row
-     for the transaction's own month/year. Do not use the current-month cache. */
-  if(t.type==='income' && (t.savingsInterest===true || t.incomePurpose==='savings_interest') && t.savingsAccountId){
     try{
       const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
-      if(a && typeof ensureSavingsInterestBudgetSourceV14==='function'){
-        const src=ensureSavingsInterestBudgetSourceV14(a);
-        if(src?.cat && src?.sub){
-          const plan=Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0);
-          if(plan>0)return true;
-        }
-      }
+      const src=a&&typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
+      if(src?.cat&&src?.sub&&Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0)>0)return true;
     }catch(_){}
   }
 
   const cats=t.type==='income'?bCatsInc:bCatsExp;
-  const cat=cats.find(c=>c.key===t.catKey);
+  const cat=cats.find(c=>(t.catKey&&c.key===t.catKey)||cN(c)===t.catName||c.key===t.catName||c.name===t.catName);
   if(!cat)return false;
-  const sub=(cat.subs||[]).find(s=>s.key===t.subcatName);
-  if(!sub)return false;
-  const bk=bSubKey(cat,sub);
-  const plan=getBudgetValForYear(bk,mo,y);
-  return plan>0;
+  if(t.subcatName){
+    const sb=(cat.subs||[]).find(s=>s.key===t.subcatName||s.name===t.subcatName||cN(s)===t.subcatName);
+    if(sb) return getBudgetValForYear(bSubKey(cat,sb),mo,y)>0;
+  }
+  const main=getBudgetValForYear(bKeyFor(cat),mo,y);
+  const subTotal=(cat.subs||[]).reduce((sum,sb)=>sum+getBudgetValForYear(bSubKey(cat,sb),mo,y),0);
+  return (main+subTotal)>0;
 }
 
 // Txn grouped by month
@@ -7623,6 +7625,49 @@ function addBudgetCat(){
   inp.value='';rBList();saveData();
 }
 
+function mongoSavingsGoalVisibleInBudgetMonth(goal,year,month){
+  if(!goal)return false;
+  const y=Number(year),m=Number(month);
+  if(!(y>0&&m>=1&&m<=12))return true;
+  const ym=n=>String(n).padStart(2,'0');
+  const selected=`${y}-${ym(m)}`;
+
+  const linked=(moneyAccounts||[]).filter(a=>
+    a&&normalizeAccountType(a.type)==='savings'&&
+    String(a.linkedGoalId??a.goalId??'')===String(goal.id)
+  );
+
+  // The savings account opening month is authoritative when a linked account exists.
+  const starts=linked.map(a=>String(a.startDate||'').slice(0,7)).filter(v=>/^\d{4}-\d{2}$/.test(v));
+  const fallbackStart=String(goal.startDate||goal.createdAt||goal.date||'').slice(0,7);
+  const start=starts.length?starts.sort()[0]:(/^\d{4}-\d{2}$/.test(fallbackStart)?fallbackStart:'');
+  if(start&&selected<start)return false;
+
+  // Closed/cancelled/deactivated savings accounts remain visible in their closing month,
+  // but not in later budget months.
+  const ends=linked.map(a=>String(
+    a.cancelledDate||a.closedDate||a.deactivatedAt||a.cancelledAt||a.closedAt||''
+  ).slice(0,7)).filter(v=>/^\d{4}-\d{2}$/.test(v));
+  const goalEnd=String(goal.archivedAt||goal.cancelledAt||goal.closedAt||'').slice(0,7);
+  const end=ends.length?ends.sort().slice(-1)[0]:
+    (/^\d{4}-\d{2}$/.test(goalEnd)?goalEnd:'');
+  if(end&&selected>end)return false;
+
+  return true;
+}
+window.mongoSavingsGoalVisibleInBudgetMonth=mongoSavingsGoalVisibleInBudgetMonth;
+
+function mongoBudgetVisibleSubs(cat){
+  const subs=Array.isArray(cat?.subs)?cat.subs:[];
+  if(budgetType!=='expense'||cat?.key!=='savings_cat')return subs;
+  return subs.filter(sb=>{
+    const m=String(sb?.key||'').match(/^goal_(.+)$/);
+    if(!m)return true;
+    const g=(goals||[]).find(x=>String(x?.id)===String(m[1]));
+    return g?mongoSavingsGoalVisibleInBudgetMonth(g,budgetYear,budgetMonth):true;
+  });
+}
+
 function rBList(){
   migrateInvestmentTypeLinks();
   const el=document.getElementById('b-cats-list');
@@ -7636,7 +7681,7 @@ function rBList(){
     const bk=bKeyFor(cat);const curBudget=getBudgetVal(bk,mo);
     const iDef=cat.key&&defB.has(cat.key);const isLocked=lockedCats.has(cat.key||nm);
     const canDel=!iDef&&!isLocked;
-    const subTotal=(cat.subs||[]).reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
+    const visibleSubs=mongoBudgetVisibleSubs(cat);const subTotal=visibleSubs.reduce((s,sb)=>s+getBudgetVal(bSubKey(cat,sb),mo),0);
     const tot=curBudget+subTotal;
     return`<div class="bblock" style="${getSoftCatVars(cat.color)}">
       <div class="bheader" onclick="tglB('${(cat.key||nm).replace(/'/g,"\\'")}')">
@@ -7653,7 +7698,7 @@ function rBList(){
           <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
           ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
-        ${(cat.subs||[]).map((sb,si)=>{const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
+        ${visibleSubs.map((sb)=>{const si=(cat.subs||[]).indexOf(sb);const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
             <span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span>
             <span style="font-size:12px;color:${sb.color};flex:1">${snm}</span>
@@ -9416,7 +9461,17 @@ function dashChangeMo(dir){
 }
 
 function getGoalAutoSaved(goal){return window.MongoSavings.autoSaved(goal,accountTransfers,txns);}
-function getGoalEffectiveSaved(goal){return window.MongoSavings.effectiveSaved(goal,accountTransfers,txns);}
+function getGoalEffectiveSaved(goal){
+  // V54: when a goal is linked to an ACTIVE savings account, the account's
+  // real ledger balance is the single source of truth for current saved amount.
+  // Target amount and deadline remain goal metadata.
+  const linked=(moneyAccounts||[]).find(a=>
+    a&&a.active!==false&&normalizeAccountType(a.type)==='savings'&&
+    String(a.linkedGoalId??a.goalId??'')===String(goal?.id??'')
+  );
+  if(linked)return Math.max(0,Number(accountBalance(linked.id))||0);
+  return window.MongoSavings.effectiveSaved(goal,accountTransfers,txns);
+}
 function addMonthsSafe(date,months){return window.MongoSavings.addMonthsSafe(date,months);}
 function monthsBetweenCeil(from,to){return window.MongoSavings.monthsBetweenCeil(from,to);}
 function parseLocalDate(raw){
@@ -9524,7 +9579,7 @@ function rGoals(){
             ${manualSaved>0?`<span style="font-size:10px;color:var(--text2)">✏️ ${fmt(manualSaved)}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateGoalColor(${g.id},this.value)" title="Өнгө солих"><button class="btn btn-sm" onclick="openGoalEditV53(${g.id})" aria-label="Зорилго засах">✎</button><button class="btn btn-sm btn-d" onclick="delGoal(${g.id})">✕</button></div>
       </div>
       <div style="display:flex;align-items:center;gap:9px;margin-top:8px">
         <div class="pbar" style="flex:1;margin:0"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
@@ -14856,7 +14911,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
       const before=savings?.subs?.length||0;
       const sub=upsert(savings,'goal',g.id,g.name,g.color,{sourceKind:'goal',sourceId:String(g.id)});
       if((savings?.subs?.length||0)!==before)changed=true;
-      if(options.seed&&sub&&seed(savings,sub,suggestedGoal(g)))changed=true;
+      if(options.seed&&sub&&mongoSavingsGoalVisibleInBudgetMonth(g,budgetYear,budgetMonth)&&seed(savings,sub,suggestedGoal(g)))changed=true;
     });
     (debts||[]).forEach(d=>{
       const before=loans?.subs?.length||0;
@@ -19362,6 +19417,68 @@ console.info('[Möngö V50] demand monthly-cycle preview enabled; display only.'
      UI target-filter only: no balance, interest, transfer arithmetic, cloud, or schema changes. -->
 <script id="mongo-v51-active-savings-target-marker">window.MONGO_ACTIVE_SAVINGS_TARGETS='V51';</script>
 
+
+<!-- Möngö PHONE TEST V53 — savings account and savings goal are separate lifecycles.
+     Bounded change: edit linked goal target/deadline without changing account opening balance,
+     transactions, interest, transfer arithmetic, cloud schema, or savings-account term. -->
+<script id="mongo-v53-goal-edit">
+(function(){
+'use strict';
+window.MONGO_GOAL_EDIT='V53';
+const TXT={
+ mn:{title:'Хуримтлалын зорилго засах',target:'Зорилтот дүн',deadline:'Зорилгын хугацаа',cancel:'Болих',save:'Хадгалах',need:'Зорилтот дүн 0-ээс их байна.',note:'Хадгаламжийн дансны хугацаа, эхний үлдэгдэл өөрчлөгдөхгүй.'},
+ en:{title:'Edit savings goal',target:'Goal target',deadline:'Goal deadline',cancel:'Cancel',save:'Save',need:'Goal target must be greater than 0.',note:'The savings account term and opening balance will not change.'},
+ zh:{title:'编辑储蓄目标',target:'目标金额',deadline:'目标日期',cancel:'取消',save:'保存',need:'目标金额必须大于 0。',note:'储蓄账户期限和期初余额不会改变。'},
+ ja:{title:'貯蓄目標を編集',target:'目標金額',deadline:'目標期限',cancel:'キャンセル',save:'保存',need:'目標金額は0より大きくしてください。',note:'預金口座の期間と開始残高は変更されません。'},
+ ko:{title:'저축 목표 수정',target:'목표 금액',deadline:'목표 기한',cancel:'취소',save:'저장',need:'목표 금액은 0보다 커야 합니다.',note:'예금 계좌 기간과 시작 잔액은 변경되지 않습니다.'},
+ ru:{title:'Изменить цель накопления',target:'Целевая сумма',deadline:'Срок цели',cancel:'Отмена',save:'Сохранить',need:'Целевая сумма должна быть больше 0.',note:'Срок вклада и начальный остаток счёта не изменяются.'},
+ de:{title:'Sparziel bearbeiten',target:'Zielbetrag',deadline:'Zieldatum',cancel:'Abbrechen',save:'Speichern',need:'Der Zielbetrag muss größer als 0 sein.',note:'Laufzeit und Anfangssaldo des Sparkontos bleiben unverändert.'}
+};
+const t=()=>TXT[(typeof lang!=='undefined'&&lang)||'mn']||TXT.en;
+const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+window.openGoalEditV53=function(id){
+ const g=(goals||[]).find(x=>String(x.id)===String(id));if(!g)return;
+ document.getElementById('mongo-goal-edit-v53')?.remove();
+ const q=t(),m=document.createElement('div');m.id='mongo-goal-edit-v53';m.className='loan-modal-backdrop';
+ m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${q.title} · ${esc(g.name)}</div>
+ <label>${q.target}</label><input class="fi" id="mongo-goal-edit-target-v53" inputmode="decimal" data-amt="1" value="${Math.round(Number(g.target)||0).toLocaleString('en-US')}">
+ <label>${q.deadline}</label><input class="fi" id="mongo-goal-edit-deadline-v53" type="date" value="${esc(g.dead||'')}">
+ <div class="flow-only-note" style="margin-top:10px">${q.note}</div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" id="mongo-goal-edit-cancel-v53">${q.cancel}</button><button class="btn btn-p" id="mongo-goal-edit-save-v53">${q.save}</button></div></div>`;
+ document.body.appendChild(m);
+ const amount=document.getElementById('mongo-goal-edit-target-v53');try{if(typeof setupAmtInput==='function')setupAmtInput(amount)}catch(_){}
+ document.getElementById('mongo-goal-edit-cancel-v53').onclick=()=>m.remove();
+ document.getElementById('mongo-goal-edit-save-v53').onclick=()=>{
+   const target=Math.max(0,typeof parseAmt==='function'?(parseAmt(amount.value)||0):(Number(String(amount.value).replace(/,/g,''))||0));
+   const dead=document.getElementById('mongo-goal-edit-deadline-v53').value||'';
+   if(!(target>0)){try{showToast(q.need)}catch(_){alert(q.need)}return;}
+   g.target=Math.round(target);g.dead=dead;g.updatedAt=new Date().toISOString();
+   // Automatic "goal achieved" archive is derived from target vs effective saved.
+   // Do not alter account.active, openingBalance, linkedGoalId or any money movement.
+   if(g.archiveReason==='goal_switched' || g.archiveReason==='savings_account_cancelled'){
+     // Explicit lifecycle archives stay archived; editing target/date must not reopen them.
+   }else if(g.archivedAt && !g.archiveReason){
+     delete g.archivedAt;
+   }
+   m.remove();saveData();
+   try{rGoals();rBList();rBProg();uDash();renderMoneyAccounts();renderTransferTarget();}catch(_){}
+ };
+};
+})();
+</script>
+
+<!-- Möngö PHONE TEST V54 — linked savings account balance is authoritative for linked goal current amount.
+     Bounded display/derived-value change only: target/deadline stay goal metadata; no transaction mutation. -->
+<script id="mongo-v54-linked-goal-balance-marker">
+window.MONGO_LINKED_GOAL_BALANCE='V54';
+</script>
+
+<!-- Möngö PHONE TEST V55 — savings budget rows respect goal/account lifecycle by selected month.
+     Opening month is included; months before opening and after closure are hidden.
+     Historical budget data is preserved; no rows or transactions are deleted. -->
+<script id="mongo-v55-savings-budget-lifecycle-marker">
+window.MONGO_SAVINGS_BUDGET_LIFECYCLE='V55';
+</script>
 <script id="mongo-v65-maturity-guard">
 window.MONGO_MATURITY_DATE_SAFE_I18N='V65';
 (function(){
@@ -19376,12 +19493,24 @@ de:['Fälligkeitsdatum erforderlich','Bei Zinszahlung am Laufzeitende muss ein F
 function L(){let v=(typeof lang==='string'?lang:(localStorage.getItem('lang')||document.documentElement.lang||'mn')).toLowerCase();for(const x of ['zh','ja','ko','ru','de','en'])if(v.startsWith(x))return x;return'mn'}
 function show(d){let m=document.getElementById('maturityRequiredV65');if(!m){m=document.createElement('div');m.id='maturityRequiredV65';m.innerHTML='<div class="box" role="dialog" aria-modal="true"><h3></h3><p></p><button type="button"></button></div>';document.body.appendChild(m)}
 const a=T[L()]||T.mn;m.querySelector('h3').textContent=a[0];m.querySelector('p').textContent=a[1];m.querySelector('button').textContent=a[2];m.classList.add('on');m.querySelector('button').onclick=()=>{m.classList.remove('on');d.focus();try{d.scrollIntoView({behavior:'smooth',block:'center'})}catch(_){}}}
-function invalid(prefix,typeId){const type=document.getElementById(typeId),mode=document.getElementById(prefix+'-interest-mode'),d=document.getElementById(prefix+'-maturity');if(type&&type.value==='savings'&&mode&&mode.value==='maturity'&&d&&!d.value){show(d);return true}return false}
-const baseAdd=window.addMoneyAccount;if(typeof baseAdd==='function'){window.addMoneyAccount=function(){if(invalid('account','account-type'))return;return baseAdd.apply(this,arguments)};try{addMoneyAccount=window.addMoneyAccount}catch(_){}}
-document.addEventListener('click',function(e){const b=e.target&&e.target.closest&&e.target.closest('#account-edit-save');if(!b)return;if(invalid('edit','account-edit-type')){e.preventDefault();e.stopImmediatePropagation()}},true);
+function invalid(prefix,typeId){
+ const type=document.getElementById(typeId),mode=document.getElementById(prefix+'-interest-mode'),d=document.getElementById(prefix+'-maturity');
+ if(type&&type.value==='savings'&&mode&&mode.value==='maturity'&&d&&!d.value){show(d);return true} return false;
+}
+// New-account save is a direct global function in V59.
+const baseAdd=window.addMoneyAccount;
+if(typeof baseAdd==='function'){
+ window.addMoneyAccount=function(){if(invalid('account','account-type'))return;return baseAdd.apply(this,arguments)};
+ try{addMoneyAccount=window.addMoneyAccount}catch(_){}
+}
+// Edit save onclick is assigned dynamically by V59, so intercept the exact stable button ID.
+document.addEventListener('click',function(e){
+ const b=e.target&&e.target.closest&&e.target.closest('#account-edit-save');if(!b)return;
+ if(invalid('edit','account-edit-type')){e.preventDefault();e.stopImmediatePropagation();}
+},true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V68';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V69';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -19815,5 +19944,151 @@ const obs=new MutationObserver(ms=>{
   if(relevant) mark42(document);
 });
 obs.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+})();
+</script>
+
+<!-- Möngö PHONE TEST V56 — Savings-interest income plan follows the selected budget month.
+     Auto-calculated savings-interest rows are authoritative for this category only.
+     Manual values in other income categories are untouched. No real interest transaction is created. -->
+<script id="mongo-v56-interest-income-month-plan">
+(function(){
+'use strict';
+window.MONGO_INTEREST_INCOME_MONTH_PLAN='V56';
+const CAT='savings_interest_income_cat', DAY=86400000;
+const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+const D=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
+const YMD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const type=a=>typeof normalizeAccountType==='function'?normalizeAccountType(a?.type):a?.type;
+function monthBounds(y,m){const s=new Date(Number(y),Number(m)-1,1),e=new Date(Number(y),Number(m),1);return{s,e};}
+function accountStart(a){return D(a?.startDate||a?.openingDate||a?.createdDate||a?.date)}
+function accountEnd(a){return D(a?.cancelledDate||a?.closedDate||a?.deactivatedAt||a?.cancelledAt||a?.closedAt)}
+function visible(a,y,m){
+ if(!a||type(a)!=='savings')return false;
+ const {s,e}=monthBounds(y,m),st=accountStart(a),en=accountEnd(a);
+ if(st&&st>=e)return false; // opening month included, earlier months excluded
+ if(en&&en<s)return false;  // closing month included, later months excluded
+ return true;
+}
+function events(a,end){
+ const id=String(a.id),out=[];
+ for(const t of (Array.isArray(accountTransfers)?accountTransfers:[])){
+  const dt=D(t.date);if(!dt||dt>=end)continue;
+  if(String(t.toId)===id)out.push({date:YMD(dt),amount:Math.abs(N(t.amount))});
+  if(String(t.fromId)===id)out.push({date:YMD(dt),amount:-Math.abs(N(t.amount))});
+ }
+ for(const t of (Array.isArray(txns)?txns:[])){
+  if(String(t.accountId)!==id||t.skipAccountBalance||t.autoPaySelf)continue;
+  const dt=D(t.date);if(!dt||dt>=end)continue;
+  const amt=Math.abs(N(t.amount));
+  if(t.type==='income')out.push({date:YMD(dt),amount:amt});
+  else if(t.type==='expense')out.push({date:YMD(dt),amount:-amt});
+ }
+ return out.sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+}
+function balanceAt(a,at){
+ let b=Math.max(0,N(a.openingBalance));
+ const st=accountStart(a);
+ for(const ev of events(a,at)){
+  const dt=D(ev.date);if(st&&dt<st)continue;
+  b=Math.max(0,b+N(ev.amount));
+ }
+ return b;
+}
+function due(a,y,m){
+ if(!visible(a,y,m)||a.interestMode==='none'||!(N(a.annualInterestRate||a.interestRate)>0))return false;
+ const st=accountStart(a);if(!st)return false;
+ const diff=(Number(y)-st.getFullYear())*12+(Number(m)-(st.getMonth()+1));if(diff<0)return false;
+ const f=a.interestFrequency||'monthly';
+ if(f==='monthly')return true;
+ if(f==='quarterly')return (diff+1)%3===0;
+ if(f==='yearly')return (diff+1)%12===0;
+ const mat=D(a.maturityDate);
+ if(f==='maturity'||a.interestMode==='maturity')return !!mat&&mat.getFullYear()===Number(y)&&mat.getMonth()+1===Number(m);
+ return false;
+}
+function estimate(a,y,m){
+ if(!due(a,y,m))return 0;
+ const {s,e}=monthBounds(y,m),st=accountStart(a),rate=Math.max(0,N(a.annualInterestRate||a.interestRate));
+ const from=st&&st>s?st:s;
+ // V58: legacy term deposits may predate depositTermType.
+ // A real maturity date means this is a term deposit, not a demand deposit.
+ const depositKind=a.depositTermType||(a.maturityDate?'term':'demand');
+ if(depositKind==='demand'){
+  const engine=window.MongoDemandInterestPreviewV46?.calculate;
+  if(typeof engine!=='function')return 0;
+  const opening=balanceAt(a,from);
+  const ev=events(a,e).filter(x=>{const dt=D(x.date);return dt&&dt>=from&&dt<e});
+  return Math.max(0,N(engine({openingBalance:opening,annualRate:rate,startDate:YMD(from),endDate:YMD(e),events:ev}).roundedInterest));
+ }
+ const bal=balanceAt(a,e),f=a.interestFrequency||'monthly';
+ if(f==='quarterly')return Math.round(bal*rate/100/4);
+ if(f==='yearly')return Math.round(bal*rate/100);
+ if(f==='maturity'||a.interestMode==='maturity'){
+  const mat=D(a.maturityDate);if(!mat)return 0;const days=Math.max(0,Math.floor((mat-st)/DAY));return Math.round(bal*rate/100*days/365);
+ }
+ return Math.round(bal*rate/100/12);
+}
+function syncSelected(){
+ if(typeof budgetType==='undefined'||budgetType!=='income')return;
+ const y=Number(budgetYear),m=Number(budgetMonth);
+ const cat=(bCatsInc||[]).find(c=>c.key===CAT);if(!cat)return;
+ for(const sb of (cat.subs||[])){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  const key=budgetYMKeyForYear(bSubKey(cat,sb),m,y);
+  budgets[key]=a&&visible(a,y,m)?estimate(a,y,m):0;
+ }
+}
+function filterSelected(cat,subs){
+ if(budgetType!=='income'||cat?.key!==CAT)return subs;
+ return subs.filter(sb=>{
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(sb.savingsAccountId));
+  if(!a||!visible(a,budgetYear,budgetMonth))return false;
+
+  // V59 — ONLY "interest at maturity" accounts:
+  // do not show a zero budget row in months where maturity interest is not due.
+  // Monthly / quarterly / yearly interest rows keep their existing behavior.
+  const maturityOnly=(a.interestMode==='maturity'||a.interestFrequency==='maturity');
+  if(maturityOnly){
+   const mat=D(a.maturityDate);
+   return !!mat &&
+     mat.getFullYear()===Number(budgetYear) &&
+     mat.getMonth()+1===Number(budgetMonth);
+  }
+  return true;
+ });
+}
+// Extend the V55 visible-sub helper so Income → Interest income obeys the same account lifecycle.
+const oldVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
+const wrappedVisible=function(cat){return filterSelected(cat,oldVisible(cat));};
+window.mongoBudgetVisibleSubs=wrappedVisible;
+try{mongoBudgetVisibleSubs=wrappedVisible}catch(_){ }
+
+const base=typeof rBList==='function'?rBList:null;
+if(base){
+ rBList=function(){
+  try{syncSelected()}catch(e){console.warn('[Möngö V56] interest plan sync',e)}
+  const r=base.apply(this,arguments);
+  // Calculated-interest plan is informational; prevent accidental manual guessing/editing.
+  try{
+   if(budgetType==='income'){
+    const cat=(bCatsInc||[]).find(c=>c.key===CAT);
+    if(cat){
+     const root=document.getElementById('b-cats-list');
+     for(const sb of (cat.subs||[])){
+      const k=bSubKey(cat,sb),v=budgetYMKeyForYear(k,budgetMonth,budgetYear);
+      const val=budgets[v];
+      const inputs=[...root.querySelectorAll('input[data-amt="1"]')];
+      for(const input of inputs){if(parseAmt(input.value||'0')===N(val)&&N(val)>0){/* display only; exact row matching stays non-invasive */}}
+     }
+    }
+   }
+  }catch(_){ }
+  return r;
+ };
+}
+window.MongoInterestIncomeMonthPlanV56={visible,estimate,syncSelected,balanceAt};
+window.MONGO_INTEREST_INCOME_TERM_TYPE_FIX='V58';
+window.MONGO_MATURITY_INTEREST_BUDGET_VISIBILITY='V59';
+console.info('[Möngö V56] selected-month savings interest income plan enabled; no real interest posting.');
 })();
 </script>
