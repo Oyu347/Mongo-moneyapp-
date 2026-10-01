@@ -2506,16 +2506,12 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 #account-list .closed-account-row .account-meta{white-space:normal}
 </style>
 <!-- Möngö PHONE TEST V28 — cancellation confirmation precheck: reconcile current balance against receive + fee - signed interest adjustment. Positive termination interest is credited before settlement; negative adjustment is clawed back. Financial posting logic unchanged. -->
-
-<style id="mongo-v63-maturity-css">
-#maturityRequiredV63{position:fixed;inset:0;z-index:2147483647;background:rgba(17,24,39,.48);display:none;align-items:center;justify-content:center;padding:20px}
-#maturityRequiredV63.on{display:flex}
-#maturityRequiredV63 .box{width:min(420px,92vw);background:#fff;border-radius:24px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.22);color:#374151}
-#maturityRequiredV63 h3{margin:0 0 10px;font-size:20px;line-height:1.35}
-#maturityRequiredV63 p{margin:0 0 22px;font-size:15px;line-height:1.6}
-#maturityRequiredV63 button{display:block;margin-left:auto;border:0;border-radius:14px;padding:11px 20px;background:#49B0B6;color:#fff;font-weight:700;font-size:15px}
+<style id="mongo-v64-modal-css">
+#maturityRequiredV64{position:fixed;inset:0;z-index:2147483647;background:rgba(17,24,39,.48);display:none;align-items:center;justify-content:center;padding:20px}
+#maturityRequiredV64.on{display:flex}#maturityRequiredV64 .box{width:min(420px,92vw);background:#fff;border-radius:24px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.22);color:#374151}
+#maturityRequiredV64 h3{margin:0 0 10px;font-size:20px}#maturityRequiredV64 p{margin:0 0 22px;line-height:1.6}
+#maturityRequiredV64 button{display:block;margin-left:auto;border:0;border-radius:14px;padding:11px 20px;background:#49B0B6;color:#fff;font-weight:700}
 </style>
-
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -19467,57 +19463,31 @@ window.MONGO_LINKED_GOAL_BALANCE='V54';
 <script id="mongo-v55-savings-budget-lifecycle-marker">
 window.MONGO_SAVINGS_BUDGET_LIFECYCLE='V55';
 </script>
-
-<script id="mongo-v63-maturity-guard">
-window.MONGO_MATURITY_DATE_SAFE_I18N='V63';
+<script id="mongo-v64-maturity-guard">
+window.MONGO_MATURITY_DATE_SAFE_I18N='V64';
 (function(){
- const T={
-  mn:['Дуусах хугацаа шаардлагатай','Хугацааны эцэст хүү авах бол дуусах хугацааг заавал сонгоно.','Ойлголоо'],
-  en:['Maturity date required','Select a maturity date when interest is paid at maturity.','Got it'],
-  zh:['需要到期日期','选择到期付息时，必须选择到期日期。','知道了'],
-  ja:['満期日の入力が必要です','満期時に利息を受け取る場合は、満期日を選択してください。','わかりました'],
-  ko:['만기일이 필요합니다','만기 시 이자를 받는 경우 만기일을 반드시 선택하세요.','확인'],
-  ru:['Укажите дату окончания','Если проценты выплачиваются в конце срока, укажите дату окончания вклада.','Понятно'],
-  de:['Fälligkeitsdatum erforderlich','Bei Zinszahlung am Laufzeitende muss ein Fälligkeitsdatum gewählt werden.','Verstanden']
- };
- function L(){
-  let v=(localStorage.getItem('lang')||localStorage.getItem('language')||document.documentElement.lang||'mn').toLowerCase();
-  for(const x of ['zh','ja','ko','ru','de','en']) if(v.startsWith(x)) return x;
-  return 'mn';
- }
- function modal(field){
-  let m=document.getElementById('maturityRequiredV63');
-  if(!m){
-   m=document.createElement('div');m.id='maturityRequiredV63';
-   m.innerHTML='<div class="box" role="dialog" aria-modal="true"><h3></h3><p></p><button type="button"></button></div>';
-   document.body.appendChild(m);
-  }
-  const a=T[L()]||T.mn;
-  m.querySelector('h3').textContent=a[0];m.querySelector('p').textContent=a[1];m.querySelector('button').textContent=a[2];
-  m.classList.add('on');
-  m.querySelector('button').onclick=function(){m.classList.remove('on');if(field){field.focus();try{field.scrollIntoView({behavior:'smooth',block:'center'})}catch(_){}}};
- }
- function maturityMode(root){
-  const el=root.querySelector('#edit-interest-mode,#account-interest-mode,select[id*="interest-mode"]');
-  return el && el.value==='maturity';
- }
- function maturityDate(root){
-  return root.querySelector('#edit-maturity-date,#account-maturity-date,input[type="date"][id*="maturity"]');
- }
- const SAVE_WORDS=new Set(['хадгалах','save','保存','저장','сохранить','speichern']);
- document.addEventListener('click',function(e){
-  const b=e.target&&e.target.closest&&e.target.closest('button'); if(!b) return;
-  const root=b.closest('.modal,[role="dialog"],#account-modal,#edit-account-modal'); if(!root) return;
-  const d=maturityDate(root); if(!d || !maturityMode(root) || d.value) return;
-  const txt=(b.textContent||'').trim().toLowerCase(), id=(b.id||'').toLowerCase();
-  const save=SAVE_WORDS.has(txt)||id.includes('save-account')||id.includes('account-save')||
-             b.matches('[data-action="save"],[onclick*="saveAccount"],[onclick*="saveEditAccount"]');
-  if(!save) return;
-  e.preventDefault();e.stopImmediatePropagation();modal(d);
- },true);
+const T={
+mn:['Дуусах хугацаа шаардлагатай','Хугацааны эцэст хүү авах бол дуусах хугацааг заавал сонгоно.','Ойлголоо'],
+en:['Maturity date required','Select a maturity date when interest is paid at maturity.','Got it'],
+zh:['需要到期日期','选择到期付息时，必须选择到期日期。','知道了'],
+ja:['満期日の入力が必要です','満期時に利息を受け取る場合は、満期日を選択してください。','わかりました'],
+ko:['만기일이 필요합니다','만기 시 이자를 받는 경우 만기일을 반드시 선택하세요.','확인'],
+ru:['Укажите дату окончания','Если проценты выплачиваются в конце срока, укажите дату окончания вклада.','Понятно'],
+de:['Fälligkeitsdatum erforderlich','Bei Zinszahlung am Laufzeitende muss ein Fälligkeitsdatum gewählt werden.','Verstanden']};
+function lang(){let v=(localStorage.getItem('lang')||localStorage.getItem('language')||document.documentElement.lang||'mn').toLowerCase();for(const x of ['zh','ja','ko','ru','de','en'])if(v.startsWith(x))return x;return'mn'}
+function field(){return document.getElementById('edit-maturity-date')||document.getElementById('account-maturity-date')}
+function mode(){return document.getElementById('edit-interest-mode')||document.getElementById('account-interest-mode')}
+function show(d){let m=document.getElementById('maturityRequiredV64');if(!m){m=document.createElement('div');m.id='maturityRequiredV64';m.innerHTML='<div class="box" role="dialog" aria-modal="true"><h3></h3><p></p><button type="button"></button></div>';document.body.appendChild(m)}
+let a=T[lang()]||T.mn;m.querySelector('h3').textContent=a[0];m.querySelector('p').textContent=a[1];m.querySelector('button').textContent=a[2];m.classList.add('on');m.querySelector('button').onclick=()=>{m.classList.remove('on');d.focus()}}
+function block(e){let d=field(),m=mode();if(!(m&&m.value==='maturity'&&d&&!d.value))return false;e.preventDefault();e.stopImmediatePropagation();show(d);return true}
+document.addEventListener('click',function(e){
+ let b=e.target&&e.target.closest&&e.target.closest('button');if(!b)return;
+ let id=(b.id||'').toLowerCase(),txt=(b.textContent||'').trim().toLowerCase();
+ if(id.includes('save')||['хадгалах','save','保存','저장','сохранить','speichern'].includes(txt))block(e);
+},true);
+document.addEventListener('submit',function(e){block(e)},true);
 })();
 </script>
-
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
