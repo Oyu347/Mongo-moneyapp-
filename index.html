@@ -20044,6 +20044,7 @@ window.MONGO_MATURITY_INTEREST_BUDGET_VISIBILITY='V59';
 
 window.MONGO_MATURITY_DATE_REQUIRED='V60';
 window.MONGO_MATURITY_DATE_I18N_MODAL='V61';
+window.MONGO_MATURITY_DATE_LANGUAGE_SAFE_GUARD='V62';
 (function(){
  const T={
  mn:['Дуусах хугацаа шаардлагатай','Хугацааны эцэст хүү авах бол дуусах хугацааг заавал сонгоно.','Ойлголоо'],
@@ -20064,7 +20065,10 @@ window.MONGO_MATURITY_DATE_I18N_MODAL='V61';
  document.addEventListener('click',function(e){
   var b=e.target&&e.target.closest&&e.target.closest('button'); if(!b)return;
   var txt=(b.textContent||'').trim().toLowerCase(), id=(b.id||'').toLowerCase();
-  if(!(txt==='хадгалах'||txt==='save'||id.includes('save-account')||id.includes('account-save')))return;
+  const saveWords=['хадгалах','save','保存','저장','сохранить','speichern'];
+  const saveLike=saveWords.includes(txt)||id.includes('save-account')||id.includes('account-save')||
+    b.matches('[data-action="save"],[onclick*="saveAccount"],[onclick*="saveEditAccount"]');
+  if(!saveLike)return;
   var m=mode(),d=date();
   if(m&&m.value==='maturity'&&d&&!d.value){
    e.preventDefault();e.stopImmediatePropagation();d.required=true;d.focus();
