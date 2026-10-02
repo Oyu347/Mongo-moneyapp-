@@ -4233,10 +4233,29 @@ function getBudgetVal(bKey,month){
   if(budgets[bKey]&&typeof budgets[bKey]==='object') return budgets[bKey][month]||0;
   return 0;
 }
+function mongoBudgetShadowKeyV73(){
+  const uid=window._authUid||'guest';
+  return 'mongo_manual_budget_shadow_v73_'+uid;
+}
+function mongoReadBudgetShadowV73(){
+  try{return JSON.parse(localStorage.getItem(mongoBudgetShadowKeyV73())||'{}')||{};}catch(e){return {};}
+}
+function mongoWriteBudgetShadowV73(key,value,ts){
+  try{
+    const sh=mongoReadBudgetShadowV73();
+    sh[key]={value:Number(value)||0,updatedAt:ts||new Date().toISOString()};
+    localStorage.setItem(mongoBudgetShadowKeyV73(),JSON.stringify(sh));
+  }catch(e){}
+}
 function setBudgetVal(bKey,month,val){
-  budgets[budgetYMKey(bKey,month)]=val;
-  /* V72: manual Income/Expense budget edit is a new financial-state revision. */
-  window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
+  const key=budgetYMKey(bKey,month);
+  const ts=new Date().toISOString();
+  budgets[key]=val;
+  /* V73: keep the user's manual budget edit in a tiny user-scoped shadow.
+     Cloud/bootstrap may re-apply financial state during reload; this shadow
+     lets the newer manual budget survive that race and be pushed back to Cloud. */
+  mongoWriteBudgetShadowV73(key,val,ts);
+  window.MONGO_LOCAL_DATA_UPDATED_AT=ts;
   try{
     if(typeof window.saveData==='function') window.saveData();
     else if(typeof saveData==='function') saveData();
@@ -13169,6 +13188,33 @@ auth.onAuthStateChanged(async user=>{
     return cloudClearSynced;
   }
 
+  const mongoBaseApplyFinancialStateV73=applyFinancialState;
+  applyFinancialState=function(raw,source){
+    const ok=mongoBaseApplyFinancialStateV73(raw,source);
+    if(ok!==false){
+      try{
+        const incomingTs=Date.parse((raw&&raw.clientUpdatedAt)||'')||0;
+        const sh=mongoReadBudgetShadowV73();
+        let changed=false,newest=incomingTs;
+        Object.keys(sh).forEach(k=>{
+          const item=sh[k]||{},t=Date.parse(item.updatedAt||'')||0;
+          if(t>=incomingTs){
+            const v=Number(item.value)||0;
+            if(Number(budgets[k]||0)!==v){budgets[k]=v;changed=true;}
+            if(t>newest)newest=t;
+          }
+        });
+        if(changed){
+          if(newest)window.MONGO_LOCAL_DATA_UPDATED_AT=new Date(newest).toISOString();
+          try{saveData();}catch(e){}
+          try{rerenderFinance();}catch(e){}
+          setTimeout(()=>{try{saveCloudNow('budget-shadow-v73');}catch(e){}},0);
+        }
+      }catch(e){console.warn('V73 budget shadow merge failed',e);}
+    }
+    return ok;
+  };
+
   window.CloudDataService={
     version:CLOUD_FINANCIAL_VERSION,
     collectFinancialState, applyFinancialState,
@@ -19523,7 +19569,7 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_PERSISTENCE='V72';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_PERSISTENCE='V73';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
