@@ -4235,11 +4235,16 @@ function getBudgetVal(bKey,month){
 }
 function setBudgetVal(bKey,month,val){
   budgets[budgetYMKey(bKey,month)]=val;
-  /* V71 — manual Budget edits must survive refresh/navigation.
-     Income and Expense use this same setter. saveData writes local state immediately;
-     the existing Cloud wrapper remains debounced, so typing does not create parallel
-     Cloud writes. */
-  try{ saveData(); }catch(e){ console.warn('Budget autosave failed:',e); }
+  /* V72: manual Income/Expense budget edit is a new financial-state revision. */
+  window.MONGO_LOCAL_DATA_UPDATED_AT=new Date().toISOString();
+  try{
+    if(typeof window.saveData==='function') window.saveData();
+    else if(typeof saveData==='function') saveData();
+  }catch(e){ console.warn('Budget persistence failed:',e); }
+  try{
+    if(window.CloudDataService&&typeof window.CloudDataService.scheduleSave==='function')
+      window.CloudDataService.scheduleSave('budget-edit-v72');
+  }catch(e){}
 }
 function budgetYMKeyForYear(bKey,month,year){return window.MongoBudget.yearMonthKey(bKey,month,year);}
 function getBudgetValForYear(bKey,month,year){
@@ -4301,9 +4306,6 @@ function isTxnBudgeted(t){
       const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
       const src=a&&typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
       if(src?.cat&&src?.sub&&Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0)>0)return true;
-
-      /* V70 — use the authoritative V56 calculated plan for this transaction month
-         when the auto plan has not yet been persisted into `budgets`. */
       const plan=window.MongoInterestIncomeMonthPlanV56;
       if(a&&plan&&typeof plan.visible==='function'&&typeof plan.estimate==='function'&&
          plan.visible(a,y,mo)&&Number(plan.estimate(a,y,mo)||0)>0)return true;
@@ -19521,7 +19523,7 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_PERSISTENCE='V71';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_PERSISTENCE='V72';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
