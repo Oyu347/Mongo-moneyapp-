@@ -4235,6 +4235,11 @@ function getBudgetVal(bKey,month){
 }
 function setBudgetVal(bKey,month,val){
   budgets[budgetYMKey(bKey,month)]=val;
+  /* V71 — manual Budget edits must survive refresh/navigation.
+     Income and Expense use this same setter. saveData writes local state immediately;
+     the existing Cloud wrapper remains debounced, so typing does not create parallel
+     Cloud writes. */
+  try{ saveData(); }catch(e){ console.warn('Budget autosave failed:',e); }
 }
 function budgetYMKeyForYear(bKey,month,year){return window.MongoBudget.yearMonthKey(bKey,month,year);}
 function getBudgetValForYear(bKey,month,year){
@@ -4297,9 +4302,8 @@ function isTxnBudgeted(t){
       const src=a&&typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
       if(src?.cat&&src?.sub&&Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0)>0)return true;
 
-      /* V70 — V56 auto interest plans are calculated at render time and may not yet be
-         persisted in `budgets` after reload. Treat the same authoritative V56 estimate
-         for the transaction's own month as planned, without creating/changing a budget. */
+      /* V70 — use the authoritative V56 calculated plan for this transaction month
+         when the auto plan has not yet been persisted into `budgets`. */
       const plan=window.MongoInterestIncomeMonthPlanV56;
       if(a&&plan&&typeof plan.visible==='function'&&typeof plan.estimate==='function'&&
          plan.visible(a,y,mo)&&Number(plan.estimate(a,y,mo)||0)>0)return true;
@@ -19517,7 +19521,7 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_PERSISTENCE='V71';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
