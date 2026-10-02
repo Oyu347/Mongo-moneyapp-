@@ -4307,9 +4307,7 @@ function isTxnBudgeted(t){
   if(!cat)return false;
   if(t.subcatName){
     const sb=(cat.subs||[]).find(s=>s.key===t.subcatName||s.name===t.subcatName||cN(s)===t.subcatName);
-    if(sb && getBudgetValForYear(bSubKey(cat,sb),mo,y)>0) return true;
-    /* V74 — if this subcategory itself is 0/unset, do NOT return false yet.
-       A valid parent-category budget still makes the transaction planned. */
+    if(sb) return getBudgetValForYear(bSubKey(cat,sb),mo,y)>0;
   }
   const main=getBudgetValForYear(bKeyFor(cat),mo,y);
   const subTotal=(cat.subs||[]).reduce((sum,sb)=>sum+getBudgetValForYear(bSubKey(cat,sb),mo,y),0);
@@ -7700,7 +7698,7 @@ function rBList(){
       ${isO?`<div class="bbody">
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--text2);min-width:50px">${L.total}:</span>
-          <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
+          <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))" onchange="saveData()">
           ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
         ${visibleSubs.map((sb)=>{const si=(cat.subs||[]).indexOf(sb);const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
@@ -7711,7 +7709,7 @@ function rBList(){
           </div>
           <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
             ${investmentBudgetCat(cat)?`<select class="fi" style="flex:0 0 150px;max-width:45%;font-size:11px;padding:4px 7px" onchange="setBudgetInvestType(${ci},${si},this.value)">${(INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn).map(it=>`<option value="${it.k}"${getInvestmentSubType(sb)===it.k?' selected':''}>${it.icon} ${it.label}</option>`).join('')}</select>`:''}
-            <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))">
+            <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))" onchange="saveData()">
             ${/^(goal|debt|invest)_/.test(String(sb.key||''))?'':`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats()[${ci}].subs.splice(${si},1);rBList();saveData();}})">✕</button>`}
           </div>
         </div>`}).join('')}
@@ -19515,7 +19513,7 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_MATCH_FALLBACK='V74';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_INPUT_SAVE='V75';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
