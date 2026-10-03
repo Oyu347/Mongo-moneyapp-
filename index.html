@@ -4296,9 +4296,6 @@ function isTxnBudgeted(t){
       const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
       const src=a&&typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
       if(src?.cat&&src?.sub&&Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0)>0)return true;
-      const plan=window.MongoInterestIncomeMonthPlanV56;
-      if(a&&plan&&typeof plan.visible==='function'&&typeof plan.estimate==='function'&&
-         plan.visible(a,y,mo)&&Number(plan.estimate(a,y,mo)||0)>0)return true;
     }catch(_){}
   }
 
@@ -7698,7 +7695,7 @@ function rBList(){
       ${isO?`<div class="bbody">
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--text2);min-width:50px">${L.total}:</span>
-          <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))" onchange="saveData()">
+          <input type="text" value="${curBudget>0?curBudget.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="width:100px;max-width:100px;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${bk}',${mo},parseAmt(this.value))">
           ${canDel?`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats().splice(${ci},1);openB.delete('${(cat.key||nm).replace(/'/g,"\\'")}');rBList();saveData();}})">✕</button>`:''}
         </div>
         ${visibleSubs.map((sb)=>{const si=(cat.subs||[]).indexOf(sb);const snm=cN(sb)||sb.key||'';const sbk=bSubKey(cat,sb);const sbv=getBudgetVal(sbk,mo);return`<div style="margin-bottom:6px">
@@ -7709,7 +7706,7 @@ function rBList(){
           </div>
           <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
             ${investmentBudgetCat(cat)?`<select class="fi" style="flex:0 0 150px;max-width:45%;font-size:11px;padding:4px 7px" onchange="setBudgetInvestType(${ci},${si},this.value)">${(INVEST_TYPES_ALL[lang]||INVEST_TYPES_ALL.mn).map(it=>`<option value="${it.k}"${getInvestmentSubType(sb)===it.k?' selected':''}>${it.icon} ${it.label}</option>`).join('')}</select>`:''}
-            <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))" onchange="saveData()">
+            <input type="text" value="${sbv>0?sbv.toLocaleString('en-US'):''}" placeholder="0" inputmode="decimal" data-amt="1" class="fi" style="flex:1;font-size:12px;padding:4px 7px" oninput="setBudgetVal('${sbk}',${mo},parseAmt(this.value))">
             ${/^(goal|debt|invest)_/.test(String(sb.key||''))?'':`<button class="btn btn-sm btn-d" onclick="showConfirm(L.confirmDel).then(ok=>{if(ok){getBCats()[${ci}].subs.splice(${si},1);rBList();saveData();}})">✕</button>`}
           </div>
         </div>`}).join('')}
@@ -10017,6 +10014,19 @@ function secCleanDeep(value, depth=0){
 function secNormalizeData(data){
   if(!data || typeof data!=='object') throw new Error('Invalid backup');
   const clean=secCleanDeep(data);
+  // V76: Budget is a year/month keyed map and can legitimately exceed the
+  // generic 80-property security cap. Rebuild only this bounded map from the
+  // original input so newer manual Income/Expense budgets are not truncated
+  // before local/Cloud persistence. Nested legacy month maps still pass through
+  // the existing deep sanitizer.
+  if(data.budgets && typeof data.budgets==='object' && !Array.isArray(data.budgets)){
+    const safeBudgets={};
+    Object.keys(data.budgets).slice(0,5000).forEach(k=>{
+      const safeKey=secPlain(k,220);
+      if(safeKey) safeBudgets[safeKey]=secCleanDeep(data.budgets[k],1);
+    });
+    clean.budgets=safeBudgets;
+  }
   clean.txns=(Array.isArray(clean.txns)?clean.txns:[]).map(t=>({
     ...t,
     id:secPlain(t.id || ('t_'+Date.now()+Math.random().toString(36).slice(2)),60),
@@ -19513,7 +19523,8 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V70';window.MONGO_BUDGET_INPUT_SAVE='V75';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V69';</script>
+<script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
