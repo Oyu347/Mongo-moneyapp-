@@ -4219,7 +4219,12 @@ function getCatInfo(nm,type){
   const arr=type==='income'?incCats:expCats;
   return arr.find(c=>cN(c)===nm)||arr.find(c=>c.key===nm)||{icon:'💡',color:'#888'};
 }
-function getBCats(){return budgetType==='income'?bCatsInc:bCatsExp;}
+function getBCats(){
+  if(budgetType!=='income'&&typeof ensureInterestAdjustmentBudgetSubV79==='function'){
+    ensureInterestAdjustmentBudgetSubV79();
+  }
+  return budgetType==='income'?bCatsInc:bCatsExp;
+}
 function getDefB(){return budgetType==='income'?DEF_B_INC:DEF_B_EXP;}
 
 // Budget helpers
@@ -10176,6 +10181,7 @@ function loadData(){
     if(data.paySettings)paySettings=Object.assign({enabled:true,rate:20,alloc:{}},data.paySettings);
     if(data.netWorthSnapshots)window.netWorthSnapshots=data.netWorthSnapshots;
     window.MONGO_LOCAL_DATA_UPDATED_AT=data.clientUpdatedAt||'';
+    try{ if(typeof ensureInterestAdjustmentBudgetSubV79==='function') ensureInterestAdjustmentBudgetSubV79(); }catch(e){}
     if(data.incCatsCustom)incCats=[...incCats,...data.incCatsCustom];
     if(data.expCatsCustom)expCats=[...expCats,...data.expCatsCustom];
     // Merge bCats
@@ -20147,3 +20153,5 @@ console.info('[Möngö V56] selected-month savings interest income plan enabled;
 </script>
 
 <script>window.MONGO_INTEREST_ADJUSTMENT_SUBCATEGORY='V79';</script>
+
+<script>window.MONGO_INTEREST_ADJUSTMENT_SUBCATEGORY_FIX='V80';</script>
