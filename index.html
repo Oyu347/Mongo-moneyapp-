@@ -4290,6 +4290,7 @@ function isTxnBudgeted(t){
   if(t&&t.savingsInterestAdjustment)return false;
   /* V82 — cancellation interest is actual-only, never pre-budgeted. */
   if(t&&t.savingsCancellationId&&t.type==='income')return false;
+  if(t&&t.savingsCancellationInterest===true&&t.type==='income')return false;
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
   /* V69 — ordinary savings-interest income only.
@@ -20186,7 +20187,29 @@ function ensureV82(){
  let c=(bCatsInc||[]).find(x=>x&&x.key===CK);if(!c){c={key:CK,names:{...CN},icon:'🏦',color:'#1D9E75',subs:[]};bCatsInc.push(c)}
  c.names={...CN};if(!Array.isArray(c.subs))c.subs=[];let sb=c.subs.find(x=>x&&x.key===SK);if(!sb){sb={key:SK,names:{...SN},color:'#1D9E75',actualOnly:true};c.subs.push(sb)}else{sb.names={...SN};sb.actualOnly=true}
  if(typeof incCats!=='undefined'&&!(incCats||[]).find(x=>x&&x.key===CK))incCats.push({key:CK,names:{...CN},icon:'🏦',color:'#1D9E75'});
- (typeof txns!=='undefined'?txns:[]).forEach(t=>{if(!t||t.type!=='income'||!t.savingsCancellationId)return;t.catKey=CK;t.catName=typeof cN==='function'?cN(c):CN.mn;t.subcatKey=SK;t.subcatName=typeof cN==='function'?cN(sb):SN.mn;t.savingsCancellationInterest=true});
+ const all=(typeof txns!=='undefined'?txns:[]);
+  /* V83: legacy cancellation records can predate savingsCancellationId on the
+     income row.  Only migrate an old savings-interest income when a real
+     interest-adjustment audit exists for the SAME savings account and date.
+     This keeps ordinary monthly interest untouched. */
+  const legacyPairs=new Set(
+    all.filter(x=>x&&x.type==='expense'&&x.savingsInterestAdjustment===true&&x.date)
+       .map(x=>String(x.savingsAccountId||x.accountId||'')+'|'+String(x.date))
+  );
+  all.forEach(t=>{
+    if(!t||t.type!=='income')return;
+    const direct=!!t.savingsCancellationId;
+    const legacyKey=String(t.savingsAccountId||t.accountId||'')+'|'+String(t.date||'');
+    const ordinarySavingsInterest=(t.savingsInterest===true||t.incomePurpose==='savings_interest'||t.interestMode);
+    const legacy=!direct&&ordinarySavingsInterest&&legacyPairs.has(legacyKey);
+    if(!direct&&!legacy)return;
+    t.catKey=CK;
+    t.catName=typeof cN==='function'?cN(c):CN.mn;
+    t.subcatKey=SK;
+    t.subcatName=typeof cN==='function'?cN(sb):SN.mn;
+    t.savingsCancellationInterest=true;
+    if(legacy)t.savingsCancellationLegacyV83=true;
+  });
  return {cat:c,sub:sb};
 }
 window.ensureCancellationInterestActualV82=ensureV82;
@@ -20195,3 +20218,5 @@ try{ensureV82()}catch(e){}
 window.MONGO_CANCELLATION_INTEREST_ACTUAL='V82';
 })();
 </script>
+
+<script>window.MONGO_LEGACY_CANCELLATION_INTEREST='V83';</script>
