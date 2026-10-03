@@ -9476,8 +9476,14 @@ function rBProg(){
           const snm=cN(sb)||sb.key||'';const sv=getBudgetVal(bSubKey(cat,sb),mo);
           const actualSS=subActualV81(sb);
           const ss=budgetViewMode==='plan'?sv:actualSS;const subOver=!isIncomePlan&&actualSS>sv;const subOverAmt=subOver?actualSS-sv:0;const subPct=sv>0?Math.round(actualSS/sv*100):0;const sc=isIncomePlan?(subPct>=100?'#1D9E75':sb.color):sb.color;
-          const subLine=budgetViewMode==='plan'?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`;
-          return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
+          const actualOnlyIncome=isIncomePlan&&sb&&sb.actualOnly===true&&sv<=0&&actualSS>0;
+          const subLine=budgetViewMode==='plan'
+            ?`${fmt(sv)} · ${lang==='mn'?'Бодит':'Actual'} ${fmt(actualSS)}`
+            :(actualOnlyIncome?`${fmt(actualSS)} / ${fmt(sv)}`:`${fmt(actualSS)} / ${fmt(sv)} (${subPct}%)`);
+          const actualOnlyBadge=budgetViewMode==='actual'&&actualOnlyIncome
+            ?`<span style="padding:3px 7px;border-radius:999px;background:rgba(29,158,117,.12);color:#13795B;font-size:10px;font-weight:900">+${fmt(actualSS)}</span>`
+            :'';
+          return `<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap"><span style="width:7px;height:7px;border-radius:50%;background:${sb.color};display:inline-block;flex-shrink:0"></span><span style="font-size:12px;color:${sb.color};flex:1;font-weight:700">${snm}</span><span style="font-size:10px;color:${subOver?'#A32D2D':'var(--text2)'};font-weight:${subOver?'800':'600'}">${subLine}</span>${actualOnlyBadge}${budgetViewMode==='actual'&&subOver?`<span class="budget-over-amount">+${fmt(subOverAmt)}</span>`:''}</div>${budgetViewMode==='plan'?overSubBar(sv,sv,sc,false):overSubBar(actualSS,sv,sc,subOver)}</div>`;
         }).join('')}
       </div>`:''}
     </div>`;
@@ -20220,3 +20226,5 @@ window.MONGO_CANCELLATION_INTEREST_ACTUAL='V82';
 </script>
 
 <script>window.MONGO_LEGACY_CANCELLATION_INTEREST='V83';</script>
+
+<script>window.MONGO_ACTUAL_ONLY_INCOME_PROGRESS='V84';</script>
