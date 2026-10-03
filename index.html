@@ -4296,6 +4296,15 @@ function isTxnBudgeted(t){
       const a=(moneyAccounts||[]).find(x=>String(x.id)===String(t.savingsAccountId));
       const src=a&&typeof ensureSavingsInterestBudgetSourceV14==='function'?ensureSavingsInterestBudgetSourceV14(a):null;
       if(src?.cat&&src?.sub&&Number(getBudgetValForYear(bSubKey(src.cat,src.sub),mo,y)||0)>0)return true;
+
+      /* V77 — preserve V70 behavior:
+         an auto-calculated savings-interest plan can exist at render time
+         without a persisted manual budget value. In that case the actual
+         ordinary savings-interest transaction is still planned. */
+      const plan=window.MongoInterestIncomeMonthPlanV56;
+      if(a&&plan&&typeof plan.visible==='function'&&typeof plan.estimate==='function'){
+        if(plan.visible(a,y,mo) && Number(plan.estimate(a,y,mo)||0)>0)return true;
+      }
     }catch(_){}
   }
 
@@ -19523,8 +19532,8 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V69';</script>
-<script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
+<script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
