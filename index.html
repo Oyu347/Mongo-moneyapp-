@@ -3941,6 +3941,7 @@ const CAT_LABELS={
   household:{mn:'Ахуйн хэрэглээ',en:'Household',zh:'家用',ja:'生活費',ko:'생활비',ru:'Быт',de:'Haushalt'},
   other_exp:{mn:'Бусад',en:'Other',zh:'其他',ja:'その他',ko:'기타',ru:'Прочее',de:'Sonstiges'},
   bank_expense:{mn:'Банкны зардал',en:'Bank expenses',zh:'银行费用',ja:'銀行費用',ko:'은행 비용',ru:'Банковские расходы',de:'Bankkosten'},
+  savings_interest_adjustment:{mn:'Хүүгийн буцаан тохируулга',en:'Interest adjustment',zh:'利息调整',ja:'利息調整',ko:'이자 조정',ru:'Корректировка процентов',de:'Zinsanpassung'},
   vegs:{mn:'Хүнсний ногоо',en:'Vegetables',zh:'蔬菜',ja:'野菜',ko:'채소',ru:'Овощи',de:'Gemüse'},
   fruits:{mn:'Жимс',en:'Fruits',zh:'水果',ja:'果物',ko:'과일',ru:'Фрукты',de:'Obst'},
   meat:{mn:'Мах/загас',en:'Meat/Fish',zh:'肉/鱼',ja:'肉/魚',ko:'육류',ru:'Мясо',de:'Fleisch'},
@@ -4281,8 +4282,6 @@ function syncPrimaryCategoryColorsFromBudget(){
 }
 
 function isTxnBudgeted(t){
-  /* V78 — savings interest clawback is an unexpected actual Bank expense.
-     It contributes to actual spending but must remain visually 'Unplanned'. */
   if(t&&t.savingsInterestAdjustment)return false;
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
@@ -9264,6 +9263,34 @@ function investmentTxnMatchesBudgetSub(t,catObj,subObj,subNm){
   const inferred=inferExistingInvestTypeForName(t.desc||subNm);
   return !!inferred&&inferred===wantedType;
 }
+
+function ensureInterestAdjustmentBudgetSubV79(){
+  try{
+    let cat=(bCatsExp||[]).find(c=>c&&c.key==='bank_expense');
+    if(!cat){
+      cat={key:'bank_expense',icon:'🏦',color:'#64748B',subs:[]};
+      bCatsExp.push(cat);
+    }
+    if(!Array.isArray(cat.subs))cat.subs=[];
+    let sub=cat.subs.find(x=>x&&x.key==='savings_interest_adjustment');
+    if(!sub){
+      sub={key:'savings_interest_adjustment',color:'#64748B'};
+      cat.subs.push(sub);
+    }
+    (txns||[]).forEach(t=>{
+      if(!t||!t.savingsInterestAdjustment)return;
+      t.type='expense';
+      t.catKey='bank_expense';
+      t.catName=cN(cat);
+      t.subcatKey='savings_interest_adjustment';
+      t.subcatName=cN(sub);
+      t.excludeFromBudget=false;
+      t.skipAccountBalance=true;
+    });
+    return {cat,sub};
+  }catch(e){return null;}
+}
+ensureInterestAdjustmentBudgetSubV79();
 
 function gSpent(catNm,subNm,month,subObjOverride){
   const filterM=month?t=>{
@@ -18845,7 +18872,7 @@ function mount(id){
    if(Math.abs(beforeBalance-expectedBefore)>1){await appDialog({title:z.title,body:z.need,confirmText:z.done,single:true});return}
    const now=new Date().toISOString(),cancelId=uid('cancel');
    if(c.adjust>0.5){const meta=interestMeta(a);txns.unshift({id:uid('cancel_interest'),type:'income',desc:`${a.name} · ${z.interest}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.adjust),date:r.date,accountId:a.id,savingsAccountId:a.id,interestMode:'compound',goalId:a.linkedGoalId||a.goalId||null,savingsCancellationId:cancelId,createdAt:now});}
-   if(c.adjust<-0.5){const meta=bankFeeMeta();txns.unshift({id:uid('interest_adjustment_audit'),type:'expense',desc:`${a.name} · ${z.claw}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(Math.abs(c.adjust)),date:r.date,accountId:a.id,savingsAccountId:a.id,savingsInterestAdjustment:true,interestAdjustmentActual:true,excludeFromBudget:false,skipAccountBalance:true,savingsCancellationId:cancelId,createdAt:now});}
+   if(c.adjust<-0.5){const bm=ensureInterestAdjustmentBudgetSubV79();txns.unshift({id:uid('interest_adjustment_audit'),type:'expense',desc:`${a.name} · ${z.claw}`,catKey:'bank_expense',catName:bm?cN(bm.cat):'Банкны зардал',subcatKey:'savings_interest_adjustment',subcatName:bm?cN(bm.sub):z.claw,amount:Math.round(Math.abs(c.adjust)),date:r.date,accountId:a.id,savingsAccountId:a.id,savingsInterestAdjustment:true,excludeFromBudget:false,skipAccountBalance:true,savingsCancellationId:cancelId,createdAt:now});}
    if(c.fee>0.5){const meta=bankFeeMeta();txns.unshift({id:uid('cancel_fee'),type:'expense',desc:`${a.name} · ${z.cancelFee}`,catKey:meta.catKey,catName:meta.catName,subcatKey:meta.subcatKey,subcatName:meta.subcatName,amount:Math.round(c.fee),date:r.date,accountId:a.id,savingsCancellationFee:true,savingsAccountId:a.id,savingsCancellationId:cancelId,createdAt:now});}
    if(c.receive>0.5)accountTransfers.push({id:uid('cancel_transfer'),fromId:a.id,toId:destId,amount:Math.round(c.receive),date:r.date,purpose:'internal',targetId:null,description:`${a.name} · ${z.cancel}`,savingsCancellation:true,savingsCancellationId:cancelId,createdAt:now,updatedAt:now});
    a.active=false;a.status='cancelled';a.cancelledAt=now;a.cancelledDate=r.date;a.cancellationId=cancelId;a.cancellationReceiveAccountId=destId;a.cancellationReceiveAmount=Math.round(c.receive);a.cancellationAllowedInterest=Math.round(c.allowed);a.cancellationPriorInterest=Math.round(c.h.total);a.cancellationInterestAdjustment=Math.round(c.adjust);a.cancellationFee=Math.round(c.fee);
@@ -19535,7 +19562,7 @@ document.addEventListener('click',function(e){
 },true);
 })();
 </script>
-<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';window.MONGO_INTEREST_ADJUSTMENT_BANK_EXPENSE='V78';</script>
+<script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 </body>
 </html>
@@ -20118,3 +20145,5 @@ window.MONGO_MATURITY_INTEREST_BUDGET_VISIBILITY='V59';
 console.info('[Möngö V56] selected-month savings interest income plan enabled; no real interest posting.');
 })();
 </script>
+
+<script>window.MONGO_INTEREST_ADJUSTMENT_SUBCATEGORY='V79';</script>
