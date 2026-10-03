@@ -4288,6 +4288,8 @@ function syncPrimaryCategoryColorsFromBudget(){
 
 function isTxnBudgeted(t){
   if(t&&t.savingsInterestAdjustment)return false;
+  /* V82 — cancellation interest is actual-only, never pre-budgeted. */
+  if(t&&t.savingsCancellationId&&t.type==='income')return false;
   if(!t||!t.date)return false;
   const parts=t.date.split('-'); const y=parseInt(parts[0]), mo=parseInt(parts[1]);
   /* V69 — ordinary savings-interest income only.
@@ -20173,3 +20175,23 @@ console.info('[Möngö V56] selected-month savings interest income plan enabled;
 <script>window.MONGO_INTEREST_ADJUSTMENT_SUBCATEGORY_FIX='V80';</script>
 
 <script>window.MONGO_INTEREST_ADJUSTMENT_PROGRESS='V81';</script>
+
+<script id="mongo-cancellation-interest-actual-v82">
+(function(){
+const CK='savings_interest_income_cat',SK='savings_cancellation_interest';
+const CN={mn:'Хүүгийн орлого',en:'Interest income',zh:'利息收入',ja:'利息収入',ko:'이자 수입',ru:'Процентный доход',de:'Zinseinnahmen'};
+const SN={mn:'Цуцлалтын хүү',en:'Termination interest',zh:'提前终止利息',ja:'中途解約利息',ko:'중도해지 이자',ru:'Проценты при досрочном расторжении',de:'Zinsen bei vorzeitiger Kündigung'};
+function ensureV82(){
+ if(typeof bCatsInc==='undefined')return null;
+ let c=(bCatsInc||[]).find(x=>x&&x.key===CK);if(!c){c={key:CK,names:{...CN},icon:'🏦',color:'#1D9E75',subs:[]};bCatsInc.push(c)}
+ c.names={...CN};if(!Array.isArray(c.subs))c.subs=[];let sb=c.subs.find(x=>x&&x.key===SK);if(!sb){sb={key:SK,names:{...SN},color:'#1D9E75',actualOnly:true};c.subs.push(sb)}else{sb.names={...SN};sb.actualOnly=true}
+ if(typeof incCats!=='undefined'&&!(incCats||[]).find(x=>x&&x.key===CK))incCats.push({key:CK,names:{...CN},icon:'🏦',color:'#1D9E75'});
+ (typeof txns!=='undefined'?txns:[]).forEach(t=>{if(!t||t.type!=='income'||!t.savingsCancellationId)return;t.catKey=CK;t.catName=typeof cN==='function'?cN(c):CN.mn;t.subcatKey=SK;t.subcatName=typeof cN==='function'?cN(sb):SN.mn;t.savingsCancellationInterest=true});
+ return {cat:c,sub:sb};
+}
+window.ensureCancellationInterestActualV82=ensureV82;
+const bg=typeof getBCats==='function'?getBCats:null;if(bg){getBCats=function(){if(typeof budgetType!=='undefined'&&budgetType==='income')ensureV82();return bg.apply(this,arguments)};window.getBCats=getBCats}
+try{ensureV82()}catch(e){}
+window.MONGO_CANCELLATION_INTEREST_ACTUAL='V82';
+})();
+</script>
