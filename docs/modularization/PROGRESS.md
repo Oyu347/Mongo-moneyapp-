@@ -154,3 +154,67 @@ This section reconstructs the missing continuity record from the retained phone-
 
 ### Exact next action
 Compare the currently served/tested file against `Mongo-PHONE-TEST-SAVINGS-INTEREST-BUDGET-MATCH-V69.html` specifically around `isTxnBudgeted` and the V56/V59 interest-plan blocks. Restore only the missing V69 classification behavior, then Android-test several months/accounts. Do not create/promote V70 until V69 state is recorded and the regression cause is identified.
+
+
+## Daily phone-work closeout — 2026-10-04
+
+This section records the 2026-10-04 Möngö savings work from the active chat. It is a continuity record; it does not promote production `main`.
+
+### Product / formula decisions
+- Term-deposit normal interest conditions remain 3: compound into savings; pay interest to a separate account; pay at maturity. Legacy `interestMode='none'` may remain internally for compatibility but is not a normal user-facing term-deposit condition.
+- User-facing interest payout frequency direction: remove/hide `Улирал бүр` from the normal term-deposit UI; retain `Сар бүр`, `Жил бүр`, and `Хугацааны эцэст`. Quarterly legacy compatibility must not be destructively removed as part of an unrelated patch.
+- Cancellation accounting principle: do not create 12 separate handwritten cancellation formulas. Reconcile the total interest allowed by the selected cancellation rule against interest already actually paid/capitalized.
+- Whole-tugrik rounding invariant: calculate each principal lot's cancellation interest and `Math.round()` that lot first, then sum the rounded lots. Do not sum fractional lot interest and round only at the end.
+
+### Receiver-account picker
+- V86 `Mongo-PHONE-TEST-NEW-SAVINGS-RECEIVER-V86.html`: PHONE FAIL / DISCARD. The new-savings receiver popup used the wrong account source and rendered empty.
+- V87 `Mongo-PHONE-TEST-NEW-SAVINGS-RECEIVER-V87.html`: PHONE FAIL / DISCARD. The popup still exposed only the legacy `Эхний мөнгө` option.
+- V88 `Mongo-PHONE-TEST-CHECKING-RECEIVER-V88.html`: PHONE PASS. For `Хүүг тусдаа дансанд авах`, the new-account popup refreshes immediately before the mobile custom picker reads it and shows active Checking accounts only. Cash, Savings, inactive accounts and `Эхний мөнгө` are excluded. User confirmed the two current checking accounts appeared.
+
+### Yearly-interest test account
+Test account `Жил тест`:
+- Term deposit; separate-account interest; annual rate 11%; payout frequency yearly; receiver `Голомт`; start 2025-03-01.
+- Opening principal ₮1,000,000.
+- Added savings transfers: 2025-04-11 ₮300,000; 2025-06-19 ₮150,000; 2025-07-23 ₮100,000; 2025-08-12 ₮200,000. Total additions ₮750,000; current principal ₮1,750,000.
+- Actual first yearly interest transaction entered for 2026-03-01: +₮110,000 to `Голомт`.
+
+### Yearly cancellation preview validation
+Cancellation preview date: 2026-10-04. Principal ₮1,750,000. Previously paid separate-account interest correctly classified as ₮110,000. No interest capitalized into the savings account. Additions reconcile exactly; unexplained balance difference = ₮0.
+- Rule 1 reduced-rate 2.4%: per-lot display ₮38,268 + ₮10,672 + ₮4,655 + ₮2,880 + ₮5,497 = expected allowed interest ₮61,972. A later screen exposed a ₮1 aggregation regression: adjustment -₮48,027 / receive ₮1,696,973 instead of invariant-correct -₮48,028 / ₮1,696,972. Therefore Rule 1 is NOT final PASS yet.
+- Rule 2 staged-rate preview: 365+ tier 8%; displayed lot results ₮127,562 + ₮35,573 + ₮15,518 + ₮9,600 + ₮18,323 = ₮206,576; adjustment +₮96,576; fee ₮5,000; receive ₮1,841,576. Preview matched the expected screen.
+- Rule 3 threshold preview: 365-day threshold, after-threshold 6%; displayed lot results ₮95,671 + ₮26,679 + ₮11,638 + ₮7,200 + ₮13,742 = ₮154,930; adjustment +₮44,930; fee ₮5,000; receive ₮1,789,930. Preview matched.
+- Rule 4 bank actual: entered final bank-allowed total interest ₮90,000; prior paid ₮110,000; adjustment -₮20,000; fee ₮5,000; receive ₮1,725,000. Preview matched.
+- No destructive real cancellation was executed. Preview validation is not permission to mark the final cancellation mutation flow PASS.
+
+### Yearly Budget cycle
+- A regression placed `Жил тест` yearly planned interest in February for a 2025-03-01 start date. Root cause was an off-by-one yearly month-cycle condition.
+- V89 yearly-budget-cycle patch corrected the anniversary placement. User phone-confirmed 2026-02 `Жил тест` = ₮0 and 2026-03 `Жил тест` = ₮192,500.
+- ₮192,500 is correct for the current estimator design because current principal ₮1,750,000 × 11% = ₮192,500. March total interest-income plan displayed ₮209,583 = Business ₮10,833 + Аялал ₮6,250 + Жил тест ₮192,500.
+- YEARLY BUDGET CYCLE: PHONE PASS.
+- Transactions follow-up: the actual 2026-03-01 `Жил тест · Хүүгийн орлого` +₮110,000 no longer displayed `Төсөвлөөгүй`. Budget ↔ transaction classification for this yearly test: PHONE PASS. The actual bank credit may differ from the calculated plan; do not force the actual to equal the plan.
+
+### Failed rounding patch / regression incident
+- `Mongo-PHONE-TEST-CANCEL-ROUNDING-V89.html`: PHONE FAIL / DISCARD / DO NOT USE AS BASELINE.
+- It attempted to restore the whole-tugrik per-lot cancellation rounding rule, but it was created from an older/stale source lineage rather than the latest fully preserved phone checkpoint.
+- Phone regression evidence: the Savings actions `Хадгаламж цуцлах` and `+ Хүүгийн орлого`, which had previously fit on one row, regressed to two rows. This proves the patch did not preserve all later UI work.
+- File size was not the root issue: the source materialized during the patch was 1,978,984 bytes and the generated file was about the same size. The problem was lineage/source selection, not simple truncation.
+- Do not patch forward from this failed file. Return to the latest fully preserved PHONE-PASS lineage and port only the rounding change.
+
+### Protected PASS state after today's work
+Preserve all of the following before the next cancellation patch:
+1. V88 active Checking-only interest receiver picker.
+2. Yearly prior-paid interest recognition of ₮110,000.
+3. 2026-02 yearly plan = ₮0 and 2026-03 yearly plan = ₮192,500 for `Жил тест`.
+4. 2026-03-01 +₮110,000 yearly-interest transaction is treated as planned (no `Төсөвлөөгүй` badge).
+5. Existing monthly and maturity interest behavior.
+6. Existing cancellation accounting/history classification and zero unexplained balance difference.
+7. Existing one-row mobile Savings action-button layout.
+8. Seven-language UI, Cloud/data, transfer, Budget and other earlier PHONE-PASS behavior.
+
+### Continuity incident and rule
+The canonical pointers had not been updated after the 2026-10-01 checkpoint, so today's work existed in chat/files without a synchronized GitHub continuity record. This stale-pointer state contributed to selecting an older source for the rounding patch.
+From now on, before creating V(N+1), record V(N)'s PASS/FAIL/DISCARD state and verify the source file contains the latest protected PHONE-PASS behaviors. A financial fix must not be accepted if an unrelated UI/function regresses.
+
+### Exact next action
+Do NOT modify the failed `Mongo-PHONE-TEST-CANCEL-ROUNDING-V89.html`.
+First identify/recover the exact latest full PHONE-PASS source that contains V88 receiver behavior + yearly Budget cycle PASS + planned yearly transaction classification + one-row Savings action buttons. Compare it against the failed rounding file. Then port only the previously validated per-lot whole-tugrik rounding invariant into that source. Regression-check protected items before giving the user a new phone-test file. Test all 4 cancellation rules and require 0₮ discrepancy before promotion.
