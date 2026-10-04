@@ -2,33 +2,41 @@
 
 > Canonical startup pointer. Keep synchronized with `docs/modularization/CURRENT_WORK.md`.
 
-Updated: 2026-10-01
+Updated: 2026-10-04
 Repository: `Oyu347/Mongo-moneyapp-`
 Pointer / active working branch: `development-modular`
 Verified production lineage: `V44.12.30`
 
-## Current PHONE checkpoint
-`Mongo-PHONE-TEST-SAVINGS-INTEREST-BUDGET-MATCH-V69.html`
+## Current phone state
+Today's yearly-interest Budget work is PHONE PASS, but the latest cancellation-rounding test file is PHONE FAIL / DISCARD.
 
-V69 is the last recovered user-confirmed checkpoint for the current combined Budget ↔ Transactions savings-interest work. It is a PHONE working checkpoint, not a production-baseline promotion.
+### Confirmed PHONE PASS
+- V88 `Mongo-PHONE-TEST-CHECKING-RECEIVER-V88.html`: new term-deposit separate-interest receiver picker shows active Checking accounts only; excludes Cash, Savings, inactive accounts and `Эхний мөнгө`.
+- `Жил тест` yearly Budget cycle: start 2025-03-01 → 2026-02 planned interest ₮0; 2026-03 planned interest ₮192,500 on current ₮1,750,000 principal at 11%. PHONE PASS.
+- Actual 2026-03-01 `Жил тест · Хүүгийн орлого` +₮110,000 is now recognized as planned and no longer shows `Төсөвлөөгүй`. PHONE PASS.
+- Yearly cancellation preview correctly recognizes prior paid interest ₮110,000 and principal/addition history with unexplained balance difference ₮0.
 
-## Preserve
-- V51 active savings-transfer target behavior and real internal transfer accounting.
-- V55 savings-account lifecycle visibility: no budget rows before opening or after closure.
-- V56 selected-month calculated savings-interest plan.
-- V59 maturity-only interest row appears only in maturity month.
-- V65 maturity-date required guard with seven-language Möngö modal behavior.
-- Earlier cancellation/accounting, Cloud/restore, linked-goal, bank-expense, transaction grouping and savings i18n PHONE-PASS protections.
+### Current FAIL / DISCARD
+`Mongo-PHONE-TEST-CANCEL-ROUNDING-V89.html` — PHONE FAIL / DISCARD / DO NOT USE AS BASELINE.
 
-## Current incident
-The currently opened app again labels ordinary savings-interest transactions `Төсөвлөөгүй`, although this behavior was PHONE-confirmed as working on V69. Treat this as a regression against V69.
+Reason: it was built from a stale/older source lineage. The previously working one-row mobile Savings actions (`Хадгаламж цуцлах` + `+ Хүүгийн орлого`) regressed to two rows. File size was not the cause; source lineage was.
 
-Recovered evidence shows V68 was unsafe because it dropped the V56 monthly-plan block; V69 restored that block and changed `isTxnBudgeted` to match ordinary savings-interest income by the transaction's own month/year and persisted interest-income budget category/subcategory.
+Rule 1 also exposed the outstanding rounding issue: displayed rounded lots total ₮61,972, so with prior paid ₮110,000 and fee ₮5,000 the invariant-correct adjustment/receive values are -₮48,028 and ₮1,696,972. The current calculation path showed -₮48,027 / ₮1,696,973.
 
-No verified V70 PHONE-TEST file was recovered. Do not assume V70 exists.
+## Preserve before next patch
+- V88 receiver picker PASS.
+- Yearly prior-paid-interest recognition.
+- Yearly Budget anniversary-month PASS and yearly transaction planned classification.
+- Monthly and maturity interest behavior.
+- Cancellation history classification and zero unexplained balance difference.
+- One-row Savings action-button layout.
+- Seven-language UI, Cloud/data, transfers, Budget and all earlier PHONE-PASS protections.
+
+## Rounding invariant
+For cancellation rules that calculate interest from principal lots, calculate each lot's interest, round that lot to whole ₮ with `Math.round()`, then sum the rounded lots. Do not sum fractional lot interest and round only at the end.
 
 ## Exact next action
-Diff the currently served/tested file against V69 around `isTxnBudgeted` plus the V56/V59 blocks. Restore only the missing V69 classification behavior. Android-test multiple savings accounts and months, including a month before account opening. Only after explicit PHONE PASS may a new V70 be created/promoted.
+Do not patch forward from the failed rounding file. Recover/identify the exact latest full PHONE-PASS source containing V88 + yearly Budget/transaction PASS + one-row Savings actions. Port only the per-lot rounding invariant into that source. Regression-check protected behavior, then phone-test all four cancellation rules. Require 0₮ discrepancy before promotion.
 
 ## Working rule
-Every explicit PHONE PASS / PHONE FAIL / discard / rollback is recorded immediately before the next version. The 23:00 Asia/Ulaanbaatar closeout is a reconciliation check, not the primary save mechanism.
+Every explicit PHONE PASS / PHONE FAIL / discard / rollback is recorded before the next version. Never create the next patch from a file merely because it is newer or conveniently available; verify it contains the latest protected PHONE-PASS behavior first.
