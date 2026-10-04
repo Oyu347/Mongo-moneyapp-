@@ -19597,34 +19597,44 @@ document.addEventListener('click',function(e){
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 <!-- MONGO_PHONE_TEST_CANCEL_YEARLY_V85: yearly previously-paid-interest = 12-month payout cycle; all other logic preserved -->
 
-<!-- MONGO PHONE TEST V87 — refresh NEW savings receiver from proven V40 accountOptions -->
-<script id="mongo-new-savings-receiver-v87">
+<!-- MONGO PHONE TEST V88 — NEW savings interest receiver: active real checking accounts only -->
+<script id="mongo-new-checking-receiver-v88">
 (function(){
 'use strict';
-function refreshNewReceiverV87(){
+window.MONGO_NEW_CHECKING_RECEIVER='V88';
+function typ88(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function esc88(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function eligible88(a){
+  return !!a && a.active!==false && !a.legacy && typ88(a)==='checking';
+}
+function refresh88(){
   const sel=document.getElementById('account-interest-account');
-  if(!sel || typeof accountOptions!=='function') return false;
-  const keep=sel.value||'';
-  const box=document.createElement('select');
-  box.innerHTML=accountOptions(keep,'');
-  const real=[...box.options].filter(o=>{
-    const t=String(o.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    return t!=='эхний мөнгө' && t!=='initial money';
-  });
-  sel.innerHTML='';
-  real.forEach(o=>sel.appendChild(o));
-  if(keep && [...sel.options].some(o=>o.value===keep)) sel.value=keep;
+  if(!sel)return false;
+  const keep=String(sel.value||'');
+  const list=(moneyAccounts||[]).filter(eligible88);
+  sel.innerHTML=list.map(a=>`<option value="${esc88(a.id)}"${String(a.id)===keep?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc88(a.name||'Данс')}</option>`).join('');
+  if(keep&&list.some(a=>String(a.id)===keep))sel.value=keep;
   return true;
 }
-function runV87(){[0,30,100,250,600].forEach(ms=>setTimeout(refreshNewReceiverV87,ms));}
-document.addEventListener('click',function(e){
-  if(e.target?.closest?.('#account-interest-fields') || e.target?.closest?.('[data-value="separate"]')) runV87();
+/* The mobile UI opens a custom picker from the native select.
+   Refresh the native select BEFORE that picker reads its options. */
+document.addEventListener('touchstart',function(ev){
+  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+  if(sel&&sel.id==='account-interest-account')refresh88();
 },true);
-document.getElementById('account-interest-mode')?.addEventListener('change',runV87);
-new MutationObserver(()=>{if(document.getElementById('account-interest-account'))refreshNewReceiverV87();})
- .observe(document.documentElement,{childList:true,subtree:true});
-setTimeout(runV87,0);
-window.MongoNewSavingsReceiverV87={refresh:refreshNewReceiverV87};
+document.addEventListener('pointerdown',function(ev){
+  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+  if(sel&&sel.id==='account-interest-account')refresh88();
+},true);
+document.addEventListener('click',function(ev){
+  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
+  if(sel&&sel.id==='account-interest-account')refresh88();
+},true);
+/* Also refresh when the new savings fields are shown / interest mode changes. */
+document.getElementById('account-type')?.addEventListener('change',()=>setTimeout(refresh88,0));
+document.getElementById('account-interest-mode')?.addEventListener('change',()=>setTimeout(refresh88,0));
+setTimeout(refresh88,0);
+window.MongoNewCheckingReceiverV88={refresh:refresh88};
 })();
 </script>
 
