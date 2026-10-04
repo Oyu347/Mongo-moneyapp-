@@ -19596,6 +19596,39 @@ document.addEventListener('click',function(e){
 <script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 <!-- MONGO_PHONE_TEST_CANCEL_YEARLY_V85: yearly previously-paid-interest = 12-month payout cycle; all other logic preserved -->
+
+<!-- MONGO PHONE TEST V86 — new savings receiver picker uses same eligibility as edit form -->
+<script id="mongo-new-savings-receiver-v86">
+(function(){
+'use strict';
+function ty86(a){
+  return typeof normalizeAccountType==='function'
+    ? normalizeAccountType(a&&a.type)
+    : String(a&&a.type||'').toLowerCase();
+}
+function esc86(v){
+  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function refresh86(){
+  const sel=document.getElementById('account-interest-account');
+  if(!sel)return false;
+  const keep=String(sel.value||'');
+  const eligible=(window.moneyAccounts||[])
+    .filter(a=>a && a.active!==false && ty86(a)!=='savings');
+  sel.innerHTML=eligible.map(a=>'<option value="'+esc86(a.id)+'">'+esc86(a.name||'Данс')+'</option>').join('');
+  if(keep&&eligible.some(a=>String(a.id)===keep))sel.value=keep;
+  return true;
+}
+function schedule86(){[0,20,60,140,300,600].forEach(ms=>setTimeout(refresh86,ms));}
+document.getElementById('account-type')?.addEventListener('change',schedule86);
+document.getElementById('account-interest-mode')?.addEventListener('change',schedule86);
+const obs=new MutationObserver(()=>{if(document.getElementById('account-interest-account'))refresh86();});
+obs.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(schedule86,0);
+window.MongoNewSavingsReceiverV86={refresh:refresh86};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
