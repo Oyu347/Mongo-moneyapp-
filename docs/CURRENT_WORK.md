@@ -7,36 +7,70 @@ Repository: `Oyu347/Mongo-moneyapp-`
 Pointer / active working branch: `development-modular`
 Verified production lineage: `V44.12.30`
 
-## Current phone state
-Today's yearly-interest Budget work is PHONE PASS, but the latest cancellation-rounding test file is PHONE FAIL / DISCARD.
+## START HERE — latest handoff
 
-### Confirmed PHONE PASS
-- V88 `Mongo-PHONE-TEST-CHECKING-RECEIVER-V88.html`: new term-deposit separate-interest receiver picker shows active Checking accounts only; excludes Cash, Savings, inactive accounts and `Эхний мөнгө`.
-- `Жил тест` yearly Budget cycle: start 2025-03-01 → 2026-02 planned interest ₮0; 2026-03 planned interest ₮192,500 on current ₮1,750,000 principal at 11%. PHONE PASS.
-- Actual 2026-03-01 `Жил тест · Хүүгийн орлого` +₮110,000 is now recognized as planned and no longer shows `Төсөвлөөгүй`. PHONE PASS.
-- Yearly cancellation preview correctly recognizes prior paid interest ₮110,000 and principal/addition history with unexplained balance difference ₮0.
+The newest inspected file is **`Mongo-PHONE-TEST-CANCEL-CANONICAL-ROUNDING-V91.html`**.
 
-### Current FAIL / DISCARD
-`Mongo-PHONE-TEST-CANCEL-ROUNDING-V89.html` — PHONE FAIL / DISCARD / DO NOT USE AS BASELINE.
+**Do NOT promote V91 as the new baseline yet.** Full code inspection found that V91 contains the desired canonical cancellation rounding, but it does not preserve every recently PHONE-PASS fix.
 
-Reason: it was built from a stale/older source lineage. The previously working one-row mobile Savings actions (`Хадгаламж цуцлах` + `+ Хүүгийн орлого`) regressed to two rows. File size was not the cause; source lineage was.
+### Confirmed PHONE PASS that must be preserved
+- V88 receiver picker: new term-deposit separate-interest receiver shows **active Checking accounts only**; excludes Cash, Savings, inactive accounts and `Эхний мөнгө`.
+- `Жил тест` yearly Budget cycle: start 2025-03-01 → **2026-02 = ₮0**, **2026-03 = ₮192,500** on current ₮1,750,000 principal at 11%.
+- Actual 2026-03-01 `Жил тест · Хүүгийн орлого` +₮110,000 is recognized as planned and no longer shows `Төсөвлөөгүй`.
+- Yearly cancellation preview recognizes prior paid interest **₮110,000** and principal/addition history with unexplained balance difference **₮0**.
+- Monthly and maturity interest behavior previously passed.
+- Cancellation interest classification / actual-only Budget behavior through V84 passed.
+- One-row mobile Savings action layout passed.
+- Demand-deposit daily/monthly preview and transfer-out flow previously passed.
 
-Rule 1 also exposed the outstanding rounding issue: displayed rounded lots total ₮61,972, so with prior paid ₮110,000 and fee ₮5,000 the invariant-correct adjustment/receive values are -₮48,028 and ₮1,696,972. The current calculation path showed -₮48,027 / ₮1,696,973.
+### V91 inspection result
+**Good / keep:**
+- Canonical per-lot rounding exists in the real cancellation Stage3 path:
+  `i = Math.round(...); allowed += i`.
+- This matches the required invariant: round each principal lot to whole ₮ first, then sum.
+- Demand-deposit engine and recent cancellation classification code are present.
 
-## Preserve before next patch
-- V88 receiver picker PASS.
-- Yearly prior-paid-interest recognition.
-- Yearly Budget anniversary-month PASS and yearly transaction planned classification.
-- Monthly and maturity interest behavior.
-- Cancellation history classification and zero unexplained balance difference.
-- One-row Savings action-button layout.
-- Seven-language UI, Cloud/data, transfers, Budget and all earlier PHONE-PASS protections.
+**Regression / missing protected fixes:**
+1. **Yearly Budget cycle regressed.**
+   V91 still contains `if(f==='yearly') return (diff+1)%12===0` in two budget paths. For a 2025-03-01 start this is the old off-by-one behavior that can place annual interest in February. The passed behavior is February ₮0 / March ₮192,500.
+2. **V88 receiver picker must be restored/verified.**
+   V91 visibly contains older V40 receiver eligibility that allows Checking + Cash. The final passed behavior must be Checking-only and must exclude `Эхний мөнгө`.
+3. **V91 canonical rounding itself is not yet 4/4 PHONE PASS.**
+   Do not mark it passed until all four cancellation rules show 0₮ discrepancy on phone.
+4. `interestMode='none'` may remain internally for legacy compatibility, but the normal term-deposit UI must continue to show only the 3 approved interest conditions.
 
-## Rounding invariant
-For cancellation rules that calculate interest from principal lots, calculate each lot's interest, round that lot to whole ₮ with `Math.round()`, then sum the rounded lots. Do not sum fractional lot interest and round only at the end.
+## Current status
+V91 is a **candidate integration source, not a baseline**.
 
-## Exact next action
-Do not patch forward from the failed rounding file. Recover/identify the exact latest full PHONE-PASS source containing V88 + yearly Budget/transaction PASS + one-row Savings actions. Port only the per-lot rounding invariant into that source. Regression-check protected behavior, then phone-test all four cancellation rules. Require 0₮ discrepancy before promotion.
+Target next build = **V91 canonical rounding + restore V88 receiver PASS + restore yearly Budget anniversary-month PASS**, while preserving all other PHONE-PASS behavior.
+
+Avoid reusing V89 numbering because two different V89 test files existed. Use a new unambiguous version/name for the integrated build.
+
+## Cancellation rounding invariant
+For cancellation rules calculated from principal lots:
+1. calculate each lot's interest;
+2. `Math.round()` that lot to whole ₮;
+3. sum the rounded lot amounts;
+4. derive adjustment and final receive amount from that exact sum.
+
+### Exact expected `Жил тест` cancellation values (cancel date 2026-10-04)
+- Rule 1: allowed **₮61,972**; prior paid **₮110,000**; adjustment **−₮48,028**; fee **₮5,000**; receive **₮1,696,972**.
+- Rule 2: allowed **₮206,576**; adjustment **+₮96,576**; fee **₮5,000**; receive **₮1,841,576**.
+- Rule 3: allowed **₮154,930**; adjustment **+₮44,930**; fee **₮5,000**; receive **₮1,789,930**.
+- Rule 4 with bank actual total interest ₮90,000: allowed **₮90,000**; adjustment **−₮20,000**; fee **₮5,000**; receive **₮1,725,000**.
+
+## Exact next action in a new chat
+1. Read this file first.
+2. Inspect V91 and the latest PHONE-PASS source/patches for V88 receiver and yearly Budget cycle.
+3. Build one bounded integrated file without changing unrelated logic.
+4. Regression-check:
+   - receiver picker = active Checking only;
+   - 2026-02 yearly plan = ₮0;
+   - 2026-03 yearly plan = ₮192,500;
+   - one-row Savings actions preserved;
+   - 3 approved term-deposit interest conditions preserved;
+   - cancellation Rule 1–4 values above are exact.
+5. Phone-test. Promote only after explicit PHONE PASS.
 
 ## Working rule
-Every explicit PHONE PASS / PHONE FAIL / discard / rollback is recorded before the next version. Never create the next patch from a file merely because it is newer or conveniently available; verify it contains the latest protected PHONE-PASS behavior first.
+Every explicit PHONE PASS / PHONE FAIL / discard / rollback is recorded before the next version. Never patch forward merely because a file is newer. Preserve the last proven behavior and port only the bounded change.
