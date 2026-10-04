@@ -18147,7 +18147,7 @@ function boot(){
  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
  if(document.getElementById('gmarketWrap'))return;
  const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
- wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="yearly">Жил бүр</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
  const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
  const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
@@ -18198,7 +18198,7 @@ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)
 function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
 function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const yy=y+Math.floor(m/12),mm=((m%12)+12)%12,last=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(day,last))}
 function contributions(sd,ed){const arr=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value))}];const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;if(!reg||!amt)return arr;const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;arr.push({date:dt,amount:amt})}return arr}
-function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
+function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='yearly'?12:(freq==='monthly'?1:0));if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
  for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay)total+=lot.amount*rate*days(from,pay)/365;}prev=pay;}
  return total;
 }
@@ -19595,6 +19595,7 @@ document.addEventListener('click',function(e){
 </script>
 <script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
+<!-- MONGO_PHONE_TEST_CANCEL_YEARLY_V85: yearly previously-paid-interest = 12-month payout cycle; all other logic preserved -->
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
