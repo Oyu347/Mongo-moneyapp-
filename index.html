@@ -19597,35 +19597,34 @@ document.addEventListener('click',function(e){
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 <!-- MONGO_PHONE_TEST_CANCEL_YEARLY_V85: yearly previously-paid-interest = 12-month payout cycle; all other logic preserved -->
 
-<!-- MONGO PHONE TEST V86 — new savings receiver picker uses same eligibility as edit form -->
-<script id="mongo-new-savings-receiver-v86">
+<!-- MONGO PHONE TEST V87 — refresh NEW savings receiver from proven V40 accountOptions -->
+<script id="mongo-new-savings-receiver-v87">
 (function(){
 'use strict';
-function ty86(a){
-  return typeof normalizeAccountType==='function'
-    ? normalizeAccountType(a&&a.type)
-    : String(a&&a.type||'').toLowerCase();
-}
-function esc86(v){
-  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function refresh86(){
+function refreshNewReceiverV87(){
   const sel=document.getElementById('account-interest-account');
-  if(!sel)return false;
-  const keep=String(sel.value||'');
-  const eligible=(window.moneyAccounts||[])
-    .filter(a=>a && a.active!==false && ty86(a)!=='savings');
-  sel.innerHTML=eligible.map(a=>'<option value="'+esc86(a.id)+'">'+esc86(a.name||'Данс')+'</option>').join('');
-  if(keep&&eligible.some(a=>String(a.id)===keep))sel.value=keep;
+  if(!sel || typeof accountOptions!=='function') return false;
+  const keep=sel.value||'';
+  const box=document.createElement('select');
+  box.innerHTML=accountOptions(keep,'');
+  const real=[...box.options].filter(o=>{
+    const t=String(o.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+    return t!=='эхний мөнгө' && t!=='initial money';
+  });
+  sel.innerHTML='';
+  real.forEach(o=>sel.appendChild(o));
+  if(keep && [...sel.options].some(o=>o.value===keep)) sel.value=keep;
   return true;
 }
-function schedule86(){[0,20,60,140,300,600].forEach(ms=>setTimeout(refresh86,ms));}
-document.getElementById('account-type')?.addEventListener('change',schedule86);
-document.getElementById('account-interest-mode')?.addEventListener('change',schedule86);
-const obs=new MutationObserver(()=>{if(document.getElementById('account-interest-account'))refresh86();});
-obs.observe(document.documentElement,{childList:true,subtree:true});
-setTimeout(schedule86,0);
-window.MongoNewSavingsReceiverV86={refresh:refresh86};
+function runV87(){[0,30,100,250,600].forEach(ms=>setTimeout(refreshNewReceiverV87,ms));}
+document.addEventListener('click',function(e){
+  if(e.target?.closest?.('#account-interest-fields') || e.target?.closest?.('[data-value="separate"]')) runV87();
+},true);
+document.getElementById('account-interest-mode')?.addEventListener('change',runV87);
+new MutationObserver(()=>{if(document.getElementById('account-interest-account'))refreshNewReceiverV87();})
+ .observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(runV87,0);
+window.MongoNewSavingsReceiverV87={refresh:refreshNewReceiverV87};
 })();
 </script>
 
