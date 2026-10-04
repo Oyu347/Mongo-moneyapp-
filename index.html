@@ -18147,7 +18147,7 @@ function boot(){
  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
  if(document.getElementById('gmarketWrap'))return;
  const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
- wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="yearly">Жил бүр</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
  const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
  const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
@@ -18198,7 +18198,7 @@ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)
 function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
 function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const yy=y+Math.floor(m/12),mm=((m%12)+12)%12,last=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(day,last))}
 function contributions(sd,ed){const arr=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value))}];const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;if(!reg||!amt)return arr;const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;arr.push({date:dt,amount:amt})}return arr}
-function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='yearly'?12:(freq==='monthly'?1:0));if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
+function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
  for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay)total+=lot.amount*rate*days(from,pay)/365;}prev=pay;}
  return total;
 }
@@ -18449,7 +18449,7 @@ function due14(a,y,m){
   const start=ym14(a.startDate); if(!start)return false; const cur={y:Number(y),m:Number(m)},diff=monthDiff14(start,cur); if(diff<0)return false;
   const mat=ym14(a.maturityDate); if(mat&&(cur.y>mat.y||(cur.y===mat.y&&cur.m>mat.m)))return false;
   const f=a.interestFrequency||'monthly';
-  if(f==='monthly')return true; if(f==='quarterly')return (diff+1)%3===0; if(f==='yearly')return (diff+1)%12===0;
+  if(f==='monthly')return true; if(f==='quarterly')return (diff+1)%3===0; if(f==='yearly')return diff>0&&diff%12===0;
   if(f==='maturity'||a.interestMode==='maturity')return !!mat&&mat.y===cur.y&&mat.m===cur.m; return false;
 }
 function estimate14(a,y,m){
@@ -19595,49 +19595,8 @@ document.addEventListener('click',function(e){
 </script>
 <script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
-<!-- MONGO_PHONE_TEST_CANCEL_YEARLY_V85: yearly previously-paid-interest = 12-month payout cycle; all other logic preserved -->
 
-<!-- MONGO PHONE TEST V88 — NEW savings interest receiver: active real checking accounts only -->
-<script id="mongo-new-checking-receiver-v88">
-(function(){
-'use strict';
-window.MONGO_NEW_CHECKING_RECEIVER='V88';
-function typ88(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
-function esc88(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function eligible88(a){
-  return !!a && a.active!==false && !a.legacy && typ88(a)==='checking';
-}
-function refresh88(){
-  const sel=document.getElementById('account-interest-account');
-  if(!sel)return false;
-  const keep=String(sel.value||'');
-  const list=(moneyAccounts||[]).filter(eligible88);
-  sel.innerHTML=list.map(a=>`<option value="${esc88(a.id)}"${String(a.id)===keep?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc88(a.name||'Данс')}</option>`).join('');
-  if(keep&&list.some(a=>String(a.id)===keep))sel.value=keep;
-  return true;
-}
-/* The mobile UI opens a custom picker from the native select.
-   Refresh the native select BEFORE that picker reads its options. */
-document.addEventListener('touchstart',function(ev){
-  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
-  if(sel&&sel.id==='account-interest-account')refresh88();
-},true);
-document.addEventListener('pointerdown',function(ev){
-  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
-  if(sel&&sel.id==='account-interest-account')refresh88();
-},true);
-document.addEventListener('click',function(ev){
-  const sel=ev.target&&ev.target.closest?ev.target.closest('select'):null;
-  if(sel&&sel.id==='account-interest-account')refresh88();
-},true);
-/* Also refresh when the new savings fields are shown / interest mode changes. */
-document.getElementById('account-type')?.addEventListener('change',()=>setTimeout(refresh88,0));
-document.getElementById('account-interest-mode')?.addEventListener('change',()=>setTimeout(refresh88,0));
-setTimeout(refresh88,0);
-window.MongoNewCheckingReceiverV88={refresh:refresh88};
-})();
-</script>
-
+<script id="mongo-phone-test-yearly-budget-v89-marker">window.MONGO_PHONE_TEST_YEARLY_BUDGET_V89='V89';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -20128,7 +20087,7 @@ function due(a,y,m){
  const f=a.interestFrequency||'monthly';
  if(f==='monthly')return true;
  if(f==='quarterly')return (diff+1)%3===0;
- if(f==='yearly')return (diff+1)%12===0;
+ if(f==='yearly')return diff>0&&diff%12===0;
  const mat=D(a.maturityDate);
  if(f==='maturity'||a.interestMode==='maturity')return !!mat&&mat.getFullYear()===Number(y)&&mat.getMonth()+1===Number(m);
  return false;
@@ -20180,6 +20139,21 @@ function filterSelected(cat,subs){
    return !!mat &&
      mat.getFullYear()===Number(budgetYear) &&
      mat.getMonth()+1===Number(budgetMonth);
+  }
+
+  // V89 — yearly interest is visible only in a completed 12-month anniversary month.
+  // The budget is monthly, but the anniversary day is calendar-safe:
+  // 03/31 stays in March; 02/29 clamps to 02/28 in a non-leap year.
+  if(a.interestFrequency==='yearly'){
+   const st=D(a.startDate);
+   if(!st)return false;
+   const y=Number(budgetYear),m=Number(budgetMonth);
+   const diff=(y-st.getFullYear())*12+(m-(st.getMonth()+1));
+   if(!(diff>0&&diff%12===0))return false;
+   const anniversaryYear=st.getFullYear()+Math.floor(diff/12);
+   const lastDay=new Date(anniversaryYear,st.getMonth()+1,0).getDate();
+   const anniversary=new Date(anniversaryYear,st.getMonth(),Math.min(st.getDate(),lastDay),12,0,0,0);
+   return anniversary.getFullYear()===y&&anniversary.getMonth()+1===m;
   }
   return true;
  });
