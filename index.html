@@ -19650,6 +19650,31 @@ if(typeof basePicker93==='function'){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V95 — layout-only: keep maturity date with interest terms,
+     before linked savings goal. IDs, values, save logic and calculations are untouched. -->
+<script id="mongo-v95-maturity-before-goal">
+(function(){
+'use strict';
+window.MONGO_MATURITY_BEFORE_GOAL='V95';
+function moveMaturityBeforeGoal95(prefix){
+  const maturity=document.getElementById(prefix+'-maturity');
+  const goal=document.getElementById(prefix+'-linked-goal');
+  if(!maturity||!goal)return;
+  const maturityRow=maturity.parentElement;
+  const goalRow=goal.parentElement;
+  const host=goalRow&&goalRow.parentElement;
+  if(!maturityRow||!goalRow||!host||maturityRow.parentElement!==host)return;
+  if(maturityRow.nextElementSibling!==goalRow)host.insertBefore(maturityRow,goalRow);
+}
+function apply95(){moveMaturityBeforeGoal95('account');moveMaturityBeforeGoal95('edit');}
+const observer95=new MutationObserver(apply95);
+observer95.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('focusin',apply95,true);
+setTimeout(apply95,0);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
