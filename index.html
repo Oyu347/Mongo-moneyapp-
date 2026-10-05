@@ -19601,66 +19601,53 @@ document.addEventListener('click',function(e){
 <script>window.MONGO_SAVINGS_INTEREST_BUDGET_MATCH='V77';</script>
 <script>window.MONGO_BUDGET_KEY_LIMIT_FIX='V76';window.MONGO_PHONE_TEST='V77';</script>
 
-<!-- Möngö PHONE TEST V92 — bounded PASS restoration integration.
-     V91 canonical per-lot cancellation rounding is preserved.
-     Restores yearly Budget anniversary month and V88 Checking-only receiver behavior.
-     No unrelated financial/data/UI logic changed. -->
-<script id="mongo-v92-pass-restore">
+
+
+<!-- Möngö PHONE TEST V93 — exact V88 picker-timing restoration.
+     V86/V87 failed by filtering the wrong/stale source.
+     V88 PASS method: refresh the real native receiver select from live moneyAccounts
+     immediately before openMongoCalcPicker reads sel.options. -->
+<script id="mongo-v93-v88-picker-restore">
 (function(){
 'use strict';
-window.MONGO_PHONE_TEST_INTEGRATED_PASS_RESTORE='V92';
+window.MONGO_V88_PICKER_RESTORE='V93';
 
-function v92Type(a){
+function type93(a){
   return typeof normalizeAccountType==='function'
     ? normalizeAccountType(a&&a.type)
     : (a&&a.type);
 }
-function v92Eligible(a,excludeId){
-  return !!a &&
-    a.active!==false &&
-    !a.legacy &&
-    String(a.id)!==String(excludeId||'') &&
-    v92Type(a)==='checking';
+function eligible93(a){
+  return !!a && a.active!==false && !a.legacy && type93(a)==='checking';
 }
-function v92Esc(v){
+function esc93(v){
   return String(v??'').replace(/[&<>"']/g,c=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
-function v92Options(selected,excludeId){
-  return (moneyAccounts||[])
-    .filter(a=>v92Eligible(a,excludeId))
-    .map(a=>`<option value="${v92Esc(a.id)}"${String(a.id)===String(selected)?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${v92Esc(a.name||'Данс')}</option>`)
-    .join('');
-}
-function v92Refresh(sel){
+function refreshReceiver93(sel){
   if(!sel)return;
-  const prefix=sel.id.startsWith('edit-')?'edit':'account';
-  const excludeId=prefix==='edit'
-    ? (document.getElementById('edit-account-id')?.value||'')
-    : '';
-  const wanted=sel.value;
+  const selected=String(sel.value||'');
   const placeholder=[...sel.options].find(o=>!o.value)?.textContent||'Данс сонгох';
-  sel.innerHTML=`<option value="">${v92Esc(placeholder)}</option>`+v92Options(wanted,excludeId);
-  if(wanted && [...sel.options].some(o=>String(o.value)===String(wanted))) sel.value=wanted;
+  const rows=(moneyAccounts||[]).filter(eligible93);
+  sel.innerHTML=`<option value="">${esc93(placeholder)}</option>`+
+    rows.map(a=>`<option value="${esc93(a.id)}"${String(a.id)===selected?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc93(a.name||'Данс')}</option>`).join('');
+  if(selected && rows.some(a=>String(a.id)===selected)) sel.value=selected;
 }
 
-/* New/edit account helper: Checking-only, no Cash/Savings/legacy/inactive. */
-accountOptions=function(selected,excludeId){ return v92Options(selected,excludeId); };
-
-/* Refresh immediately before mobile/custom picker reads the native select. */
-document.addEventListener('pointerdown',function(e){
-  const sel=e.target && e.target.closest
-    ? e.target.closest('#account-interest-account,#edit-interest-account,#edit-interest-receive-account-v7')
-    : null;
-  if(sel)v92Refresh(sel);
-},true);
-document.addEventListener('focusin',function(e){
-  const sel=e.target;
-  if(sel && /^(account-interest-account|edit-interest-account|edit-interest-receive-account-v7)$/.test(sel.id||'')){
-    v92Refresh(sel);
-  }
-},true);
+/* This is the key V88 timing point: the custom mobile picker reads
+   [...sel.options] inside openMongoCalcPicker(), so refresh first. */
+const basePicker93=window.openMongoCalcPicker;
+if(typeof basePicker93==='function'){
+  window.openMongoCalcPicker=function(sel){
+    if(sel && (sel.id==='account-interest-account' ||
+               sel.id==='edit-interest-account' ||
+               sel.id==='edit-interest-receive-account-v7')){
+      refreshReceiver93(sel);
+    }
+    return basePicker93.call(this,sel);
+  };
+}
 })();
 </script>
 
