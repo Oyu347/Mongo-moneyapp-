@@ -218,3 +218,20 @@ From now on, before creating V(N+1), record V(N)'s PASS/FAIL/DISCARD state and v
 ### Exact next action
 Do NOT modify the failed `Mongo-PHONE-TEST-CANCEL-ROUNDING-V89.html`.
 First identify/recover the exact latest full PHONE-PASS source that contains V88 receiver behavior + yearly Budget cycle PASS + planned yearly transaction classification + one-row Savings action buttons. Compare it against the failed rounding file. Then port only the previously validated per-lot whole-tugrik rounding invariant into that source. Regression-check protected items before giving the user a new phone-test file. Test all 4 cancellation rules and require 0₮ discrepancy before promotion.
+
+
+## V94 integrated savings/cancellation PHONE checkpoint — 2026-10-05
+- V92 integrated attempt: **PHONE FAIL / DISCARD**. Receiver picker rendered no Checking accounts; do not use as baseline.
+- V93 restored the successful V88 timing strategy: refresh the real native receiver select from live `moneyAccounts` immediately before the mobile custom picker reads `sel.options`. User confirmed `Хаан тест` and `Голомт` appeared, but the placeholder `Данс сонгох` was also selectable. Therefore V93 is only partial PASS and is superseded.
+- V94 removed the placeholder from the selectable receiver options without changing the V88 live-picker timing. User confirmed only real Checking accounts appear. **Receiver picker PHONE PASS.**
+- Yearly Budget anniversary behavior reconfirmed on V94: `Жил тест` annual plan appears in March, not February. Protected exact values remain 2026-02 ₮0 and 2026-03 ₮192,500. **PHONE PASS.**
+- Canonical cancellation rounding was phone-tested on 2026-10-04 cancel date and passed all four rules:
+  - Rule 1: ₮61,972 allowed; −₮48,028 adjustment; ₮5,000 fee; ₮1,696,972 receive.
+  - Rule 2: ₮206,576 allowed; +₮96,576 adjustment; ₮5,000 fee; ₮1,841,576 receive.
+  - Rule 3: ₮154,930 allowed; +₮44,930 adjustment; ₮5,000 fee; ₮1,789,930 receive.
+  - Rule 4 with bank actual total interest ₮90,000: −₮20,000 adjustment; ₮5,000 fee; ₮1,725,000 receive.
+- Per-lot rounding invariant is now **4/4 PHONE PASS**: round each principal lot to whole ₮ before summing.
+- Cancellation reconciliation also remained correct: opening ₮1,000,000 + additions ₮750,000 = current principal ₮1,750,000; prior paid separate-account interest ₮110,000 recognized; unexplained balance difference ₮0.
+- No destructive real cancellation was required for these preview/formula checks.
+- **Latest active phone-test checkpoint for this bounded work: `Mongo-PHONE-TEST-V88-PICKER-RESTORE-V94.html`.**
+- Do not treat this checkpoint as an automatic production/main promotion. Preserve all earlier protected PASS behavior and require explicit phone validation for subsequent versions.
