@@ -72,6 +72,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+<!-- V95: V94 base. New-account types = Checking/Savings only. Separate-interest receiver invariant = active non-legacy Checking only. -->
 <!-- V94: V92 base; approved maturity-date field order fixed at source template. No observer, no calculation change. -->
 <!-- Möngö PHONE TEST V92 — bounded UI/i18n change only:
 Term-deposit interest condition selector now exposes exactly 3 approved choices.
@@ -2803,7 +2804,7 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
       <div class="account-section-head"><div class="slbl" id="accounts-title">МИНИЙ МӨНГӨ</div><button class="btn btn-sm" type="button" onclick="toggleAccountAdd()" id="account-add-toggle">＋ Данс</button></div>
       <div id="account-list" class="account-list"></div><div id="account-detail" class="account-detail" style="display:none"></div>
       <div id="account-add-form" style="display:none">
-        <div class="account-add-grid"><input class="fi account-name-input" id="account-name" placeholder="Хаан банк"><select class="fi" id="account-type"><option value="checking">🏦 Харилцах</option><option value="savings">🐷 Хадгаламж</option><option value="cash">💵 Бэлэн мөнгө</option></select><input type="date" class="fi" id="account-start-date"></div>
+        <div class="account-add-grid"><input class="fi account-name-input" id="account-name" placeholder="Хаан банк"><select class="fi" id="account-type"><option value="checking">🏦 Харилцах</option><option value="savings">🐷 Хадгаламж</option></select><input type="date" class="fi" id="account-start-date"></div>
         <div class="form-row" style="margin-top:7px"><input class="fi" id="account-opening" inputmode="decimal" placeholder="₮ 0"><button class="btn btn-p" type="button" onclick="addMoneyAccount()" id="account-save-btn">Нэмэх</button></div>
         <div class="opening-balance-note" id="account-help-note">Шинэ дансны эхний үлдэгдэл нь орлого биш. Өөр данснаас мөнгө хийсэн бол “Шилжүүлэг” ашиглана.</div>
       </div>
@@ -14227,7 +14228,13 @@ rRecent=function(){
 
 function interestModeOptions(selected){const q=V58();const safeSelected=selected==='none'?'compound':selected;return [['compound',q.compound],['payout',q.payout],['maturity',q.maturity]].map(x=>`<option value="${x[0]}"${safeSelected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
 function frequencyOptions(selected){const q=V58();return [['monthly',q.monthly],['quarterly',q.quarterly],['yearly',q.yearly],['maturity',q.atMaturity]].map(x=>`<option value="${x[0]}"${selected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
-function accountOptions(selected,exclude){return window.MongoAccounts.activeAccounts(moneyAccounts,{excludeId:exclude}).map(a=>`<option value="${a.id}"${String(selected)===String(a.id)?' selected':''}>${accountIcon(a)} ${a.name}</option>`).join('');}
+function accountOptions(selected,exclude){
+  /* Protected invariant: a separate-interest receiver is an ACTIVE CHECKING account only.
+     Never offer Savings, Cash, inactive accounts, or the legacy “Opening money / Эхний мөнгө”. */
+  return window.MongoAccounts.activeAccounts(moneyAccounts,{excludeId:exclude,type:'checking'})
+    .filter(a=>!a.legacy&&String(a.id)!=='legacy_main')
+    .map(a=>`<option value="${a.id}"${String(selected)===String(a.id)?' selected':''}>${accountIcon(a)} ${a.name}</option>`).join('');
+}
 function goalOptions(selected){return `<option value="">${V58().noGoal}</option>`+goals.map(g=>`<option value="${g.id}"${String(selected)===String(g.id)?' selected':''}>🎯 ${g.name}</option>`).join('');}
 function interestFieldsHtml(prefix,a){const q=V58(),x=a||{};return `<div class="savings-interest-grid"><div><label>${q.interestRule}</label><select class="fi" id="${prefix}-interest-mode">${interestModeOptions(x.interestMode||'compound')}</select></div><div><label>${q.rate}</label><input class="fi" id="${prefix}-interest-rate" type="number" min="0" step="0.01" value="${Number(x.annualInterestRate)||''}"></div><div><label>${q.frequency}</label><select class="fi" id="${prefix}-interest-frequency">${frequencyOptions(x.interestFrequency||'monthly')}</select></div><div><label>${q.interestAccount}</label><select class="fi" id="${prefix}-interest-account">${accountOptions(x.interestAccountId,x.id)}</select></div><div><label>${q.maturityDate}</label><input class="fi" id="${prefix}-maturity" type="date" value="${x.maturityDate||''}"></div><div><label>${q.linkedGoal}</label><select class="fi" id="${prefix}-linked-goal">${goalOptions(x.linkedGoalId)}</select></div></div><div class="flow-only-note" id="${prefix}-actual-interest-note">${q.actualOnly}</div>`;}
 function toggleNewInterestFields(){const box=document.getElementById('account-interest-fields'),ty=document.getElementById('account-type');if(box)box.classList.toggle('show',ty&&ty.value==='savings');}
