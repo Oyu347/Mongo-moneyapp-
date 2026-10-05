@@ -19603,14 +19603,14 @@ document.addEventListener('click',function(e){
 
 
 
-<!-- Möngö PHONE TEST V93 — exact V88 picker-timing restoration.
+<!-- Möngö PHONE TEST V94 — V88 picker restoration + placeholder exclusion.
      V86/V87 failed by filtering the wrong/stale source.
      V88 PASS method: refresh the real native receiver select from live moneyAccounts
      immediately before openMongoCalcPicker reads sel.options. -->
 <script id="mongo-v93-v88-picker-restore">
 (function(){
 'use strict';
-window.MONGO_V88_PICKER_RESTORE='V93';
+window.MONGO_V88_PICKER_RESTORE='V94';
 
 function type93(a){
   return typeof normalizeAccountType==='function'
@@ -19628,11 +19628,10 @@ function esc93(v){
 function refreshReceiver93(sel){
   if(!sel)return;
   const selected=String(sel.value||'');
-  const placeholder=[...sel.options].find(o=>!o.value)?.textContent||'Данс сонгох';
   const rows=(moneyAccounts||[]).filter(eligible93);
-  sel.innerHTML=`<option value="">${esc93(placeholder)}</option>`+
-    rows.map(a=>`<option value="${esc93(a.id)}"${String(a.id)===selected?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc93(a.name||'Данс')}</option>`).join('');
+  sel.innerHTML=rows.map(a=>`<option value="${esc93(a.id)}"${String(a.id)===selected?' selected':''}>${typeof accountIcon==='function'?accountIcon(a):''} ${esc93(a.name||'Данс')}</option>`).join('');
   if(selected && rows.some(a=>String(a.id)===selected)) sel.value=selected;
+  else sel.selectedIndex=-1;
 }
 
 /* This is the key V88 timing point: the custom mobile picker reads
