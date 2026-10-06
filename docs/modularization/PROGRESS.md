@@ -235,3 +235,15 @@ First identify/recover the exact latest full PHONE-PASS source that contains V88
 - No destructive real cancellation was required for these preview/formula checks.
 - **Latest active phone-test checkpoint for this bounded work: `Mongo-PHONE-TEST-V88-PICKER-RESTORE-V94.html`.**
 - Do not treat this checkpoint as an automatic production/main promotion. Preserve all earlier protected PASS behavior and require explicit phone validation for subsequent versions.
+
+
+## Savings cancellation PHONE closeout — 2026-10-06
+- PHONE PASS: receiver picker remains limited to live active Checking accounts.
+- PHONE PASS: Savings `+ Хүүгийн орлого` works and the action buttons remain in the approved compact one-row layout.
+- PHONE PASS: intended cancellation workflow was tested across all four cancellation-rule variants, including simple-interest calculation and multiple dated principal additions.
+- PHONE PASS: real cancellation completed successfully; **₮2,404,600** was transferred to the selected receiving account.
+- The intentionally future-dated ₮10,000 interest test entry caused the reconciliation guard to block confirmation. Removing that artificial future transaction restored a consistent history and cancellation succeeded.
+- Product decision: no future-dated cancellation-balance patch is required for the intended workflow. Future income should not be posted today as an already-realized transaction.
+- **V95E is not promoted / not a verified baseline.** Its future-date reconstruction change is no longer the active next step.
+- Preserve the verified cancellation formulas and per-lot whole-₮ rounding, 4 rules, simple/compound behavior, receiver picker, yearly Budget anniversary behavior, interest-income action, transfers, seven-language UI and data safety.
+- Next: review the remaining Savings backlog and select one genuinely unfinished item before editing code.
