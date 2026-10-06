@@ -18012,6 +18012,52 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
  document.addEventListener('DOMContentLoaded',()=>setTimeout(tryInstall,1100));setTimeout(tryInstall,1600);
 })();
 </script>
+<script id="mongo-rule2-staged-stability-v99">
+(function(){
+  let lastRule=null, timer=0, busy=false;
+  function stagedInstaller(){
+    /* Reuse the existing V95 Rule-2 installer by dispatching the same lifecycle
+       it already listens to, then restore the selected rule on the current node. */
+    const sel=document.getElementById('grule');
+    if(!sel) return;
+    const wanted=lastRule || sel.value;
+    if(wanted) sel.value=wanted;
+    sel.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  function arm(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      if(busy) return;
+      busy=true;
+      try{
+        const sel=document.getElementById('grule');
+        if(sel){
+          if(lastRule && [...sel.options].some(o=>o.value===lastRule)) sel.value=lastRule;
+          stagedInstaller();
+        }
+      }finally{busy=false}
+    },40);
+  }
+  document.addEventListener('change',function(e){
+    if(e.target && e.target.id==='grule'){
+      lastRule=e.target.value;
+      arm();
+    }
+  },true);
+  const mo=new MutationObserver(function(muts){
+    if(muts.some(m=>m.addedNodes.length||m.removedNodes.length)) arm();
+  });
+  function start(){
+    const root=document.getElementById('calc') || document.getElementById('savingsCalc') || document.body;
+    mo.observe(root,{childList:true,subtree:true});
+    const sel=document.getElementById('grule');
+    if(sel) lastRule=sel.value;
+    arm();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+</script>
 
 
 <!-- Möngö PHONE TEST — Rule 3: threshold-based interest. Scoped to cancellation calculator only. -->
