@@ -90,6 +90,14 @@ Important limitation: the full clean prepared HTML remains local and has NOT bee
 6. Validate Android/iOS/Capacitor runtime parity before any release merge.
 7. Do not modify `main` until a controlled release merge is separately approved after these validations.
 
+## 2026-10-06 — V95D / V95E phone-history correction
+- V95D: presentation-only action-row stabilization for maturity savings. It did not change financial, Budget, cancellation, transaction or persistence logic. The one-row action presentation was confirmed, but V95D alone is not evidence that every subsequent cancellation state passed.
+- V95E: previous wording was too broad. Only the proposed future-dated-transaction reconstruction behavior is rejected/not promoted.
+- During phone testing, the real-cancellation confirmation was blocked while an intentionally artificial future-dated ₮10,000 test entry made reconciliation inconsistent. This was the reconciliation guard acting on inconsistent test history, not final proof that V95E cancellation was broken.
+- After that artificial entry was removed, the real cancellation path became usable and completed successfully; **₮2,404,600** was transferred to the selected receiving account.
+- Record V95E as **mixed / bounded evidence**: do not promote its future-date reconstruction patch, but do not label the whole build PHONE FAIL or discard the independently confirmed cancellation behavior.
+- Any later V99 lineage comparison must distinguish these two facts instead of assuming V95E was wholly invalid.
+
 ## Handoff rule
 Record exact commits, tests actually performed, unresolved risks and exact next step before any integration or release action.
 
