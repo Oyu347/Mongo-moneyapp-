@@ -19656,6 +19656,46 @@ if(typeof basePicker93==='function'){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V95B — restore Interest income action for maturity/simple-interest term deposits.
+     UI eligibility only. Reuses the already-tested same-savings interest entry/save flow.
+     No transfer, cancellation, receiver-picker, Budget, rounding, or persistence arithmetic changed. -->
+<style id="mongo-v95b-maturity-interest-action-style">
+.mongo-savings-interest-income-v95b{display:inline-flex;margin:0 0 8px 8px;vertical-align:top}
+</style>
+<script id="mongo-v95b-maturity-interest-action">
+(function(){
+'use strict';
+window.MONGO_MATURITY_INTEREST_ACTION='V95B';
+function typ95b(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function eligible95b(a){
+  return !!a && typ95b(a)==='savings' && a.active!==false &&
+         (a.depositTermType||'term')==='term' && a.interestMode==='maturity';
+}
+const baseOpen95b=window.openMongoSavingsDepositInterestV13;
+window.openMongoSavingsMaturityInterestV95B=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!eligible95b(a)||typeof baseOpen95b!=='function')return;
+  /* V13 normally admits compound only. Temporarily expose the same-account credit path
+     without mutating the saved account mode. */
+  const keep=a.interestMode;
+  try{a.interestMode='compound';return baseOpen95b(id)}
+  finally{a.interestMode=keep}
+};
+const baseDetail95b=accountInlineDetail;
+accountInlineDetail=function(a){
+  let html=baseDetail95b(a);
+  if(String(expandedMoneyAccountId)!==String(a&&a.id)||!eligible95b(a))return html;
+  if(/openMongoSavingsMaturityInterestV95B/.test(html))return html;
+  const label=(typeof D!=='undefined'&&D?.[lang]?.interest)||({
+    mn:'+ Хүүгийн орлого',en:'+ Interest income',zh:'+ 利息收入',ja:'+ 利息収入',
+    ko:'+ 이자 수입',ru:'+ Процентный доход',de:'+ Zinsertrag'
+  }[typeof lang!=='undefined'?lang:'mn']||'+ Хүүгийн орлого');
+  return html+`<div class="mongo-savings-interest-income-v95b"><button class="btn btn-p" onclick="event.stopPropagation();openMongoSavingsMaturityInterestV95B('${String(a.id).replace(/'/g,"&#39;")}')">${label}</button></div>`;
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
