@@ -64,3 +64,11 @@ Before the next feature/fix:
 2. verify the protected PASS list above is still present;
 3. make only the next bounded change;
 4. record PHONE PASS/FAIL before creating another version.
+
+
+## 2026-10-06 — Savings interest / cancellation follow-up
+- Receiver picker regression was repaired and phone-confirmed: live active Checking accounts continue to appear as new accounts are added.
+- Savings `+ Хүүгийн орлого` action and transaction posting were phone-confirmed; compact action row was restored.
+- **V95D — PHONE FAIL for cancellation after a future-dated interest test.** Example: `Энгийн хүү` had opening/principal ₮1,750,000 and a ₮10,000 interest transaction dated 2027-10-06. Cancellation date 2026-10-06 correctly excluded that future interest from prior-interest history, but incorrectly used the all-time account balance ₮1,760,000, creating a false ₮10,000 reconciliation mismatch and disabling confirmation.
+- **V95E — NEEDS PHONE TEST.** Surgical fix: cancellation balance is reconstructed **as of the selected cancellation date** from opening balance + transfers + balance-affecting transactions through that date. Future-dated interest/transfers are excluded; same-day entries remain included. No rounding/rule/Budget/receiver logic changed.
+- Expected V95E check for the example above on 2026-10-06: principal/history balance ₮1,750,000; future 2027-10-06 interest not counted as prior interest; unexplained difference ₮0; confirmation no longer blocked by that future entry.
