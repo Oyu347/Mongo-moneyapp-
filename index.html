@@ -19696,6 +19696,51 @@ accountInlineDetail=function(a){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V95C — maturity interest save-path + compact action row.
+     Fixes V95B UI-only restore: the legacy V13 saver rejected maturity mode.
+     Reuses the tested V13 transaction creator by temporarily exposing compound mode in memory only;
+     saved account mode remains maturity. No cancellation/Budget/receiver arithmetic changed. -->
+<style id="mongo-v95c-savings-actions-one-row">
+@media(max-width:700px){
+  .mongo-cancel-btn,
+  .mongo-savings-interest-income-v95b{
+    display:inline-flex!important;
+    margin:8px 4px 8px 0!important;
+    vertical-align:top;
+  }
+  .mongo-cancel-btn .btn,
+  .mongo-savings-interest-income-v95b .btn{
+    width:auto!important;
+    min-width:0!important;
+    padding:10px 13px!important;
+    white-space:nowrap;
+    font-size:14px!important;
+  }
+}
+</style>
+<script id="mongo-v95c-maturity-interest-save">
+(function(){
+'use strict';
+window.MONGO_MATURITY_INTEREST_SAVE='V95C';
+function typ95c(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function eligible95c(a){return !!a&&typ95c(a)==='savings'&&a.active!==false&&(a.depositTermType||'term')==='term'&&a.interestMode==='maturity'}
+const baseSave95c=window.saveMongoSavingsDepositInterestV13;
+window.saveMongoSavingsDepositInterestV13=function(id){
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(!eligible95c(a))return typeof baseSave95c==='function'?baseSave95c(id):undefined;
+  if(typeof baseSave95c!=='function')return;
+  const keep=a.interestMode;
+  try{
+    a.interestMode='compound';
+    return baseSave95c(id);
+  }finally{
+    a.interestMode=keep;
+  }
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
