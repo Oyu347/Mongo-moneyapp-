@@ -75,7 +75,9 @@ Before the next feature/fix:
 - Cancellation reconciliation matched history before confirmation; the confirmation guard correctly blocked cancellation while the intentionally future-dated ₮10,000 test transaction made the test history inconsistent.
 - After deleting that artificial future-dated test transaction, real cancellation succeeded.
 - Decision: **do not pursue a future-dated-transaction cancellation patch now.** Entering not-yet-earned future income as a real transaction is not the intended normal workflow, and the reconciliation guard is useful protection against inconsistent history.
-- Therefore **V95E is NOT promoted and is no longer the next action**. Do not treat V95E as PHONE PASS and do not use its future-date reconstruction change as a new baseline merely because it exists.
+- V95D was a presentation-only stabilization of the maturity-account action row. It did not change financial, Budget, cancellation, transaction or persistence logic. Its action-row layout passed, but it must not be interpreted as proof that every later cancellation state was already resolved.
+- V95E requires a narrower status than the earlier note implied. The future-dated-transaction reconstruction idea in V95E is **NOT promoted** and is no longer a next action. However, V95E must **not** be treated as a wholly failed/discarded build: phone testing later reached an enabled real-cancellation path and completed a real cancellation successfully after the artificial future-dated ₮10,000 test entry was removed.
+- Therefore do not use the V95E future-date reconstruction change as a baseline. At the same time, preserve the independently PHONE-PASS cancellation behavior demonstrated in that test lineage.
 - Preserve: cancellation per-lot rounding, all 4 rules, simple/compound behavior, receiver picker, yearly Budget anniversary behavior, `+ Хүүгийн орлого`, compact one-row actions, 7 languages, transfers and data safety.
 
 ## Current status / next action
