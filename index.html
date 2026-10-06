@@ -72,6 +72,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+<!-- V97: V96 base. Fix authoritative late V40 receiver override: active non-legacy Checking only, reused by new/edit/interest modal. -->
 <!-- V96: V95 base. Receiver list now resolves active Checking accounts from live moneyAccounts on every render/open; persistent invariant. -->
 <!-- V95: V94 base. New-account types = Checking/Savings only. Separate-interest receiver invariant = active non-legacy Checking only. -->
 <!-- V94: V92 base; approved maturity-date field order fixed at source template. No observer, no calculation change. -->
@@ -19884,7 +19885,7 @@ window.openMongoSavingsExternalInterestV9=function(id){
 window.MONGO_INTEREST_RECEIVER_REAL_ACCOUNTS='V40';
 function typ40(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
 function eligible40(a,excludeId){
-  return !!a && a.active!==false && !a.legacy && String(a.id)!==String(excludeId||'') && ['checking','cash'].includes(typ40(a));
+  return !!a && a.active!==false && !a.legacy && String(a.id)!==String(excludeId||'') && typ40(a)==='checking';
 }
 function esc40(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function opts40(selected,excludeId){
