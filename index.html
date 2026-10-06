@@ -19741,6 +19741,60 @@ window.saveMongoSavingsDepositInterestV13=function(id){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V95D — stable one-row maturity actions after every re-render.
+     Presentation-only. No financial, Budget, cancellation, picker, transaction or persistence logic changed. -->
+<style id="mongo-v95d-stable-maturity-actions">
+.mongo-v95d-maturity-actions{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+  margin:8px 0!important;
+}
+.mongo-v95d-maturity-actions .mongo-cancel-btn,
+.mongo-v95d-maturity-actions .mongo-savings-interest-income-v95b{
+  display:block!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.mongo-v95d-maturity-actions .btn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:12px 8px!important;
+  white-space:nowrap!important;
+  font-size:clamp(12px,3.4vw,15px)!important;
+}
+</style>
+<script id="mongo-v95d-stable-maturity-actions">
+(function(){
+'use strict';
+window.MONGO_STABLE_MATURITY_ACTIONS='V95D';
+function typD(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function eligibleD(a){
+ return !!a&&typD(a)==='savings'&&a.active!==false&&(a.depositTermType||'term')==='term'&&a.interestMode==='maturity';
+}
+const prevD=accountInlineDetail;
+accountInlineDetail=function(a){
+ let html=prevD(a);
+ if(String(expandedMoneyAccountId)!==String(a&&a.id)||!eligibleD(a)) return html;
+ const cancelRe=/(<div class="mongo-cancel-btn">[\s\S]*?<\/div>)/;
+ const interestRe=/(<div class="mongo-savings-interest-income-v95b">[\s\S]*?<\/div>)/;
+ const cm=html.match(cancelRe), im=html.match(interestRe);
+ if(!cm||!im) return html;
+ html=html.replace(cm[1],'').replace(im[1],'');
+ return html+`<div class="mongo-v95d-maturity-actions">${cm[1]}${im[1]}</div>`;
+};
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
