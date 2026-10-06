@@ -72,6 +72,7 @@ V41.1: Security hardening — CSP/meta protections, safer import, user-scoped ba
 -->
 <html lang="mn">
 <head>
+<!-- V96: V95 base. Receiver list now resolves active Checking accounts from live moneyAccounts on every render/open; persistent invariant. -->
 <!-- V95: V94 base. New-account types = Checking/Savings only. Separate-interest receiver invariant = active non-legacy Checking only. -->
 <!-- V94: V92 base; approved maturity-date field order fixed at source template. No observer, no calculation change. -->
 <!-- Möngö PHONE TEST V92 — bounded UI/i18n change only:
@@ -14229,10 +14230,16 @@ rRecent=function(){
 function interestModeOptions(selected){const q=V58();const safeSelected=selected==='none'?'compound':selected;return [['compound',q.compound],['payout',q.payout],['maturity',q.maturity]].map(x=>`<option value="${x[0]}"${safeSelected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
 function frequencyOptions(selected){const q=V58();return [['monthly',q.monthly],['quarterly',q.quarterly],['yearly',q.yearly],['maturity',q.atMaturity]].map(x=>`<option value="${x[0]}"${selected===x[0]?' selected':''}>${x[1]}</option>`).join('');}
 function accountOptions(selected,exclude){
-  /* Protected invariant: a separate-interest receiver is an ACTIVE CHECKING account only.
-     Never offer Savings, Cash, inactive accounts, or the legacy “Opening money / Эхний мөнгө”. */
-  return window.MongoAccounts.activeAccounts(moneyAccounts,{excludeId:exclude,type:'checking'})
-    .filter(a=>!a.legacy&&String(a.id)!=='legacy_main')
+  /* PROTECTED APP-WIDE INVARIANT (V96):
+     Separate-interest receiver = active, non-legacy Checking only.
+     Resolve from the live moneyAccounts array on EVERY render/open so newly-created
+     Checking accounts are immediately discoverable. Never offer Savings, Cash,
+     inactive accounts, or legacy “Opening money / Эхний мөнгө”. */
+  const normalize=window.MongoAccounts?.normalizeType||((t)=>t==='bank'?'checking':(t||'checking'));
+  return (Array.isArray(moneyAccounts)?moneyAccounts:[])
+    .filter(a=>a&&a.active!==false&&!a.legacy&&String(a.id)!=='legacy_main')
+    .filter(a=>normalize(a.type)==='checking')
+    .filter(a=>exclude==null||String(a.id)!==String(exclude))
     .map(a=>`<option value="${a.id}"${String(selected)===String(a.id)?' selected':''}>${accountIcon(a)} ${a.name}</option>`).join('');
 }
 function goalOptions(selected){return `<option value="">${V58().noGoal}</option>`+goals.map(g=>`<option value="${g.id}"${String(selected)===String(g.id)?' selected':''}>🎯 ${g.name}</option>`).join('');}
