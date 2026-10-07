@@ -20035,6 +20035,131 @@ setTimeout(()=>{refresh();badge()},3200);
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V105 — preserve interest type + translate calculator tabs.
+     UI/language lifecycle only. No financial formulas, transactions, Budget or persistence changes. -->
+<script id="mongo-v105-cancel-language-ui">
+(function(){
+'use strict';
+window.MONGO_PHONE_TEST_BUILD='V105';
+
+const T={
+ mn:{saveCalc:'Хуримтлал тооцох',cancelCalc:'Хугацаанаас өмнө цуцлах'},
+ en:{saveCalc:'Savings calculator',cancelCalc:'Early termination'},
+ zh:{saveCalc:'储蓄计算',cancelCalc:'提前终止'},
+ ja:{saveCalc:'貯蓄計算',cancelCalc:'中途解約'},
+ ko:{saveCalc:'저축 계산',cancelCalc:'중도 해지'},
+ ru:{saveCalc:'Расчёт накоплений',cancelCalc:'Досрочное расторжение'},
+ de:{saveCalc:'Sparberechnung',cancelCalc:'Vorzeitig kündigen'}
+};
+
+function L(){
+  const k=(typeof lang==='string' && T[lang]) ? lang : 'mn';
+  return T[k];
+}
+function cancelRoot(){
+  return document.getElementById('v382gCancel');
+}
+function translateTabs(){
+  const root=cancelRoot();
+  if(!root) return;
+  const t=L();
+  // The two calculator-mode buttons are the first direct mode buttons above the form.
+  const buttons=[...root.querySelectorAll('button')];
+  for(const b of buttons){
+    const x=(b.textContent||'').trim();
+    if(/^(Хуримтлал тооцох|Savings calculator|储蓄计算|貯蓄計算|저축 계산|Расчёт накоплений|Sparberechnung)$/i.test(x)) b.textContent=t.saveCalc;
+    if(/^(Хугацаанаас өмнө цуцлах|Early termination|提前终止|中途解約|중도 해지|Досрочное расторжение|Vorzeitig kündigen)$/i.test(x)) b.textContent=t.cancelCalc;
+  }
+}
+function preserveInterestType(){
+  const root=cancelRoot();
+  if(!root) return;
+
+  // Existing calculator interest-method select. Do not rebuild it; only restore visibility.
+  const interest=document.getElementById('ginterest');
+  if(!interest) return;
+  const wrap=interest.parentElement;
+  const rule=document.getElementById('grule');
+  const actual=rule && rule.value==='actual';
+
+  // Rule 4 may hide the interest method while active. All other rules must restore it.
+  if(wrap && !actual){
+    wrap.style.removeProperty('display');
+    wrap.hidden=false;
+  }
+
+  // Restore the compound-frequency block only according to the existing interest selection.
+  const cw=document.getElementById('gcompoundWrap');
+  if(cw && !actual){
+    cw.style.display=(interest.value==='compound')?'':'none';
+  }
+}
+function refresh(){
+  translateTabs();
+  preserveInterestType();
+}
+window.mongoCancelRefreshLanguageV105=refresh;
+
+// Chain after V104's refresh; do not replace its now-correct lower translations.
+const p=window.mongoCancelRefreshLanguageV104;
+window.mongoCancelRefreshLanguageV104=function(){
+  if(typeof p==='function') p();
+  setTimeout(refresh,0);
+};
+
+// Language switching can re-render the calculator. Re-apply after that render.
+try{
+  if(typeof setLang==='function' && !setLang.__v105CancelUI){
+    const old=setLang;
+    setLang=function(){
+      const r=old.apply(this,arguments);
+      setTimeout(refresh,0);
+      setTimeout(refresh,250);
+      setTimeout(refresh,800);
+      return r;
+    };
+    setLang.__v105CancelUI=true;
+  }
+}catch(_){}
+
+// Rule changes can hide/show fields; restore the existing interest type for rules 1–3.
+document.addEventListener('change',function(e){
+  if(e.target && (e.target.id==='grule' || e.target.id==='ginterest')){
+    setTimeout(refresh,0);
+  }
+},true);
+
+// Observe only the calculator subtree lifecycle.
+let obs;
+function observe(){
+  const root=cancelRoot();
+  if(!root) return;
+  if(obs) obs.disconnect();
+  obs=new MutationObserver(()=>setTimeout(refresh,0));
+  obs.observe(root,{childList:true,subtree:true});
+  refresh();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(observe,2500));
+setTimeout(observe,3300);
+
+// Replace only our PHONE TEST badge.
+function badge(){
+  let b=document.getElementById('mongo-phone-test-build-v104');
+  if(!b) b=document.getElementById('mongo-phone-test-build-v105');
+  if(!b){
+    b=document.createElement('div');
+    b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
+    document.body.appendChild(b);
+  }
+  b.id='mongo-phone-test-build-v105';
+  b.textContent='PHONE TEST V105';
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(badge,500));
+setTimeout(badge,3200);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
