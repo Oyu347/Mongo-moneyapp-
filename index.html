@@ -18262,8 +18262,8 @@ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)
 function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
 function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const yy=y+Math.floor(m/12),mm=((m%12)+12)%12,last=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(day,last))}
 function contributions(sd,ed){const arr=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value))}];const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;if(!reg||!amt)return arr;const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;arr.push({date:dt,amount:amt})}return arr}
-function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
- for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay)total+=lot.amount*rate*days(from,pay)/365;}prev=pay;}
+function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const compound=document.getElementById('ginterest')?.value==='compound';const lots=contributions(sd,ed).map(x=>({date:x.date,amount:x.amount,balance:x.amount}));let total=0,prev=sd;
+ for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay){const base=compound?lot.balance:lot.amount;const earned=base*rate*days(from,pay)/365;total+=earned;if(compound)lot.balance+=earned;}}prev=pay;}
  return total;
 }
 function boot(){const rule=document.getElementById('grule'),wrap=document.getElementById('gmarketWrap'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo');if(!rule||!wrap||!prior||!go){setTimeout(boot,300);return}if(document.getElementById('gmarketContractWrap'))return;
@@ -18273,7 +18273,7 @@ function boot(){const rule=document.getElementById('grule'),wrap=document.getEle
  function setAutoPrior(){if(rule.value==='actual'&&!priorManual)prior.value=Math.round(paidInterest()).toLocaleString('en-US')}
  prior.addEventListener('input',()=>{if(rule.value==='actual')priorManual=true});
  const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';prior.readOnly=false;if(on)setAutoPrior();else priorManual=false;}rule.onchange=sync;
- ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{setAutoPrior()}))}});
+ ['gmarketContract','gmarketFreq','ginterest','gcompoundfreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{setAutoPrior()}))}});
  go.addEventListener('click',()=>{setAutoPrior()},true);
  sync();
  try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
@@ -20703,3 +20703,19 @@ window.MONGO_CANCELLATION_INTEREST_ACTUAL='V82';
 <script>window.MONGO_LEGACY_CANCELLATION_INTEREST='V83';</script>
 
 <script>window.MONGO_ACTUAL_ONLY_INCOME_PROGRESS='V84';</script>
+
+<!-- Möngö PHONE TEST V109 — compound-aware prior-paid interest estimate only.
+     Keeps V108 manual override; no cancellation-rule, Budget, transaction or persistence changes. -->
+<script id="mongo-v109-compound-prior-paid-marker">
+window.MONGO_PHONE_TEST_BUILD='V109';
+(function(){
+ function badge(){
+   document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
+   var b=document.getElementById('mongo-phone-test-build-v109');
+   if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v109';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
+   b.textContent='PHONE TEST V109';
+ }
+ document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4300)});
+ setTimeout(badge,5000);
+})();
+</script>
