@@ -82,3 +82,13 @@ Before the next feature/fix:
 
 ## Current status / next action
 The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the intended workflow**. Before any new code change, review the remaining Savings backlog and choose one still-unfinished item. Do not rework the future-dated test case unless the product later intentionally supports posting future income as a real transaction.
+
+
+## 2026-10-07 — V100 staged cancellation calculator stability PHONE PASS
+- Source: exact conversation V95E source; V99's broad lifecycle stabilizer was not carried forward.
+- V100 changed only the existing Rule 2 staged-calculator lifecycle: if the cancellation calculator rebuilds its DOM and the existing tier node disappears, the existing V95E staged UI is reinstalled. No duplicate tier UI/formula was added.
+- PHONE PASS: `Үе шаттай хүү бодох` remains visible/stable after the prior disappear/reappear failure.
+- PHONE PASS: existing four editable tiers remain visible: 0–89 = 2.4%, 90–179 = 4%, 180–364 = 6%, 365+ = 8%.
+- Regression check: the calculator's other expected fields remained visible in the user's phone test; the earlier V99 UI regression was not observed.
+- Status: **V100 PHONE PASS for this bounded staged-visibility fix only.** This does not promote production/main and does not supersede the protected financial PHONE-PASS checkpoints without their own regression tests.
+- Separate remaining display issue: literal `\\n\\n` is visible at the bottom of the page. Treat it as presentation-only and fix separately; do not mix it with cancellation formulas or data logic.
