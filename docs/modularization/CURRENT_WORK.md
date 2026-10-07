@@ -92,3 +92,11 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Regression check: the calculator's other expected fields remained visible in the user's phone test; the earlier V99 UI regression was not observed.
 - Status: **V100 PHONE PASS for this bounded staged-visibility fix only.** This does not promote production/main and does not supersede the protected financial PHONE-PASS checkpoints without their own regression tests.
 - Separate remaining display issue: literal `\\n\\n` is visible at the bottom of the page. Treat it as presentation-only and fix separately; do not mix it with cancellation formulas or data logic.
+
+
+## 2026-10-07 — cancellation calculator language-switch lifecycle
+- V102 phone regression: after switching app language, the cancellation calculator rebuilt its core DOM. This removed already-installed supplemental calculator controls: interest method could disappear and Rule 3 / Rule 4 UI could disappear or leave mismatched fields.
+- Root cause confirmed in code: the language hook called `v382gRefreshLanguage=render`; `render()` replaces the calculator `innerHTML`, invalidating the Rule 2/3/4 injected nodes and event bindings.
+- V103 candidate: `Mongo-PHONE-TEST-CANCEL-LANGUAGE-STABLE-V103.html`.
+- V103 changes only calculator language refresh: translate existing core labels/options in place instead of rebuilding the calculator DOM. Financial formulas, cancellation rules, account data, Budget and persistence are untouched.
+- V103 status: **NEEDS PHONE TEST**. Required regression: switch among languages while checking interest method and all 4 cancellation rules remain present; switch back to Mongolian; confirm entered values and calculation results remain stable.
