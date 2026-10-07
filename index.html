@@ -16988,6 +16988,21 @@ const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){
 };
 const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{installNew();const open=document.getElementById('account-edit-modal');if(open){const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});}},30);};
 setTimeout(installNew,50);
+
+/* V102 — term-deposit contract lifecycle stability only.
+   Some later savings UI scripts can rebuild #account-interest-fields after
+   V38.1 mounted the contract once. Re-mount the existing V38.1 contract only
+   when the Savings add form exists and its contract node is genuinely missing.
+   This does not change deposit-type values, interest formulas or cancellation. */
+window.MONGO_TERM_DEPOSIT_UI_STABILITY='V102';
+setInterval(function(){
+  const root=document.getElementById('account-interest-fields');
+  if(!root)return;
+  const type=document.getElementById('account-type');
+  if(type && type.value!=='savings')return;
+  if(!document.getElementById('account-term-contract')) ensure('account',{});
+},400);
+
 setTimeout(()=>{
   let changed=false;
   (moneyAccounts||[]).forEach(a=>{
