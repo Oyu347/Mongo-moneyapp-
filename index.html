@@ -18269,9 +18269,12 @@ function paidInterest(){const a=document.getElementById('gstart')?.value,b=docum
 function boot(){const rule=document.getElementById('grule'),wrap=document.getElementById('gmarketWrap'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo');if(!rule||!wrap||!prior||!go){setTimeout(boot,300);return}if(document.getElementById('gmarketContractWrap'))return;
  const grid=wrap.querySelector('.gmarket-grid'),rateWrap=document.getElementById('gmarketRateWrap');const f=document.createElement('div');f.id='gmarketContractWrap';f.innerHTML='<label>'+T().contract+'</label><input id="gmarketContract" type="number" min="0" step=".01" value="" placeholder="12">';grid.insertBefore(f,rateWrap);
  const note=document.createElement('div');note.id='gpriorAutoNote';note.textContent=T().auto;prior.parentElement.insertAdjacentElement('afterend',note);
- const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';if(on){prior.readOnly=true;prior.value=Math.round(paidInterest()).toLocaleString('en-US')}else prior.readOnly=false;}rule.onchange=sync;
- ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')}))}});
- go.addEventListener('click',()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')},true);
+ let priorManual=false;
+ function setAutoPrior(){if(rule.value==='actual'&&!priorManual)prior.value=Math.round(paidInterest()).toLocaleString('en-US')}
+ prior.addEventListener('input',()=>{if(rule.value==='actual')priorManual=true});
+ const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';prior.readOnly=false;if(on)setAutoPrior();else priorManual=false;}rule.onchange=sync;
+ ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{setAutoPrior()}))}});
+ go.addEventListener('click',()=>{setAutoPrior()},true);
  sync();
  try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
 }
@@ -20054,6 +20057,14 @@ window.MONGO_PHONE_TEST_BUILD='V107';
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,800)});
  setTimeout(badge,3600);
 })();
+</script>
+
+<!-- Möngö PHONE TEST V108 — Rule 4 prior-paid interest remains auto-estimated until user manually edits it. -->
+<script id="mongo-v108-prior-interest-manual-override-marker">
+window.MONGO_PHONE_TEST_BUILD='V108';
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+  document.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&/PHONE TEST V107/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/PHONE TEST V107/g,'PHONE TEST V108')});
+},1200));
 </script>
 </body>
 </html>
