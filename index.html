@@ -18595,7 +18595,37 @@ accountInlineDetail=function(a){
 })();
 </script>
 
-\n<script id="mongo-interest-receiver-persist-v11">\n(function(){\n'use strict';\n/* Persist the Rule-4 external-interest receiver AFTER the legacy edit saver finishes.\n   The earlier V7 hook wrote to the live account before saveMoneyAccountEdit(); the legacy\n   saver can replace/rebuild that account object, which dropped the two receiver fields. */\nconst base=saveMoneyAccountEdit;\nsaveMoneyAccountEdit=async function(){\n  const id=String(editingMoneyAccountId||'');\n  const method=(typeof findMethod7==='function'?findMethod7():null) || (function(){\n    const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;\n    return [...root.querySelectorAll('select')].find(sel=>[...sel.options].some(o=>o.value==='external'))||null;\n  })();\n  const sel=document.getElementById('edit-interest-receive-account-v7');\n  const external=method?.value==='external';\n  const receiver=external?String(sel?.value||''):'';\n  if(external&&!receiver){alert('Хүү хүлээн авах дансаа сонгоно уу.');return;}\n  const result=await base();\n  if(!id)return result;\n  const a=(moneyAccounts||[]).find(x=>String(x.id)===id);\n  if(a && (typeof normalizeAccountType!=='function'||normalizeAccountType(a.type)==='savings')){\n    a.interestReceiveAccountId=receiver;\n    a.interestPayoutAccountId=receiver;\n    if(typeof saveData==='function')await saveData();\n  }\n  return result;\n};\n})();\n</script>\n
+
+<script id="mongo-interest-receiver-persist-v11">
+(function(){
+'use strict';
+/* Persist the Rule-4 external-interest receiver AFTER the legacy edit saver finishes.
+   The earlier V7 hook wrote to the live account before saveMoneyAccountEdit(); the legacy
+   saver can replace/rebuild that account object, which dropped the two receiver fields. */
+const base=saveMoneyAccountEdit;
+saveMoneyAccountEdit=async function(){
+  const id=String(editingMoneyAccountId||'');
+  const method=(typeof findMethod7==='function'?findMethod7():null) || (function(){
+    const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;
+    return [...root.querySelectorAll('select')].find(sel=>[...sel.options].some(o=>o.value==='external'))||null;
+  })();
+  const sel=document.getElementById('edit-interest-receive-account-v7');
+  const external=method?.value==='external';
+  const receiver=external?String(sel?.value||''):'';
+  if(external&&!receiver){alert('Хүү хүлээн авах дансаа сонгоно уу.');return;}
+  const result=await base();
+  if(!id)return result;
+  const a=(moneyAccounts||[]).find(x=>String(x.id)===id);
+  if(a && (typeof normalizeAccountType!=='function'||normalizeAccountType(a.type)==='savings')){
+    a.interestReceiveAccountId=receiver;
+    a.interestPayoutAccountId=receiver;
+    if(typeof saveData==='function')await saveData();
+  }
+  return result;
+};
+})();
+</script>
+
 <!-- Möngö PHONE TEST V12 — receiver persistence moved into canonical Rule4 read/applyMeta save path; failed V11 post-save wrapper removed. -->
 
 
