@@ -20070,6 +20070,144 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
   document.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&/PHONE TEST V107/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/PHONE TEST V107/g,'PHONE TEST V108')});
 },1200));
 </script>
+
+<style id="mongo-v114-calc-interest-flow-style">
+#v382gCancel #mongoV114CapitalizedInfo{grid-column:1/-1;font-size:12px;line-height:1.45;color:#6b7280;margin-top:-2px}
+</style>
+<script id="mongo-v114-calc-interest-flow">
+(function(){
+'use strict';
+window.MONGO_PHONE_TEST_BUILD='V114';
+const L={
+ mn:{deposit:'Хадгаламждаа нэмэх',external:'Өөр дансанд авах',maturity:'Хугацааны эцэст авах',
+     capitalized:'Капиталжсан хүү',paid:'Өмнө бодитоор олгосон хүү'},
+ en:{deposit:'Add to deposit',external:'Pay to another account',maturity:'Pay at maturity',
+     capitalized:'Capitalized interest',paid:'Interest actually paid previously'},
+ zh:{deposit:'计入存款',external:'支付到其他账户',maturity:'到期支付',
+     capitalized:'资本化利息',paid:'此前实际支付的利息'},
+ ja:{deposit:'預金に加算',external:'別口座で受取',maturity:'満期時に受取',
+     capitalized:'元本組入利息',paid:'以前に実際に支払われた利息'},
+ ko:{deposit:'예금에 더하기',external:'다른 계좌로 받기',maturity:'만기 시 받기',
+     capitalized:'원금에 합산된 이자',paid:'이전에 실제 지급된 이자'},
+ ru:{deposit:'Добавлять к вкладу',external:'Получать на другой счёт',maturity:'Получить в конце срока',
+     capitalized:'Капитализированные проценты',paid:'Ранее фактически выплаченные проценты'},
+ de:{deposit:'Dem Guthaben gutschreiben',external:'Auf ein anderes Konto auszahlen',maturity:'Bei Fälligkeit auszahlen',
+     capitalized:'Kapitalisierte Zinsen',paid:'Zuvor tatsächlich ausgezahlte Zinsen'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+function N(v){return Number(String(v??'').replace(/,/g,''))||0}
+function fmt(v){return Math.round(Math.max(0,v)).toLocaleString('en-US')+'₮'}
+function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
+function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate(),last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(day,last))}
+function lots(sd,ed){
+ const out=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value)),balance:Math.max(0,N(document.getElementById('gp')?.value))}];
+ const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;
+ if(!reg||!amt)return out;
+ const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);
+ for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;out.push({date:dt,amount:amt,balance:amt})}
+ return out;
+}
+function contractInterest(compound){
+ const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;
+ if(!a||!b)return 0;
+ const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;
+ const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;
+ const freq=document.getElementById('gmarketFreq')?.value;
+ if(freq==='maturity'){
+   let total=0; for(const lot of lots(sd,ed)) total+=lot.amount*rate*days(lot.date,ed)/365; return total;
+ }
+ const months=freq==='quarterly'?3:(freq==='yearly'?12:1);
+ const arr=lots(sd,ed);let total=0,prev=sd;
+ for(let k=1;k<1200;k++){
+   const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;
+   for(const lot of arr){
+     const from=lot.date>prev?lot.date:prev;
+     if(from<pay&&lot.date<pay){
+       const base=compound?lot.balance:lot.amount,earned=base*rate*days(from,pay)/365;
+       total+=earned;if(compound)lot.balance+=earned;
+     }
+   }
+   prev=pay;
+ }
+ return total;
+}
+function boot(){
+ const root=document.getElementById('v382gCancel'),payout=document.getElementById('gmarketPayout'),
+       freq=document.getElementById('gmarketFreq'),interest=document.getElementById('ginterest'),
+       prior=document.getElementById('gprior'),priorWrap=document.getElementById('gpriorWrap'),
+       market=document.getElementById('gmarketWrap');
+ if(!root||!payout||!freq||!interest||!prior||!priorWrap||!market){setTimeout(boot,350);return}
+ if(root.dataset.v114==='1'){sync();return}
+ root.dataset.v114='1';
+
+ function ensureOptions(){
+   const q=T();
+   const opts=[['deposit',q.deposit],['external',q.external],['maturity',q.maturity]];
+   for(const [v,txt] of opts){
+     let o=payout.querySelector('option[value="'+v+'"]');
+     if(!o){o=document.createElement('option');o.value=v;payout.appendChild(o)}
+     o.textContent=txt;
+   }
+ }
+ function ensureInfo(){
+   let el=document.getElementById('mongoV114CapitalizedInfo');
+   if(!el){el=document.createElement('div');el.id='mongoV114CapitalizedInfo';priorWrap.insertAdjacentElement('afterend',el)}
+   return el;
+ }
+ function sync(){
+   ensureOptions();
+   const q=T(),mode=payout.value||'external',compound=mode==='deposit';
+   // One source of truth: payout mode determines simple/compound calculation.
+   interest.value=compound?'compound':'simple';
+   interest.disabled=true;
+   const iw=interest.parentElement;if(iw)iw.style.display='none';
+   const cw=document.getElementById('gcompoundWrap');if(cw)cw.style.display='none';
+
+   // Frequency semantics.
+   let maturityOpt=freq.querySelector('option[value="maturity"]');
+   if(!maturityOpt){maturityOpt=document.createElement('option');maturityOpt.value='maturity';freq.appendChild(maturityOpt)}
+   maturityOpt.textContent=q.maturity;
+   if(mode==='maturity'){freq.value='maturity';freq.disabled=true}else{
+     if(freq.value==='maturity'||freq.value==='other')freq.value='monthly';
+     freq.disabled=false;
+   }
+
+   const info=ensureInfo();
+   const pl=priorWrap.querySelector('label');if(pl)pl.textContent=q.paid;
+   if(mode==='deposit'){
+     prior.value='0';prior.readOnly=true;priorWrap.style.display='none';
+     info.style.display='block';
+     info.textContent=q.capitalized+': '+fmt(contractInterest(true));
+   }else if(mode==='external'){
+     priorWrap.style.display='';
+     prior.readOnly=false;
+     info.style.display='none';
+     // Existing auto-paid script remains the source for editable prior amount.
+   }else{
+     prior.value='0';prior.readOnly=true;priorWrap.style.display='none';
+     info.style.display='none';
+   }
+ }
+ payout.addEventListener('change',sync);
+ freq.addEventListener('change',sync);
+ ['gmarketContract','gstart','gend','gp','gcontrib','gcontribamt','gcontribfreq'].forEach(id=>{
+   const e=document.getElementById(id);if(e){e.addEventListener('input',sync);e.addEventListener('change',sync)}
+ });
+ const go=document.getElementById('v382gGo');if(go)go.addEventListener('click',sync,true);
+ try{
+   if(typeof setLang==='function'&&!setLang.__v114calc){
+     const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(sync,50);setTimeout(sync,500);return r};
+     setLang.__v114calc=true;
+   }
+ }catch(e){}
+ sync();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,5200));
+setTimeout(boot,5700);
+})();
+</script>
+<div id="mongo-phone-test-build-v114" style="position:fixed;right:8px;bottom:8px;z-index:99999;background:#374151;color:white;padding:5px 8px;border-radius:8px;font:11px Arial;opacity:.88">PHONE TEST V114</div>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
