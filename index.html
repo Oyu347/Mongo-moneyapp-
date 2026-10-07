@@ -17097,7 +17097,32 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
   gcontrib.onchange=()=>{const on=gcontrib.value==='regular';gcontribAmtWrap.style.display=on?'block':'none';gcontribFreqWrap.style.display=on?'block':'none'};
   v382gGo.onclick=run;
   grule.onchange();ginterest.onchange();gcontrib.onchange();days();
-  window.v382gRefreshLanguage=render;
+  // V103 — language refresh must not rebuild the cancellation calculator DOM.
+  // Rebuilding here removed the already-installed Rule 2/3/4 panels and their
+  // event bindings. Translate the existing core controls in place instead.
+  function refreshLanguageInPlace(){
+   const q=Q();
+   const label=(id,txt)=>{const e=document.getElementById(id);const l=e?.parentElement?.querySelector('label');if(l)l.textContent=txt};
+   const opt=(id,value,txt)=>{const e=document.getElementById(id);const o=e?[...e.options].find(x=>x.value===value):null;if(o)o.textContent=txt};
+   const saveBtn=document.getElementById('v382gSave'),earlyBtn=document.getElementById('v382gEarly');
+   if(saveBtn)saveBtn.textContent=q.tabCalc;if(earlyBtn)earlyBtn.textContent=q.tabCancel;
+   label('gp',q.principal);label('ginterest',q.interestMethod);label('gcompoundfreq',q.compoundFreq);
+   label('gcontrib',q.contribution);label('gcontribamt',q.contributionAmount);label('gcontribfreq',q.contributionFreq);
+   label('gcr',q.contractRate);label('grr',q.cancelRate);label('gprior',q.priorInterest);
+   label('gstart',q.startDate);label('gend',q.cancelDate);label('gfee',q.fee);label('grule',q.rule);label('gmanual',q.manualInterest);
+   opt('ginterest','simple',q.simple);opt('ginterest','compound',q.compound);
+   opt('gcompoundfreq','12',q.monthly);opt('gcompoundfreq','4',q.quarterly);opt('gcompoundfreq','1',q.yearly);
+   opt('gcontrib','none',q.noContribution);opt('gcontrib','regular',q.regularContribution);
+   opt('gcontribfreq','monthly',q.monthly);opt('gcontribfreq','quarterly',q.quarterly);opt('gcontribfreq','yearly',q.yearly);
+   opt('grule','all',q.all);opt('grule','staged',q.staged);opt('grule','threshold',q.threshold);opt('grule','actual',q.actual);
+   const held=document.getElementById('gdays');if(held){const l=held.parentElement?.querySelector('label');if(l)l.textContent=q.heldPeriod;days()}
+   const go=document.getElementById('v382gGo');if(go)go.textContent=q.calculate;
+   const note=document.querySelector('#v382gCancel .gnote');if(note)note.textContent=q.note;
+   // Existing result values are left intact; only their labels are translated.
+   const rows=[...document.querySelectorAll('#v382gCancel #gout .grow')];
+   [q.principal,q.allowed,q.claw,q.add,q.fee,q.estimated].forEach((txt,i)=>{const sp=rows[i]?.querySelector('span');if(sp)sp.textContent=txt});
+  }
+  window.v382gRefreshLanguage=refreshLanguageInPlace;
   }
   function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){
