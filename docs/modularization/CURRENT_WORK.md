@@ -124,3 +124,14 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Status: **V121 PHONE PASS for the bounded cancellation-calculator work tested above.** This is a protected phone-test checkpoint, not automatic production/main promotion and not proof of unrelated modules.
 - Preserve going forward: all earlier per-lot whole-₮ rounding, Rule 2 staged tiers, Rule 3 behavior, receiver picker, yearly Budget anniversary behavior, seven-language stability, transfers, persistence/data safety and compact Savings actions.
 - Exact next action: perform one final consolidated Rules 1–3 numeric regression matrix (simple + compound) without changing code. If those numbers pass, close the preview cancellation-calculator cycle and move to the remaining Savings backlog; the known separate candidate is opening-balance edit synchronization with linked goal/history.
+
+
+## 2026-10-08 — V121 final Rules 1–3 regression closeout PHONE PASS
+- User completed the requested consolidated phone regression on the visible `PHONE TEST V121` build using principal ₮10,000,000, regular monthly additions of ₮1,000,000, start 2026-01-01, cancellation 2027-01-31 (395 days), and cancellation fee ₮3,000.
+- Rule 1 PHONE PASS: simple-interest result displayed principal total **₮22,000,000**, allowed interest **₮416,022**, prior-interest adjustment **₮0**, add-on interest **₮416,022**, calculated bank payout **₮22,413,022**. Compound/monthly remained independently selectable and displayed allowed interest **₮420,313**, calculated bank payout **₮22,417,313**.
+- Rule 2 PHONE PASS: staged tiers remained visible/editable (0–89 = 2.4%, 90–179 = 4%, 180–364 = 6%, 365+ = 8%). Simple-interest result displayed allowed interest **₮1,227,518**, payout **₮23,224,518**; compound/monthly displayed allowed interest **₮1,269,958**, payout **₮23,266,958**.
+- Rule 3 PHONE PASS: threshold 180 days, before threshold 2.4%, at/after threshold 6%. Simple-interest result displayed allowed interest **₮1,040,055**, payout **₮23,037,055**; compound/monthly displayed allowed interest **₮1,067,149**, payout **₮23,064,149**.
+- Rule 4 is **not reopened** by this closeout: its payout-condition-specific behavior and three payout forms were already recorded as PHONE PASS in the V121 checkpoint above.
+- Preview-only invariant remains protected: no real account, transaction or Budget mutation.
+- **Cancellation-calculator preview cycle is CLOSED / PHONE PASS for the tested V121 scope.** V121 is a protected phone-test checkpoint, not an automatic production/main promotion and not proof of unrelated modules.
+- Next work should move to the remaining Savings backlog. Known separate candidate: opening-balance edit synchronization with linked goal/history. Do not alter the now-closed cancellation calculator unless a new regression is observed.
