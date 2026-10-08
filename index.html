@@ -20870,3 +20870,71 @@ document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){bo
 setTimeout(function(){boot();badge()},6200);
 })();
 </script>
+
+<!-- Möngö PHONE TEST V121 — Rule 4 settlement semantics only.
+     Deposit-capitalized: final = principal + capitalized interest + recalculation adjustment - fee.
+     Maturity payout before maturity: prior actually-paid interest = 0; allowed cancellation interest is added once.
+     Rules 1–3 and V120 interest-method scope are untouched. -->
+<script id="mongo-v121-rule4-settlement-semantics">
+(function(){
+'use strict';
+window.MONGO_PHONE_TEST_BUILD='V121';
+const L={
+ mn:{capital:'Хадгаламжид нэмэгдсэн хүү'},
+ en:{capital:'Interest added to the deposit'},
+ zh:{capital:'已计入存款的利息'},
+ ja:{capital:'預金に加算された利息'},
+ ko:{capital:'예금에 더해진 이자'},
+ ru:{capital:'Проценты, добавленные к вкладу'},
+ de:{capital:'Dem Guthaben gutgeschriebene Zinsen'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']||L.mn}
+function num(v){const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0}
+function money(v){return '₮'+Math.round(Math.max(0,v)).toLocaleString('en-US')}
+function els(){return {
+ rule:document.getElementById('grule'), payout:document.getElementById('gmarketPayout'),
+ prior:document.getElementById('gprior'), go:document.getElementById('v382gGo'), out:document.getElementById('gout')
+}}
+function enforceMaturityPrior(){
+ const e=els(); if(!e.rule||!e.payout||!e.prior)return;
+ if(e.rule.value==='actual'&&e.payout.value==='maturity'){
+   e.prior.value='0'; e.prior.readOnly=true;
+ } else if(e.rule.value==='actual'&&e.payout.value!=='maturity'){
+   // Do not calculate here; existing V108/V119 logic owns external/deposit estimates.
+   if(e.payout.value==='external')e.prior.readOnly=false;
+ }
+}
+function rewriteResult(){
+ const e=els(); if(!e.rule||!e.payout||!e.out||e.rule.value!=='actual')return;
+ const rows=[...e.out.querySelectorAll('.grow')]; if(rows.length<6)return;
+ const strong=i=>rows[i]?.querySelector('strong');
+ const label=i=>rows[i]?.querySelector('span');
+ const principal=num(strong(0)?.textContent), allowed=num(strong(1)?.textContent), fee=num(strong(4)?.textContent);
+ if(e.payout.value==='deposit'){
+   const capital=num(e.prior?.value);
+   const adjustment=allowed-capital;
+   // Keep the recalculation adjustment row; show the already-capitalized amount explicitly so the result reconciles.
+   if(strong(2))strong(2).textContent=(adjustment<0?'−':'+')+money(Math.abs(adjustment));
+   if(label(3))label(3).textContent=T().capital;
+   if(strong(3))strong(3).textContent='+'+money(capital);
+   if(strong(5))strong(5).textContent=money(principal+capital+adjustment-fee);
+ } else if(e.payout.value==='maturity'){
+   // No interest was actually paid before maturity. Allowed cancellation interest is paid once now.
+   if(strong(2))strong(2).textContent='−'+money(0);
+   if(strong(3))strong(3).textContent='+'+money(allowed);
+   if(strong(5))strong(5).textContent=money(principal+allowed-fee);
+ }
+}
+function sync(){enforceMaturityPrior();setTimeout(rewriteResult,0)}
+document.addEventListener('change',ev=>{const id=ev.target&&ev.target.id;if(id==='grule'||id==='gmarketPayout'||id==='gmarketContract'||id==='gmarketRate'||id==='gmarketSettlement'||id==='gmarketActual'||id==='gstart'||id==='gend'||id==='gcontrib'||id==='gcontribamt'||id==='gcontribfreq')setTimeout(sync,0)},true);
+document.addEventListener('click',ev=>{if(ev.target&&ev.target.id==='v382gGo'){enforceMaturityPrior();setTimeout(rewriteResult,30)}},true);
+setInterval(()=>{const c=document.getElementById('v382gCancel');if(c&&c.offsetParent!==null){enforceMaturityPrior();rewriteResult()}},450);
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(e=>e.remove());
+ let b=document.getElementById('mongo-phone-test-build-v121');if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v121';document.body.appendChild(b)}
+ b.textContent='PHONE TEST V121';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{sync();badge()},6800));setTimeout(()=>{sync();badge()},7400);
+})();
+</script>
