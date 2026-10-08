@@ -20164,6 +20164,9 @@ function badge(){
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{refreshLabels();badge()},2800)});setTimeout(()=>{refreshLabels();badge()},3300);
 })();
 </script>
+
+
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -20793,5 +20796,77 @@ window.MONGO_PHONE_TEST_BUILD='V118';
  }
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4400)});
  setTimeout(badge,5200);
+})();
+</script>
+
+<!-- Möngö PHONE TEST V120 — interest-method scope correction.
+     Rules 1–3: user chooses Simple/Compound.
+     Rule 4 only: payout destination determines interest method.
+     No cancellation formulas, Budget, transactions or persistence changed. -->
+<script id="mongo-v120-interest-method-scope">
+(function(){
+'use strict';
+window.MONGO_PHONE_TEST_BUILD='V120';
+let manualInterest=null, internal=false;
+function els(){return {
+ rule:document.getElementById('grule'),
+ interest:document.getElementById('ginterest'),
+ compoundWrap:document.getElementById('gcompoundWrap'),
+ compoundFreq:document.getElementById('gcompoundfreq'),
+ payout:document.getElementById('gmarketPayout'),
+ marketFreq:document.getElementById('gmarketFreq')
+}}
+function setCompoundVisibility(e){
+ if(!e.compoundWrap||!e.interest)return;
+ e.compoundWrap.style.display=e.interest.value==='compound'?'block':'none';
+}
+function syncRule4(){
+ const e=els(); if(!e.rule||!e.interest)return;
+ const isRule4=e.rule.value==='actual';
+ if(!isRule4){
+   e.interest.disabled=false;
+   if(manualInterest&&e.interest.value!==manualInterest){internal=true;e.interest.value=manualInterest;internal=false;}
+   setCompoundVisibility(e);
+   return;
+ }
+ if(!manualInterest)manualInterest=e.interest.value||'simple';
+ const mode=e.payout?.value||'external';
+ const wanted=mode==='deposit'?'compound':'simple';
+ internal=true;e.interest.value=wanted;internal=false;
+ e.interest.disabled=true;
+ if(wanted==='compound'&&e.compoundFreq&&e.marketFreq){
+   if(e.marketFreq.value==='monthly')e.compoundFreq.value='12';
+   else if(e.marketFreq.value==='quarterly')e.compoundFreq.value='4';
+ }
+ setCompoundVisibility(e);
+}
+function boot(){
+ const e=els(); if(!e.rule||!e.interest){setTimeout(boot,250);return;}
+ if(!manualInterest&&e.rule.value!=='actual')manualInterest=e.interest.value||'simple';
+ document.addEventListener('change',function(ev){
+   const id=ev.target&&ev.target.id;
+   if(id==='ginterest'&&!internal){const x=els();if(x.rule&&x.rule.value!=='actual')manualInterest=x.interest.value;}
+   if(id==='grule'||id==='gmarketPayout'||id==='gmarketFreq')setTimeout(syncRule4,0);
+ },true);
+ syncRule4();
+ // Calculator supplemental controls can be installed after core DOM; keep this narrow.
+ let lastRule=e.rule.value,lastPayout=e.payout?.value,lastInterest=e.interest.value;
+ setInterval(function(){
+   const x=els(); if(!x.rule||!x.interest)return;
+   const rp=x.rule.value,pp=x.payout?.value,iv=x.interest.value;
+   if(rp!==lastRule||pp!==lastPayout||(rp==='actual'&&iv!==lastInterest)){
+     lastRule=rp;lastPayout=pp;syncRule4();lastInterest=els().interest?.value;
+   }
+ },350);
+}
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
+ let b=document.getElementById('mongo-phone-test-build-v120');
+ if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v120';document.body.appendChild(b)}
+ b.textContent='PHONE TEST V120';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
+}
+document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){boot();badge()},5600)});
+setTimeout(function(){boot();badge()},6200);
 })();
 </script>
