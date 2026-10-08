@@ -18195,14 +18195,14 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
 (function(){
 'use strict';
 const L={
- mn:{mode:'Хүү олгох хэлбэр',out:'Өөр дансанд олгогдоно',freq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settle:'Цуцлалтын тооцооны арга',rate:'Цуцлалтын жилийн хүү (%)',actual:'Банкны зөвшөөрсөн нийт хүү (₮)',calc:'Хувиар тооцох',bank:'Банкны бодит дүнгээр',note:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.'},
- en:{mode:'Interest payout method',out:'Paid to another account',freq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settle:'Cancellation calculation',rate:'Cancellation annual rate (%)',actual:'Total interest allowed by bank',calc:'Calculate by rate',bank:'Use bank actual amount',note:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or entered as the bank’s actual total amount.'},
- zh:{mode:'利息支付方式',out:'支付到其他账户',freq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settle:'提前终止计算方式',rate:'提前终止年利率 (%)',actual:'银行认可的利息总额',calc:'按利率计算',bank:'按银行实际金额',note:'支付到其他账户的利息不会加入存款本金。提前终止利息可按年利率计算，或输入银行实际确认的利息总额。'},
- ja:{mode:'利息の受取方法',out:'別口座へ受取',freq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settle:'中途解約の計算方法',rate:'中途解約年利 (%)',actual:'銀行が認めた利息総額',calc:'利率で計算',bank:'銀行の実額を使用',note:'別口座に支払われた利息は預金元本に加算されません。中途解約利息は年利率で計算するか、銀行の実際の総額を入力します。'},
- ko:{mode:'이자 지급 방식',out:'다른 계좌로 지급',freq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settle:'중도해지 계산 방식',rate:'중도해지 연이율 (%)',actual:'은행이 인정한 총 이자',calc:'금리로 계산',bank:'은행 실제 금액 사용',note:'다른 계좌로 지급된 이자는 예금 원금에 더해지지 않습니다. 중도해지 이자는 연이율로 계산하거나 은행의 실제 총액을 입력합니다.'},
- ru:{mode:'Способ выплаты процентов',out:'На другой счёт',freq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settle:'Расчёт при расторжении',rate:'Годовая ставка досрочного расторжения (%)',actual:'Общая сумма процентов, признанная банком',calc:'Рассчитать по ставке',bank:'По фактической сумме банка',note:'Проценты, выплаченные на другой счёт, не прибавляются к основной сумме вклада. При расторжении проценты рассчитываются по годовой ставке или вводятся фактической суммой банка.'},
- de:{mode:'Art der Zinsauszahlung',out:'Auf ein anderes Konto',freq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settle:'Berechnung bei Kündigung',rate:'Jahreszins bei vorzeitiger Kündigung (%)',actual:'Von der Bank anerkannter Gesamtzins',calc:'Nach Zinssatz berechnen',bank:'Tatsächlichen Bankbetrag verwenden',note:'Auf ein anderes Konto ausgezahlte Zinsen werden dem Anlagekapital nicht zugeschlagen. Bei Kündigung werden die zulässigen Zinsen per Jahreszins berechnet oder als tatsächlicher Bankbetrag eingegeben.'}
-};
+ mn:{mode:'Хүү олгох хэлбэр',out:'Өөр дансанд олгогдоно',inside:'Хадгаламждаа нэмэгдэнэ',maturity:'Хугацааны эцэст',freq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settle:'Цуцлалтын тооцооны арга',rate:'Цуцлалтын жилийн хүү (%)',actual:'Банкны зөвшөөрсөн нийт хүү (₮)',calc:'Хувиар тооцох',bank:'Банкны бодит дүнгээр',noteOut:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',noteIn:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',noteMat:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
+ en:{mode:'Interest payout method',out:'Paid to another account',inside:'Added to the deposit',maturity:'At maturity',freq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settle:'Cancellation calculation',rate:'Cancellation annual rate (%)',actual:'Total interest allowed by bank',calc:'Calculate by rate',bank:'Use bank actual amount',noteOut:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or the bank actual total amount.',noteIn:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',noteMat:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
+ zh:{mode:'利息支付方式',out:'支付到其他账户',inside:'计入存款',maturity:'到期支付',freq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settle:'提前终止计算方式',rate:'提前终止年利率 (%)',actual:'银行认可的利息总额',calc:'按利率计算',bank:'按银行实际金额',noteOut:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',noteIn:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',noteMat:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
+ ja:{mode:'利息の受取方法',out:'別口座へ受取',inside:'預金に加算',maturity:'満期時',freq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settle:'中途解約の計算方法',rate:'中途解約年利 (%)',actual:'銀行が認めた利息総額',calc:'利率で計算',bank:'銀行の実額を使用',noteOut:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',noteIn:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',noteMat:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
+ ko:{mode:'이자 지급 방식',out:'다른 계좌로 지급',inside:'예금에 더하기',maturity:'만기 시',freq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settle:'중도해지 계산 방식',rate:'중도해지 연이율 (%)',actual:'은행이 인정한 총 이자',calc:'금리로 계산',bank:'은행 실제 금액 사용',noteOut:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',noteIn:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',noteMat:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
+ ru:{mode:'Способ выплаты процентов',out:'На другой счёт',inside:'Добавлять к вкладу',maturity:'В конце срока',freq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settle:'Расчёт при расторжении',rate:'Годовая ставка досрочного расторжения (%)',actual:'Общая сумма процентов, признанная банком',calc:'Рассчитать по ставке',bank:'По фактической сумме банка',noteOut:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',noteIn:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',noteMat:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
+ de:{mode:'Art der Zinsauszahlung',out:'Auf ein anderes Konto',inside:'Dem Guthaben gutschreiben',maturity:'Bei Fälligkeit',freq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settle:'Berechnung bei Kündigung',rate:'Jahreszins bei vorzeitiger Kündigung (%)',actual:'Von der Bank anerkannter Gesamtzins',calc:'Nach Zinssatz berechnen',bank:'Tatsächlichen Bankbetrag verwenden',noteOut:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',noteIn:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',noteMat:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
+}
 function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
 function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
 function M(v){try{return (typeof CS==='string'?CS:'₮')+Math.round(v).toLocaleString('en-US')}catch(e){return '₮'+Math.round(v)}}
@@ -18211,32 +18211,20 @@ function boot(){
  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
  if(document.getElementById('gmarketWrap'))return;
  const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
- wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option><option value="deposit">'+q.deposit+'</option><option value="maturity">'+q.maturity+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option><option value="deposit">'+q.inside+'</option><option value="maturity">'+q.maturity+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.noteOut+'</div>';
  const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
  const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
-  const payout=document.getElementById('gmarketPayout'),freq=document.getElementById('gmarketFreq');
-  function syncPayoutUI(){
-    const mode=payout?.value||'external',freqCell=freq?.parentElement,note=wrap.querySelector('.gmarket-note'),qq=T();
-    if(freqCell)freqCell.style.display=mode==='maturity'?'none':'';
-    if(mode==='maturity'&&freq){const o=freq.querySelector('option[value="other"]');if(o)freq.value='other';}
-    else if(freq&&freq.value==='other')freq.value='monthly';
-    if(note){
-      const lg=(typeof lang==='string'?lang:'mn');
-      const notes={
-        mn:{deposit:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',external:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',maturity:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
-        en:{deposit:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',external:'Interest paid to another account is not added to deposit principal. Allowed cancellation interest is calculated by the cancellation annual rate or the bank actual total amount.',maturity:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
-        zh:{deposit:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',external:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',maturity:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
-        ja:{deposit:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',external:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',maturity:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
-        ko:{deposit:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',external:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',maturity:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
-        ru:{deposit:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',external:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',maturity:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
-        de:{deposit:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',external:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',maturity:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
-      };
-      const z=notes[notes[lg]?lg:'mn'];note.textContent=z[mode]||z.external;
-    }
-  }
-  if(payout)payout.addEventListener('change',syncPayoutUI);
-  syncPayoutUI();
+ const payout=document.getElementById('gmarketPayout'),freq=document.getElementById('gmarketFreq'),prior=document.getElementById('gprior'),note=wrap.querySelector('.gmarket-note');
+ function syncPayout(){
+   const qq=T(),mode=payout.value,freqCell=freq.parentElement;
+   if(note)note.textContent=mode==='deposit'?qq.noteIn:(mode==='maturity'?qq.noteMat:qq.noteOut);
+   if(freqCell)freqCell.style.display=mode==='maturity'?'none':'';
+   if(mode==='maturity'){prior.value='0';prior.readOnly=true;}
+   else if(mode==='deposit'){prior.value='0';prior.readOnly=true;}
+   else {prior.readOnly=false;}
+ }
+ payout.addEventListener('change',syncPayout);syncPayout();
 
  const oldChange=rule.onchange;
  function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';wrap.style.display=on?'block':'none';if(on){
@@ -20100,45 +20088,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
 <!-- Möngö V30.3 logo fix marker -->
 
 <!-- Möngö PHONE TEST — Rule 4: interest can be paid externally or credited to the deposit. Scoped only to cancellation calculator. -->
-<style id="mongo-rule4-payout-destination-scoped">
-#v382gCancel #gmarketPayout{width:100%}
-</style>
-<script id="mongo-rule4-payout-destination-script">
-(function(){
-'use strict';
-const L={
- mn:{inside:'Хадгаламждаа нэмэгдэнэ',noteIn:'Хүү хадгаламждаа нэмэгдсэн бол тусдаа дансанд бодитоор олгогдоогүй тул “Өмнө бодитоор олгосон хүү” 0 байна. Цуцлах үед зөвшөөрөгдөх хүүг сонгосон цуцлалтын нөхцөлөөр тооцно.'},
- en:{inside:'Added to the deposit',noteIn:'When interest is credited to the deposit, it has not been paid out to another account, so “Interest already paid” is 0. Allowed interest at cancellation is calculated under the selected cancellation terms.'},
- zh:{inside:'计入存款本金',noteIn:'利息计入存款时，并未实际支付到其他账户，因此“此前实际已支付的利息”为 0。提前终止时的认可利息按所选提前终止条件计算。'},
- ja:{inside:'預金に加算',noteIn:'利息が預金に加算される場合、別口座へ実際に支払われていないため「すでに支払われた利息」は0です。解約時の認定利息は選択した解約条件で計算します。'},
- ko:{inside:'예금에 더하기',noteIn:'이자가 예금에 더해진 경우 다른 계좌로 실제 지급된 것이 아니므로 “이미 지급된 이자”는 0입니다. 중도해지 시 인정 이자는 선택한 해지 조건으로 계산합니다.'},
- ru:{inside:'Добавлять к вкладу',noteIn:'Если проценты добавляются к вкладу, они не выплачиваются фактически на другой счёт, поэтому «Ранее выплаченные проценты» равны 0. Допустимые проценты при расторжении рассчитываются по выбранным условиям.'},
- de:{inside:'Dem Guthaben gutschreiben',noteIn:'Werden Zinsen dem Guthaben gutgeschrieben, wurden sie nicht auf ein anderes Konto ausgezahlt; daher ist „Bereits ausgezahlter Zins“ 0. Der zulässige Zins bei Kündigung wird nach den gewählten Kündigungsbedingungen berechnet.'}
-};
-function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
-function boot(){
- const payout=document.getElementById('gmarketPayout'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo'),wrap=document.getElementById('gmarketWrap');
- if(!payout||!prior||!go||!wrap){setTimeout(boot,300);return}
- if(payout.querySelector('option[value="deposit"]'))return;
- const opt=document.createElement('option');opt.value='deposit';opt.textContent=T().inside;payout.appendChild(opt);
- const note=wrap.querySelector('.gmarket-note');
- const externalNote=note?note.textContent:'';
- function sync(){
-   const inside=payout.value==='deposit';
-   if(inside){prior.value='0';prior.readOnly=true;if(note)note.textContent=T().noteIn;}
-   else {if(note)note.textContent=externalNote;}
- }
- payout.addEventListener('change',sync);
- ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{
-   const e=document.getElementById(id);if(e){e.addEventListener('input',()=>{if(payout.value==='deposit')prior.value='0'});e.addEventListener('change',()=>{if(payout.value==='deposit')prior.value='0'});}
- });
- go.addEventListener('click',()=>{if(payout.value==='deposit')prior.value='0'},true);
- try{if(typeof setLang==='function'&&!setLang.__rule4PayoutDestination){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const o=payout.querySelector('option[value="deposit"]');if(o)o.textContent=T().inside;sync()},0);return r};setLang.__rule4PayoutDestination=true}}catch(e){}
- sync();
-}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,4100));setTimeout(boot,4600);
-})();
-</script>
+
 
 <!-- Möngö PHONE TEST Stage 2B — robust visible mount + compact savings action row. -->
 <style id="mongo-real-cancel-stage2b-style">
@@ -20747,16 +20697,16 @@ window.MONGO_PHONE_TEST_BUILD='V109';
 })();
 </script>
 
-<!-- Möngö PHONE TEST V116 — Rule 4 central i18n label mapping fix.
+<!-- Möngö PHONE TEST V117 — Rule 4 central i18n label mapping fix.
      Labels only; no formulas, IDs, handlers, Budget, transactions or persistence changed. -->
 <script id="mongo-v112-rule4-central-i18n-marker">
-window.MONGO_PHONE_TEST_BUILD='V116';
+window.MONGO_PHONE_TEST_BUILD='V117';
 (function(){
  function badge(){
    document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
    var b=document.getElementById('mongo-phone-test-build-v112');
    if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v112';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-   b.textContent='PHONE TEST V116';
+   b.textContent='PHONE TEST V117';
  }
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4400)});
  setTimeout(badge,5200);
