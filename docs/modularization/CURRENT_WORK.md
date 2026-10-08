@@ -100,3 +100,12 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - V103 candidate: `Mongo-PHONE-TEST-CANCEL-LANGUAGE-STABLE-V103.html`.
 - V103 changes only calculator language refresh: translate existing core labels/options in place instead of rebuilding the calculator DOM. Financial formulas, cancellation rules, account data, Budget and persistence are untouched.
 - V103 status: **NEEDS PHONE TEST**. Required regression: switch among languages while checking interest method and all 4 cancellation rules remain present; switch back to Mongolian; confirm entered values and calculation results remain stable.
+
+
+## 2026-10-08 — V120 cancellation interest-method scope PHONE PASS
+- V120 phone-test badge rendered correctly as `PHONE TEST V120`; the earlier stale/misleading V118 badge issue is no longer present in this test.
+- User explicitly phone-confirmed Rules 1–3 allow the user to choose the interest method (simple or compound). This restores the intended user-controlled behavior and must not regress.
+- Rule 4 remains bank-condition-driven: payout form/frequency controls the applicable interest behavior. Compound/deposit payout shows capitalized interest; separate-account and maturity payout follow their own bank-condition semantics.
+- Phone evidence for the 10,000,000₮ / 2026-01-01→2027-01-31 (395 days) Rule 4 scenario remained internally consistent: 4% cancellation interest displayed 432,877₮; simple/separate or maturity flow with 1,300,000₮ prior interest produced −867,123₮ adjustment, while compound/deposit flow displayed 1,380,319₮ capitalized interest and −947,442₮ recalculation adjustment.
+- Status: **V120 PHONE PASS for this bounded interest-method scope + build-badge correction only.** Do not treat this as automatic production/main promotion or proof of unrelated app areas.
+- Protected rule going forward: Rules 1–3 = user selects simple/compound; Rule 4 = bank payout condition controls the interest behavior. Preserve all earlier cancellation rounding, receiver picker, Budget, seven-language, transfer, persistence and data-safety PASS behavior.
