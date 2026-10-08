@@ -19987,12 +19987,44 @@ function refresh(){
    if(rateLabel)rateLabel.textContent=t.rate;
    if(actualLabel)actualLabel.textContent=t.actual;
    opt('#gmarketPayout option[value="external"]','external',t.payoutOut);
+   const pp=document.getElementById('gmarketPayout');
+   if(pp){
+     const qlang=(typeof lang==='string'?lang:'mn');
+     const names={
+       mn:{deposit:'Хадгаламждаа нэмэгдэнэ',maturity:'Хугацааны эцэст'},
+       en:{deposit:'Added to the deposit',maturity:'At maturity'},
+       zh:{deposit:'计入存款',maturity:'到期支付'},
+       ja:{deposit:'預金に加算',maturity:'満期時'},
+       ko:{deposit:'예금에 더하기',maturity:'만기 시'},
+       ru:{deposit:'Добавлять к вкладу',maturity:'В конце срока'},
+       de:{deposit:'Dem Guthaben gutschreiben',maturity:'Bei Fälligkeit'}
+     },nn=names[names[qlang]?qlang:'mn'];
+     const od=pp.querySelector('option[value="deposit"]'),om=pp.querySelector('option[value="maturity"]');
+     if(od)od.textContent=nn.deposit;if(om)om.textContent=nn.maturity;
+   }
    opt('#gmarketFreq option[value="monthly"]','monthly',t.monthly);
    opt('#gmarketFreq option[value="quarterly"]','quarterly',t.quarterly);
    opt('#gmarketFreq option[value="other"]','other',t.other);
    opt('#gmarketSettlement option[value="rate"]','rate',t.calcRate);
    opt('#gmarketSettlement option[value="actual"]','actual',t.bankActual);
-   setText('#gmarketWrap .gmarket-note',t.marketNote);
+   {
+   const n=document.querySelector('#gmarketWrap .gmarket-note');
+   const p=document.getElementById('gmarketPayout');
+   if(n){
+     const mode=p?.value||'external';
+     const notes={
+       mn:{external:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',deposit:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',maturity:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
+       en:{external:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or the bank actual total amount.',deposit:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',maturity:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
+       zh:{external:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',deposit:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',maturity:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
+       ja:{external:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',deposit:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',maturity:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
+       ko:{external:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',deposit:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',maturity:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
+       ru:{external:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',deposit:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',maturity:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
+       de:{external:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',deposit:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',maturity:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
+     };
+     const lg=(typeof lang==='string'&&notes[lang])?lang:'mn';
+     n.textContent=notes[lg][mode]||notes[lg].external;
+   }
+ }
  }
 
  // Visibility repair: Rule 4 used to hide Interest method but never restore it.
@@ -20697,16 +20729,16 @@ window.MONGO_PHONE_TEST_BUILD='V109';
 })();
 </script>
 
-<!-- Möngö PHONE TEST V117 — Rule 4 central i18n label mapping fix.
+<!-- Möngö PHONE TEST V118 — Rule 4 central i18n label mapping fix.
      Labels only; no formulas, IDs, handlers, Budget, transactions or persistence changed. -->
 <script id="mongo-v112-rule4-central-i18n-marker">
-window.MONGO_PHONE_TEST_BUILD='V117';
+window.MONGO_PHONE_TEST_BUILD='V118';
 (function(){
  function badge(){
    document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
    var b=document.getElementById('mongo-phone-test-build-v112');
    if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v112';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-   b.textContent='PHONE TEST V117';
+   b.textContent='PHONE TEST V118';
  }
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4400)});
  setTimeout(badge,5200);
