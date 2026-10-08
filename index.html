@@ -18211,10 +18211,33 @@ function boot(){
  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
  if(document.getElementById('gmarketWrap'))return;
  const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
- wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option><option value="deposit">'+q.deposit+'</option><option value="maturity">'+q.maturity+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
  const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
  const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
+  const payout=document.getElementById('gmarketPayout'),freq=document.getElementById('gmarketFreq');
+  function syncPayoutUI(){
+    const mode=payout?.value||'external',freqCell=freq?.parentElement,note=wrap.querySelector('.gmarket-note'),qq=T();
+    if(freqCell)freqCell.style.display=mode==='maturity'?'none':'';
+    if(mode==='maturity'&&freq){const o=freq.querySelector('option[value="other"]');if(o)freq.value='other';}
+    else if(freq&&freq.value==='other')freq.value='monthly';
+    if(note){
+      const lg=(typeof lang==='string'?lang:'mn');
+      const notes={
+        mn:{deposit:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',external:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',maturity:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
+        en:{deposit:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',external:'Interest paid to another account is not added to deposit principal. Allowed cancellation interest is calculated by the cancellation annual rate or the bank actual total amount.',maturity:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
+        zh:{deposit:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',external:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',maturity:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
+        ja:{deposit:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',external:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',maturity:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
+        ko:{deposit:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',external:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',maturity:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
+        ru:{deposit:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',external:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',maturity:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
+        de:{deposit:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',external:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',maturity:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
+      };
+      const z=notes[notes[lg]?lg:'mn'];note.textContent=z[mode]||z.external;
+    }
+  }
+  if(payout)payout.addEventListener('change',syncPayoutUI);
+  syncPayoutUI();
+
  const oldChange=rule.onchange;
  function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';wrap.style.display=on?'block':'none';if(on){
    const iw=document.getElementById('ginterest')?.parentElement;if(iw)iw.style.display='none';const cw=document.getElementById('gcompoundWrap');if(cw)cw.style.display='none';
@@ -20070,31 +20093,6 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
   document.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&/PHONE TEST V107/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/PHONE TEST V107/g,'PHONE TEST V108')});
 },1200));
 </script>
-<script id="mongo-v115-payout-ui-cleanup">
-(function(){
-window.MONGO_PHONE_TEST_BUILD='V115';
-const D={
-mn:['Хадгаламждаа нэмэх','Өөр дансанд олгох','Хугацааны эцэст','Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.','Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.','Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'],
-en:['Add to deposit','Pay to another account','At maturity','Interest is added to the deposit and the next interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.','Interest paid to another account is not added to the deposit principal. Allowed cancellation interest is calculated by the cancellation annual rate or the bank actual total amount.','Interest is paid once at maturity. Since no interest has actually been paid before cancellation, allowed interest is calculated under the cancellation terms.'],
-zh:['计入存款','支付到其他账户','到期支付','利息计入存款，下一期利息按增加后的余额计算。提前支取时按提前支取条件重新计算。','支付到其他账户的利息不计入存款本金。允许利息按提前支取年利率或银行实际总额计算。','利息在到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算允许利息。'],
-ja:['預金に加算','別口座で受取','満期時','利息は預金に加算され、次回は増加後の残高を基準に計算します。中途解約時は解約条件で再計算します。','別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行の実額で計算します。','利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'],
-ko:['예금에 더하기','다른 계좌로 받기','만기 시','이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건에 따라 다시 계산됩니다.','다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.','이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'],
-ru:['Добавлять к вкладу','На другой счёт','В конце срока','Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении они пересчитываются по условиям расторжения.','Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или фактической сумме банка.','Проценты выплачиваются один раз в конце срока. До расторжения фактической выплаты нет, поэтому применяются условия расторжения.'],
-de:['Dem Guthaben gutschreiben','Auf anderes Konto','Bei Fälligkeit','Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.','Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.','Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.']};
-function sync(){
- const p=document.getElementById('gmarketPayout'),f=document.getElementById('gmarketFreq'),w=document.getElementById('gmarketWrap');if(!p||!f||!w)return;
- const q=D[(typeof lang==='string'&&D[lang])?lang:'mn'];
- [['deposit',q[0]],['external',q[1]],['maturity',q[2]]].forEach(x=>{let o=p.querySelector('option[value="'+x[0]+'"]');if(!o){o=document.createElement('option');o.value=x[0];p.appendChild(o)}o.textContent=x[1]});
- const m=p.value||'external',cell=f.parentElement,n=w.querySelector('.gmarket-note');
- if(cell)cell.style.display=m==='maturity'?'none':'';
- if(m==='maturity'){let o=f.querySelector('option[value="other"]');if(o)f.value='other'}else if(f.value==='other')f.value='monthly';
- if(n)n.textContent=m==='deposit'?q[3]:(m==='maturity'?q[5]:q[4]);
-}
-function boot(){const p=document.getElementById('gmarketPayout');if(!p){setTimeout(boot,350);return}if(!p.dataset.v115){p.dataset.v115='1';p.addEventListener('change',sync)}sync()}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,5200));setTimeout(boot,5700);setInterval(sync,1200);
-})();
-</script>
-<div style="position:fixed;right:8px;bottom:8px;z-index:100000;background:#374151;color:white;padding:5px 8px;border-radius:8px;font:11px Arial">PHONE TEST V115</div>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -20749,16 +20747,16 @@ window.MONGO_PHONE_TEST_BUILD='V109';
 })();
 </script>
 
-<!-- Möngö PHONE TEST V112 — Rule 4 central i18n label mapping fix.
+<!-- Möngö PHONE TEST V116 — Rule 4 central i18n label mapping fix.
      Labels only; no formulas, IDs, handlers, Budget, transactions or persistence changed. -->
 <script id="mongo-v112-rule4-central-i18n-marker">
-window.MONGO_PHONE_TEST_BUILD='V112';
+window.MONGO_PHONE_TEST_BUILD='V116';
 (function(){
  function badge(){
    document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
    var b=document.getElementById('mongo-phone-test-build-v112');
    if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v112';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-   b.textContent='PHONE TEST V112';
+   b.textContent='PHONE TEST V116';
  }
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4400)});
  setTimeout(badge,5200);
