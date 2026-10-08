@@ -109,3 +109,18 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Phone evidence for the 10,000,000₮ / 2026-01-01→2027-01-31 (395 days) Rule 4 scenario remained internally consistent: 4% cancellation interest displayed 432,877₮; simple/separate or maturity flow with 1,300,000₮ prior interest produced −867,123₮ adjustment, while compound/deposit flow displayed 1,380,319₮ capitalized interest and −947,442₮ recalculation adjustment.
 - Status: **V120 PHONE PASS for this bounded interest-method scope + build-badge correction only.** Do not treat this as automatic production/main promotion or proof of unrelated app areas.
 - Protected rule going forward: Rules 1–3 = user selects simple/compound; Rule 4 = bank payout condition controls the interest behavior. Preserve all earlier cancellation rounding, receiver picker, Budget, seven-language, transfer, persistence and data-safety PASS behavior.
+
+
+## 2026-10-08 — V121 cancellation calculator PHONE PASS
+- V119: deployment/served-build state was **not verified**. The phone continued to settle on the V118 badge, so V119 must not be recorded as PHONE FAIL or used as a verified checkpoint.
+- V121 badge was visibly confirmed on phone as `PHONE TEST V121`.
+- PHONE PASS: Rules 1–3 preserve user-controlled `Хүү бодох арга`; changing cancellation rules does not globally overwrite the user's simple/compound choice.
+- PHONE PASS: Rule 4 remains payout-condition-specific and the three payout forms were exercised on phone: separate account, add/capitalize in the deposit, and pay at maturity.
+- Rule 4, separate-account/simple scenario with monthly ₮1,000,000 additions: principal total **₮22,000,000**, prior actually paid interest **₮2,018,384**, cancellation-allowed interest **₮693,370**, clawback adjustment **−₮1,325,014**, fee **−₮3,000**, calculated bank payout **₮20,671,986**.
+- Rule 4, deposit-capitalized/compound scenario with the same additions: capitalized interest **₮2,125,371**, cancellation-allowed interest **₮693,370**, recalculation adjustment **−₮1,432,001**, fee **−₮3,000**. V121 correctly includes the already-capitalized interest in the balance reconciliation, producing calculated bank payout **₮22,690,370** rather than double-removing the capitalized interest.
+- Rule 4, maturity payout: no interest has been actually paid before maturity; displayed prior-interest clawback is **₮0**, add-on cancellation interest **+₮693,370**, fee **−₮3,000**, calculated bank payout **₮22,690,370**.
+- Rules 1–3 regression evidence on the 395-day / monthly-addition test remained coherent: simple 2.4% example displayed allowed interest **₮416,022** and payout **₮22,413,022**; compound selection remained independently selectable and displayed allowed interest **₮420,313** and payout **₮22,417,313** in the tested rule flow.
+- Preview invariant remains protected: this calculator is **estimate-only** and must not mutate real accounts, transactions or Budget.
+- Status: **V121 PHONE PASS for the bounded cancellation-calculator work tested above.** This is a protected phone-test checkpoint, not automatic production/main promotion and not proof of unrelated modules.
+- Preserve going forward: all earlier per-lot whole-₮ rounding, Rule 2 staged tiers, Rule 3 behavior, receiver picker, yearly Budget anniversary behavior, seven-language stability, transfers, persistence/data safety and compact Savings actions.
+- Exact next action: perform one final consolidated Rules 1–3 numeric regression matrix (simple + compound) without changing code. If those numbers pass, close the preview cancellation-calculator cycle and move to the remaining Savings backlog; the known separate candidate is opening-balance edit synchronization with linked goal/history.
