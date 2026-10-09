@@ -135,3 +135,18 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Preview-only invariant remains protected: no real account, transaction or Budget mutation.
 - **Cancellation-calculator preview cycle is CLOSED / PHONE PASS for the tested V121 scope.** V121 is a protected phone-test checkpoint, not an automatic production/main promotion and not proof of unrelated modules.
 - Next work should move to the remaining Savings backlog. Known separate candidate: opening-balance edit synchronization with linked goal/history. Do not alter the now-closed cancellation calculator unless a new regression is observed.
+
+
+## 2026-10-09 — V123 asset-sale cashflow PHONE PASS
+- Visible phone badge confirmed: `PHONE TEST V123`.
+- Tested sale flow: asset cost basis **₮10,000,000**, sale proceeds **₮13,000,000**, realized profit **₮3,000,000**, sale date 2026-10-08.
+- PHONE PASS: sale proceeds are credited to the selected real account exactly once. Example: Голомт **₮284,087 → ₮13,284,087** (+₮13,000,000). A zero-opening-balance receiving account must therefore become **₮13,000,000**, not ₮16,000,000.
+- PHONE PASS: realized profit **₮3,000,000** is classified as `Хөрөнгийн орлого` for income/reporting, but does **not** increase the receiving account a second time (`skipAccountBalance` behavior is protected).
+- PHONE PASS: after the sold asset is removed, dashboard `Хөрөнгө оруулалт` falls accordingly (tested state displayed **₮0** for the sold investment set).
+- PHONE PASS: Financial consistency check displayed **✓ Зөрүү илрээгүй** after the sale; synthetic `asset:...` transfer source must not be treated as a missing real bank account.
+- Transaction UX decision: the transaction history should expose the **full sale cash movement (₮13,000,000)**; the **₮3,000,000 profit is a calculation/reporting component**, not a second cash receipt.
+- Budget decision: sold assets may appear as subcategories only in the **year/month in which the sale occurred**. October sale items must not automatically reappear in November.
+- Budget semantics for an unplanned sale: planned amount may remain **₮0**; actual result should reflect only the **realized profit/loss**, not the full sale proceeds. Example: planned **₮0**, actual **+₮3,000,000**, with the existing unplanned indicator where applicable. The **₮13,000,000** proceeds belong to cash movement/account history, not Budget income.
+- Preserve: do not convert the asset's returned cost basis into income and do not add realized profit to account balance twice.
+- Status: **V123 PHONE PASS for the tested profitable asset-sale cashflow/account/reconciliation behavior.** This is a bounded phone-test checkpoint, not automatic production/main promotion and not proof of unrelated modules.
+- Next bounded work: align the Transactions display with the approved sale UX (show the full sale proceeds clearly while keeping profit as calculation/reporting only), then verify Budget month scoping/actual-profit presentation without changing the now-approved cashflow math.
