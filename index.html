@@ -16467,7 +16467,9 @@ if(typeof allGroupsFn==='function'){
 }
 function safe(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 window.openAssetSaleModal=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;document.getElementById('asset-sale-modal')?.remove();const m=document.createElement('div');m.id='asset-sale-modal';m.className='loan-modal-backdrop';const opts=(moneyAccounts||[]).filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${accountIcon(a)} ${typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name}</option>`).join('');m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t().saleTitle}</div><div class="flow-only-note">${g.name} · ${t().cost}: ${fmt(g.invested)}</div><label>${t().saleAmount}</label><input class="fi" id="asset-sale-amount" inputmode="decimal" data-amt="1" value="${Math.round(g.current).toLocaleString('en-US')}"><label>${t().receive}</label><select class="fi" id="asset-sale-account">${opts}</select><label>${t().date}</label><input class="fi" id="asset-sale-date" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="asset-sale-preview" class="flow-only-note"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-sale-modal').remove()">${t().cancel}</button><button class="btn btn-p" onclick="saveAssetSale('${safe(key)}')">${t().save}</button></div></div>`;document.body.appendChild(m);const inp=document.getElementById('asset-sale-amount');if(typeof setupAmtInput==='function')setupAmtInput(inp);const preview=()=>{const b=window.MongoArchive.assetSaleBreakdown(g.invested,parseAmt(inp.value));document.getElementById('asset-sale-preview').innerHTML=`${b.pnl>=0?t().gain:t().loss}: <b>${b.pnl>=0?'+':''}${fmt(b.pnl)}</b>`;};inp.addEventListener('input',preview);preview();};
-window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=window.ensureAssetSaleGainBudgetSourceV126?window.ensureAssetSaleGainBudgetSourceV126():ensureYieldBudgetSource('',g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
+window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=window.ensureAssetSaleGainBudgetSourceV126?window.ensureAssetSaleGainBudgetSourceV126():ensureYieldBudgetSource('',g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}
+if(b.loss>0){txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'loss_'+Date.now()),type:'investment_loss',desc:`${g.name} · ${t().loss}`,amount:b.loss,date,accountId,skipAccountBalance:true,assetGroupKey:key,assetIncomeType:'realized_loss',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}
+g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
 function soldCard(g){const x=g.items[0]||{},p=Number(x.realizedPnl)||0,a=(moneyAccounts||[]).find(z=>String(z.id)===String(x.saleAccountId));const d=document.createElement('div');d.className='inv-card mongo-object-card mongo-sold-card';d.innerHTML=`<div class="portfolio-group-name">${g.name} <span class="mongo-archive-badge">✓ ${t().sold}</span></div><div class="mongo-sold-meta">${t().cost}: ${fmt(Number(x.saleCostBasis)||g.invested)}<br>${t().saleAmount}: ${fmt(Number(x.saleProceeds)||0)}<br><span class="mongo-sale-pnl ${p>=0?'pos':'neg'}">${p>=0?t().gain:t().loss}: ${p>=0?'+':''}${fmt(p)}</span><br>${t().receive}: ${a?(typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name):'—'} · ${x.saleDate||''}</div>`;return d;}
 function installInvestLifecycle(){if(typeof window.rInvests!=='function'||window.rInvests.__lifecycleWrapped)return;const base=window.rInvests;function next(){base();const root=document.getElementById('invest-list');if(!root)return;const active=window.getInvestGroups?window.getInvestGroups():[],cards=[...root.children].filter(x=>x.classList.contains('inv-card'));active.forEach((g,i)=>{const card=cards[i],actions=card?.querySelector('.portfolio-group-head>div:last-child');if(actions&&!actions.querySelector('.mongo-sell-action'))actions.insertAdjacentHTML('beforeend',`<button class="btn btn-sm mongo-sell-action" onclick="openAssetSaleModal('${safe(g.key)}')">${t().sell}</button>`);});const sold=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).filter(g=>window.MongoArchive?.assetGroupSold(g));if(sold.length){const box=document.createElement('details');box.className='mongo-archive-box';box.innerHTML=`<summary><span>${t().sold} <span class="mongo-archive-badge">${sold.length}</span></span></summary><div class="mongo-archive-list"></div>`;sold.forEach(g=>box.querySelector('.mongo-archive-list').appendChild(soldCard(g)));root.appendChild(box);}}next.__lifecycleWrapped=true;window.rInvests=next;}
 function decorateGoalHistory(){document.querySelectorAll('#goal-list .mongo-archive-list .goal-card').forEach(card=>{if(card.querySelector('.mongo-goal-life'))return;const name=(card.querySelector('.goal-name')?.textContent||card.textContent||'').trim();const g=(goals||[]).find(x=>name.includes(x.name));const h=g&&Array.isArray(g.lifecycleHistory)?g.lifecycleHistory.filter(x=>x.type==='relinked').slice(-1)[0]:null;if(!h)return;const d=document.createElement('div');d.className='flow-only-note mongo-goal-life';d.textContent=`${t().movedToGoal}: ${h.toGoalName} · ${fmt(h.amount)} · ${h.date}`;card.appendChild(d);});}
@@ -21111,5 +21113,103 @@ function badge(){
 function refresh(){migrate();try{rBList();rBProg();updateBudgetTotal();}catch(e){console.error('V126 budget refresh',e)}}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},9000));
 setTimeout(()=>{badge();refresh()},9800);setInterval(badge,5000);
+})();
+</script>
+
+
+<style id="mongo-v127-asset-card-meta-style">
+/* V127: keep asset identity on one readable line after the icon. */
+#invest-list .portfolio-group-title{align-items:center;min-width:0;flex:1}
+#invest-list .portfolio-group-title>div:last-child{min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+#invest-list .portfolio-group-name{min-width:0;flex:0 1 auto}
+#invest-list .portfolio-group-meta{
+  margin:0!important;display:flex;align-items:center;gap:6px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:11px
+}
+#invest-list .mongo-v127-income-badge{font-weight:800;color:#08724F}
+</style>
+<script id="mongo-v127-asset-loss-card-meta">
+(function(){
+'use strict';
+const META={
+ mn:{income:'Орлого оруулдаг',noIncome:'Орлого оруулдаггүй'},
+ en:{income:'Income-producing',noIncome:'Not income-producing'},
+ zh:{income:'产生收入',noIncome:'不产生收入'},
+ ja:{income:'収入あり',noIncome:'収入なし'},
+ ko:{income:'수익 발생',noIncome:'수익 없음'},
+ ru:{income:'Приносит доход',noIncome:'Без дохода'},
+ de:{income:'Ertrag bringend',noIncome:'Ohne Ertrag'}
+};
+function q(){return META[(typeof lang!=='undefined'&&lang)||'mn']||META.en}
+function allSoldGroups(){
+ try{return (window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).filter(g=>window.MongoArchive?.assetGroupSold(g));}
+ catch(_){return []}
+}
+function realizedPnl(){
+ return allSoldGroups().reduce((sum,g)=>{
+   const vals=(g.items||[]).map(x=>Number(x.realizedPnl)).filter(Number.isFinite);
+   return sum+(vals.length?vals.reduce((a,b)=>a+b,0):0);
+ },0);
+}
+function decorateCards(){
+ const root=document.getElementById('invest-list'); if(!root)return;
+ const active=typeof getInvestGroups==='function'?getInvestGroups().sort((a,b)=>b.current-a.current):[];
+ const cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
+ cards.forEach((card,i)=>{
+   const g=active[i]; if(!g)return;
+   const meta=card.querySelector('.portfolio-group-meta'); if(!meta)return;
+   const types=(INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn);
+   const typeObj=types.find(x=>x.k===g.typeKey), label=typeObj?typeObj.label:g.typeKey;
+   const inc=typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g);
+   meta.innerHTML=`<span>${label}</span><span>·</span><span class="${inc?'mongo-v127-income-badge':''}">${inc?q().income:q().noIncome}</span>`;
+ });
+}
+function updateRealizedMetric(){
+ try{
+   const groups=typeof getInvestGroups==='function'?getInvestGroups():[];
+   const active=window.MongoAssets?.portfolioTotals?window.MongoAssets.portfolioTotals(groups):null;
+   if(!active)return;
+   const totalPnl=Number(active.pnl||0)+realizedPnl();
+   const totalCost=Number(active.invested||0)+allSoldGroups().reduce((a,g)=>a+Number(g.invested||0),0);
+   const pct=totalCost>0?totalPnl/totalCost*100:0;
+   const pv=document.getElementById('i-pnl-val'), pp=document.getElementById('i-pct-val');
+   if(pv){pv.textContent=(totalPnl>=0?'+':'')+fmt(totalPnl);pv.className='metric-val '+(totalPnl>0?'inv-positive':totalPnl<0?'inv-negative':'inv-neutral');}
+   if(pp){pp.textContent=fmtP(pct);pp.className='metric-val '+(pct>0?'inv-positive':pct<0?'inv-negative':'inv-neutral');}
+   const pc=document.getElementById('i-pnl-card'), rc=document.getElementById('i-pct-card');
+   if(pc){pc.style.background=totalPnl>=0?'#E1F5EE':'#FCEBEB';pc.querySelector('.metric-lbl')?.style.setProperty('color',totalPnl>=0?'#085041':'#791F1F');pc.querySelector('.metric-val')?.style.setProperty('color',totalPnl>=0?'#085041':'#791F1F');}
+   if(rc){rc.style.background=pct>=0?'#E1F5EE':'#FCEBEB';rc.querySelector('.metric-lbl')?.style.setProperty('color',pct>=0?'#085041':'#791F1F');rc.querySelector('.metric-val')?.style.setProperty('color',pct>=0?'#085041':'#791F1F');}
+ }catch(e){console.error('V127 realized P/L metric',e)}
+}
+function migrateOldLosses(){
+ /* Existing V126 sales already store realizedPnl on sold asset lots.
+    Add reporting-only loss rows only when one does not already exist. */
+ const sales=(accountTransfers||[]).filter(x=>x&&x.purpose==='asset_sale');
+ sales.forEach(tr=>{
+   const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>String(x.key)===String(tr.assetGroupKey));
+   if(!g)return;
+   const pnl=(g.items||[]).map(x=>Number(x.realizedPnl)).find(Number.isFinite);
+   if(!(pnl<0))return;
+   if((txns||[]).some(x=>x&&x.assetIncomeType==='realized_loss'&&String(x.assetSaleId)===String(tr.id)))return;
+   txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'loss_'+Date.now()),type:'investment_loss',
+     desc:`${g.name} · ${({mn:'Алдагдал',en:'Loss',zh:'亏损',ja:'損失',ko:'손실',ru:'Убыток',de:'Verlust'}[lang]||'Loss')}`,
+     amount:Math.abs(pnl),date:tr.date,accountId:tr.toId,skipAccountBalance:true,assetGroupKey:g.key,
+     assetIncomeType:'realized_loss',assetSaleId:tr.id,incomePlanIncluded:false,createdAt:new Date().toISOString()});
+ });
+}
+function run(){migrateOldLosses();decorateCards();updateRealizedMetric();try{saveData()}catch(_){}}
+const base=window.rInvests;
+if(typeof base==='function'&&!base.__v127){
+ const f=function(){const r=base.apply(this,arguments);setTimeout(()=>{decorateCards();updateRealizedMetric()},0);return r};f.__v127=true;window.rInvests=f;
+}
+window.MONGO_PHONE_TEST_BUILD='V127';
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"]').forEach(e=>e.remove());
+ const b=document.createElement('div');b.id='mongo-v127-phone-marker';b.textContent='PHONE TEST V127';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
+ document.body.appendChild(b);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{run();badge();try{rInvests()}catch(_){}},9500),{once:true});
+else setTimeout(()=>{run();badge();try{rInvests()}catch(_){}},9500);
+setInterval(badge,5000);
 })();
 </script>
