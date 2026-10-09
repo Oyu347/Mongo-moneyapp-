@@ -9220,7 +9220,7 @@ function renderTxnAccountSummary(source){
 function rTxns(){
   const el=document.getElementById('all-txns');
   renderTxnAccountFilter();
-  let source=window.MongoTransactions.filterByAccount(txns.filter(t=>txnInSelectedPeriod(t)),txnAccountFilter);
+  let source=window.MongoTransactions.filterByAccount(txns.filter(t=>txnInSelectedPeriod(t)&&t.assetIncomeType!=='realized_gain'),txnAccountFilter);
   if(txnSearchOpen&&txnSearchQuery){
     source=source.filter(txnMatchesSearch);
   }
@@ -20952,5 +20952,27 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{sync();badge()}
  }
  document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,8200)});
  setTimeout(badge,9000); setInterval(badge,5000);
+})();
+</script>
+
+
+<!-- Möngö PHONE TEST V124 — asset-sale Transactions display only.
+     Realized gain remains stored for Budget/report calculations,
+     but is not rendered as a separate cash transaction.
+     Asset-sale proceeds/ledger behavior from V123 is untouched. -->
+<script id="mongo-v124-asset-sale-transactions-marker">
+(function(){
+ window.MONGO_PHONE_TEST_BUILD='V124';
+ function badge(){
+  document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker').forEach(function(e){e.remove()});
+  var b=document.createElement('div');
+  b.id='mongo-v124-phone-marker';
+  b.textContent='PHONE TEST V124';
+  b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
+  document.body.appendChild(b);
+ }
+ document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,8400)});
+ setTimeout(badge,9200);
+ setInterval(badge,5000);
 })();
 </script>
