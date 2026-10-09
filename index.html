@@ -16467,7 +16467,7 @@ if(typeof allGroupsFn==='function'){
 }
 function safe(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 window.openAssetSaleModal=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;document.getElementById('asset-sale-modal')?.remove();const m=document.createElement('div');m.id='asset-sale-modal';m.className='loan-modal-backdrop';const opts=(moneyAccounts||[]).filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${accountIcon(a)} ${typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name}</option>`).join('');m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t().saleTitle}</div><div class="flow-only-note">${g.name} · ${t().cost}: ${fmt(g.invested)}</div><label>${t().saleAmount}</label><input class="fi" id="asset-sale-amount" inputmode="decimal" data-amt="1" value="${Math.round(g.current).toLocaleString('en-US')}"><label>${t().receive}</label><select class="fi" id="asset-sale-account">${opts}</select><label>${t().date}</label><input class="fi" id="asset-sale-date" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="asset-sale-preview" class="flow-only-note"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-sale-modal').remove()">${t().cancel}</button><button class="btn btn-p" onclick="saveAssetSale('${safe(key)}')">${t().save}</button></div></div>`;document.body.appendChild(m);const inp=document.getElementById('asset-sale-amount');if(typeof setupAmtInput==='function')setupAmtInput(inp);const preview=()=>{const b=window.MongoArchive.assetSaleBreakdown(g.invested,parseAmt(inp.value));document.getElementById('asset-sale-preview').innerHTML=`${b.pnl>=0?t().gain:t().loss}: <b>${b.pnl>=0?'+':''}${fmt(b.pnl)}</b>`;};inp.addEventListener('input',preview);preview();};
-window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=ensureYieldBudgetSource(g.name,g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,createdAt:now});}g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
+window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=window.ensureAssetSaleGainBudgetSourceV126?window.ensureAssetSaleGainBudgetSourceV126():ensureYieldBudgetSource('',g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
 function soldCard(g){const x=g.items[0]||{},p=Number(x.realizedPnl)||0,a=(moneyAccounts||[]).find(z=>String(z.id)===String(x.saleAccountId));const d=document.createElement('div');d.className='inv-card mongo-object-card mongo-sold-card';d.innerHTML=`<div class="portfolio-group-name">${g.name} <span class="mongo-archive-badge">✓ ${t().sold}</span></div><div class="mongo-sold-meta">${t().cost}: ${fmt(Number(x.saleCostBasis)||g.invested)}<br>${t().saleAmount}: ${fmt(Number(x.saleProceeds)||0)}<br><span class="mongo-sale-pnl ${p>=0?'pos':'neg'}">${p>=0?t().gain:t().loss}: ${p>=0?'+':''}${fmt(p)}</span><br>${t().receive}: ${a?(typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name):'—'} · ${x.saleDate||''}</div>`;return d;}
 function installInvestLifecycle(){if(typeof window.rInvests!=='function'||window.rInvests.__lifecycleWrapped)return;const base=window.rInvests;function next(){base();const root=document.getElementById('invest-list');if(!root)return;const active=window.getInvestGroups?window.getInvestGroups():[],cards=[...root.children].filter(x=>x.classList.contains('inv-card'));active.forEach((g,i)=>{const card=cards[i],actions=card?.querySelector('.portfolio-group-head>div:last-child');if(actions&&!actions.querySelector('.mongo-sell-action'))actions.insertAdjacentHTML('beforeend',`<button class="btn btn-sm mongo-sell-action" onclick="openAssetSaleModal('${safe(g.key)}')">${t().sell}</button>`);});const sold=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).filter(g=>window.MongoArchive?.assetGroupSold(g));if(sold.length){const box=document.createElement('details');box.className='mongo-archive-box';box.innerHTML=`<summary><span>${t().sold} <span class="mongo-archive-badge">${sold.length}</span></span></summary><div class="mongo-archive-list"></div>`;sold.forEach(g=>box.querySelector('.mongo-archive-list').appendChild(soldCard(g)));root.appendChild(box);}}next.__lifecycleWrapped=true;window.rInvests=next;}
 function decorateGoalHistory(){document.querySelectorAll('#goal-list .mongo-archive-list .goal-card').forEach(card=>{if(card.querySelector('.mongo-goal-life'))return;const name=(card.querySelector('.goal-name')?.textContent||card.textContent||'').trim();const g=(goals||[]).find(x=>name.includes(x.name));const h=g&&Array.isArray(g.lifecycleHistory)?g.lifecycleHistory.filter(x=>x.type==='relinked').slice(-1)[0]:null;if(!h)return;const d=document.createElement('div');d.className='flow-only-note mongo-goal-life';d.textContent=`${t().movedToGoal}: ${h.toGoalName} · ${fmt(h.amount)} · ${h.date}`;card.appendChild(d);});}
@@ -21019,5 +21019,97 @@ function badge(){
 function refresh(){try{if(typeof rTxns==='function')rTxns();if(typeof rRecent==='function')rRecent();if(typeof renderMoneyAccounts==='function')renderMoneyAccounts();}catch(e){console.error('V125 display refresh',e)}}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},8600));
 setTimeout(()=>{badge();refresh()},9400);setInterval(badge,5000);
+})();
+</script>
+
+
+<!-- Möngö PHONE TEST V126 — semantic separation:
+     recurring income-producing assets remain plan-able under Investment income;
+     realized sale gains use one actual-only sale-gain subcategory and never create
+     a permanent per-asset Budget planning row. Cashflow math from V123/V125 untouched. -->
+<script id="mongo-v126-asset-income-budget-separation">
+(function(){
+'use strict';
+const CAT='asset_income_cat', SALE='asset_sale_gain';
+const SALE_NAMES={
+ mn:'Хөрөнгө борлуулалтын ашиг',en:'Asset sale gain',zh:'资产出售收益',
+ ja:'資産売却益',ko:'자산 매각 이익',ru:'Прибыль от продажи актива',de:'Gewinn aus Vermögensverkauf'
+};
+function names(){return {...SALE_NAMES}}
+function ensure(){
+ let cat=(bCatsInc||[]).find(c=>c&&c.key===CAT);
+ if(!cat){
+   const cn={mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'};
+   cat={key:CAT,names:cn,icon:'💹',color:'#1D9E75',subs:[]};bCatsInc.push(cat);
+ }
+ if(!Array.isArray(cat.subs))cat.subs=[];
+ let sub=cat.subs.find(x=>x&&x.key===SALE);
+ if(!sub){sub={key:SALE,names:names(),color:'#1D9E75',actualOnly:true,assetSaleGain:true};cat.subs.push(sub);}
+ else {sub.names=names();sub.actualOnly=true;sub.assetSaleGain=true;}
+ return {cat,sub};
+}
+window.ensureAssetSaleGainBudgetSourceV126=ensure;
+
+/* Migrate only realized-sale gain records. This does not change their amount,
+   account balance behavior, sale link, or date. */
+function migrate(){
+ const y=ensure();
+ (txns||[]).forEach(t=>{
+   if(!t||t.assetIncomeType!=='realized_gain')return;
+   t.catKey=CAT;t.catName=typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого';
+   t.subcatName=SALE;t.incomePlanIncluded=false;
+ });
+}
+
+/* A per-asset yield_* row belongs in Budget planning only when it has a real
+   income-producing asset source OR an explicit saved plan. Sale-only legacy rows
+   are hidden; the shared sale-gain actual row is shown only in the sale month. */
+const baseVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
+mongoBudgetVisibleSubs=function(cat){
+ let subs=baseVisible(cat);
+ if(budgetType!=='income'||cat?.key!==CAT)return subs;
+ const ym=`${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
+ return subs.filter(sb=>{
+   if(sb?.key===SALE){
+     return (txns||[]).some(t=>t&&t.assetIncomeType==='realized_gain'&&String(t.date||'').slice(0,7)===ym);
+   }
+   if(!String(sb?.key||'').startsWith('yield_'))return true;
+   const hasPlan=Number(getBudgetValForYear(bSubKey(cat,sb),budgetMonth,budgetYear)||0)>0;
+   if(hasPlan)return true;
+   const realIncome=(txns||[]).some(t=>t&&t.assetIncome===true&&t.assetIncomeType!=='realized_gain'&&
+     (t.subcatName===sb.key||t.subcatName===cN(sb)));
+   if(realIncome)return true;
+   try{
+     const active=(typeof getInvestGroups==='function'?getInvestGroups():[]).some(g=>
+       typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g)&&
+       (String('yield_'+String(g.name||'').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45))===String(sb.key))
+     );
+     if(active)return true;
+   }catch(_){}
+   return false;
+ });
+};
+window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
+
+/* Realized sale gain is intentionally actual-only, not a planned asset-income txn. */
+const priorBudgeted=isTxnBudgeted;
+isTxnBudgeted=function(t){
+ if(t?.assetIncomeType==='realized_gain')return false;
+ return priorBudgeted(t);
+};
+
+migrate();
+try{saveData();}catch(_){}
+
+window.MONGO_PHONE_TEST_BUILD='V126';
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker,#mongo-v125-phone-marker,#mongo-v126-phone-marker').forEach(e=>e.remove());
+ const b=document.createElement('div');b.id='mongo-v126-phone-marker';b.textContent='PHONE TEST V126';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
+ document.body.appendChild(b);
+}
+function refresh(){migrate();try{rBList();rBProg();updateBudgetTotal();}catch(e){console.error('V126 budget refresh',e)}}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},9000));
+setTimeout(()=>{badge();refresh()},9800);setInterval(badge,5000);
 })();
 </script>
