@@ -21213,3 +21213,42 @@ else setTimeout(()=>{run();badge();try{rInvests()}catch(_){}},9500);
 setInterval(badge,5000);
 })();
 </script>
+
+
+<style id="mongo-v128-card-meta-css">
+.mongo-v128-meta{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;padding:5px 8px;border-radius:14px;background:rgba(73,176,182,.10);font-size:11px;font-weight:750;color:#374151;margin-right:5px}
+.mongo-v128-meta b{color:#168c92;overflow:hidden;text-overflow:ellipsis}
+</style>
+<script id="mongo-v128-card-meta-js">
+(function(){
+const T={mn:['Орлого оруулдаг','Орлого оруулдаггүй'],en:['Income-producing','Not income-producing'],zh:['产生收入','不产生收入'],ja:['収入あり','収入なし'],ko:['수익 발생','수익 없음'],ru:['Приносит доход','Без дохода'],de:['Ertrag bringend','Ohne Ertrag']};
+function txt(){return T[window.lang||'mn']||T.en}
+function groups(){try{return getInvestGroups().sort((a,b)=>b.current-a.current)}catch(e){return []}}
+function typ(g){try{let a=INVEST_TYPES_ALL[window.lang||'mn']||INVEST_TYPES_ALL.mn||[],x=a.find(v=>v.k===g.typeKey);return x?x.label:(g.typeKey||'')}catch(e){return g.typeKey||''}}
+function draw(){
+ let root=document.getElementById('invest-list');if(!root)return;
+ let gs=groups(),cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
+ cards.forEach((card,i)=>{
+   let g=gs[i];if(!g)return;
+   card.querySelectorAll('.mongo-v128-meta').forEach(x=>x.remove());
+   let sell=[...card.querySelectorAll('button')].find(b=>/зарах|sell|прод|verkauf|売却|매각|出售/i.test((b.textContent||'').trim()));
+   if(!sell||!sell.parentElement)return;
+   let row=sell.parentElement, m=document.createElement('span');
+   let inc=false;try{inc=!!assetGroupIncomeProducing(g)}catch(e){}
+   m.className='mongo-v128-meta';
+   m.innerHTML='<b></b><span>·</span><span></span>';
+   m.children[0].textContent=typ(g);m.children[2].textContent=inc?txt()[0]:txt()[1];
+   let first=row.querySelector('button'); first?row.insertBefore(m,first):row.prepend(m);
+ });
+}
+let old=window.rInvests;
+if(typeof old==='function'){window.rInvests=function(){let r=old.apply(this,arguments);setTimeout(draw,40);return r}}
+function badge(){
+ document.querySelectorAll('[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-phone-test-build-v"]').forEach(e=>e.remove());
+ let b=document.createElement('div');b.id='mongo-v128-phone-marker';b.textContent='PHONE TEST V128';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px Arial;box-shadow:0 4px 16px #0002;pointer-events:none';document.body.appendChild(b)
+}
+window.MONGO_PHONE_TEST_BUILD='V128';
+setTimeout(()=>{draw();badge()},10000);setInterval(()=>{draw();badge()},3000);
+})();
+</script>
