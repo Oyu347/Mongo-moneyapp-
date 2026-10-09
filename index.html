@@ -9220,7 +9220,7 @@ function renderTxnAccountSummary(source){
 function rTxns(){
   const el=document.getElementById('all-txns');
   renderTxnAccountFilter();
-  let source=window.MongoTransactions.filterByAccount(txns.filter(t=>txnInSelectedPeriod(t)&&t.assetIncomeType!=='realized_gain'),txnAccountFilter);
+  let source=window.MongoTransactions.filterByAccount(txns.filter(t=>txnInSelectedPeriod(t)),txnAccountFilter);
   if(txnSearchOpen&&txnSearchQuery){
     source=source.filter(txnMatchesSearch);
   }
@@ -15346,8 +15346,23 @@ select.fi{touch-action:pan-y;cursor:pointer}
   }
   function moneyActivities(){
     mergeLedger();
-    const normal=(txns||[]).filter(isMoneyTxn);
-    return normal.concat(coreLoanActivities());
+    // Realized asset gain remains a stored reporting/Budget income record,
+    // but it is not a second cash movement in the Transactions list.
+    const normal=(txns||[]).filter(t=>isMoneyTxn(t)&&t.assetIncomeType!=='realized_gain');
+    // Asset-sale proceeds are the actual cash movement. Render them as a
+    // dedicated activity without classifying the whole proceeds as income.
+    const sales=(accountTransfers||[]).filter(t=>t&&t.purpose==='asset_sale').map(t=>{
+      const gain=(txns||[]).find(x=>x&&x.assetIncomeType==='realized_gain'&&String(x.assetSaleId||'')===String(t.id||''));
+      const group=(typeof window.getAllInvestGroupsIncludingSold==='function'
+        ?window.getAllInvestGroupsIncludingSold():[]).find(g=>String(g.key||'')===String(t.assetGroupKey||''));
+      const name=String(group?.name||gain?.desc||t.description||'').replace(/\s*·\s*(Ашиг|Gain|收益|利益|이익|Прибыль|Gewinn|Зарсан|Sold).*$/i,'').trim();
+      const proceeds=Number(t.amount)||0, pnl=Number(gain?.amount)||Number(group?.realizedPnl)||0;
+      const cost=Math.max(0,Number(group?.invested)||Number(group?.saleCostBasis)||proceeds-pnl);
+      return {id:'assetsale_'+String(t.id),_assetSaleActivity:true,assetSaleId:t.id,assetGroupKey:t.assetGroupKey,
+        date:t.date,accountId:t.toId,amount:proceeds,costBasis:cost,realizedPnl:pnl,assetName:name,type:'asset_sale',
+        updatedAt:t.updatedAt||t.createdAt||`${t.date||''}T12:00:00`};
+    });
+    return normal.concat(coreLoanActivities(),sales);
   }
   function activeAccount(){const s=document.getElementById('txn-account-filter');return String(s?.value||txnAccountFilter||'all');}
   function searchIsVisible(){const p=document.getElementById('txn-search-panel');return !!(txnSearchOpen&&txnSearchQuery&&p&&getComputedStyle(p).display!=='none');}
@@ -20956,23 +20971,53 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{sync();badge()}
 </script>
 
 
-<!-- Möngö PHONE TEST V124 — asset-sale Transactions display only.
-     Realized gain remains stored for Budget/report calculations,
-     but is not rendered as a separate cash transaction.
-     Asset-sale proceeds/ledger behavior from V123 is untouched. -->
-<script id="mongo-v124-asset-sale-transactions-marker">
+<!-- Möngö PHONE TEST V125 — asset-sale Transactions + account-history labels only. -->
+<script id="mongo-v125-asset-sale-display">
 (function(){
- window.MONGO_PHONE_TEST_BUILD='V124';
- function badge(){
-  document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker').forEach(function(e){e.remove()});
-  var b=document.createElement('div');
-  b.id='mongo-v124-phone-marker';
-  b.textContent='PHONE TEST V124';
-  b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
-  document.body.appendChild(b);
- }
- document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,8400)});
- setTimeout(badge,9200);
- setInterval(badge,5000);
+'use strict';
+const UI={
+ mn:{sold:'Хөрөнгө зарсан',cost:'Анхны өртөг',gain:'Ашиг',loss:'Алдагдал'},
+ en:{sold:'Asset sold',cost:'Cost basis',gain:'Gain',loss:'Loss'},
+ zh:{sold:'出售资产',cost:'成本',gain:'收益',loss:'亏损'},
+ ja:{sold:'資産を売却',cost:'取得原価',gain:'利益',loss:'損失'},
+ ko:{sold:'자산 매각',cost:'취득 원가',gain:'이익',loss:'손실'},
+ ru:{sold:'Продажа актива',cost:'Первоначальная стоимость',gain:'Прибыль',loss:'Убыток'},
+ de:{sold:'Vermögenswert verkauft',cost:'Anschaffungskosten',gain:'Gewinn',loss:'Verlust'}
+};
+function q(){return UI[(typeof lang!=='undefined'&&lang)||'mn']||UI.en}
+function escV125(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const priorTRow=window.tRow;
+window.tRow=function(t,del){
+ if(!t||!t._assetSaleActivity)return priorTRow(t,del);
+ const z=q(),acc=(moneyAccounts||[]).find(a=>String(a.id)===String(t.accountId)),accText=acc?`${accountIcon(acc)} ${typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(acc):acc.name}`:'';
+ const pnl=Number(t.realizedPnl)||0, pnlLabel=pnl>=0?z.gain:z.loss;
+ return `<div class="list-item asset-sale-activity-row"><div class="il"><div class="txn-main-line"><span class="lbl1">${escV125(z.sold)} · ${escV125(t.assetName||'')}</span></div><div class="txn-meta-line"><span class="lbl2">${escV125(accText)} · ${escV125(t.date||'')}</span></div><div class="loan-activity-split">${escV125(z.cost)}: ${fmt(Number(t.costBasis)||0)} · ${escV125(pnlLabel)}: ${pnl>=0?'+':'-'}${fmt(Math.abs(pnl))}</div></div><div class="ir"><span class="amt amt-i">+${fmt(Number(t.amount)||0)}</span></div></div>`;
+};
+
+const priorAccountRowsFor=window.accountRowsFor;
+window.accountRowsFor=function(a){
+ const rows=priorAccountRowsFor(a);
+ const map=new Map((accountTransfers||[]).filter(t=>t&&t.purpose==='asset_sale').map(t=>[String(t.id),t]));
+ rows.forEach(r=>{
+   const tr=map.get(String(r.transferId||''));
+   if(!tr)return;
+   const gain=(txns||[]).find(x=>x&&x.assetIncomeType==='realized_gain'&&String(x.assetSaleId||'')===String(tr.id||''));
+   const group=(typeof window.getAllInvestGroupsIncludingSold==='function'?window.getAllInvestGroupsIncludingSold():[]).find(g=>String(g.key||'')===String(tr.assetGroupKey||''));
+   const raw=String(group?.name||gain?.desc||tr.description||'').replace(/\s*·\s*(Ашиг|Gain|收益|利益|이익|Прибыль|Gewinn|Зарсан|Sold).*$/i,'').trim();
+   r.label=`${q().sold}${raw?' · '+raw:''}`;
+ });
+ return rows;
+};
+
+window.MONGO_PHONE_TEST_BUILD='V125';
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker,#mongo-v125-phone-marker').forEach(e=>e.remove());
+ const b=document.createElement('div');b.id='mongo-v125-phone-marker';b.textContent='PHONE TEST V125';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
+ document.body.appendChild(b);
+}
+function refresh(){try{if(typeof rTxns==='function')rTxns();if(typeof rRecent==='function')rRecent();if(typeof renderMoneyAccounts==='function')renderMoneyAccounts();}catch(e){console.error('V125 display refresh',e)}}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},8600));
+setTimeout(()=>{badge();refresh()},9400);setInterval(badge,5000);
 })();
 </script>
