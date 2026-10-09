@@ -150,3 +150,18 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Preserve: do not convert the asset's returned cost basis into income and do not add realized profit to account balance twice.
 - Status: **V123 PHONE PASS for the tested profitable asset-sale cashflow/account/reconciliation behavior.** This is a bounded phone-test checkpoint, not automatic production/main promotion and not proof of unrelated modules.
 - Next bounded work: align the Transactions display with the approved sale UX (show the full sale proceeds clearly while keeping profit as calculation/reporting only), then verify Budget month scoping/actual-profit presentation without changing the now-approved cashflow math.
+
+
+## 2026-10-09 — V123 asset-sale cashflow PHONE PASS
+- Visible phone badge confirmed: PHONE TEST V123.
+- Tested: cost basis ₮10,000,000; sale proceeds ₮13,000,000; realized profit ₮3,000,000; sale date 2026-10-08.
+- PHONE PASS: proceeds enter the selected real account exactly once. Голомт ₮284,087 → ₮13,284,087. A zero-balance receiving account must become ₮13,000,000, not ₮16,000,000.
+- PHONE PASS: realized profit ₮3,000,000 is classified as Хөрөнгийн орлого for reporting but does not increase account balance again.
+- PHONE PASS: sold investment is removed from investment total; tested dashboard displayed Хөрөнгө оруулалт ₮0.
+- PHONE PASS: Financial consistency check displayed ✓ Зөрүү илрээгүй; synthetic asset source must not be treated as a missing real bank account.
+- Approved transaction UX: show the full sale cash movement ₮13,000,000 in Transactions; ₮3,000,000 profit is calculation/reporting only, not a second cash receipt.
+- Approved Budget rule: sold assets appear only in the year/month sold; October sale items must not automatically appear in November.
+- For an unplanned sale, planned Budget may remain ₮0; actual result reflects only realized profit/loss, not full proceeds. Example: planned ₮0, actual +₮3,000,000, with unplanned indicator where applicable.
+- Preserve: never treat returned cost basis as income; never add realized profit to account balance twice.
+- Status: V123 PHONE PASS for tested profitable asset-sale cashflow/account/reconciliation behavior. Bounded checkpoint only; not automatic production/main promotion.
+- Next bounded work: align Transactions display with the approved full-proceeds view, then verify Budget month scoping and actual-profit presentation without changing approved cashflow math.
