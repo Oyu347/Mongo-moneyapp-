@@ -20246,6 +20246,83 @@ setTimeout(()=>{badge();refresh()},10800);setInterval(badge,5000);
 })();
 </script>
 
+
+
+<!-- Möngö PHONE TEST V131 — sold-asset identity + sale-gain Budget progress semantics only.
+     Protected V129 card layout and V123 sale cash-flow math are untouched.
+     • Sold cards keep asset type + asset name + income-producing status visible.
+     • Non-income-producing asset itself is not an income-budget row.
+     • Realized gain appears in sale month as the shared “Asset sale gain” actual row.
+     • The shared sale-gain row disappears in later months when there is no sale gain. -->
+<style id="mongo-v131-sold-identity-style">
+#invest-list .mongo-sold-card>.portfolio-group-name{
+ display:block!important;font-weight:850!important;color:#374151!important;margin-bottom:7px!important;
+ white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+}
+#invest-list .mongo-sold-card .mongo-v131-sold-identity{
+ display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;line-height:1.45;color:#667085;margin-bottom:8px;
+}
+#invest-list .mongo-sold-card .mongo-v131-sold-identity b{color:#374151}
+</style>
+<script id="mongo-v131-sold-identity-sale-gain">
+(function(){
+'use strict';
+const CAT='asset_income_cat', SALE='asset_sale_gain';
+const META={
+ mn:{income:'Орлого оруулдаг',noIncome:'Орлого оруулдаггүй'},
+ en:{income:'Income-producing',noIncome:'Not income-producing'},
+ zh:{income:'产生收入',noIncome:'不产生收入'},ja:{income:'収入あり',noIncome:'収入なし'},
+ ko:{income:'수익 발생',noIncome:'수익 없음'},ru:{income:'Приносит доход',noIncome:'Без дохода'},de:{income:'Ertrag bringend',noIncome:'Ohne Ertrag'}
+};
+function q(){return META[(typeof lang!=='undefined'&&lang)||'mn']||META.en}
+function allGroups(){try{return window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]}catch(_){return []}}
+function soldGroups(){return allGroups().filter(g=>{try{return !!window.MongoArchive?.assetGroupSold(g)}catch(_){return false}})}
+function typeLabel(g){try{const a=INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn||[];return a.find(x=>x.k===g.typeKey)?.label||g.typeKey||''}catch(_){return g?.typeKey||''}}
+function incomeFlag(g){try{return !!(typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g))}catch(_){return false}}
+function decorateSold(){
+ const root=document.getElementById('invest-list');if(!root)return;
+ const cards=[...root.querySelectorAll('.mongo-sold-card')], gs=soldGroups();
+ cards.forEach((card,i)=>{
+   const g=gs[i];if(!g)return;
+   let title=card.querySelector(':scope > .portfolio-group-name');
+   if(title){title.style.display='block';title.childNodes[0]&&(title.childNodes[0].textContent=String(g.name||'')+' ')}
+   card.querySelectorAll('.mongo-v131-sold-identity').forEach(x=>x.remove());
+   const meta=card.querySelector('.mongo-sold-meta');if(!meta)return;
+   const row=document.createElement('div');row.className='mongo-v131-sold-identity';
+   const typ=typeLabel(g), state=incomeFlag(g)?q().income:q().noIncome;
+   row.innerHTML=`<b></b><span>·</span><span></span>`;row.children[0].textContent=typ;row.children[2].textContent=state;
+   meta.parentNode.insertBefore(row,meta);
+ });
+}
+function selectedYM(){return `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`}
+function saleGainInMonth(){const ym=selectedYM();return (txns||[]).some(t=>t&&t.assetIncomeType==='realized_gain'&&Number(t.amount)>0&&String(t.date||'').slice(0,7)===ym)}
+const v130Visible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
+mongoBudgetVisibleSubs=function(cat){
+ let subs=v130Visible(cat);
+ if(budgetType!=='income'||cat?.key!==CAT)return subs;
+ const all=Array.isArray(cat?.subs)?cat.subs:[];
+ const sale=all.find(sb=>sb?.key===SALE||sb?.assetSaleGain===true);
+ // V130 intentionally removed this planning row. V131 restores it only as actual sale-month progress.
+ if(sale&&saleGainInMonth()&&!subs.some(sb=>sb?.key===SALE))subs=[...subs,sale];
+ return subs.filter(sb=>{
+   if(sb?.key===SALE||sb?.assetSaleGain===true)return saleGainInMonth();
+   return true;
+ });
+};
+window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
+const oldR=window.rInvests;
+if(typeof oldR==='function'&&!oldR.__v131){const f=function(){const r=oldR.apply(this,arguments);setTimeout(decorateSold,60);return r};f.__v131=true;window.rInvests=f;}
+window.MONGO_PHONE_TEST_BUILD='V131';
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-v13"][id$="-phone-marker"]').forEach(e=>e.remove());
+ const b=document.createElement('div');b.id='mongo-v131-phone-marker';b.textContent='PHONE TEST V131';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';document.body.appendChild(b);
+}
+function refresh(){decorateSold();try{if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof updateBudgetTotal==='function')updateBudgetTotal();}catch(e){console.error('V131 refresh',e)}}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},11200));
+setTimeout(()=>{badge();refresh()},11800);setInterval(()=>{badge();decorateSold()},5000);
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
