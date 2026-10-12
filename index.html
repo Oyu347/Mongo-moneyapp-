@@ -20186,6 +20186,66 @@ document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{refreshLabels(
 
 
 <div id="mongo-v122-phone-marker" style="position:fixed;right:8px;bottom:8px;z-index:2147483646;background:#0f766e;color:white;padding:4px 8px;border-radius:999px;font:700 10px/1.2 system-ui;opacity:.88;pointer-events:none">PHONE TEST V122</div>
+
+
+<!-- Möngö PHONE TEST V130 — asset-income Budget lifecycle only.
+     Protected V129 asset cards and V123/V129 sale cash-flow math are untouched.
+     Rules:
+       • active income-producing asset may remain available for planning;
+       • sold asset remains visible in historical/sale month only when that month has a saved plan;
+       • sold asset is hidden after its sale month;
+       • non-income-producing, unplanned assets do not appear in Budget;
+       • realized sale gain remains actual/reporting income, not a Budget planning row. -->
+<script id="mongo-v130-asset-budget-lifecycle">
+(function(){
+'use strict';
+const CAT='asset_income_cat', SALE='asset_sale_gain';
+const priorVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
+function ym(y,m){return String(y)+'-'+String(m).padStart(2,'0')}
+function yieldKey(name){return 'yield_'+String(name||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45)}
+function allGroups(){try{return window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]}catch(_){return []}}
+function groupForSub(sb){const k=String(sb?.key||'');return allGroups().find(g=>yieldKey(g?.name)===k)||null}
+function saleMonth(g){
+ const ds=(g?.items||[]).map(x=>String(x?.saleDate||'').slice(0,7)).filter(x=>/^\d{4}-\d{2}$/.test(x));
+ return ds.length?ds.sort().slice(-1)[0]:'';
+}
+function isSold(g){try{return !!(g&&window.MongoArchive?.assetGroupSold(g))}catch(_){return false}}
+function isIncomeProducing(g){try{return !!(g&&typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g))}catch(_){return false}}
+function planned(cat,sb){try{return Number(getBudgetValForYear(bSubKey(cat,sb),budgetMonth,budgetYear)||0)>0}catch(_){return false}}
+
+mongoBudgetVisibleSubs=function(cat){
+ if(budgetType!=='income'||cat?.key!==CAT)return priorVisible(cat);
+ const selected=ym(budgetYear,budgetMonth);
+ const subs=Array.isArray(cat?.subs)?cat.subs:[];
+ return subs.filter(sb=>{
+   // Sale gain is an actual/reporting result, never a planning row.
+   if(sb?.key===SALE||sb?.assetSaleGain===true)return false;
+   if(!String(sb?.key||'').startsWith('yield_'))return true;
+   const hasPlan=planned(cat,sb), g=groupForSub(sb);
+   if(!g)return hasPlan; // preserve genuine old manual history only.
+   if(isSold(g)){
+     const sm=saleMonth(g);
+     if(sm&&selected>sm)return false;
+     return hasPlan; // historical/sale month survives only when it was actually planned.
+   }
+   // Active assets appear automatically only when configured to produce income.
+   return isIncomeProducing(g)||hasPlan;
+ });
+};
+window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
+window.MONGO_PHONE_TEST_BUILD='V130';
+function badge(){
+ document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-v130-phone-marker"]').forEach(e=>e.remove());
+ const b=document.createElement('div');b.id='mongo-v130-phone-marker';b.textContent='PHONE TEST V130';
+ b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
+ document.body.appendChild(b);
+}
+function refresh(){try{if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof updateBudgetTotal==='function')updateBudgetTotal();}catch(e){console.error('V130 budget lifecycle refresh',e)}}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},10200));
+setTimeout(()=>{badge();refresh()},10800);setInterval(badge,5000);
+})();
+</script>
+
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
