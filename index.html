@@ -19785,7 +19785,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V136</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V137</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
@@ -20438,5 +20438,76 @@ function clean(){const el=document.getElementById('mongo-demand-v47a-card');if(e
 document.addEventListener('DOMContentLoaded',clean);
 document.addEventListener('change',e=>{if(e.target&&(e.target.id==='account-deposit-term-type'||e.target.id==='account-type'))setTimeout(clean,0);});
 document.addEventListener('click',()=>setTimeout(clean,0));
+})();
+</script>
+
+
+<!-- Möngö PHONE TEST V137 — demand-savings interest modal follows selected credit date.
+     Scoped UI/calculation bridge only: reuses the existing V46 daily-interest engine and
+     existing account/transaction history. No save schema, Budget, transfer, cancellation,
+     Firebase, or account-balance mutation logic changed. -->
+<script id="mongo-v137-interest-date-recalc">
+(function(){
+'use strict';
+window.MONGO_SAVINGS_INTEREST_DATE_RECALC='V137';
+const DAY137=86400000;
+const N137=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+const D137=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
+const K137=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';
+const MD137=d=>d?`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`:'';
+function typ137(a){return typeof normalizeAccountType==='function'?normalizeAccountType(a&&a.type):(a&&a.type)}
+function isDemand137(a){return !!a&&typ137(a)==='savings'&&(a.depositTermType||'demand')==='demand'}
+function money137(v){try{return typeof fmtMoney==='function'?fmtMoney(Math.round(N137(v))):'₮'+Math.round(N137(v)).toLocaleString('en-US')}catch(_){return '₮'+Math.round(N137(v)).toLocaleString('en-US')}}
+function events137(a,end){
+  if(window.MongoDemandRealV48&&typeof window.MongoDemandRealV48.eventsFor==='function')return window.MongoDemandRealV48.eventsFor(a,end);
+  return [];
+}
+function calc137(a,dateStr){
+  const accountStart=D137(a.startDate||a.openingDate||a.createdDate||a.date), selected=D137(dateStr);
+  if(!accountStart||!selected||selected<accountStart)return {interest:0,start:accountStart,end:selected,balance:0};
+  const engine=window.MongoDemandInterestPreviewV46?.calculate;
+  if(typeof engine!=='function')return null;
+  const endExclusive=new Date(+selected+DAY137), allEvents=events137(a,endExclusive), id=String(a.id);
+  const credits=(Array.isArray(txns)?txns:[])
+    .filter(t=>String(t.accountId)===id&&String(t.savingsAccountId||'')===id&&t.type==='income'&&t.interestMode==='compound'&&D137(t.date)&&D137(t.date)<=selected)
+    .sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+  const lastCredit=credits.length?D137(credits[credits.length-1].date):null;
+  const cycleStart=(lastCredit&&lastCredit>=accountStart)?lastCredit:accountStart;
+  let opening=Math.max(0,N137(a.openingBalance));
+  for(const e of allEvents){const dt=D137(e.date);if(dt&&dt<cycleStart)opening=Math.max(0,opening+N137(e.amount));}
+  const cycleEvents=allEvents.filter(e=>{const dt=D137(e.date);return dt&&dt>=cycleStart&&dt<endExclusive});
+  const result=engine({openingBalance:opening,annualRate:Math.max(0,N137(a.annualInterestRate||a.interestRate)),startDate:K137(cycleStart),endDate:K137(endExclusive),events:cycleEvents});
+  return {interest:Math.max(0,Math.round(N137(result?.roundedInterest))),start:cycleStart,end:selected,balance:Math.max(0,N137(result?.closingPrincipal))};
+}
+function bind137(modalId,dateId,amountId,a){
+  const modal=document.getElementById(modalId), dateEl=document.getElementById(dateId), amountEl=document.getElementById(amountId);
+  if(!modal||!dateEl||!amountEl||!isDemand137(a))return;
+  const note=modal.querySelector('.mongo-interest-auto-v34');
+  let manual=false, internal=false;
+  amountEl.addEventListener('input',()=>{if(!internal)manual=true});
+  function refresh(force){
+    const c=calc137(a,dateEl.value); if(!c)return;
+    if(note){
+      const x=(typeof lang==='string'&&lang==='mn')?{calc:'Тооцоолсон хүү',help:'Банкнаас бодитоор орсон дүн зөрвөл доорх дүнг засаж болно.'}:null;
+      const calcLabel=x?x.calc:'Calculated interest', help=x?x.help:'If the amount actually credited by the bank differs, you can edit the amount below.';
+      note.innerHTML=`<b>${calcLabel}: ${money137(c.interest)}</b><br>${Number(a.annualInterestRate||a.interestRate)||0}% · ${MD137(c.start)}–${MD137(c.end)}<br>${help}`;
+    }
+    if(force||!manual){internal=true;amountEl.value=String(c.interest);try{if(typeof setupAmtInput==='function')setupAmtInput(amountEl)}catch(_){}internal=false;}
+  }
+  dateEl.addEventListener('change',()=>refresh(false));
+  refresh(true);
+}
+const openDeposit137=window.openMongoSavingsDepositInterestV13;
+if(typeof openDeposit137==='function')window.openMongoSavingsDepositInterestV13=function(id){
+  const r=openDeposit137.apply(this,arguments),a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(a)setTimeout(()=>bind137('mongo-savings-interest-income-v13','mongo-si-v13-date','mongo-si-v13-amount',a),0);
+  return r;
+};
+const openExternal137=window.openMongoSavingsExternalInterestV9;
+if(typeof openExternal137==='function')window.openMongoSavingsExternalInterestV9=function(id){
+  const r=openExternal137.apply(this,arguments),a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));
+  if(a)setTimeout(()=>bind137('mongo-savings-interest-income-v9','mongo-si-v9-date','mongo-si-v9-amount',a),0);
+  return r;
+};
 })();
 </script>
