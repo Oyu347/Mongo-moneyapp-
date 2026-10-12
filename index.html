@@ -3648,7 +3648,7 @@ function makeTransfer(input,options={}){
  if(!(amount>0))return {ok:false,reason:'amount_required'};
  if(!s.fromId)return {ok:false,reason:'source_required'};
  if(purpose==='internal'&&(!s.toId||String(s.fromId)===String(s.toId)))return {ok:false,reason:'destination_required'};
- if(purpose==='savings'&&(!s.toId||String(s.fromId)===String(s.toId)||!s.targetId))return {ok:false,reason:'savings_destination_required'};
+ if(purpose==='savings'&&(!s.toId||String(s.fromId)===String(s.toId)))return {ok:false,reason:'savings_destination_required'};
  if(purpose==='investment'&&!s.targetId)return {ok:false,reason:'investment_destination_required'};
  const toId=(purpose==='asset'||purpose==='investment')?null:s.toId;
  return {ok:true,transfer:{id:s.id||makeId('tr',options.uuid,options.now),fromId:s.fromId,toId,amount,date:s.date||options.fallbackDate||new Date().toISOString().slice(0,10),purpose,targetId:s.targetId||null,updatedAt:options.timestamp||new Date().toISOString()}};
@@ -8064,18 +8064,11 @@ function renderTransferTarget(){
   }else if(purpose==='savings'){
     if(to){to.innerHTML='';to.style.display='none';}
     tar.style.removeProperty('display');
-    const linkedGoals=goals.filter(g=>{
-      const saved=typeof getGoalEffectiveSaved==='function'?getGoalEffectiveSaved(g):(Number(g.saved)||0);
-      const goalIsActive=window.MongoArchive?.goalActive
-        ?!!window.MongoArchive.goalActive(g,saved)
-        :!(g.archivedAt||g.completedAt);
-      // V51: the transfer target follows the ACTIVE savings account.
-      // A linked goal may carry stale completed/archive metadata after account edits,
-      // but an active savings account must remain available for Add to savings.
-      return active.some(a=>normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(g.id));
-    });
-    tar.innerHTML=linkedGoals.map(g=>`<option value="${g.id}">🎯 ${g.name} · ${fmt(getGoalEffectiveSaved(g))}</option>`).join('');
-    if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Холбогдсон хуримтлал эхлээд үүсгэнэ үү':'Create a linked savings goal first'}</option>`;
+    // V136: Savings account is the transfer destination. A goal is optional metadata.
+    // This keeps goal-linked savings working while also allowing goal-free savings accounts.
+    const savingsAccounts=active.filter(a=>normalizeAccountType(a.type)==='savings');
+    tar.innerHTML=savingsAccounts.map(a=>`<option value="${a.id}">🐷 ${a.name} · ${fmt(accountBalance(a.id))}</option>`).join('');
+    if(!tar.innerHTML)tar.innerHTML=`<option value="">${lang==='mn'?'Хуримтлалын данс эхлээд үүсгэнэ үү':'Create a savings account first'}</option>`;
   }else if(purpose==='investment'){
     if(to){to.innerHTML='';to.style.display='none';}
     tar.style.removeProperty('display');
@@ -8105,21 +8098,18 @@ function addTransaction(){
     let targetId=purpose==='asset'?'__new__':((document.getElementById('t-transfer-target')||{}).value||null);
     // V29: Simple transfer cannot target savings accounts; savings uses the dedicated flow.
     if(purpose==='savings'){
-      // Canonical savings link: every new savings transfer is stored against the real goal id.
-      // The selected value may be a goal id (current UI) or, for compatibility, a savings account id.
-      let goal=goals.find(g=>String(g?.id)===String(targetId));
-      if(!goal){
-        const selectedAccount=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.id)===String(targetId));
-        const gid=selectedAccount?.linkedGoalId??selectedAccount?.goalId??null;
-        if(gid!=null) goal=goals.find(g=>String(g?.id)===String(gid));
-      }
-      if(goal){
-        targetId=goal.id;
-        const linked=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(goal.id));
-        toId=linked?.id||null;
+      // V136: the selected savings account is authoritative; a linked goal is optional.
+      const selectedAccount=moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.id)===String(targetId));
+      if(selectedAccount){
+        toId=selectedAccount.id;
+        const gid=selectedAccount.linkedGoalId??selectedAccount.goalId??null;
+        targetId=gid!=null&&goals.some(g=>String(g?.id)===String(gid))?gid:null;
       }else{
-        targetId=null;
-        toId=null;
+        // Compatibility for older UI/state where the selected value was a goal id.
+        const goal=goals.find(g=>String(g?.id)===String(targetId));
+        const linked=goal?moneyAccounts.find(a=>a.active!==false&&normalizeAccountType(a.type)==='savings'&&String(a.linkedGoalId??a.goalId??'')===String(goal.id)):null;
+        toId=linked?.id||null;
+        targetId=goal?.id||null;
       }
     }else if(purpose==='investment')toId=null;
     if(purpose==='asset'){
@@ -8148,7 +8138,7 @@ function addTransaction(){
       accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId:null,amount,date,purpose:'asset',targetId:assetKey,assetId:boughtGroup?.items?.[0]?.id||null,updatedAt:new Date().toISOString()});
       document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';saveData();rAll();renderMoneyAccounts();return;
     }
-    const invalidDestination=purpose==='internal'?(!toId||fromId===toId):purpose==='savings'?(!toId||!targetId||fromId===toId):purpose==='investment'?!targetId:true;
+    const invalidDestination=purpose==='internal'?(!toId||fromId===toId):purpose==='savings'?(!toId||fromId===toId):purpose==='investment'?!targetId:true;
     if(!amount||amount<=0||!fromId||invalidDestination){showToast(lang==='mn'?'Шилжүүлгийн төрөл, данс болон очих газраа шалгана уу':'Check the transfer type, account and destination');return;}
     if(rejectInsufficientBalance(fromId,amount))return;
     if(purpose==='investment'){
@@ -19792,6 +19782,11 @@ accountInlineDetail=function(a){
 })();
 </script>
 
+
+<!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
+<style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
+<div id="mongo-v136-phone-badge">PHONE TEST V136</div>
+<script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
