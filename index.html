@@ -19217,6 +19217,7 @@ setTimeout(syncAll,1000);
 (function(){
 'use strict';
 window.MONGO_DEMAND_SAVINGS_UI='V45B';
+window.MONGO_DEMAND_REDUNDANT_NOTE_REMOVED='V135';
 const TXT={
  mn:{withdraw:'Мөнгө гаргах боломжтой',freq:'Хүү олгох давтамж',note:'Хүүг тухайн хадгаламжид нэмнэ. Банкнаас бодитоор олгосон хүүг “Хүүний орлого”-оор бүртгэнэ.'},
  en:{withdraw:'Withdrawals allowed',freq:'Interest payment frequency',note:'Interest is added to this savings account. Record the interest actually credited by the bank using “Interest income”.'},
@@ -19265,14 +19266,10 @@ function apply(p){
  const wrow=withdraw ? (withdraw.closest('.v381-check') || withdraw.parentElement) : null;
  if(wrow)wrow.style.display=demand?'':'none';
 
- let note=contract.querySelector('.v45a-demand-note');
- if(!note){
-   note=document.createElement('div');
-   note.className='v45a-demand-note';
-   contract.appendChild(note);
- }
- if(note.textContent!==tr().note)note.textContent=tr().note;
- note.style.display=demand?'':'none';
+ // V135: redundant demand-savings note removed from the form.
+ // The two dedicated interest explanations above already communicate this behavior.
+ const oldDemandNote=contract.querySelector('.v45a-demand-note');
+ if(oldDemandNote) oldDemandNote.remove();
 
  if(demand){
    const m=document.getElementById(p+'-interest-mode');
