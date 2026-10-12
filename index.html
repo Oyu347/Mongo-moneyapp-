@@ -13085,7 +13085,7 @@ auth.onAuthStateChanged(async user=>{
         updateSyncStatus('error','Дутуу Cloud төлөв хаагдлаа');
         let guard=document.getElementById('mongo-cloud-partial-guard');
         if(!guard){guard=document.createElement('div');guard.id='mongo-cloud-partial-guard';guard.className='loan-modal-backdrop';document.body.appendChild(guard);}
-        guard.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">Дутуу Cloud өгөгдлийг хаалаа</div><div style="font-size:13px;line-height:1.6;color:var(--text2)">Данс, гүйлгээ, хуримтлал, зээл эсвэл хөрөнгийн багц дутуу байгаа тул апп түүнийг ачаалж, буцаан хадгалсангүй.<br><br><b>Энэ файл дээр шинэ бүртгэл хийхгүй, дэлгэцийн зургийг илгээнэ үү.</b></div></div>';
+        guard.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">Дутуу Cloud өгөгдлийг хаалаа</div><div style="font-size:13px;line-height:1.6;color:var(--text2)">Данс, гүйлгээ, хуримтлал, зээл эсвэл хөрөнгийн багц дутуу байгаа тул апп түүнийг ачаалж, буцаан хадгалсангүй.<br><br><b>Энэ файл дээр шинэ бүртгэл хийхгүй, дэлгэцийн зургийг илгээнэ үү.</b></div><button type="button" id="mongo-cloud-partial-guard-close" style="width:100%;margin-top:18px;padding:13px 16px;border:0;border-radius:12px;background:var(--primary,#49B0B6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">Хаах</button></div>'; var closeBtn=document.getElementById("mongo-cloud-partial-guard-close"); if(closeBtn)closeBtn.onclick=function(){guard.remove();};
         return false;
       }
       const clearBarrier=getClearBarrier();
@@ -20323,6 +20323,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh
 setTimeout(()=>{badge();refresh()},11800);setInterval(()=>{badge();decorateSold()},5000);
 })();
 </script>
+<!-- Möngö PHONE TEST V133 — dismissible partial-cloud guard only; quarantine remains active. -->
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
