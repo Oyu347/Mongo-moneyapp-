@@ -19785,7 +19785,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V140</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V141</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
@@ -20473,7 +20473,7 @@ document.addEventListener('click',()=>setTimeout(clean,0));
 <script id="mongo-v137-interest-date-recalc">
 (function(){
 'use strict';
-window.MONGO_SAVINGS_INTEREST_DATE_RECALC='V137';
+window.MONGO_SAVINGS_INTEREST_DATE_RECALC='V141';
 const DAY137=86400000;
 const N137=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const D137=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
@@ -20493,7 +20493,7 @@ function calc137(a,dateStr){
   if(typeof engine!=='function')return null;
   const endExclusive=new Date(+selected), allEvents=events137(a,endExclusive), id=String(a.id);
   const credits=(Array.isArray(txns)?txns:[])
-    .filter(t=>String(t.accountId)===id&&String(t.savingsAccountId||'')===id&&t.type==='income'&&t.interestMode==='compound'&&D137(t.date)&&D137(t.date)<=selected)
+    .filter(t=>String(t.accountId)===id&&String(t.savingsAccountId||'')===id&&t.type==='income'&&t.interestMode==='compound'&&D137(t.date)&&D137(t.date)<selected)
     .sort((x,y)=>String(x.date).localeCompare(String(y.date)));
   const lastCredit=credits.length?D137(credits[credits.length-1].date):null;
   const cycleStart=(lastCredit&&lastCredit>=accountStart)?lastCredit:accountStart;
@@ -20517,6 +20517,12 @@ function bind137(modalId,dateId,amountId,a){
       note.innerHTML=`<b>${calcLabel}: ${money137(c.interest)}</b><br>${Number(a.annualInterestRate||a.interestRate)||0}% · ${MD137(c.start)}–${MD137(c.end)}<br>${help}`;
     }
     if(force||!manual){internal=true;amountEl.value=String(c.interest);try{if(typeof setupAmtInput==='function')setupAmtInput(amountEl)}catch(_){}internal=false;}
+    // Prevent accidental duplicate posting for an already credited payout date.
+    const existing=(Array.isArray(txns)?txns:[]).some(t=>String(t.savingsAccountId||'')===String(a.id)&&t.type==='income'&&
+      (t.interestMode==='compound'||t.interestMode==='payout')&&String(t.date||'').slice(0,10)===K137(c.end));
+    const save=[...modal.querySelectorAll('button')].find(b=>/^(Хадгалах|Save)$/i.test((b.textContent||'').trim()));
+    if(save){save.disabled=existing;save.title=existing?'Энэ огнооны хүү өмнө бүртгэгдсэн байна.':'';}
+    if(note&&existing)note.innerHTML+='<div style="margin-top:6px;font-weight:600">Энэ өдрийн хүү өмнө бүртгэгдсэн тул давхар хадгалах боломжгүй.</div>';
   }
   dateEl.addEventListener('change',()=>refresh(false));
   refresh(true);
