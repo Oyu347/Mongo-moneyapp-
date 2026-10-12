@@ -21443,3 +21443,53 @@ setTimeout(()=>{clean();badge();try{rInvests()}catch(_){}},10200);
 setInterval(()=>{clean();badge()},3000);
 })();
 </script>
+
+<!-- Möngö PHONE TEST V132 — active asset identity only.
+     Keeps V129 two-row card layout and V131 sold-card/Budget semantics untouched.
+     Active row becomes: Type · Asset name · Income-producing status. -->
+<style id="mongo-v132-active-asset-name-style">
+#invest-list .portfolio-group-meta.mongo-v132-active-identity{
+ display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#invest-list .portfolio-group-meta.mongo-v132-active-identity .mongo-v132-name{
+ color:#374151;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;
+}
+#invest-list .portfolio-group-meta.mongo-v132-active-identity .mongo-v132-income{font-weight:850;color:#08724F}
+</style>
+<script id="mongo-v132-active-asset-name-js">
+(function(){
+'use strict';
+const T={
+ mn:['Орлого оруулдаг','Орлого оруулдаггүй'],en:['Income-producing','Not income-producing'],
+ zh:['产生收入','不产生收入'],ja:['収入あり','収入なし'],ko:['수익 발생','수익 없음'],
+ ru:['Приносит доход','Без дохода'],de:['Ertrag bringend','Ohne Ertrag']
+};
+function tt(){return T[(typeof lang!=='undefined'&&lang)||'mn']||T.en}
+function typeLabel(g){try{const a=INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn||[];return a.find(x=>x.k===g.typeKey)?.label||g.typeKey||''}catch(_){return g?.typeKey||''}}
+function activeGroups(){try{return (typeof getInvestGroups==='function'?getInvestGroups():[]).sort((a,b)=>b.current-a.current)}catch(_){return []}}
+function draw(){
+ const root=document.getElementById('invest-list');if(!root)return;
+ const gs=activeGroups();
+ const cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
+ cards.forEach((card,i)=>{
+   const g=gs[i];if(!g)return;
+   const meta=card.querySelector('.portfolio-group-meta');if(!meta)return;
+   let inc=false;try{inc=!!assetGroupIncomeProducing(g)}catch(_){}
+   meta.classList.add('mongo-v132-active-identity');
+   meta.replaceChildren();
+   const type=document.createElement('span');type.textContent=typeLabel(g);
+   const dot1=document.createElement('span');dot1.textContent='·';
+   const name=document.createElement('span');name.className='mongo-v132-name';name.textContent=String(g.name||'');
+   const dot2=document.createElement('span');dot2.textContent='·';
+   const state=document.createElement('span');state.className=inc?'mongo-v132-income':'';state.textContent=inc?tt()[0]:tt()[1];
+   meta.append(type,dot1,name,dot2,state);
+ });
+}
+const old=window.rInvests;
+if(typeof old==='function'&&!old.__v132){const f=function(){const r=old.apply(this,arguments);setTimeout(draw,90);return r};f.__v132=true;window.rInvests=f;}
+window.MONGO_PHONE_TEST_BUILD='V132';
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(draw,11200),{once:true});else setTimeout(draw,11200);
+setInterval(draw,2500);
+})();
+</script>
