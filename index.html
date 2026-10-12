@@ -20467,7 +20467,7 @@ function calc137(a,dateStr){
   if(!accountStart||!selected||selected<accountStart)return {interest:0,start:accountStart,end:selected,balance:0};
   const engine=window.MongoDemandInterestPreviewV46?.calculate;
   if(typeof engine!=='function')return null;
-  const endExclusive=new Date(+selected+DAY137), allEvents=events137(a,endExclusive), id=String(a.id);
+  const endExclusive=new Date(+selected), allEvents=events137(a,endExclusive), id=String(a.id);
   const credits=(Array.isArray(txns)?txns:[])
     .filter(t=>String(t.accountId)===id&&String(t.savingsAccountId||'')===id&&t.type==='income'&&t.interestMode==='compound'&&D137(t.date)&&D137(t.date)<=selected)
     .sort((x,y)=>String(x.date).localeCompare(String(y.date)));
