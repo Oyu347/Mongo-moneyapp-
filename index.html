@@ -3596,7 +3596,7 @@ function makeLoanFundingEntry(d={},o,ts){const n=ts||new Date().toISOString();re
 function makeLoanPaymentEntry(d={},p={},o,ts){const n=ts||new Date().toISOString();return{id:`loan-payment:${id(p.id)}`,kind:'loan_payment',amount:Number(p.total)||0,date:p.date,fromAccountId:id(p.accountId),loanId:id(d.id),description:d.name||'',sourceId:id(p.id),principal:Number(p.principal)||0,interest:Number(p.interest)||0,extraPrincipal:Number(p.extraPrincipal)||0,createdAt:o?.createdAt||p.createdAt||n,updatedAt:p.updatedAt||n}}
 function expectedLedgerIds(x={}){const a=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>a.push('txn:'+id(t.id)));(x.accountTransfers||[]).forEach(t=>a.push('transfer:'+id(t.id)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&Number(d.fundingAmount)>0&&d.fundingAccountId)a.push('loan-received:'+id(d.id));(Array.isArray(d?.payments)?d.payments:[]).forEach(p=>a.push('loan-payment:'+id(p.id)))});return a}
 function buildLedger(x={},prev=[],ts){const m=new Map((prev||[]).map(e=>[id(e?.id),e])),a=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>a.push(makeTransactionEntry(t,m.get('txn:'+id(t.id)),ts)));(x.accountTransfers||[]).forEach(t=>a.push(makeTransferEntry(t,m.get('transfer:'+id(t.id)),ts)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&Number(d.fundingAmount)>0&&d.fundingAccountId)a.push(makeLoanFundingEntry(d,m.get('loan-received:'+id(d.id)),ts));(Array.isArray(d?.payments)?d.payments:[]).forEach(p=>a.push(makeLoanPaymentEntry(d,p,m.get('loan-payment:'+id(p.id)),ts)))});return a.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')))}
-function accountBalance(a,acs=[],l=[]){const q=id(a),ac=acs.find(x=>id(x?.id)===q);if(!ac)return 0;let v=Number(ac.openingBalance)||0;(l||[]).forEach(e=>{if(e?.data?.skipAccountBalance)return;const n=Number(e?.amount)||0;if(id(e?.fromAccountId)===q)v-=n;if(id(e?.toAccountId)===q)v+=n});return v}
+function accountBalance(a,acs=[],l=[]){const q=id(a),ac=acs.find(x=>id(x?.id)===q);if(!ac)return 0;let v=Number(ac.openingBalance)||0;(l||[]).forEach(e=>{const n=Number(e?.amount)||0;if(id(e?.fromAccountId)===q)v-=n;if(id(e?.toAccountId)===q)v+=n});return v}
 function validateLedger(l=[]){const z=[],seen=new Set();l.forEach(e=>{const x=id(e?.id);if(!x||seen.has(x))z.push('Давхардсан бүртгэл: '+(x||'ID байхгүй'));seen.add(x);if(!K.has(e?.kind))z.push('Төрөл буруу: '+e?.kind);if(!(Number(e?.amount)>0))z.push('Дүн буруу: '+x)});return z}
 function needsRebuild(x,l){const e=expectedLedgerIds(x),a=new Set((l||[]).map(v=>id(v?.id)));return a.size!==e.length||e.some(v=>!a.has(v))}
 g.MongoLedgerCore=Object.freeze({ledgerKindForTransaction,ledgerKindForTransfer,makeTransactionEntry,makeTransferEntry,makeLoanFundingEntry,makeLoanPaymentEntry,buildLedger,accountBalance,totalAccountMoney:(a,l)=>(a||[]).reduce((s,x)=>s+accountBalance(x?.id,a,l),0),validateLedger,expectedLedgerIds,needsRebuild});})(window);
@@ -3784,7 +3784,7 @@ function ledgerIdFindings(ledger,expectedIds){const rows=Array.isArray(ledger)?l
 function sourceLedgerIds(input){const x=input||{},ids=[];(x.txns||[]).filter(t=>t&&!t.loanPaymentId&&(t.type==='income'||t.type==='expense')).forEach(t=>ids.push('txn:'+id(t.id)));(x.transfers||[]).forEach(t=>ids.push('transfer:'+id(t.id)));(x.debts||[]).forEach(d=>{if(d&&d.fundingMode==='existing'&&num(d.fundingAmount)>0&&d.fundingAccountId)ids.push('loan-received:'+id(d.id));(Array.isArray(d&&d.payments)?d.payments:[]).forEach(p=>ids.push('loan-payment:'+id(p.id)));});return ids;}
 function sourceLedgerParityFindings(input){const x=input||{},expected=sourceLedgerIds(x),expectedSet=new Set(expected),out=ledgerIdFindings(x.ledger,expected);(x.ledger||[]).forEach(e=>{const lid=id(e&&e.id);if(lid&&/^(txn:|transfer:|loan-received:|loan-payment:)/.test(lid)&&!expectedSet.has(lid))out.push(finding('orphan-ledger-row','warn',{ledgerId:lid,kind:e&&e.kind}));});return out;}
 function transferFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to)out.push(finding('transfer-missing-account','error',{id:tid,fromId:from,toId:to}));if(from&&to&&from===to)out.push(finding('transfer-same-account','error',{id:tid,accountId:from}));if(amount<=0)out.push(finding('transfer-nonpositive-amount','error',{id:tid,amount}));});return out;}
-function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]),assetSaleSource=field==='fromAccountId'&&e?.data?.purpose==='asset_sale'&&aid.startsWith('asset:');if(aid&&!known.has(aid)&&!assetSaleSource)out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
+function accountReferenceFindings(accounts,ledger){const known=new Set((accounts||[]).map(a=>id(a&&a.id)).filter(Boolean)),out=[];(ledger||[]).forEach(e=>{[['fromAccountId','ledger-unknown-from-account'],['toAccountId','ledger-unknown-to-account']].forEach(([field,code])=>{const aid=id(e&&e[field]);if(aid&&!known.has(aid))out.push(finding(code,'error',{ledgerId:id(e&&e.id),accountId:aid}));});});return out;}
 function ledgerDeltaForAccount(accountId,ledger){const aid=id(accountId);return (ledger||[]).reduce((sum,e)=>sum+(id(e&&e.toAccountId)===aid?num(e.amount):0)-(id(e&&e.fromAccountId)===aid?num(e.amount):0),0);}
 function accountBalanceFindings(accounts,ledger,balanceFor){if(typeof balanceFor!=='function')return [];const out=[];(accounts||[]).forEach(a=>{const aid=id(a&&a.id),opening=num(a&&a.openingBalance),delta=ledgerDeltaForAccount(aid,ledger),expected=opening+delta,actual=num(balanceFor(aid));if(Math.abs(actual-expected)>1)out.push(finding('account-balance-ledger-mismatch','error',{accountId:aid,opening,ledgerDelta:delta,expected,actual}));});return out;}
 function transferConservationFindings(transfers){const out=[];(transfers||[]).forEach(t=>{const tid=id(t&&t.id),from=id(t&&t.fromId),to=id(t&&t.toId),amount=num(t&&t.amount);if(!from||!to||from===to||amount<=0)return;const sourceDelta=-amount,destinationDelta=amount,net=sourceDelta+destinationDelta;if(Math.abs(net)>1e-9)out.push(finding('transfer-conservation-failed','error',{id:tid,sourceDelta,destinationDelta,net}));});return out;}
@@ -9032,9 +9032,8 @@ function uDash(){
   const pd=getPD(),loanCashPaid=(debts||[]).reduce((s,d)=>s+debtPayments(d).filter(p=>objInRange(p,pd.from,pd.to)).reduce((x,p)=>x+(Number(p.total)||0),0),0);
   const exp=ordinaryExpense+loanCashPaid;
   const dbt=debts.reduce((s,d)=>s+getDebtRemaining(d),0);
-  const activeInvestGroups=(typeof getInvestGroups==='function'?getInvestGroups():[]);
-  const tIn=activeInvestGroups.reduce((s,g)=>s+(Number(g.invested)||0),0);
-  const tCur=activeInvestGroups.reduce((s,g)=>s+(Number(g.current)||0),0);
+  const tIn=invests.reduce((s,i)=>s+i.invested,0);
+  const tCur=invests.reduce((s,i)=>s+i.current,0);
   const totalSavings=savingsAccountsTotal();
   document.getElementById('d-inc').textContent=fmt(inc);
   document.getElementById('d-exp').textContent=fmt(exp);
@@ -13085,7 +13084,7 @@ auth.onAuthStateChanged(async user=>{
         updateSyncStatus('error','Дутуу Cloud төлөв хаагдлаа');
         let guard=document.getElementById('mongo-cloud-partial-guard');
         if(!guard){guard=document.createElement('div');guard.id='mongo-cloud-partial-guard';guard.className='loan-modal-backdrop';document.body.appendChild(guard);}
-        guard.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">Дутуу Cloud өгөгдлийг хаалаа</div><div style="font-size:13px;line-height:1.6;color:var(--text2)">Данс, гүйлгээ, хуримтлал, зээл эсвэл хөрөнгийн багц дутуу байгаа тул апп түүнийг ачаалж, буцаан хадгалсангүй.<br><br><b>Энэ файл дээр шинэ бүртгэл хийхгүй, дэлгэцийн зургийг илгээнэ үү.</b></div><button type="button" id="mongo-cloud-partial-guard-close" style="width:100%;margin-top:18px;padding:13px 16px;border:0;border-radius:12px;background:var(--primary,#49B0B6);color:#fff;font-size:15px;font-weight:800;cursor:pointer">Хаах</button></div>'; var closeBtn=document.getElementById("mongo-cloud-partial-guard-close"); if(closeBtn)closeBtn.onclick=function(){guard.remove();};
+        guard.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">Дутуу Cloud өгөгдлийг хаалаа</div><div style="font-size:13px;line-height:1.6;color:var(--text2)">Данс, гүйлгээ, хуримтлал, зээл эсвэл хөрөнгийн багц дутуу байгаа тул апп түүнийг ачаалж, буцаан хадгалсангүй.<br><br><b>Энэ файл дээр шинэ бүртгэл хийхгүй, дэлгэцийн зургийг илгээнэ үү.</b></div></div>';
         return false;
       }
       const clearBarrier=getClearBarrier();
@@ -15346,23 +15345,8 @@ select.fi{touch-action:pan-y;cursor:pointer}
   }
   function moneyActivities(){
     mergeLedger();
-    // Realized asset gain remains a stored reporting/Budget income record,
-    // but it is not a second cash movement in the Transactions list.
-    const normal=(txns||[]).filter(t=>isMoneyTxn(t)&&t.assetIncomeType!=='realized_gain');
-    // Asset-sale proceeds are the actual cash movement. Render them as a
-    // dedicated activity without classifying the whole proceeds as income.
-    const sales=(accountTransfers||[]).filter(t=>t&&t.purpose==='asset_sale').map(t=>{
-      const gain=(txns||[]).find(x=>x&&x.assetIncomeType==='realized_gain'&&String(x.assetSaleId||'')===String(t.id||''));
-      const group=(typeof window.getAllInvestGroupsIncludingSold==='function'
-        ?window.getAllInvestGroupsIncludingSold():[]).find(g=>String(g.key||'')===String(t.assetGroupKey||''));
-      const name=String(group?.name||gain?.desc||t.description||'').replace(/\s*·\s*(Ашиг|Gain|收益|利益|이익|Прибыль|Gewinn|Зарсан|Sold).*$/i,'').trim();
-      const proceeds=Number(t.amount)||0, pnl=Number(gain?.amount)||Number(group?.realizedPnl)||0;
-      const cost=Math.max(0,Number(group?.invested)||Number(group?.saleCostBasis)||proceeds-pnl);
-      return {id:'assetsale_'+String(t.id),_assetSaleActivity:true,assetSaleId:t.id,assetGroupKey:t.assetGroupKey,
-        date:t.date,accountId:t.toId,amount:proceeds,costBasis:cost,realizedPnl:pnl,assetName:name,type:'asset_sale',
-        updatedAt:t.updatedAt||t.createdAt||`${t.date||''}T12:00:00`};
-    });
-    return normal.concat(coreLoanActivities(),sales);
+    const normal=(txns||[]).filter(isMoneyTxn);
+    return normal.concat(coreLoanActivities());
   }
   function activeAccount(){const s=document.getElementById('txn-account-filter');return String(s?.value||txnAccountFilter||'all');}
   function searchIsVisible(){const p=document.getElementById('txn-search-panel');return !!(txnSearchOpen&&txnSearchQuery&&p&&getComputedStyle(p).display!=='none');}
@@ -15816,7 +15800,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
     duplicateIds(txns,q.txn,issues);duplicateIds(accountTransfers,q.transfer,issues);duplicateIds(debts,q.loan,issues);duplicateIds(moneyAccounts,q.account,issues);
     (moneyAccounts||[]).forEach(a=>{const bal=Number(accountBalance(a.id));if(!Number.isFinite(bal))issues.push(`${q.account} · ${a.name}: үлдэгдэл буруу`);if(bal<-.001)issues.push(`${q.account} · ${a.name}: сөрөг үлдэгдэл ${fmt(bal)}`);});
     (txns||[]).forEach(t=>{if(!['income','expense'].includes(t?.type))return;if(!(Number(t.amount)>0))issues.push(`${q.txn} · ${t.desc||t.id}: дүн буруу`);if(!validDate(t.date))issues.push(`${q.txn} · ${t.desc||t.id}: огноо буруу`);if(t.accountId&&!accountIds.has(String(t.accountId)))issues.push(`${q.txn} · ${t.desc||t.id}: данс олдсонгүй`);});
-    (accountTransfers||[]).forEach(t=>{if(!(Number(t.amount)>0))issues.push(`${q.transfer}: дүн буруу`);if(!validDate(t.date))issues.push(`${q.transfer}: огноо буруу`);if(t.fromId&&t.toId&&String(t.fromId)===String(t.toId))issues.push(`${q.transfer}: эхлэх ба очих данс ижил`);if(t.fromId&&!accountIds.has(String(t.fromId))&&!(t.purpose==='asset_sale'&&String(t.fromId).startsWith('asset:')))issues.push(`${q.transfer}: эхлэх данс олдсонгүй`);if(t.toId&&!accountIds.has(String(t.toId)))issues.push(`${q.transfer}: очих данс олдсонгүй`);});
+    (accountTransfers||[]).forEach(t=>{if(!(Number(t.amount)>0))issues.push(`${q.transfer}: дүн буруу`);if(!validDate(t.date))issues.push(`${q.transfer}: огноо буруу`);if(t.fromId&&t.toId&&String(t.fromId)===String(t.toId))issues.push(`${q.transfer}: эхлэх ба очих данс ижил`);if(t.fromId&&!accountIds.has(String(t.fromId)))issues.push(`${q.transfer}: эхлэх данс олдсонгүй`);if(t.toId&&!accountIds.has(String(t.toId)))issues.push(`${q.transfer}: очих данс олдсонгүй`);});
     (debts||[]).forEach(d=>{
       const local=new Set(),payments=Array.isArray(d.payments)?d.payments:[];paymentCount+=payments.length;
       payments.forEach(p=>{const id=String(p?.id??'');if(!id)issues.push(`${q.payment} · ${d.name}: ID байхгүй`);else if(local.has(id)||paymentIds.has(id))issues.push(`${q.payment} · ${d.name}: давхардсан ID ${id}`);else{local.add(id);paymentIds.add(id);}
@@ -16467,9 +16451,7 @@ if(typeof allGroupsFn==='function'){
 }
 function safe(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 window.openAssetSaleModal=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;document.getElementById('asset-sale-modal')?.remove();const m=document.createElement('div');m.id='asset-sale-modal';m.className='loan-modal-backdrop';const opts=(moneyAccounts||[]).filter(a=>a.active!==false).map(a=>`<option value="${a.id}">${accountIcon(a)} ${typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name}</option>`).join('');m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t().saleTitle}</div><div class="flow-only-note">${g.name} · ${t().cost}: ${fmt(g.invested)}</div><label>${t().saleAmount}</label><input class="fi" id="asset-sale-amount" inputmode="decimal" data-amt="1" value="${Math.round(g.current).toLocaleString('en-US')}"><label>${t().receive}</label><select class="fi" id="asset-sale-account">${opts}</select><label>${t().date}</label><input class="fi" id="asset-sale-date" type="date" value="${new Date().toISOString().slice(0,10)}"><div id="asset-sale-preview" class="flow-only-note"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-sale-modal').remove()">${t().cancel}</button><button class="btn btn-p" onclick="saveAssetSale('${safe(key)}')">${t().save}</button></div></div>`;document.body.appendChild(m);const inp=document.getElementById('asset-sale-amount');if(typeof setupAmtInput==='function')setupAmtInput(inp);const preview=()=>{const b=window.MongoArchive.assetSaleBreakdown(g.invested,parseAmt(inp.value));document.getElementById('asset-sale-preview').innerHTML=`${b.pnl>=0?t().gain:t().loss}: <b>${b.pnl>=0?'+':''}${fmt(b.pnl)}</b>`;};inp.addEventListener('input',preview);preview();};
-window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=window.ensureAssetSaleGainBudgetSourceV126?window.ensureAssetSaleGainBudgetSourceV126():ensureYieldBudgetSource('',g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}
-if(b.loss>0){txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'loss_'+Date.now()),type:'investment_loss',desc:`${g.name} · ${t().loss}`,amount:b.loss,date,accountId,skipAccountBalance:true,assetGroupKey:key,assetIncomeType:'realized_loss',assetSaleId:saleId,incomePlanIncluded:false,createdAt:now});}
-g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
+window.saveAssetSale=function(key){const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>x.key===key);if(!g)return;const proceeds=Math.max(0,parseAmt(document.getElementById('asset-sale-amount')?.value)||0),accountId=document.getElementById('asset-sale-account')?.value,date=document.getElementById('asset-sale-date')?.value;if(!(proceeds>0)||!accountId||!date){showToast(t().need);return;}const b=window.MongoArchive.assetSaleBreakdown(g.invested,proceeds),now=new Date().toISOString(),saleId=crypto.randomUUID?crypto.randomUUID():'sale_'+Date.now();accountTransfers.push({id:saleId,fromId:'asset:'+key,toId:accountId,amount:proceeds,date,purpose:'asset_sale',assetGroupKey:key,description:`${g.name} · ${t().sold}`,createdAt:now});if(b.gain>0){const y=ensureYieldBudgetSource(g.name,g.color);txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'gain_'+Date.now()),type:'income',desc:`${g.name} · ${t().gain}`,catKey:y.cat.key,catName:cN(y.cat),subcatName:y.sub.key,amount:b.gain,date,accountId,skipAccountBalance:true,assetIncome:true,assetGroupKey:key,assetIncomeType:'realized_gain',assetSaleId:saleId,createdAt:now});}g.items.forEach(x=>{x.soldAt=now;x.saleDate=date;x.saleProceeds=proceeds;x.saleAccountId=accountId;x.saleCostBasis=b.costBasis;x.realizedPnl=b.pnl;x.assetSaleId=saleId;x.archivedAt=x.archivedAt||now;});document.getElementById('asset-sale-modal')?.remove();saveData();rAll();rDonut('inv');uDash();};
 function soldCard(g){const x=g.items[0]||{},p=Number(x.realizedPnl)||0,a=(moneyAccounts||[]).find(z=>String(z.id)===String(x.saleAccountId));const d=document.createElement('div');d.className='inv-card mongo-object-card mongo-sold-card';d.innerHTML=`<div class="portfolio-group-name">${g.name} <span class="mongo-archive-badge">✓ ${t().sold}</span></div><div class="mongo-sold-meta">${t().cost}: ${fmt(Number(x.saleCostBasis)||g.invested)}<br>${t().saleAmount}: ${fmt(Number(x.saleProceeds)||0)}<br><span class="mongo-sale-pnl ${p>=0?'pos':'neg'}">${p>=0?t().gain:t().loss}: ${p>=0?'+':''}${fmt(p)}</span><br>${t().receive}: ${a?(typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(a):a.name):'—'} · ${x.saleDate||''}</div>`;return d;}
 function installInvestLifecycle(){if(typeof window.rInvests!=='function'||window.rInvests.__lifecycleWrapped)return;const base=window.rInvests;function next(){base();const root=document.getElementById('invest-list');if(!root)return;const active=window.getInvestGroups?window.getInvestGroups():[],cards=[...root.children].filter(x=>x.classList.contains('inv-card'));active.forEach((g,i)=>{const card=cards[i],actions=card?.querySelector('.portfolio-group-head>div:last-child');if(actions&&!actions.querySelector('.mongo-sell-action'))actions.insertAdjacentHTML('beforeend',`<button class="btn btn-sm mongo-sell-action" onclick="openAssetSaleModal('${safe(g.key)}')">${t().sell}</button>`);});const sold=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).filter(g=>window.MongoArchive?.assetGroupSold(g));if(sold.length){const box=document.createElement('details');box.className='mongo-archive-box';box.innerHTML=`<summary><span>${t().sold} <span class="mongo-archive-badge">${sold.length}</span></span></summary><div class="mongo-archive-list"></div>`;sold.forEach(g=>box.querySelector('.mongo-archive-list').appendChild(soldCard(g)));root.appendChild(box);}}next.__lifecycleWrapped=true;window.rInvests=next;}
 function decorateGoalHistory(){document.querySelectorAll('#goal-list .mongo-archive-list .goal-card').forEach(card=>{if(card.querySelector('.mongo-goal-life'))return;const name=(card.querySelector('.goal-name')?.textContent||card.textContent||'').trim();const g=(goals||[]).find(x=>name.includes(x.name));const h=g&&Array.isArray(g.lifecycleHistory)?g.lifecycleHistory.filter(x=>x.type==='relinked').slice(-1)[0]:null;if(!h)return;const d=document.createElement('div');d.className='flow-only-note mongo-goal-life';d.textContent=`${t().movedToGoal}: ${h.toGoalName} · ${fmt(h.amount)} · ${h.date}`;card.appendChild(d);});}
@@ -16963,7 +16945,7 @@ const D={
 mn:{title:'Хадгаламжийн нөхцөл',kind:'Хадгаламжийн төрөл',demand:'Хугацаагүй',term:'Хугацаатай',extra:'Нэмэлт орлого хийх боломжтой',early:'Хугацаанаас өмнө цуцлах боломжтой',rule:'Цуцлалтын тооцооны дүрэм',all:'Бүх хадгалсан хугацааг бууруулсан хүүгээр бодох',staged:'Үе шаттай хүү бодох',threshold:'Хугацааны босгоос хамаарч хүү бодох',stageTitle:'Хадгалсан хугацааны шатлал',stageHelp:'Мөнгө тус бүр хэдэн хоног хадгалагдсанаас нь хамаарч тохирох шатны жилийн хүүг автоматаар сонгоно.',stageFrom:'Эхлэх хоног',stageTo:'Дуусах хоног',stageRate:'Жилийн хүү (%)',stageUp:'дээш',thresholdTitle:'Хугацааны босго',thresholdHelp:'Хадгаламжийн нийт хадгалсан хугацаа босгод хүрсэн эсэхээр жилийн хүү сонгогдоно.',thresholdDays:'Босго хугацаа (хоног)',thresholdBefore:'Босгоос өмнөх жилийн хүү (%)',thresholdAfter:'Босго хүрсний дараах жилийн хүү (%)',actual:'Банкны нөхцөлөөр / бодит дүнгээр тохируулах',rate:'Цуцлалтын жилийн хүү (%)',fee:'Цуцлалтын шимтгэл',note:'Энэ шатанд зөвхөн гэрээний нөхцөлийг хадгална. Цуцлалтын мөнгөн тооцоо болон бодит цуцлалт дараагийн шатанд нэмэгдэнэ.',bankTitle:'Банкны нөхцөлийн тохиргоо',bankHelp:'Хүү олгох хэлбэр, жилийн хүү, хүү хүлээн авах дансыг дээрх “Хүүгийн нөхцөл”-өөс ашиглана. Энд зөвхөн цуцлах үеийн банкны бодит нийт хүүг шаардлагатай үед тохируулна.',bankUseActual:'Банкны бодит дүн ашиглах',bankActualInterest:'Банкны бодит нийт хүү (₮)',end:'Дуусах хугацаа'},
 en:{title:'Deposit terms',kind:'Deposit type',demand:'Demand savings',term:'Term deposit',extra:'Additional deposits allowed',early:'Early termination allowed',rule:'Early termination calculation rule',all:'Calculate the full held period at the reduced rate',staged:'Calculate interest by holding-period tiers',threshold:'Calculate interest by holding-period threshold',stageTitle:'Holding-period tiers',stageHelp:'The annual rate is selected automatically for each amount based on how many days it was held.',stageFrom:'From day',stageTo:'To day',stageRate:'Annual rate (%)',stageUp:'and above',thresholdTitle:'Holding-period threshold',thresholdHelp:'The annual rate is selected based on whether the total holding period has reached the threshold.',thresholdDays:'Threshold period (days)',thresholdBefore:'Annual rate before threshold (%)',thresholdAfter:'Annual rate at/after threshold (%)',actual:'Use bank terms / actual settlement',rate:'Early termination annual rate (%)',fee:'Early termination fee',note:'This stage stores contract terms only. Settlement calculation and actual termination will be added in the next stage.',bankTitle:'Bank settlement settings',bankHelp:'Interest payment method, annual rate, and receiving account use the “Interest terms” above. Here, only the bank’s actual total interest at early termination is adjusted when needed.',bankUseActual:'Use bank actual amount',bankActualInterest:'Bank actual total interest (₮)',end:'Maturity date'},
 zh:{title:'存款条件',kind:'存款类型',demand:'活期储蓄',term:'定期存款',extra:'允许追加存款',early:'允许提前支取',rule:'提前支取计算规则',all:'全部存期按降低后的利率计息',staged:'按存期阶梯计息',threshold:'按存期门槛计息',stageTitle:'存期利率阶梯',stageHelp:'每笔资金按实际存放天数自动匹配相应年利率。',stageFrom:'起始天数',stageTo:'结束天数',stageRate:'年利率 (%)',stageUp:'以上',thresholdTitle:'存期门槛',thresholdHelp:'根据总存期是否达到门槛选择年利率。',thresholdDays:'门槛期限（天）',thresholdBefore:'门槛前年利率 (%)',thresholdAfter:'达到门槛后的年利率 (%)',actual:'按银行条款 / 实际结算调整',rate:'提前支取年利率 (%)',fee:'提前支取手续费',note:'此阶段仅保存合同条件。结算计算和实际提前支取将在下一阶段加入。',bankTitle:'银行结算设置',bankHelp:'付息方式、年利率和收息账户使用上方“利息条件”中的设置。这里只在需要时调整提前支取时银行实际结算的总利息。',bankUseActual:'使用银行实际金额',bankActualInterest:'银行实际总利息 (₮)',end:'到期日'},
-ja:{title:'預金条件',kind:'預金の種類',demand:'普通・随時預金',term:'定期預金',extra:'追加預入が可能',early:'中途解約が可能',rule:'中途解約の計算ルール',all:'預入全期間を低い利率で利息計算',staged:'預入期間の段階別に利息計算',threshold:'預入期間の基準に応じて利息計算',stageTitle:'預入期間別金利',stageHelp:'各入金は実際の預入日数に応じた年利率を自動適用します。',stageFrom:'開始日数',stageTo:'終了日数',stageRate:'年利率 (%)',stageUp:'以上',thresholdTitle:'預入期間の基準',thresholdHelp:'預金の総預入期間が基準に達したかどうかで年利率を選択します。',thresholdDays:'基準期間（日）',thresholdBefore:'基準前の年利率 (%)',thresholdAfter:'基準到達後の年利率 (%)',actual:'銀行条件 / 実際の精算額で調整',rate:'中途解約年利率 (%)',fee:'中途解約手数料',note:'この段階では契約条件のみ保存します。精算計算と実際の解約は次の段階で追加します。',bankTitle:'銀行精算設定',bankHelp:'利息の受取方法、年利率、受取口座は上の「利息条件」の設定を使用します。ここでは必要な場合のみ、中途解約時に銀行が実際に精算する利息総額を調整します。',bankUseActual:'銀行の実額を使用',bankActualInterest:'銀行の実際の利息総額 (₮)',end:'満期日'},
+ja:{title:'預金条件',kind:'預金の種類',demand:'普通・随時預金',term:'定期預金',extra:'追加預入が可能',early:'中途解約が可能',rule:'中途解約の計算ルール',all:'預入全期間を低い利率で利息計算',staged:'預入期間の段階別に利息計算',threshold:'預入期間の基準に応じて利息計算',stageTitle:'預入期間別金利',stageHelp:'各入金は実際の預入日数に応じた年利率を自動適用します。',stageFrom:'開始日数',stageTo:'終了日数',stageRate:'年利率 (%)',stageUp:'以上',thresholdTitle:'預入期間の基準',thresholdHelp:'預金の総預入期間が基準に達したかどうかで年利率を選択します。',thresholdDays:'基準期間（日）',thresholdBefore:'基準前の年利率 (%)',thresholdAfter:'基準到達後の年利率 (%)',actual:'銀行条件 / 実際の精算額で調整',rate:'中途解約年利 (%)',fee:'中途解約手数料',note:'この段階では契約条件のみ保存します。精算計算と実際の解約は次の段階で追加します。',bankTitle:'銀行精算設定',bankHelp:'利息の受取方法、年利率、受取口座は上の「利息条件」の設定を使用します。ここでは必要な場合のみ、中途解約時に銀行が実際に精算する利息総額を調整します。',bankUseActual:'銀行の実額を使用',bankActualInterest:'銀行の実際の利息総額 (₮)',end:'満期日'},
 ko:{title:'예금 조건',kind:'예금 유형',demand:'수시입출금 저축',term:'정기예금',extra:'추가 입금 가능',early:'중도 해지 가능',rule:'중도 해지 계산 규칙',all:'전체 예치 기간을 낮은 금리로 이자 계산',staged:'예치기간 구간별 이자 계산',threshold:'예치기간 기준에 따라 이자 계산',stageTitle:'예치기간별 금리 구간',stageHelp:'각 입금액은 실제 예치 일수에 맞는 연이율을 자동 적용합니다.',stageFrom:'시작 일수',stageTo:'종료 일수',stageRate:'연이율 (%)',stageUp:'이상',thresholdTitle:'예치기간 기준',thresholdHelp:'전체 예치기간이 기준에 도달했는지에 따라 연이율을 선택합니다.',thresholdDays:'기준 기간 (일)',thresholdBefore:'기준 전 연이율 (%)',thresholdAfter:'기준 도달 후 연이율 (%)',actual:'은행 조건 / 실제 정산액으로 조정',rate:'중도 해지 연 이율 (%)',fee:'중도 해지 수수료',note:'이 단계에서는 계약 조건만 저장합니다. 정산 계산과 실제 해지는 다음 단계에서 추가합니다.',bankTitle:'은행 정산 설정',bankHelp:'이자 지급 방식, 연이율, 이자 수령 계좌는 위의 “이자 조건” 설정을 사용합니다. 여기서는 필요한 경우에만 중도 해지 시 은행의 실제 총 이자를 조정합니다.',bankUseActual:'은행 실제 금액 사용',bankActualInterest:'은행 실제 총 이자 (₮)',end:'만기일'},
 ru:{title:'Условия вклада',kind:'Тип вклада',demand:'До востребования',term:'Срочный вклад',extra:'Разрешено пополнение',early:'Разрешено досрочное расторжение',rule:'Правило расчёта при досрочном расторжении',all:'Рассчитать проценты за весь срок по сниженной ставке',staged:'Рассчитать проценты по сроковым ступеням',threshold:'Рассчитать проценты по порогу срока хранения',stageTitle:'Ставки по сроку хранения',stageHelp:'Для каждой суммы автоматически применяется ставка по фактическому числу дней хранения.',stageFrom:'От, дней',stageTo:'До, дней',stageRate:'Годовая ставка (%)',stageUp:'и более',thresholdTitle:'Порог срока хранения',thresholdHelp:'Годовая ставка выбирается в зависимости от того, достиг ли общий срок хранения заданного порога.',thresholdDays:'Пороговый срок (дней)',thresholdBefore:'Годовая ставка до порога (%)',thresholdAfter:'Годовая ставка после достижения порога (%)',actual:'По условиям банка / фактической сумме',rate:'Годовая ставка при досрочном расторжении (%)',fee:'Комиссия за досрочное расторжение',note:'На этом этапе сохраняются только условия договора. Расчёт и фактическое расторжение будут добавлены на следующем этапе.',bankTitle:'Настройки расчёта банка',bankHelp:'Способ выплаты процентов, годовая ставка и счёт получения берутся из раздела «Условия процентов» выше. Здесь при необходимости указывается только фактическая общая сумма процентов банка при досрочном расторжении.',bankUseActual:'Использовать фактическую сумму банка',bankActualInterest:'Фактическая общая сумма процентов банка (₮)',end:'Дата окончания'},
 de:{title:'Einlagenbedingungen',kind:'Einlagenart',demand:'Täglich fällige Einlage',term:'Festgeld',extra:'Zusätzliche Einzahlungen erlaubt',early:'Vorzeitige Kündigung erlaubt',rule:'Berechnungsregel bei vorzeitiger Kündigung',all:'Zinsen für die gesamte Anlagedauer zum reduzierten Zinssatz berechnen',staged:'Zinsen nach Anlagedauer-Stufen berechnen',threshold:'Zinsen nach Laufzeitschwelle berechnen',stageTitle:'Zinsstufen nach Anlagedauer',stageHelp:'Für jede Einzahlung gilt automatisch der Jahreszins entsprechend ihrer tatsächlichen Anlagedauer.',stageFrom:'Ab Tag',stageTo:'Bis Tag',stageRate:'Jahreszins (%)',stageUp:'und mehr',thresholdTitle:'Laufzeitschwelle',thresholdHelp:'Der Jahreszins wird danach gewählt, ob die gesamte Anlagedauer die Schwelle erreicht hat.',thresholdDays:'Schwelle (Tage)',thresholdBefore:'Jahreszins vor der Schwelle (%)',thresholdAfter:'Jahreszins ab der Schwelle (%)',actual:'Nach Bankbedingungen / tatsächlicher Abrechnung',rate:'Jahreszins bei vorzeitiger Kündigung (%)',fee:'Gebühr bei vorzeitiger Kündigung',note:'In dieser Stufe werden nur Vertragsbedingungen gespeichert. Abrechnung und tatsächliche Kündigung folgen in der nächsten Stufe.',bankTitle:'Einstellungen der Bankabrechnung',bankHelp:'Auszahlungsart der Zinsen, Jahreszins und Empfangskonto werden aus den obigen „Zinsbedingungen“ übernommen. Hier wird bei Bedarf nur der tatsächliche Gesamtzins der Bank bei vorzeitiger Kündigung angepasst.',bankUseActual:'Tatsächlichen Bankbetrag verwenden',bankActualInterest:'Tatsächlicher Gesamtzins der Bank (₮)',end:'Fälligkeitsdatum'}};
@@ -17006,21 +16988,6 @@ const baseEdit=editMoneyAccount;editMoneyAccount=async function(id){
 };
 const baseLang=applyLang;applyLang=function(){baseLang();setTimeout(()=>{installNew();const open=document.getElementById('account-edit-modal');if(open){const id=typeof expandedMoneyAccountId!=='undefined'?expandedMoneyAccountId:null;const a=(moneyAccounts||[]).find(x=>String(x.id)===String(id));if(document.getElementById('edit-interest-fields'))ensure('edit',a||{});}},30);};
 setTimeout(installNew,50);
-
-/* V102 — term-deposit contract lifecycle stability only.
-   Some later savings UI scripts can rebuild #account-interest-fields after
-   V38.1 mounted the contract once. Re-mount the existing V38.1 contract only
-   when the Savings add form exists and its contract node is genuinely missing.
-   This does not change deposit-type values, interest formulas or cancellation. */
-window.MONGO_TERM_DEPOSIT_UI_STABILITY='V102';
-setInterval(function(){
-  const root=document.getElementById('account-interest-fields');
-  if(!root)return;
-  const type=document.getElementById('account-type');
-  if(type && type.value!=='savings')return;
-  if(!document.getElementById('account-term-contract')) ensure('account',{});
-},400);
-
 setTimeout(()=>{
   let changed=false;
   (moneyAccounts||[]).forEach(a=>{
@@ -17115,32 +17082,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,400));document
   gcontrib.onchange=()=>{const on=gcontrib.value==='regular';gcontribAmtWrap.style.display=on?'block':'none';gcontribFreqWrap.style.display=on?'block':'none'};
   v382gGo.onclick=run;
   grule.onchange();ginterest.onchange();gcontrib.onchange();days();
-  // V103 — language refresh must not rebuild the cancellation calculator DOM.
-  // Rebuilding here removed the already-installed Rule 2/3/4 panels and their
-  // event bindings. Translate the existing core controls in place instead.
-  function refreshLanguageInPlace(){
-   const q=Q();
-   const label=(id,txt)=>{const e=document.getElementById(id);const l=e?.parentElement?.querySelector('label');if(l)l.textContent=txt};
-   const opt=(id,value,txt)=>{const e=document.getElementById(id);const o=e?[...e.options].find(x=>x.value===value):null;if(o)o.textContent=txt};
-   const saveBtn=document.getElementById('v382dSave'),earlyBtn=document.getElementById('v382dEarly');
-   if(saveBtn)saveBtn.textContent=q.tabCalc;if(earlyBtn)earlyBtn.textContent=q.tabCancel;
-   label('gp',q.principal);label('ginterest',q.interestMethod);label('gcompoundfreq',q.compoundFreq);
-   label('gcontrib',q.contribution);label('gcontribamt',q.contributionAmount);label('gcontribfreq',q.contributionFreq);
-   label('gcr',q.contractRate);label('grr',q.cancelRate);label('gprior',q.priorInterest);
-   label('gstart',q.startDate);label('gend',q.cancelDate);label('gfee',q.fee);label('grule',q.rule);label('gmanual',q.manualInterest);
-   opt('ginterest','simple',q.simple);opt('ginterest','compound',q.compound);
-   opt('gcompoundfreq','12',q.monthly);opt('gcompoundfreq','4',q.quarterly);opt('gcompoundfreq','1',q.yearly);
-   opt('gcontrib','none',q.noContribution);opt('gcontrib','regular',q.regularContribution);
-   opt('gcontribfreq','monthly',q.monthly);opt('gcontribfreq','quarterly',q.quarterly);opt('gcontribfreq','yearly',q.yearly);
-   opt('grule','all',q.all);opt('grule','staged',q.staged);opt('grule','threshold',q.threshold);opt('grule','actual',q.actual);
-   const held=document.getElementById('gdays');if(held){const l=held.parentElement?.querySelector('label');if(l)l.textContent=q.heldPeriod;days()}
-   const go=document.getElementById('v382gGo');if(go)go.textContent=q.calculate;
-   const note=document.querySelector('#v382gCancel .gnote');if(note)note.textContent=q.note;
-   // Existing result values are left intact; only their labels are translated.
-   const rows=[...document.querySelectorAll('#v382gCancel #gout .grow')];
-   [q.principal,q.allowed,q.claw,q.add,q.fee,q.estimated].forEach((txt,i)=>{const sp=rows[i]?.querySelector('span');if(sp)sp.textContent=txt});
-  }
-  window.v382gRefreshLanguage=refreshLanguageInPlace;
+  window.v382gRefreshLanguage=render;
   }
   function days(){const q=Q(),a=gstart.value,b=gend.value;if(!a||!b){gdays.textContent='— '+q.days;return 0}const d=Math.floor((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);gdays.textContent=d>=0?d+' '+q.days:q.checkDate;return Math.max(0,d)}
   function run(){
@@ -18068,18 +18010,6 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
  }
  function tryInstall(){if(!install())setTimeout(tryInstall,300)}
  document.addEventListener('DOMContentLoaded',()=>setTimeout(tryInstall,1100));setTimeout(tryInstall,1600);
-
- /* V100 — lifecycle-only stability fix.
-    Reinstall the existing V95E Rule-2 tier UI only if the cancellation
-    calculator rebuilds its DOM and the tier node is genuinely missing.
-    No MutationObserver, no synthetic change event, no account/deposit UI touch. */
- window.MONGO_RULE2_STAGED_STABILITY='V100';
- setInterval(function(){
-   const calc=document.getElementById('v382gCancel');
-   if(!calc)return;
-   const rule=calc.querySelector('#grule'),go=calc.querySelector('#v382gGo');
-   if(rule&&go&&!calc.querySelector('#gstageWrap')) install();
- },400);
 })();
 </script>
 
@@ -18213,14 +18143,14 @@ Typography-only, scoped to #tab-debts. No layout, financial logic, i18n, or othe
 (function(){
 'use strict';
 const L={
- mn:{mode:'Хүү олгох хэлбэр',out:'Өөр дансанд олгогдоно',inside:'Хадгаламждаа нэмэгдэнэ',maturity:'Хугацааны эцэст',freq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settle:'Цуцлалтын тооцооны арга',rate:'Цуцлалтын жилийн хүү (%)',actual:'Банкны зөвшөөрсөн нийт хүү (₮)',calc:'Хувиар тооцох',bank:'Банкны бодит дүнгээр',noteOut:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',noteIn:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',noteMat:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
- en:{mode:'Interest payout method',out:'Paid to another account',inside:'Added to the deposit',maturity:'At maturity',freq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settle:'Cancellation calculation',rate:'Cancellation annual rate (%)',actual:'Total interest allowed by bank',calc:'Calculate by rate',bank:'Use bank actual amount',noteOut:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or the bank actual total amount.',noteIn:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',noteMat:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
- zh:{mode:'利息支付方式',out:'支付到其他账户',inside:'计入存款',maturity:'到期支付',freq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settle:'提前终止计算方式',rate:'提前终止年利率 (%)',actual:'银行认可的利息总额',calc:'按利率计算',bank:'按银行实际金额',noteOut:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',noteIn:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',noteMat:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
- ja:{mode:'利息の受取方法',out:'別口座へ受取',inside:'預金に加算',maturity:'満期時',freq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settle:'中途解約の計算方法',rate:'中途解約年利 (%)',actual:'銀行が認めた利息総額',calc:'利率で計算',bank:'銀行の実額を使用',noteOut:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',noteIn:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',noteMat:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
- ko:{mode:'이자 지급 방식',out:'다른 계좌로 지급',inside:'예금에 더하기',maturity:'만기 시',freq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settle:'중도해지 계산 방식',rate:'중도해지 연이율 (%)',actual:'은행이 인정한 총 이자',calc:'금리로 계산',bank:'은행 실제 금액 사용',noteOut:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',noteIn:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',noteMat:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
- ru:{mode:'Способ выплаты процентов',out:'На другой счёт',inside:'Добавлять к вкладу',maturity:'В конце срока',freq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settle:'Расчёт при расторжении',rate:'Годовая ставка досрочного расторжения (%)',actual:'Общая сумма процентов, признанная банком',calc:'Рассчитать по ставке',bank:'По фактической сумме банка',noteOut:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',noteIn:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',noteMat:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
- de:{mode:'Art der Zinsauszahlung',out:'Auf ein anderes Konto',inside:'Dem Guthaben gutschreiben',maturity:'Bei Fälligkeit',freq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settle:'Berechnung bei Kündigung',rate:'Jahreszins bei vorzeitiger Kündigung (%)',actual:'Von der Bank anerkannter Gesamtzins',calc:'Nach Zinssatz berechnen',bank:'Tatsächlichen Bankbetrag verwenden',noteOut:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',noteIn:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',noteMat:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
-}
+ mn:{mode:'Хүү олгох хэлбэр',out:'Өөр дансанд олгогдоно',freq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settle:'Цуцлалтын тооцооны арга',rate:'Цуцлахад тооцох жилийн хүү (%)',actual:'Банкны бодит нийт хүү (₮)',calc:'Хувиар тооцох',bank:'Банкны бодит дүнгээр',note:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.'},
+ en:{mode:'Interest payout method',out:'Paid to another account',freq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settle:'Cancellation calculation',rate:'Annual cancellation rate (%)',actual:'Bank actual total interest',calc:'Calculate by rate',bank:'Use bank actual amount',note:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or entered as the bank’s actual total amount.'},
+ zh:{mode:'利息支付方式',out:'支付到其他账户',freq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settle:'提前终止计算方式',rate:'提前终止年利率 (%)',actual:'银行实际利息总额',calc:'按利率计算',bank:'按银行实际金额',note:'支付到其他账户的利息不会加入存款本金。提前终止利息可按年利率计算，或输入银行实际确认的利息总额。'},
+ ja:{mode:'利息の受取方法',out:'別口座へ受取',freq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settle:'中途解約の計算方法',rate:'中途解約年利 (%)',actual:'銀行の実際の利息総額',calc:'利率で計算',bank:'銀行の実額を使用',note:'別口座に支払われた利息は預金元本に加算されません。中途解約利息は年利率で計算するか、銀行の実際の総額を入力します。'},
+ ko:{mode:'이자 지급 방식',out:'다른 계좌로 지급',freq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settle:'중도해지 계산 방식',rate:'중도해지 연이율 (%)',actual:'은행 실제 총 이자',calc:'금리로 계산',bank:'은행 실제 금액 사용',note:'다른 계좌로 지급된 이자는 예금 원금에 더해지지 않습니다. 중도해지 이자는 연이율로 계산하거나 은행의 실제 총액을 입력합니다.'},
+ ru:{mode:'Способ выплаты процентов',out:'На другой счёт',freq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settle:'Расчёт при расторжении',rate:'Годовая ставка при расторжении (%)',actual:'Фактическая общая сумма процентов банка',calc:'Рассчитать по ставке',bank:'По фактической сумме банка',note:'Проценты, выплаченные на другой счёт, не прибавляются к основной сумме вклада. При расторжении проценты рассчитываются по годовой ставке или вводятся фактической суммой банка.'},
+ de:{mode:'Art der Zinsauszahlung',out:'Auf ein anderes Konto',freq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settle:'Berechnung bei Kündigung',rate:'Jahreszins bei Kündigung (%)',actual:'Tatsächlicher Gesamtzins der Bank',calc:'Nach Zinssatz berechnen',bank:'Tatsächlichen Bankbetrag verwenden',note:'Auf ein anderes Konto ausgezahlte Zinsen werden dem Anlagekapital nicht zugeschlagen. Bei Kündigung werden die zulässigen Zinsen per Jahreszins berechnet oder als tatsächlicher Bankbetrag eingegeben.'}
+};
 function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
 function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
 function M(v){try{return (typeof CS==='string'?CS:'₮')+Math.round(v).toLocaleString('en-US')}catch(e){return '₮'+Math.round(v)}}
@@ -18229,21 +18159,10 @@ function boot(){
  const rule=document.getElementById('grule'),go=document.getElementById('v382gGo'); if(!rule||!go){setTimeout(boot,300);return}
  if(document.getElementById('gmarketWrap'))return;
  const q=T(),wrap=document.createElement('div');wrap.id='gmarketWrap';
- wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option><option value="deposit">'+q.inside+'</option><option value="maturity">'+q.maturity+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.noteOut+'</div>';
+ wrap.innerHTML='<div class="gmarket-grid"><div><label>'+q.mode+'</label><select id="gmarketPayout"><option value="external">'+q.out+'</option></select></div><div><label>'+q.freq+'</label><select id="gmarketFreq"><option value="monthly">'+q.monthly+'</option><option value="quarterly">'+q.quarterly+'</option><option value="other">'+q.other+'</option></select></div><div><label>'+q.settle+'</label><select id="gmarketSettlement"><option value="rate">'+q.calc+'</option><option value="actual">'+q.bank+'</option></select></div><div id="gmarketRateWrap"><label>'+q.rate+'</label><input id="gmarketRate" type="number" min="0" step=".01" placeholder="0"></div><div id="gmarketActualWrap" style="display:none"><label>'+q.actual+'</label><input id="gmarketActual" inputmode="decimal" data-amt="1" placeholder="0"></div></div><div class="gmarket-note">'+q.note+'</div>';
  const mw=document.getElementById('gmanualWrap'); (mw||rule.parentElement).insertAdjacentElement('afterend',wrap);
  if(typeof setupAmtInput==='function')setupAmtInput(document.getElementById('gmarketActual'));
  const settle=document.getElementById('gmarketSettlement');settle.onchange=()=>{document.getElementById('gmarketRateWrap').style.display=settle.value==='rate'?'':'none';document.getElementById('gmarketActualWrap').style.display=settle.value==='actual'?'':'none'};
- const payout=document.getElementById('gmarketPayout'),freq=document.getElementById('gmarketFreq'),prior=document.getElementById('gprior'),note=wrap.querySelector('.gmarket-note');
- function syncPayout(){
-   const qq=T(),mode=payout.value,freqCell=freq.parentElement;
-   if(note)note.textContent=mode==='deposit'?qq.noteIn:(mode==='maturity'?qq.noteMat:qq.noteOut);
-   if(freqCell)freqCell.style.display=mode==='maturity'?'none':'';
-   if(mode==='maturity'){prior.value='0';prior.readOnly=true;}
-   else if(mode==='deposit'){prior.value='0';prior.readOnly=true;}
-   else {prior.readOnly=false;}
- }
- payout.addEventListener('change',syncPayout);syncPayout();
-
  const oldChange=rule.onchange;
  function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';wrap.style.display=on?'block':'none';if(on){
    const iw=document.getElementById('ginterest')?.parentElement;if(iw)iw.style.display='none';const cw=document.getElementById('gcompoundWrap');if(cw)cw.style.display='none';
@@ -18291,19 +18210,16 @@ function N(v){v=Number(String(v??'').replace(/,/g,''));return Number.isFinite(v)
 function days(a,b){return Math.max(0,Math.floor((b-a)/86400000))}
 function addMonthsSafe(d,n){const y=d.getFullYear(),m=d.getMonth()+n,day=d.getDate();const yy=y+Math.floor(m/12),mm=((m%12)+12)%12,last=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(day,last))}
 function contributions(sd,ed){const arr=[{date:sd,amount:Math.max(0,N(document.getElementById('gp')?.value))}];const reg=document.getElementById('gcontrib')?.value==='regular',amt=reg?Math.max(0,N(document.getElementById('gcontribamt')?.value)):0;if(!reg||!amt)return arr;const cf=document.getElementById('gcontribfreq')?.value,step=cf==='quarterly'?3:(cf==='yearly'?12:1);for(let n=1;n<1200;n++){const dt=addMonthsSafe(sd,step*n);if(dt>ed)break;arr.push({date:dt,amount:amt})}return arr}
-function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const compound=document.getElementById('ginterest')?.value==='compound';const lots=contributions(sd,ed).map(x=>({date:x.date,amount:x.amount,balance:x.amount}));let total=0,prev=sd;
- for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay){const base=compound?lot.balance:lot.amount;const earned=base*rate*days(from,pay)/365;total+=earned;if(compound)lot.balance+=earned;}}prev=pay;}
+function paidInterest(){const a=document.getElementById('gstart')?.value,b=document.getElementById('gend')?.value;if(!a||!b)return 0;const sd=new Date(a+'T00:00:00'),ed=new Date(b+'T00:00:00');if(ed<=sd)return 0;const rate=Math.max(0,N(document.getElementById('gmarketContract')?.value))/100;if(!rate)return 0;const freq=document.getElementById('gmarketFreq')?.value,months=freq==='quarterly'?3:(freq==='monthly'?1:0);if(!months)return 0;const lots=contributions(sd,ed);let total=0,prev=sd;
+ for(let k=1;k<1200;k++){const pay=addMonthsSafe(sd,months*k);if(pay>ed)break;for(const lot of lots){const from=lot.date>prev?lot.date:prev;if(from<pay&&lot.date<pay)total+=lot.amount*rate*days(from,pay)/365;}prev=pay;}
  return total;
 }
 function boot(){const rule=document.getElementById('grule'),wrap=document.getElementById('gmarketWrap'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo');if(!rule||!wrap||!prior||!go){setTimeout(boot,300);return}if(document.getElementById('gmarketContractWrap'))return;
  const grid=wrap.querySelector('.gmarket-grid'),rateWrap=document.getElementById('gmarketRateWrap');const f=document.createElement('div');f.id='gmarketContractWrap';f.innerHTML='<label>'+T().contract+'</label><input id="gmarketContract" type="number" min="0" step=".01" value="" placeholder="12">';grid.insertBefore(f,rateWrap);
  const note=document.createElement('div');note.id='gpriorAutoNote';note.textContent=T().auto;prior.parentElement.insertAdjacentElement('afterend',note);
- let priorManual=false;
- function setAutoPrior(){if(rule.value==='actual'&&!priorManual)prior.value=Math.round(paidInterest()).toLocaleString('en-US')}
- prior.addEventListener('input',()=>{if(rule.value==='actual')priorManual=true});
- const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';prior.readOnly=false;if(on)setAutoPrior();else priorManual=false;}rule.onchange=sync;
- ['gmarketContract','gmarketFreq','ginterest','gcompoundfreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{setAutoPrior()}))}});
- go.addEventListener('click',()=>{setAutoPrior()},true);
+ const oldChange=rule.onchange;function sync(){if(oldChange)oldChange.call(rule);const on=rule.value==='actual';f.style.display=on?'':'none';note.style.display=on?'block':'none';if(on){prior.readOnly=true;prior.value=Math.round(paidInterest()).toLocaleString('en-US')}else prior.readOnly=false;}rule.onchange=sync;
+ ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{const e=document.getElementById(id);if(e){['change','input'].forEach(ev=>e.addEventListener(ev,()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')}))}});
+ go.addEventListener('click',()=>{if(rule.value==='actual')prior.value=Math.round(paidInterest()).toLocaleString('en-US')},true);
  sync();
  try{if(typeof setLang==='function'&&!setLang.__rule4AutoPaid){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const q=T();const lab=f.querySelector('label');if(lab)lab.textContent=q.contract;note.textContent=q.auto;sync()},0);return r};setLang.__rule4AutoPaid=true}}catch(e){}
 }
@@ -18667,37 +18583,7 @@ accountInlineDetail=function(a){
 })();
 </script>
 
-
-<script id="mongo-interest-receiver-persist-v11">
-(function(){
-'use strict';
-/* Persist the Rule-4 external-interest receiver AFTER the legacy edit saver finishes.
-   The earlier V7 hook wrote to the live account before saveMoneyAccountEdit(); the legacy
-   saver can replace/rebuild that account object, which dropped the two receiver fields. */
-const base=saveMoneyAccountEdit;
-saveMoneyAccountEdit=async function(){
-  const id=String(editingMoneyAccountId||'');
-  const method=(typeof findMethod7==='function'?findMethod7():null) || (function(){
-    const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;
-    return [...root.querySelectorAll('select')].find(sel=>[...sel.options].some(o=>o.value==='external'))||null;
-  })();
-  const sel=document.getElementById('edit-interest-receive-account-v7');
-  const external=method?.value==='external';
-  const receiver=external?String(sel?.value||''):'';
-  if(external&&!receiver){alert('Хүү хүлээн авах дансаа сонгоно уу.');return;}
-  const result=await base();
-  if(!id)return result;
-  const a=(moneyAccounts||[]).find(x=>String(x.id)===id);
-  if(a && (typeof normalizeAccountType!=='function'||normalizeAccountType(a.type)==='savings')){
-    a.interestReceiveAccountId=receiver;
-    a.interestPayoutAccountId=receiver;
-    if(typeof saveData==='function')await saveData();
-  }
-  return result;
-};
-})();
-</script>
-
+\n<script id="mongo-interest-receiver-persist-v11">\n(function(){\n'use strict';\n/* Persist the Rule-4 external-interest receiver AFTER the legacy edit saver finishes.\n   The earlier V7 hook wrote to the live account before saveMoneyAccountEdit(); the legacy\n   saver can replace/rebuild that account object, which dropped the two receiver fields. */\nconst base=saveMoneyAccountEdit;\nsaveMoneyAccountEdit=async function(){\n  const id=String(editingMoneyAccountId||'');\n  const method=(typeof findMethod7==='function'?findMethod7():null) || (function(){\n    const root=document.getElementById('edit-term-contract')||document.getElementById('edit-interest-fields')||document;\n    return [...root.querySelectorAll('select')].find(sel=>[...sel.options].some(o=>o.value==='external'))||null;\n  })();\n  const sel=document.getElementById('edit-interest-receive-account-v7');\n  const external=method?.value==='external';\n  const receiver=external?String(sel?.value||''):'';\n  if(external&&!receiver){alert('Хүү хүлээн авах дансаа сонгоно уу.');return;}\n  const result=await base();\n  if(!id)return result;\n  const a=(moneyAccounts||[]).find(x=>String(x.id)===id);\n  if(a && (typeof normalizeAccountType!=='function'||normalizeAccountType(a.type)==='savings')){\n    a.interestReceiveAccountId=receiver;\n    a.interestPayoutAccountId=receiver;\n    if(typeof saveData==='function')await saveData();\n  }\n  return result;\n};\n})();\n</script>\n
 <!-- Möngö PHONE TEST V12 — receiver persistence moved into canonical Rule4 read/applyMeta save path; failed V11 post-save wrapper removed. -->
 
 
@@ -19909,421 +19795,6 @@ accountInlineDetail=function(a){
 })();
 </script>
 
-
-<!-- Möngö PHONE TEST V104 — cancellation calculator central language refresh + visibility restore.
-     Presentation/lifecycle only: no financial formula, persistence, Budget or transaction changes. -->
-<script id="mongo-v104-cancel-i18n-central">
-(function(){
-'use strict';
-window.MONGO_PHONE_TEST_BUILD='V104';
-
-const X={
- mn:{
-  stageTitle:'Хадгалсан хугацааны шатлал',stageHelp:'Мөнгө тус бүр хэдэн хоног хадгалагдсанаас нь хамаарч тохирох шатны жилийн хүүг автоматаар сонгоно.',stageFrom:'Эхлэх хоног',stageTo:'Дуусах хоног',stageRate:'Жилийн хүү (%)',stageUp:'дээш',
-  thresholdTitle:'Хугацааны босгын нөхцөл',thresholdHelp:'Хадгаламжийн нийт хадгалсан хугацаа босгод хүрсэн эсэхээр нэг жилийн хүү сонгогдоно. Нэмсэн мөнгө бүр сонгогдсон ижил хүүгээр өөрийн хадгалагдсан хугацаанд хүү бодогдоно.',thresholdDays:'Босго хугацаа (хоног)',thresholdBefore:'Босгоос өмнөх жилийн хүү (%)',thresholdAfter:'Босго хүрсний дараах жилийн хүү (%)',
-  bankTotal:'Банкны зөвшөөрсөн нийт хүү (₮)',bankHelp:'Банк цуцлах өдөр хүртэл нийт хэдэн төгрөгийн хүү зөвшөөрснийг оруулна. Апп үүнээс өмнө бодитоор олгосон хүүг хасаж, нэмж авах эсвэл буцаан тохируулах дүнг тооцно.',
-  payoutMode:'Хүү олгох хэлбэр',payoutOut:'Өөр дансанд олгох',payoutFreq:'Хүү олгох давтамж',monthly:'Сар бүр',quarterly:'Улирал бүр',other:'Бусад',settlement:'Цуцлалтын тооцооны арга',contract:'Хадгаламжийн гэрээний жилийн хүү (%)',rate:'Цуцлалтын жилийн хүү (%)',actual:'Банкны зөвшөөрсөн нийт хүү (₮)',calcRate:'Хувиар тооцох',bankActual:'Банкны бодит дүн ашиглах',marketNote:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.'
- },
- en:{
-  stageTitle:'Holding-period tiers',stageHelp:'Each deposit automatically uses the annual rate for the number of days that money was held.',stageFrom:'From day',stageTo:'To day',stageRate:'Annual rate (%)',stageUp:'and above',
-  thresholdTitle:'Holding-period threshold',thresholdHelp:'One annual rate is selected based on whether the total deposit period reaches the threshold. Each added amount uses that selected rate for its own held period.',thresholdDays:'Threshold (days)',thresholdBefore:'Annual rate before threshold (%)',thresholdAfter:'Annual rate at/after threshold (%)',
-  bankTotal:'Total interest allowed by bank',bankHelp:'Enter the total interest amount the bank allows through the termination date. The app subtracts interest already paid and calculates the additional interest or adjustment.',
-  payoutMode:'Interest payout method',payoutOut:'Pay to another account',payoutFreq:'Interest payout frequency',monthly:'Monthly',quarterly:'Quarterly',other:'Other',settlement:'Early termination calculation',contract:'Deposit contract annual rate (%)',rate:'Cancellation annual rate (%)',actual:'Total interest allowed by bank',calcRate:'Calculate by rate',bankActual:'Use bank actual amount',marketNote:'Interest paid to another account is not added to deposit principal. Termination interest can be calculated by annual rate or by the bank’s actual confirmed total.'
- },
- zh:{
-  stageTitle:'存期利率阶梯',stageHelp:'每笔资金按实际存放天数自动匹配相应年利率。',stageFrom:'起始天数',stageTo:'结束天数',stageRate:'年利率 (%)',stageUp:'以上',
-  thresholdTitle:'存期门槛条件',thresholdHelp:'根据存款总存期是否达到门槛选择一个年利率。每笔追加资金按所选利率及其实际存放时间计息。',thresholdDays:'门槛期限（天）',thresholdBefore:'门槛前年利率 (%)',thresholdAfter:'达到门槛后的年利率 (%)',
-  bankTotal:'银行认可的利息总额',bankHelp:'输入银行截至提前终止日认可的利息总额。应用会扣除此前实际已支付的利息，并计算追加支付或返还调整金额。',
-  payoutMode:'利息支付方式',payoutOut:'支付到其他账户',payoutFreq:'利息支付频率',monthly:'每月',quarterly:'每季度',other:'其他',settlement:'提前终止计算方式',contract:'存款合同年利率 (%)',rate:'提前终止年利率 (%)',actual:'银行认可的利息总额',calcRate:'按利率计算',bankActual:'按银行实际金额',marketNote:'支付到其他账户的利息不会加入存款本金。提前终止利息可按年利率计算，或输入银行实际确认的利息总额。'
- },
- ja:{
-  stageTitle:'預入期間別金利',stageHelp:'各入金は実際の預入日数に応じた年利率を自動適用します。',stageFrom:'開始日数',stageTo:'終了日数',stageRate:'年利率 (%)',stageUp:'以上',
-  thresholdTitle:'預入期間の基準条件',thresholdHelp:'預金全体の預入期間が基準に達したかどうかで年利率を1つ選択します。追加預入も同じ選択利率で各預入期間に応じて計算します。',thresholdDays:'基準期間（日）',thresholdBefore:'基準未満の年利 (%)',thresholdAfter:'基準到達後の年利 (%)',
-  bankTotal:'銀行が認めた利息総額',bankHelp:'解約日までに銀行が認める利息の総額を入力します。すでに支払われた利息を差し引き、追加支払額または返還調整額を計算します。',
-  payoutMode:'利息の受取方法',payoutOut:'別口座へ受取',payoutFreq:'利息の受取頻度',monthly:'毎月',quarterly:'四半期ごと',other:'その他',settlement:'中途解約の計算方法',contract:'預金契約の年利率 (%)',rate:'中途解約年利率 (%)',actual:'銀行が認めた利息総額',calcRate:'利率で計算',bankActual:'銀行の実額を使用',marketNote:'別口座に支払われた利息は預金元本に加算されません。中途解約利息は年利率で計算するか、銀行の実際の総額を入力します。'
- },
- ko:{
-  stageTitle:'예치기간별 금리 구간',stageHelp:'각 입금액은 실제 예치 일수에 맞는 연이율을 자동 적용합니다.',stageFrom:'시작 일수',stageTo:'종료 일수',stageRate:'연이율 (%)',stageUp:'이상',
-  thresholdTitle:'예치기간 기준 조건',thresholdHelp:'전체 예치기간이 기준에 도달했는지에 따라 하나의 연이율을 선택합니다. 추가 입금액도 같은 선택 금리로 각 예치기간만큼 계산합니다.',thresholdDays:'기준 기간(일)',thresholdBefore:'기준 전 연이율 (%)',thresholdAfter:'기준 도달 후 연이율 (%)',
-  bankTotal:'은행이 인정한 총 이자',bankHelp:'중도 해지일까지 은행이 인정한 총 이자 금액을 입력합니다. 이미 지급된 이자를 차감하여 추가 지급 또는 반환 조정 금액을 계산합니다.',
-  payoutMode:'이자 지급 방식',payoutOut:'다른 계좌로 지급',payoutFreq:'이자 지급 주기',monthly:'매월',quarterly:'분기별',other:'기타',settlement:'중도해지 계산 방식',contract:'예금 계약 연이율 (%)',rate:'중도해지 연이율 (%)',actual:'은행이 인정한 총 이자',calcRate:'금리로 계산',bankActual:'은행 실제 금액 사용',marketNote:'다른 계좌로 지급된 이자는 예금 원금에 더해지지 않습니다. 중도해지 이자는 연이율로 계산하거나 은행의 실제 총액을 입력합니다.'
- },
- ru:{
-  stageTitle:'Ставки по сроку хранения',stageHelp:'Для каждой суммы автоматически применяется ставка по фактическому числу дней хранения.',stageFrom:'От, дней',stageTo:'До, дней',stageRate:'Годовая ставка (%)',stageUp:'и более',
-  thresholdTitle:'Условие порога срока',thresholdHelp:'Одна годовая ставка выбирается по тому, достиг ли общий срок вклада порога. Каждое пополнение рассчитывается по выбранной ставке за свой срок хранения.',thresholdDays:'Порог срока (дни)',thresholdBefore:'Годовая ставка до порога (%)',thresholdAfter:'Годовая ставка после порога (%)',
-  bankTotal:'Общая сумма процентов, признанная банком',bankHelp:'Введите общую сумму процентов, которую банк признаёт на дату расторжения. Приложение вычтет ранее выплаченные проценты и рассчитает доплату или корректировку.',
-  payoutMode:'Способ выплаты процентов',payoutOut:'На другой счёт',payoutFreq:'Периодичность выплаты',monthly:'Ежемесячно',quarterly:'Ежеквартально',other:'Другое',settlement:'Расчёт при расторжении',contract:'Годовая ставка по договору вклада (%)',rate:'Годовая ставка досрочного расторжения (%)',actual:'Общая сумма процентов, признанная банком',calcRate:'Рассчитать по ставке',bankActual:'По фактической сумме банка',marketNote:'Проценты, выплаченные на другой счёт, не прибавляются к основной сумме вклада. При расторжении проценты рассчитываются по годовой ставке или вводятся фактической суммой банка.'
- },
- de:{
-  stageTitle:'Zinsstufen nach Anlagedauer',stageHelp:'Für jede Einzahlung gilt automatisch der Jahreszins entsprechend ihrer tatsächlichen Anlagedauer.',stageFrom:'Ab Tag',stageTo:'Bis Tag',stageRate:'Jahreszins (%)',stageUp:'und mehr',
-  thresholdTitle:'Laufzeitschwelle',thresholdHelp:'Ein Jahreszins wird danach gewählt, ob die gesamte Anlagedauer die Schwelle erreicht. Jede zusätzliche Einzahlung wird mit diesem Zinssatz für ihre eigene Anlagedauer berechnet.',thresholdDays:'Schwelle (Tage)',thresholdBefore:'Jahreszins vor Schwelle (%)',thresholdAfter:'Jahreszins ab Schwelle (%)',
-  bankTotal:'Von der Bank anerkannter Gesamtzins',bankHelp:'Geben Sie den gesamten Zinsbetrag ein, den die Bank bis zum Kündigungsdatum anerkennt. Bereits gezahlte Zinsen werden abgezogen und Nachzahlung bzw. Rückbuchung berechnet.',
-  payoutMode:'Art der Zinsauszahlung',payoutOut:'Auf ein anderes Konto',payoutFreq:'Zinsauszahlungsrhythmus',monthly:'Monatlich',quarterly:'Vierteljährlich',other:'Andere',settlement:'Berechnung bei Kündigung',contract:'Vertraglicher Jahreszins der Einlage (%)',rate:'Jahreszins bei vorzeitiger Kündigung (%)',actual:'Von der Bank anerkannter Gesamtzins',calcRate:'Nach Zinssatz berechnen',bankActual:'Tatsächlichen Bankbetrag verwenden',marketNote:'Auf ein anderes Konto ausgezahlte Zinsen werden dem Anlagekapital nicht zugeschlagen. Bei Kündigung werden die zulässigen Zinsen per Jahreszins berechnet oder als tatsächlicher Bankbetrag eingegeben.'
- }
-};
-window.MongoCancelI18nV104=Object.freeze(X);
-function q(){const l=(typeof lang==='string'&&X[lang])?lang:'mn';return X[l]}
-function setText(sel,val){const e=document.querySelector(sel);if(e&&val!=null)e.textContent=val}
-function opt(sel,val,text){const e=document.querySelector(sel);if(e)e.textContent=text}
-function refresh(){
- const t=q();
-
- // Rule 2 staged UI.
- setText('#gstageWrap .gstage-title',t.stageTitle);
- setText('#gstageWrap .gstage-note',t.stageHelp);
- document.querySelectorAll('#gstageRows .gstage-row').forEach((row,i)=>{
-   const labels=row.querySelectorAll('label');
-   if(labels[0])labels[0].textContent=t.stageFrom;
-   if(labels[1])labels[1].textContent=t.stageTo+(i===document.querySelectorAll('#gstageRows .gstage-row').length-1?' ('+t.stageUp+')':'');
-   if(labels[2])labels[2].textContent=t.stageRate;
- });
-
- // Rule 3 threshold UI.
- setText('#gthresholdWrap .gthreshold-title',t.thresholdTitle);
- setText('#gthresholdWrap .gthreshold-note',t.thresholdHelp);
- const th=document.querySelectorAll('#gthresholdWrap .gthreshold-row label');
- if(th[0])th[0].textContent=t.thresholdDays;
- if(th[1])th[1].textContent=t.thresholdBefore;
- if(th[2])th[2].textContent=t.thresholdAfter;
-
- // Rule 4 bank actual UI.
- const manual=document.querySelector('#gmanualWrap label');
- if(manual)manual.textContent=t.bankTotal;
- setText('#gactualHelp',t.bankHelp);
-
- // Rule 4 payout/settlement UI.
- const market=document.getElementById('gmarketWrap');
- if(market){
-   const labels=market.querySelectorAll('.gmarket-grid label');
-   if(labels[0])labels[0].textContent=t.payoutMode;
-   if(labels[1])labels[1].textContent=t.payoutFreq;
-   if(labels[2])labels[2].textContent=t.settlement;
-   const contractLabel=document.querySelector('#gmarketContractWrap label');
-   const rateLabel=document.querySelector('#gmarketRateWrap label');
-   const actualLabel=document.querySelector('#gmarketActualWrap label');
-   if(contractLabel)contractLabel.textContent=t.contract;
-   if(rateLabel)rateLabel.textContent=t.rate;
-   if(actualLabel)actualLabel.textContent=t.actual;
-   opt('#gmarketPayout option[value="external"]','external',t.payoutOut);
-   const pp=document.getElementById('gmarketPayout');
-   if(pp){
-     const qlang=(typeof lang==='string'?lang:'mn');
-     const names={
-       mn:{deposit:'Хадгаламждаа нэмэгдэнэ',maturity:'Хугацааны эцэст'},
-       en:{deposit:'Added to the deposit',maturity:'At maturity'},
-       zh:{deposit:'计入存款',maturity:'到期支付'},
-       ja:{deposit:'預金に加算',maturity:'満期時'},
-       ko:{deposit:'예금에 더하기',maturity:'만기 시'},
-       ru:{deposit:'Добавлять к вкладу',maturity:'В конце срока'},
-       de:{deposit:'Dem Guthaben gutschreiben',maturity:'Bei Fälligkeit'}
-     },nn=names[names[qlang]?qlang:'mn'];
-     const od=pp.querySelector('option[value="deposit"]'),om=pp.querySelector('option[value="maturity"]');
-     if(od)od.textContent=nn.deposit;if(om)om.textContent=nn.maturity;
-   }
-   opt('#gmarketFreq option[value="monthly"]','monthly',t.monthly);
-   opt('#gmarketFreq option[value="quarterly"]','quarterly',t.quarterly);
-   opt('#gmarketFreq option[value="other"]','other',t.other);
-   opt('#gmarketSettlement option[value="rate"]','rate',t.calcRate);
-   opt('#gmarketSettlement option[value="actual"]','actual',t.bankActual);
-   {
-   const n=document.querySelector('#gmarketWrap .gmarket-note');
-   const p=document.getElementById('gmarketPayout');
-   if(n){
-     const mode=p?.value||'external';
-     const notes={
-       mn:{external:'Өөр дансанд олгосон хүү хадгаламжийн үндсэнд нэмэгдэхгүй. Цуцлах үеийн зөвшөөрөгдөх хүүг жилийн хүүгээр эсвэл банкны бодит нийт дүнгээр тооцно.',deposit:'Хүү хадгаламждаа нэмэгдэж, дараагийн хүү өссөн үлдэгдлээс бодогдоно. Цуцлах үед гэрээний хүүг цуцлалтын нөхцөлөөр дахин тооцно.',maturity:'Хүү хугацаа дуусахад нэг удаа олгогдоно. Цуцлах өдрөөс өмнө бодитоор олгосон хүү байхгүй тул цуцлалтын нөхцөлөөр зөвшөөрөгдөх хүүг тооцно.'},
-       en:{external:'Interest paid to another account is not added to deposit principal. Cancellation interest is calculated by annual rate or the bank actual total amount.',deposit:'Interest is added to the deposit and future interest is calculated on the increased balance. On early cancellation, contract interest is recalculated under the cancellation terms.',maturity:'Interest is paid once at maturity. No interest was actually paid before cancellation, so allowed interest is calculated under the cancellation terms.'},
-       zh:{external:'支付到其他账户的利息不计入本金。允许利息按提前支取年利率或银行实际总额计算。',deposit:'利息计入存款，下一期按增加后的余额计算。提前支取时按提前支取条件重新计算。',maturity:'利息到期时一次支付。提前支取日前没有实际支付利息，因此按提前支取条件计算。'},
-       ja:{external:'別口座に支払われた利息は元本に加算されません。解約時の利息は解約年利または銀行実額で計算します。',deposit:'利息は預金に加算され、次回は増加後の残高で計算します。中途解約時は解約条件で再計算します。',maturity:'利息は満期時に一度支払われます。解約日前に実際の支払いがないため解約条件で計算します。'},
-       ko:{external:'다른 계좌로 지급된 이자는 원금에 더해지지 않습니다. 해지 이자는 해지 연이율 또는 은행 실제 총액으로 계산합니다.',deposit:'이자는 예금에 더해지고 다음 이자는 증가한 잔액을 기준으로 계산됩니다. 중도해지 시 해지 조건으로 다시 계산합니다.',maturity:'이자는 만기 시 한 번 지급됩니다. 해지일 전에 실제 지급된 이자가 없으므로 해지 조건으로 계산합니다.'},
-       ru:{external:'Проценты на другом счёте не увеличивают вклад. Допустимые проценты считаются по ставке расторжения или сумме банка.',deposit:'Проценты добавляются к вкладу; следующие проценты считаются от увеличенного остатка. При расторжении применяется перерасчёт.',maturity:'Проценты выплачиваются один раз в конце срока. До расторжения выплаты нет, поэтому применяются условия расторжения.'},
-       de:{external:'Auf ein anderes Konto ausgezahlte Zinsen erhöhen die Einlage nicht. Kündigungszinsen werden nach Zinssatz oder Bankbetrag berechnet.',deposit:'Zinsen werden dem Guthaben zugeschlagen; weitere Zinsen werden auf den erhöhten Saldo berechnet. Bei Kündigung erfolgt eine Neuberechnung.',maturity:'Zinsen werden einmal bei Fälligkeit ausgezahlt. Vor der Kündigung gab es keine tatsächliche Auszahlung; daher gelten die Kündigungsbedingungen.'}
-     };
-     const lg=(typeof lang==='string'&&notes[lang])?lang:'mn';
-     n.textContent=notes[lg][mode]||notes[lg].external;
-   }
- }
- }
-
- // Visibility repair: Rule 4 used to hide Interest method but never restore it.
- const rule=document.getElementById('grule');
- const interest=document.getElementById('ginterest');
- const iw=interest?.parentElement;
- const cw=document.getElementById('gcompoundWrap');
- const cr=document.getElementById('gcr')?.parentElement;
- const rr=document.getElementById('grr')?.parentElement;
- if(rule){
-   const actual=rule.value==='actual';
-   if(iw){iw.style.removeProperty('display');iw.hidden=false;}
-   if(cr)cr.style.display=actual?'none':'';
-   if(rr)rr.style.display=(actual||rule.value==='staged'||rule.value==='threshold')?'none':'';
-   if(cw)cw.style.display=(interest?.value==='compound')?'':'none';
- }
-}
-window.mongoCancelRefreshLanguageV104=refresh;
-
-// Chain the existing V103 in-place language refresh instead of rebuilding the calculator.
-const prior=window.v382gRefreshLanguage;
-window.v382gRefreshLanguage=function(){
- if(typeof prior==='function')prior();
- setTimeout(refresh,0);
-};
-
-// Also refresh after any language action and after supplemental controls mount.
-try{
- if(typeof setLang==='function'&&!setLang.__v104CancelI18n){
-   const old=setLang;
-   setLang=function(){
-     const r=old.apply(this,arguments);
-     setTimeout(()=>{try{window.v382gRefreshLanguage()}catch(_){refresh()}},0);
-     setTimeout(refresh,450);
-     return r;
-   };
-   setLang.__v104CancelI18n=true;
- }
-}catch(_){}
-
-setInterval(function(){
- const c=document.getElementById('v382gCancel');
- if(c&&c.offsetParent!==null)refresh();
-},700);
-
-// Show the actual phone-test build, independent of old embedded production badges.
-function badge(){
- let b=document.getElementById('mongo-phone-test-build-v104');
- if(!b){
-   b=document.createElement('div');b.id='mongo-phone-test-build-v104';
-   b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
-   document.body.appendChild(b);
- }
- b.textContent='PHONE TEST V104';
-}
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(refresh,2600);setTimeout(badge,500)});
-setTimeout(()=>{refresh();badge()},3200);
-})();
-</script>
-
-
-
-
-
-<!-- Möngö PHONE TEST V107 — core cancellation language lifecycle repair.
-     Core source fix only: correct calculator tab IDs and preserve Interest method row.
-     No financial formulas, transactions, Budget, persistence, tiers, or cancellation calculations changed. -->
-<script id="mongo-v107-cancel-language-core-marker">
-window.MONGO_PHONE_TEST_BUILD='V107';
-(function(){
- function badge(){
-  document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
-  var b=document.getElementById('mongo-phone-test-build-v107');
-  if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v107';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-  b.textContent='PHONE TEST V107';
- }
- document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,800)});
- setTimeout(badge,3600);
-})();
-</script>
-
-<!-- Möngö PHONE TEST V108 — Rule 4 prior-paid interest remains auto-estimated until user manually edits it. -->
-<script id="mongo-v108-prior-interest-manual-override-marker">
-window.MONGO_PHONE_TEST_BUILD='V108';
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
-  document.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&/PHONE TEST V107/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/PHONE TEST V107/g,'PHONE TEST V108')});
-},1200));
-</script>
-
-
-<!-- Möngö PHONE TEST V119 — Rule 4 semantic labels only; no financial formula changes. -->
-<script id="mongo-v119-capitalized-interest-labels">
-(function(){
-'use strict';
-window.MONGO_PHONE_TEST_BUILD='V119';
-const I={
- mn:{paid:'Өмнө бодитоор олгосон хүү',capital:'Хадгаламжид нэмэгдсэн хүү',maturity:'Өмнө бодитоор олгосон хүү',clawPaid:'Өмнөх хүүний буцаан тохируулга',clawCapital:'Хадгаламжид нэмэгдсэн хүүний дахин тооцооны тохируулга',noteCapital:'Гэрээний хүүгээр хадгаламжид нэмэгдэж капиталжсан хүү. Энэ нь тусдаа дансанд бодитоор олгосон хүү биш. Цуцлах үед банкны цуцлалтын нөхцөлөөр дахин тооцож зөрүүг тохируулна.'},
- en:{paid:'Interest previously paid out',capital:'Interest added to the deposit',maturity:'Interest previously paid out',clawPaid:'Adjustment of previously paid interest',clawCapital:'Recalculation adjustment of capitalized interest',noteCapital:'Interest capitalized into the deposit at the contract rate. It was not actually paid to another account. On early cancellation, the difference is adjusted after recalculation under the bank cancellation terms.'},
- zh:{paid:'此前实际支付的利息',capital:'已计入存款的利息',maturity:'此前实际支付的利息',clawPaid:'此前利息调整',clawCapital:'存款资本化利息重算调整',noteCapital:'按合同利率计入存款并资本化的利息，并非实际支付到其他账户。提前终止时按银行提前终止条件重新计算并调整差额。'},
- ja:{paid:'以前に実際に支払われた利息',capital:'預金に加算された利息',maturity:'以前に実際に支払われた利息',clawPaid:'既払利息の調整',clawCapital:'預金加算利息の再計算調整',noteCapital:'契約金利で預金に組み入れられた利息です。別口座へ実際に支払われた利息ではありません。中途解約時は解約条件で再計算し差額を調整します。'},
- ko:{paid:'이전에 실제 지급된 이자',capital:'예금에 더해진 이자',maturity:'이전에 실제 지급된 이자',clawPaid:'이전 지급 이자 조정',clawCapital:'예금에 더해진 이자 재계산 조정',noteCapital:'계약 금리로 예금에 더해져 자본화된 이자입니다. 다른 계좌로 실제 지급된 이자가 아닙니다. 중도해지 시 은행 해지 조건으로 다시 계산해 차액을 조정합니다.'},
- ru:{paid:'Ранее фактически выплаченные проценты',capital:'Проценты, добавленные к вкладу',maturity:'Ранее фактически выплаченные проценты',clawPaid:'Корректировка ранее выплаченных процентов',clawCapital:'Корректировка пересчёта капитализированных процентов',noteCapital:'Проценты, капитализированные во вклад по договорной ставке. Они не выплачивались фактически на другой счёт. При досрочном расторжении разница корректируется после пересчёта по условиям банка.'},
- de:{paid:'Zuvor tatsächlich ausgezahlte Zinsen',capital:'Dem Guthaben gutgeschriebene Zinsen',maturity:'Zuvor tatsächlich ausgezahlte Zinsen',clawPaid:'Korrektur zuvor ausgezahlter Zinsen',clawCapital:'Neuberechnungskorrektur gutgeschriebener Zinsen',noteCapital:'Zum Vertragszins dem Guthaben zugeschriebene und kapitalisierte Zinsen. Sie wurden nicht tatsächlich auf ein anderes Konto ausgezahlt. Bei vorzeitiger Kündigung wird die Differenz nach den Kündigungsbedingungen neu berechnet und angepasst.'}
-};
-function T(){return I[(typeof lang==='string'&&I[lang])?lang:'mn']||I.mn}
-function mode(){return document.getElementById('gmarketPayout')?.value||'external'}
-function refreshLabels(){
- const t=T(),m=mode();
- const pl=document.querySelector('#gpriorWrap label');
- if(pl)pl.textContent=m==='deposit'?t.capital:(m==='maturity'?t.maturity:t.paid);
- const note=document.getElementById('gpriorAutoNote');
- if(note&&m==='deposit')note.textContent=t.noteCapital;
- const out=document.getElementById('gout');
- if(out){
-   const rows=[...out.querySelectorAll('.grow')];
-   for(const row of rows){
-     const sp=row.querySelector('span'); if(!sp)continue;
-     const txt=(sp.textContent||'').trim();
-     const all=Object.values(I);
-     const isClaw=all.some(x=>txt===x.clawPaid||txt===x.clawCapital) || /буцаан тохируулга|previously paid interest|既払利息|이전 지급 이자|выплаченных процентов|ausgezahlte Zinsen/i.test(txt);
-     if(isClaw)sp.textContent=m==='deposit'?t.clawCapital:t.clawPaid;
-   }
- }
-}
-document.addEventListener('change',e=>{if(e.target&&e.target.id==='gmarketPayout')setTimeout(refreshLabels,0)},true);
-document.addEventListener('click',e=>{if(e.target&&e.target.id==='v382gGo')setTimeout(refreshLabels,0)},true);
-const oldRefresh=window.v382gRefreshLanguage;
-window.v382gRefreshLanguage=function(){if(typeof oldRefresh==='function')oldRefresh();setTimeout(refreshLabels,0)};
-setInterval(()=>{const c=document.getElementById('v382gCancel');if(c&&c.offsetParent!==null)refreshLabels()},700);
-function badge(){
- let b=document.querySelector('[id^="mongo-phone-test-build"]');
- if(!b){b=document.createElement('div');document.body.appendChild(b)}
- b.id='mongo-phone-test-build-v119';
- b.textContent='PHONE TEST V119';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
-}
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{refreshLabels();badge()},2800)});setTimeout(()=>{refreshLabels();badge()},3300);
-})();
-</script>
-
-
-
-<div id="mongo-v122-phone-marker" style="position:fixed;right:8px;bottom:8px;z-index:2147483646;background:#0f766e;color:white;padding:4px 8px;border-radius:999px;font:700 10px/1.2 system-ui;opacity:.88;pointer-events:none">PHONE TEST V122</div>
-
-
-<!-- Möngö PHONE TEST V130 — asset-income Budget lifecycle only.
-     Protected V129 asset cards and V123/V129 sale cash-flow math are untouched.
-     Rules:
-       • active income-producing asset may remain available for planning;
-       • sold asset remains visible in historical/sale month only when that month has a saved plan;
-       • sold asset is hidden after its sale month;
-       • non-income-producing, unplanned assets do not appear in Budget;
-       • realized sale gain remains actual/reporting income, not a Budget planning row. -->
-<script id="mongo-v130-asset-budget-lifecycle">
-(function(){
-'use strict';
-const CAT='asset_income_cat', SALE='asset_sale_gain';
-const priorVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
-function ym(y,m){return String(y)+'-'+String(m).padStart(2,'0')}
-function yieldKey(name){return 'yield_'+String(name||'source').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45)}
-function allGroups(){try{return window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]}catch(_){return []}}
-function groupForSub(sb){const k=String(sb?.key||'');return allGroups().find(g=>yieldKey(g?.name)===k)||null}
-function saleMonth(g){
- const ds=(g?.items||[]).map(x=>String(x?.saleDate||'').slice(0,7)).filter(x=>/^\d{4}-\d{2}$/.test(x));
- return ds.length?ds.sort().slice(-1)[0]:'';
-}
-function isSold(g){try{return !!(g&&window.MongoArchive?.assetGroupSold(g))}catch(_){return false}}
-function isIncomeProducing(g){try{return !!(g&&typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g))}catch(_){return false}}
-function planned(cat,sb){try{return Number(getBudgetValForYear(bSubKey(cat,sb),budgetMonth,budgetYear)||0)>0}catch(_){return false}}
-
-mongoBudgetVisibleSubs=function(cat){
- if(budgetType!=='income'||cat?.key!==CAT)return priorVisible(cat);
- const selected=ym(budgetYear,budgetMonth);
- const subs=Array.isArray(cat?.subs)?cat.subs:[];
- return subs.filter(sb=>{
-   // Sale gain is an actual/reporting result, never a planning row.
-   if(sb?.key===SALE||sb?.assetSaleGain===true)return false;
-   if(!String(sb?.key||'').startsWith('yield_'))return true;
-   const hasPlan=planned(cat,sb), g=groupForSub(sb);
-   if(!g)return hasPlan; // preserve genuine old manual history only.
-   if(isSold(g)){
-     const sm=saleMonth(g);
-     if(sm&&selected>sm)return false;
-     return hasPlan; // historical/sale month survives only when it was actually planned.
-   }
-   // Active assets appear automatically only when configured to produce income.
-   return isIncomeProducing(g)||hasPlan;
- });
-};
-window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
-window.MONGO_PHONE_TEST_BUILD='V130';
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-v130-phone-marker"]').forEach(e=>e.remove());
- const b=document.createElement('div');b.id='mongo-v130-phone-marker';b.textContent='PHONE TEST V130';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
- document.body.appendChild(b);
-}
-function refresh(){try{if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof updateBudgetTotal==='function')updateBudgetTotal();}catch(e){console.error('V130 budget lifecycle refresh',e)}}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},10200));
-setTimeout(()=>{badge();refresh()},10800);setInterval(badge,5000);
-})();
-</script>
-
-
-
-<!-- Möngö PHONE TEST V131 — sold-asset identity + sale-gain Budget progress semantics only.
-     Protected V129 card layout and V123 sale cash-flow math are untouched.
-     • Sold cards keep asset type + asset name + income-producing status visible.
-     • Non-income-producing asset itself is not an income-budget row.
-     • Realized gain appears in sale month as the shared “Asset sale gain” actual row.
-     • The shared sale-gain row disappears in later months when there is no sale gain. -->
-<style id="mongo-v131-sold-identity-style">
-#invest-list .mongo-sold-card>.portfolio-group-name{
- display:block!important;font-weight:850!important;color:#374151!important;margin-bottom:7px!important;
- white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
-}
-#invest-list .mongo-sold-card .mongo-v131-sold-identity{
- display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;line-height:1.45;color:#667085;margin-bottom:8px;
-}
-#invest-list .mongo-sold-card .mongo-v131-sold-identity b{color:#374151}
-</style>
-<script id="mongo-v131-sold-identity-sale-gain">
-(function(){
-'use strict';
-const CAT='asset_income_cat', SALE='asset_sale_gain';
-const META={
- mn:{income:'Орлого оруулдаг',noIncome:'Орлого оруулдаггүй'},
- en:{income:'Income-producing',noIncome:'Not income-producing'},
- zh:{income:'产生收入',noIncome:'不产生收入'},ja:{income:'収入あり',noIncome:'収入なし'},
- ko:{income:'수익 발생',noIncome:'수익 없음'},ru:{income:'Приносит доход',noIncome:'Без дохода'},de:{income:'Ertrag bringend',noIncome:'Ohne Ertrag'}
-};
-function q(){return META[(typeof lang!=='undefined'&&lang)||'mn']||META.en}
-function allGroups(){try{return window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]}catch(_){return []}}
-function soldGroups(){return allGroups().filter(g=>{try{return !!window.MongoArchive?.assetGroupSold(g)}catch(_){return false}})}
-function typeLabel(g){try{const a=INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn||[];return a.find(x=>x.k===g.typeKey)?.label||g.typeKey||''}catch(_){return g?.typeKey||''}}
-function incomeFlag(g){try{return !!(typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g))}catch(_){return false}}
-function decorateSold(){
- const root=document.getElementById('invest-list');if(!root)return;
- const cards=[...root.querySelectorAll('.mongo-sold-card')], gs=soldGroups();
- cards.forEach((card,i)=>{
-   const g=gs[i];if(!g)return;
-   let title=card.querySelector(':scope > .portfolio-group-name');
-   if(title){title.style.display='block';title.childNodes[0]&&(title.childNodes[0].textContent=String(g.name||'')+' ')}
-   card.querySelectorAll('.mongo-v131-sold-identity').forEach(x=>x.remove());
-   const meta=card.querySelector('.mongo-sold-meta');if(!meta)return;
-   const row=document.createElement('div');row.className='mongo-v131-sold-identity';
-   const typ=typeLabel(g), state=incomeFlag(g)?q().income:q().noIncome;
-   row.innerHTML=`<b></b><span>·</span><span></span>`;row.children[0].textContent=typ;row.children[2].textContent=state;
-   meta.parentNode.insertBefore(row,meta);
- });
-}
-function selectedYM(){return `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`}
-function saleGainInMonth(){const ym=selectedYM();return (txns||[]).some(t=>t&&t.assetIncomeType==='realized_gain'&&Number(t.amount)>0&&String(t.date||'').slice(0,7)===ym)}
-const v130Visible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
-mongoBudgetVisibleSubs=function(cat){
- let subs=v130Visible(cat);
- if(budgetType!=='income'||cat?.key!==CAT)return subs;
- const all=Array.isArray(cat?.subs)?cat.subs:[];
- const sale=all.find(sb=>sb?.key===SALE||sb?.assetSaleGain===true);
- // V130 intentionally removed this planning row. V131 restores it only as actual sale-month progress.
- if(sale&&saleGainInMonth()&&!subs.some(sb=>sb?.key===SALE))subs=[...subs,sale];
- return subs.filter(sb=>{
-   if(sb?.key===SALE||sb?.assetSaleGain===true)return saleGainInMonth();
-   return true;
- });
-};
-window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
-const oldR=window.rInvests;
-if(typeof oldR==='function'&&!oldR.__v131){const f=function(){const r=oldR.apply(this,arguments);setTimeout(decorateSold,60);return r};f.__v131=true;window.rInvests=f;}
-window.MONGO_PHONE_TEST_BUILD='V131';
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-v13"][id$="-phone-marker"]').forEach(e=>e.remove());
- const b=document.createElement('div');b.id='mongo-v131-phone-marker';b.textContent='PHONE TEST V131';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';document.body.appendChild(b);
-}
-function refresh(){decorateSold();try{if(typeof rBList==='function')rBList();if(typeof rBProg==='function')rBProg();if(typeof updateBudgetTotal==='function')updateBudgetTotal();}catch(e){console.error('V131 refresh',e)}}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},11200));
-setTimeout(()=>{badge();refresh()},11800);setInterval(()=>{badge();decorateSold()},5000);
-})();
-</script>
-<!-- Möngö PHONE TEST V133 — dismissible partial-cloud guard only; quarantine remains active. -->
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
@@ -20331,7 +19802,45 @@ setTimeout(()=>{badge();refresh()},11800);setInterval(()=>{badge();decorateSold(
 <!-- Möngö V30.3 logo fix marker -->
 
 <!-- Möngö PHONE TEST — Rule 4: interest can be paid externally or credited to the deposit. Scoped only to cancellation calculator. -->
-
+<style id="mongo-rule4-payout-destination-scoped">
+#v382gCancel #gmarketPayout{width:100%}
+</style>
+<script id="mongo-rule4-payout-destination-script">
+(function(){
+'use strict';
+const L={
+ mn:{inside:'Хадгаламждаа нэмэгдэнэ',noteIn:'Хүү хадгаламждаа нэмэгдсэн бол тусдаа дансанд бодитоор олгогдоогүй тул “Өмнө бодитоор олгосон хүү” 0 байна. Цуцлах үед зөвшөөрөгдөх хүүг сонгосон цуцлалтын нөхцөлөөр тооцно.'},
+ en:{inside:'Added to the deposit',noteIn:'When interest is credited to the deposit, it has not been paid out to another account, so “Interest already paid” is 0. Allowed interest at cancellation is calculated under the selected cancellation terms.'},
+ zh:{inside:'计入存款本金',noteIn:'利息计入存款时，并未实际支付到其他账户，因此“此前实际已支付的利息”为 0。提前终止时的认可利息按所选提前终止条件计算。'},
+ ja:{inside:'預金に加算',noteIn:'利息が預金に加算される場合、別口座へ実際に支払われていないため「すでに支払われた利息」は0です。解約時の認定利息は選択した解約条件で計算します。'},
+ ko:{inside:'예금에 더하기',noteIn:'이자가 예금에 더해진 경우 다른 계좌로 실제 지급된 것이 아니므로 “이미 지급된 이자”는 0입니다. 중도해지 시 인정 이자는 선택한 해지 조건으로 계산합니다.'},
+ ru:{inside:'Добавлять к вкладу',noteIn:'Если проценты добавляются к вкладу, они не выплачиваются фактически на другой счёт, поэтому «Ранее выплаченные проценты» равны 0. Допустимые проценты при расторжении рассчитываются по выбранным условиям.'},
+ de:{inside:'Dem Guthaben gutschreiben',noteIn:'Werden Zinsen dem Guthaben gutgeschrieben, wurden sie nicht auf ein anderes Konto ausgezahlt; daher ist „Bereits ausgezahlter Zins“ 0. Der zulässige Zins bei Kündigung wird nach den gewählten Kündigungsbedingungen berechnet.'}
+};
+function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']}
+function boot(){
+ const payout=document.getElementById('gmarketPayout'),prior=document.getElementById('gprior'),go=document.getElementById('v382gGo'),wrap=document.getElementById('gmarketWrap');
+ if(!payout||!prior||!go||!wrap){setTimeout(boot,300);return}
+ if(payout.querySelector('option[value="deposit"]'))return;
+ const opt=document.createElement('option');opt.value='deposit';opt.textContent=T().inside;payout.appendChild(opt);
+ const note=wrap.querySelector('.gmarket-note');
+ const externalNote=note?note.textContent:'';
+ function sync(){
+   const inside=payout.value==='deposit';
+   if(inside){prior.value='0';prior.readOnly=true;if(note)note.textContent=T().noteIn;}
+   else {if(note)note.textContent=externalNote;}
+ }
+ payout.addEventListener('change',sync);
+ ['gmarketContract','gmarketFreq','gstart','gend','gcontrib','gcontribamt','gcontribfreq','gp'].forEach(id=>{
+   const e=document.getElementById(id);if(e){e.addEventListener('input',()=>{if(payout.value==='deposit')prior.value='0'});e.addEventListener('change',()=>{if(payout.value==='deposit')prior.value='0'});}
+ });
+ go.addEventListener('click',()=>{if(payout.value==='deposit')prior.value='0'},true);
+ try{if(typeof setLang==='function'&&!setLang.__rule4PayoutDestination){const old=setLang;setLang=function(){const r=old.apply(this,arguments);setTimeout(()=>{const o=payout.querySelector('option[value="deposit"]');if(o)o.textContent=T().inside;sync()},0);return r};setLang.__rule4PayoutDestination=true}}catch(e){}
+ sync();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,4100));setTimeout(boot,4600);
+})();
+</script>
 
 <!-- Möngö PHONE TEST Stage 2B — robust visible mount + compact savings action row. -->
 <style id="mongo-real-cancel-stage2b-style">
@@ -20924,573 +20433,18 @@ window.MONGO_CANCELLATION_INTEREST_ACTUAL='V82';
 
 <script>window.MONGO_ACTUAL_ONLY_INCOME_PROGRESS='V84';</script>
 
-<!-- Möngö PHONE TEST V109 — compound-aware prior-paid interest estimate only.
-     Keeps V108 manual override; no cancellation-rule, Budget, transaction or persistence changes. -->
-<script id="mongo-v109-compound-prior-paid-marker">
-window.MONGO_PHONE_TEST_BUILD='V109';
-(function(){
- function badge(){
-   document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
-   var b=document.getElementById('mongo-phone-test-build-v109');
-   if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v109';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-   b.textContent='PHONE TEST V109';
- }
- document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4300)});
- setTimeout(badge,5000);
-})();
-</script>
 
-<!-- Möngö PHONE TEST V118 — Rule 4 central i18n label mapping fix.
-     Labels only; no formulas, IDs, handlers, Budget, transactions or persistence changed. -->
-<script id="mongo-v112-rule4-central-i18n-marker">
-window.MONGO_PHONE_TEST_BUILD='V118';
-(function(){
- function badge(){
-   document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
-   var b=document.getElementById('mongo-phone-test-build-v112');
-   if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v112';b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';document.body.appendChild(b)}
-   b.textContent='PHONE TEST V118';
- }
- document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,4400)});
- setTimeout(badge,5200);
-})();
-</script>
-
-<!-- Möngö PHONE TEST V120 — interest-method scope correction.
-     Rules 1–3: user chooses Simple/Compound.
-     Rule 4 only: payout destination determines interest method.
-     No cancellation formulas, Budget, transactions or persistence changed. -->
-<script id="mongo-v120-interest-method-scope">
-(function(){
-'use strict';
-window.MONGO_PHONE_TEST_BUILD='V120';
-let manualInterest=null, internal=false;
-function els(){return {
- rule:document.getElementById('grule'),
- interest:document.getElementById('ginterest'),
- compoundWrap:document.getElementById('gcompoundWrap'),
- compoundFreq:document.getElementById('gcompoundfreq'),
- payout:document.getElementById('gmarketPayout'),
- marketFreq:document.getElementById('gmarketFreq')
-}}
-function setCompoundVisibility(e){
- if(!e.compoundWrap||!e.interest)return;
- e.compoundWrap.style.display=e.interest.value==='compound'?'block':'none';
-}
-function syncRule4(){
- const e=els(); if(!e.rule||!e.interest)return;
- const isRule4=e.rule.value==='actual';
- if(!isRule4){
-   e.interest.disabled=false;
-   if(manualInterest&&e.interest.value!==manualInterest){internal=true;e.interest.value=manualInterest;internal=false;}
-   setCompoundVisibility(e);
-   return;
- }
- if(!manualInterest)manualInterest=e.interest.value||'simple';
- const mode=e.payout?.value||'external';
- const wanted=mode==='deposit'?'compound':'simple';
- internal=true;e.interest.value=wanted;internal=false;
- e.interest.disabled=true;
- if(wanted==='compound'&&e.compoundFreq&&e.marketFreq){
-   if(e.marketFreq.value==='monthly')e.compoundFreq.value='12';
-   else if(e.marketFreq.value==='quarterly')e.compoundFreq.value='4';
- }
- setCompoundVisibility(e);
-}
-function boot(){
- const e=els(); if(!e.rule||!e.interest){setTimeout(boot,250);return;}
- if(!manualInterest&&e.rule.value!=='actual')manualInterest=e.interest.value||'simple';
- document.addEventListener('change',function(ev){
-   const id=ev.target&&ev.target.id;
-   if(id==='ginterest'&&!internal){const x=els();if(x.rule&&x.rule.value!=='actual')manualInterest=x.interest.value;}
-   if(id==='grule'||id==='gmarketPayout'||id==='gmarketFreq')setTimeout(syncRule4,0);
- },true);
- syncRule4();
- // Calculator supplemental controls can be installed after core DOM; keep this narrow.
- let lastRule=e.rule.value,lastPayout=e.payout?.value,lastInterest=e.interest.value;
- setInterval(function(){
-   const x=els(); if(!x.rule||!x.interest)return;
-   const rp=x.rule.value,pp=x.payout?.value,iv=x.interest.value;
-   if(rp!==lastRule||pp!==lastPayout||(rp==='actual'&&iv!==lastInterest)){
-     lastRule=rp;lastPayout=pp;syncRule4();lastInterest=els().interest?.value;
-   }
- },350);
-}
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(function(e){e.remove()});
- let b=document.getElementById('mongo-phone-test-build-v120');
- if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v120';document.body.appendChild(b)}
- b.textContent='PHONE TEST V120';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
-}
-document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){boot();badge()},5600)});
-setTimeout(function(){boot();badge()},6200);
-})();
-</script>
-
-<!-- Möngö PHONE TEST V121 — Rule 4 settlement semantics only.
-     Deposit-capitalized: final = principal + capitalized interest + recalculation adjustment - fee.
-     Maturity payout before maturity: prior actually-paid interest = 0; allowed cancellation interest is added once.
-     Rules 1–3 and V120 interest-method scope are untouched. -->
-<script id="mongo-v121-rule4-settlement-semantics">
-(function(){
-'use strict';
-window.MONGO_PHONE_TEST_BUILD='V121';
-const L={
- mn:{capital:'Хадгаламжид нэмэгдсэн хүү'},
- en:{capital:'Interest added to the deposit'},
- zh:{capital:'已计入存款的利息'},
- ja:{capital:'預金に加算された利息'},
- ko:{capital:'예금에 더해진 이자'},
- ru:{capital:'Проценты, добавленные к вкладу'},
- de:{capital:'Dem Guthaben gutgeschriebene Zinsen'}
-};
-function T(){return L[(typeof lang==='string'&&L[lang])?lang:'mn']||L.mn}
-function num(v){const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0}
-function money(v){return '₮'+Math.round(Math.max(0,v)).toLocaleString('en-US')}
-function els(){return {
- rule:document.getElementById('grule'), payout:document.getElementById('gmarketPayout'),
- prior:document.getElementById('gprior'), go:document.getElementById('v382gGo'), out:document.getElementById('gout')
-}}
-function enforceMaturityPrior(){
- const e=els(); if(!e.rule||!e.payout||!e.prior)return;
- if(e.rule.value==='actual'&&e.payout.value==='maturity'){
-   e.prior.value='0'; e.prior.readOnly=true;
- } else if(e.rule.value==='actual'&&e.payout.value!=='maturity'){
-   // Do not calculate here; existing V108/V119 logic owns external/deposit estimates.
-   if(e.payout.value==='external')e.prior.readOnly=false;
- }
-}
-function rewriteResult(){
- const e=els(); if(!e.rule||!e.payout||!e.out||e.rule.value!=='actual')return;
- const rows=[...e.out.querySelectorAll('.grow')]; if(rows.length<6)return;
- const strong=i=>rows[i]?.querySelector('strong');
- const label=i=>rows[i]?.querySelector('span');
- const principal=num(strong(0)?.textContent), allowed=num(strong(1)?.textContent), fee=num(strong(4)?.textContent);
- if(e.payout.value==='deposit'){
-   const capital=num(e.prior?.value);
-   const adjustment=allowed-capital;
-   // Keep the recalculation adjustment row; show the already-capitalized amount explicitly so the result reconciles.
-   if(strong(2))strong(2).textContent=(adjustment<0?'−':'+')+money(Math.abs(adjustment));
-   if(label(3))label(3).textContent=T().capital;
-   if(strong(3))strong(3).textContent='+'+money(capital);
-   if(strong(5))strong(5).textContent=money(principal+capital+adjustment-fee);
- } else if(e.payout.value==='maturity'){
-   // No interest was actually paid before maturity. Allowed cancellation interest is paid once now.
-   if(strong(2))strong(2).textContent='−'+money(0);
-   if(strong(3))strong(3).textContent='+'+money(allowed);
-   if(strong(5))strong(5).textContent=money(principal+allowed-fee);
- }
-}
-function sync(){enforceMaturityPrior();setTimeout(rewriteResult,0)}
-document.addEventListener('change',ev=>{const id=ev.target&&ev.target.id;if(id==='grule'||id==='gmarketPayout'||id==='gmarketContract'||id==='gmarketRate'||id==='gmarketSettlement'||id==='gmarketActual'||id==='gstart'||id==='gend'||id==='gcontrib'||id==='gcontribamt'||id==='gcontribfreq')setTimeout(sync,0)},true);
-document.addEventListener('click',ev=>{if(ev.target&&ev.target.id==='v382gGo'){enforceMaturityPrior();setTimeout(rewriteResult,30)}},true);
-setInterval(()=>{const c=document.getElementById('v382gCancel');if(c&&c.offsetParent!==null){enforceMaturityPrior();rewriteResult()}},450);
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"]').forEach(e=>e.remove());
- let b=document.getElementById('mongo-phone-test-build-v121');if(!b){b=document.createElement('div');b.id='mongo-phone-test-build-v121';document.body.appendChild(b)}
- b.textContent='PHONE TEST V121';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002';
-}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{sync();badge()},6800));setTimeout(()=>{sync();badge()},7400);
-})();
-</script>
-
-<!-- Möngö PHONE TEST V123 — asset-sale ledger balance fix only. -->
-<script id="mongo-v123-asset-sale-ledger-fix-marker">
-(function(){
- function badge(){
-  document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker').forEach(function(e){e.remove()});
-  var b=document.createElement('div'); b.id='mongo-v123-phone-marker'; b.textContent='PHONE TEST V123';
-  b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
-  document.body.appendChild(b);
- }
- document.addEventListener('DOMContentLoaded',function(){setTimeout(badge,8200)});
- setTimeout(badge,9000); setInterval(badge,5000);
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V125 — asset-sale Transactions + account-history labels only. -->
-<script id="mongo-v125-asset-sale-display">
-(function(){
-'use strict';
-const UI={
- mn:{sold:'Хөрөнгө зарсан',cost:'Анхны өртөг',gain:'Ашиг',loss:'Алдагдал'},
- en:{sold:'Asset sold',cost:'Cost basis',gain:'Gain',loss:'Loss'},
- zh:{sold:'出售资产',cost:'成本',gain:'收益',loss:'亏损'},
- ja:{sold:'資産を売却',cost:'取得原価',gain:'利益',loss:'損失'},
- ko:{sold:'자산 매각',cost:'취득 원가',gain:'이익',loss:'손실'},
- ru:{sold:'Продажа актива',cost:'Первоначальная стоимость',gain:'Прибыль',loss:'Убыток'},
- de:{sold:'Vermögenswert verkauft',cost:'Anschaffungskosten',gain:'Gewinn',loss:'Verlust'}
-};
-function q(){return UI[(typeof lang!=='undefined'&&lang)||'mn']||UI.en}
-function escV125(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-const priorTRow=window.tRow;
-window.tRow=function(t,del){
- if(!t||!t._assetSaleActivity)return priorTRow(t,del);
- const z=q(),acc=(moneyAccounts||[]).find(a=>String(a.id)===String(t.accountId)),accText=acc?`${accountIcon(acc)} ${typeof savingsAccountDisplayName==='function'?savingsAccountDisplayName(acc):acc.name}`:'';
- const pnl=Number(t.realizedPnl)||0, pnlLabel=pnl>=0?z.gain:z.loss;
- return `<div class="list-item asset-sale-activity-row"><div class="il"><div class="txn-main-line"><span class="lbl1">${escV125(z.sold)} · ${escV125(t.assetName||'')}</span></div><div class="txn-meta-line"><span class="lbl2">${escV125(accText)} · ${escV125(t.date||'')}</span></div><div class="loan-activity-split">${escV125(z.cost)}: ${fmt(Number(t.costBasis)||0)} · ${escV125(pnlLabel)}: ${pnl>=0?'+':'-'}${fmt(Math.abs(pnl))}</div></div><div class="ir"><span class="amt amt-i">+${fmt(Number(t.amount)||0)}</span></div></div>`;
-};
-
-const priorAccountRowsFor=window.accountRowsFor;
-window.accountRowsFor=function(a){
- const rows=priorAccountRowsFor(a);
- const map=new Map((accountTransfers||[]).filter(t=>t&&t.purpose==='asset_sale').map(t=>[String(t.id),t]));
- rows.forEach(r=>{
-   const tr=map.get(String(r.transferId||''));
-   if(!tr)return;
-   const gain=(txns||[]).find(x=>x&&x.assetIncomeType==='realized_gain'&&String(x.assetSaleId||'')===String(tr.id||''));
-   const group=(typeof window.getAllInvestGroupsIncludingSold==='function'?window.getAllInvestGroupsIncludingSold():[]).find(g=>String(g.key||'')===String(tr.assetGroupKey||''));
-   const raw=String(group?.name||gain?.desc||tr.description||'').replace(/\s*·\s*(Ашиг|Gain|收益|利益|이익|Прибыль|Gewinn|Зарсан|Sold).*$/i,'').trim();
-   r.label=`${q().sold}${raw?' · '+raw:''}`;
- });
- return rows;
-};
-
-window.MONGO_PHONE_TEST_BUILD='V125';
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker,#mongo-v125-phone-marker').forEach(e=>e.remove());
- const b=document.createElement('div');b.id='mongo-v125-phone-marker';b.textContent='PHONE TEST V125';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
- document.body.appendChild(b);
-}
-function refresh(){try{if(typeof rTxns==='function')rTxns();if(typeof rRecent==='function')rRecent();if(typeof renderMoneyAccounts==='function')renderMoneyAccounts();}catch(e){console.error('V125 display refresh',e)}}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},8600));
-setTimeout(()=>{badge();refresh()},9400);setInterval(badge,5000);
-})();
-</script>
-
-
-<!-- Möngö PHONE TEST V126 — semantic separation:
-     recurring income-producing assets remain plan-able under Investment income;
-     realized sale gains use one actual-only sale-gain subcategory and never create
-     a permanent per-asset Budget planning row. Cashflow math from V123/V125 untouched. -->
-<script id="mongo-v126-asset-income-budget-separation">
-(function(){
-'use strict';
-const CAT='asset_income_cat', SALE='asset_sale_gain';
-const SALE_NAMES={
- mn:'Хөрөнгө борлуулалтын ашиг',en:'Asset sale gain',zh:'资产出售收益',
- ja:'資産売却益',ko:'자산 매각 이익',ru:'Прибыль от продажи актива',de:'Gewinn aus Vermögensverkauf'
-};
-function names(){return {...SALE_NAMES}}
-function ensure(){
- let cat=(bCatsInc||[]).find(c=>c&&c.key===CAT);
- if(!cat){
-   const cn={mn:'Хөрөнгийн орлого',en:'Investment income',zh:'资产收入',ja:'資産収入',ko:'자산 수입',ru:'Доход от активов',de:'Vermögenseinkommen'};
-   cat={key:CAT,names:cn,icon:'💹',color:'#1D9E75',subs:[]};bCatsInc.push(cat);
- }
- if(!Array.isArray(cat.subs))cat.subs=[];
- let sub=cat.subs.find(x=>x&&x.key===SALE);
- if(!sub){sub={key:SALE,names:names(),color:'#1D9E75',actualOnly:true,assetSaleGain:true};cat.subs.push(sub);}
- else {sub.names=names();sub.actualOnly=true;sub.assetSaleGain=true;}
- return {cat,sub};
-}
-window.ensureAssetSaleGainBudgetSourceV126=ensure;
-
-/* Migrate only realized-sale gain records. This does not change their amount,
-   account balance behavior, sale link, or date. */
-function migrate(){
- const y=ensure();
- (txns||[]).forEach(t=>{
-   if(!t||t.assetIncomeType!=='realized_gain')return;
-   t.catKey=CAT;t.catName=typeof cN==='function'?cN(y.cat):'Хөрөнгийн орлого';
-   t.subcatName=SALE;t.incomePlanIncluded=false;
- });
-}
-
-/* A per-asset yield_* row belongs in Budget planning only when it has a real
-   income-producing asset source OR an explicit saved plan. Sale-only legacy rows
-   are hidden; the shared sale-gain actual row is shown only in the sale month. */
-const baseVisible=window.mongoBudgetVisibleSubs||mongoBudgetVisibleSubs;
-mongoBudgetVisibleSubs=function(cat){
- let subs=baseVisible(cat);
- if(budgetType!=='income'||cat?.key!==CAT)return subs;
- const ym=`${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
- return subs.filter(sb=>{
-   if(sb?.key===SALE){
-     return (txns||[]).some(t=>t&&t.assetIncomeType==='realized_gain'&&String(t.date||'').slice(0,7)===ym);
-   }
-   if(!String(sb?.key||'').startsWith('yield_'))return true;
-   const hasPlan=Number(getBudgetValForYear(bSubKey(cat,sb),budgetMonth,budgetYear)||0)>0;
-   if(hasPlan)return true;
-   const realIncome=(txns||[]).some(t=>t&&t.assetIncome===true&&t.assetIncomeType!=='realized_gain'&&
-     (t.subcatName===sb.key||t.subcatName===cN(sb)));
-   if(realIncome)return true;
-   try{
-     const active=(typeof getInvestGroups==='function'?getInvestGroups():[]).some(g=>
-       typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g)&&
-       (String('yield_'+String(g.name||'').trim().toLowerCase().replace(/[^a-z0-9\u0400-\u04ff]+/g,'_').slice(0,45))===String(sb.key))
-     );
-     if(active)return true;
-   }catch(_){}
-   return false;
- });
-};
-window.mongoBudgetVisibleSubs=mongoBudgetVisibleSubs;
-
-/* Realized sale gain is intentionally actual-only, not a planned asset-income txn. */
-const priorBudgeted=isTxnBudgeted;
-isTxnBudgeted=function(t){
- if(t?.assetIncomeType==='realized_gain')return false;
- return priorBudgeted(t);
-};
-
-migrate();
-try{saveData();}catch(_){}
-
-window.MONGO_PHONE_TEST_BUILD='V126';
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"],#mongo-v122-phone-marker,#mongo-v123-phone-marker,#mongo-v124-phone-marker,#mongo-v125-phone-marker,#mongo-v126-phone-marker').forEach(e=>e.remove());
- const b=document.createElement('div');b.id='mongo-v126-phone-marker';b.textContent='PHONE TEST V126';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
- document.body.appendChild(b);
-}
-function refresh(){migrate();try{rBList();rBProg();updateBudgetTotal();}catch(e){console.error('V126 budget refresh',e)}}
-document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{badge();refresh()},9000));
-setTimeout(()=>{badge();refresh()},9800);setInterval(badge,5000);
-})();
-</script>
-
-
-<style id="mongo-v127-asset-card-meta-style">
-/* V127: keep asset identity on one readable line after the icon. */
-#invest-list .portfolio-group-title{align-items:center;min-width:0;flex:1}
-#invest-list .portfolio-group-title>div:last-child{min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
-#invest-list .portfolio-group-name{min-width:0;flex:0 1 auto}
-#invest-list .portfolio-group-meta{
-  margin:0!important;display:flex;align-items:center;gap:6px;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:11px
-}
-#invest-list .mongo-v127-income-badge{font-weight:800;color:#08724F}
+<!-- Möngö PHONE TEST V134 — hide obsolete V47A sample preview in NEW savings form only. -->
+<style id="mongo-v134-hide-new-savings-sample-interest">
+#mongo-demand-v47a-card{display:none !important}
 </style>
-<script id="mongo-v127-asset-loss-card-meta">
+<script id="mongo-v134-new-savings-preview-guard">
 (function(){
 'use strict';
-const META={
- mn:{income:'Орлого оруулдаг',noIncome:'Орлого оруулдаггүй'},
- en:{income:'Income-producing',noIncome:'Not income-producing'},
- zh:{income:'产生收入',noIncome:'不产生收入'},
- ja:{income:'収入あり',noIncome:'収入なし'},
- ko:{income:'수익 발생',noIncome:'수익 없음'},
- ru:{income:'Приносит доход',noIncome:'Без дохода'},
- de:{income:'Ertrag bringend',noIncome:'Ohne Ertrag'}
-};
-function q(){return META[(typeof lang!=='undefined'&&lang)||'mn']||META.en}
-function allSoldGroups(){
- try{return (window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).filter(g=>window.MongoArchive?.assetGroupSold(g));}
- catch(_){return []}
-}
-function realizedPnl(){
- return allSoldGroups().reduce((sum,g)=>{
-   const vals=(g.items||[]).map(x=>Number(x.realizedPnl)).filter(Number.isFinite);
-   return sum+(vals.length?vals.reduce((a,b)=>a+b,0):0);
- },0);
-}
-function decorateCards(){
- const root=document.getElementById('invest-list'); if(!root)return;
- const active=typeof getInvestGroups==='function'?getInvestGroups().sort((a,b)=>b.current-a.current):[];
- const cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
- cards.forEach((card,i)=>{
-   const g=active[i]; if(!g)return;
-   const meta=card.querySelector('.portfolio-group-meta'); if(!meta)return;
-   const types=(INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn);
-   const typeObj=types.find(x=>x.k===g.typeKey), label=typeObj?typeObj.label:g.typeKey;
-   const inc=typeof assetGroupIncomeProducing==='function'&&assetGroupIncomeProducing(g);
-   meta.innerHTML=`<span>${label}</span><span>·</span><span class="${inc?'mongo-v127-income-badge':''}">${inc?q().income:q().noIncome}</span>`;
- });
-}
-function updateRealizedMetric(){
- try{
-   const groups=typeof getInvestGroups==='function'?getInvestGroups():[];
-   const active=window.MongoAssets?.portfolioTotals?window.MongoAssets.portfolioTotals(groups):null;
-   if(!active)return;
-   const totalPnl=Number(active.pnl||0)+realizedPnl();
-   const totalCost=Number(active.invested||0)+allSoldGroups().reduce((a,g)=>a+Number(g.invested||0),0);
-   const pct=totalCost>0?totalPnl/totalCost*100:0;
-   const pv=document.getElementById('i-pnl-val'), pp=document.getElementById('i-pct-val');
-   if(pv){pv.textContent=(totalPnl>=0?'+':'')+fmt(totalPnl);pv.className='metric-val '+(totalPnl>0?'inv-positive':totalPnl<0?'inv-negative':'inv-neutral');}
-   if(pp){pp.textContent=fmtP(pct);pp.className='metric-val '+(pct>0?'inv-positive':pct<0?'inv-negative':'inv-neutral');}
-   const pc=document.getElementById('i-pnl-card'), rc=document.getElementById('i-pct-card');
-   if(pc){pc.style.background=totalPnl>=0?'#E1F5EE':'#FCEBEB';pc.querySelector('.metric-lbl')?.style.setProperty('color',totalPnl>=0?'#085041':'#791F1F');pc.querySelector('.metric-val')?.style.setProperty('color',totalPnl>=0?'#085041':'#791F1F');}
-   if(rc){rc.style.background=pct>=0?'#E1F5EE':'#FCEBEB';rc.querySelector('.metric-lbl')?.style.setProperty('color',pct>=0?'#085041':'#791F1F');rc.querySelector('.metric-val')?.style.setProperty('color',pct>=0?'#085041':'#791F1F');}
- }catch(e){console.error('V127 realized P/L metric',e)}
-}
-function migrateOldLosses(){
- /* Existing V126 sales already store realizedPnl on sold asset lots.
-    Add reporting-only loss rows only when one does not already exist. */
- const sales=(accountTransfers||[]).filter(x=>x&&x.purpose==='asset_sale');
- sales.forEach(tr=>{
-   const g=(window.getAllInvestGroupsIncludingSold?window.getAllInvestGroupsIncludingSold():[]).find(x=>String(x.key)===String(tr.assetGroupKey));
-   if(!g)return;
-   const pnl=(g.items||[]).map(x=>Number(x.realizedPnl)).find(Number.isFinite);
-   if(!(pnl<0))return;
-   if((txns||[]).some(x=>x&&x.assetIncomeType==='realized_loss'&&String(x.assetSaleId)===String(tr.id)))return;
-   txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'loss_'+Date.now()),type:'investment_loss',
-     desc:`${g.name} · ${({mn:'Алдагдал',en:'Loss',zh:'亏损',ja:'損失',ko:'손실',ru:'Убыток',de:'Verlust'}[lang]||'Loss')}`,
-     amount:Math.abs(pnl),date:tr.date,accountId:tr.toId,skipAccountBalance:true,assetGroupKey:g.key,
-     assetIncomeType:'realized_loss',assetSaleId:tr.id,incomePlanIncluded:false,createdAt:new Date().toISOString()});
- });
-}
-function run(){migrateOldLosses();decorateCards();updateRealizedMetric();try{saveData()}catch(_){}}
-const base=window.rInvests;
-if(typeof base==='function'&&!base.__v127){
- const f=function(){const r=base.apply(this,arguments);setTimeout(()=>{decorateCards();updateRealizedMetric()},0);return r};f.__v127=true;window.rInvests=f;
-}
-window.MONGO_PHONE_TEST_BUILD='V127';
-function badge(){
- document.querySelectorAll('[id^="mongo-phone-test-build-v"],[id^="mongo-v12"][id$="-phone-marker"]').forEach(e=>e.remove());
- const b=document.createElement('div');b.id='mongo-v127-phone-marker';b.textContent='PHONE TEST V127';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px/1.2 Arial,sans-serif;box-shadow:0 4px 16px #0002;pointer-events:none';
- document.body.appendChild(b);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{run();badge();try{rInvests()}catch(_){}},9500),{once:true});
-else setTimeout(()=>{run();badge();try{rInvests()}catch(_){}},9500);
-setInterval(badge,5000);
-})();
-</script>
-
-
-<style id="mongo-v128-card-meta-css">
-.mongo-v128-meta{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;padding:5px 8px;border-radius:14px;background:rgba(73,176,182,.10);font-size:11px;font-weight:750;color:#374151;margin-right:5px}
-.mongo-v128-meta b{color:#168c92;overflow:hidden;text-overflow:ellipsis}
-</style>
-<script id="mongo-v128-card-meta-js">
-(function(){
-const T={mn:['Орлого оруулдаг','Орлого оруулдаггүй'],en:['Income-producing','Not income-producing'],zh:['产生收入','不产生收入'],ja:['収入あり','収入なし'],ko:['수익 발생','수익 없음'],ru:['Приносит доход','Без дохода'],de:['Ertrag bringend','Ohne Ertrag']};
-function txt(){return T[window.lang||'mn']||T.en}
-function groups(){try{return getInvestGroups().sort((a,b)=>b.current-a.current)}catch(e){return []}}
-function typ(g){try{let a=INVEST_TYPES_ALL[window.lang||'mn']||INVEST_TYPES_ALL.mn||[],x=a.find(v=>v.k===g.typeKey);return x?x.label:(g.typeKey||'')}catch(e){return g.typeKey||''}}
-function draw(){
- let root=document.getElementById('invest-list');if(!root)return;
- let gs=groups(),cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
- cards.forEach((card,i)=>{
-   let g=gs[i];if(!g)return;
-   card.querySelectorAll('.mongo-v128-meta').forEach(x=>x.remove());
-   let sell=[...card.querySelectorAll('button')].find(b=>/зарах|sell|прод|verkauf|売却|매각|出售/i.test((b.textContent||'').trim()));
-   if(!sell||!sell.parentElement)return;
-   let row=sell.parentElement, m=document.createElement('span');
-   let inc=false;try{inc=!!assetGroupIncomeProducing(g)}catch(e){}
-   m.className='mongo-v128-meta';
-   m.innerHTML='<b></b><span>·</span><span></span>';
-   m.children[0].textContent=typ(g);m.children[2].textContent=inc?txt()[0]:txt()[1];
-   let first=row.querySelector('button'); first?row.insertBefore(m,first):row.prepend(m);
- });
-}
-let old=window.rInvests;
-if(typeof old==='function'){window.rInvests=function(){let r=old.apply(this,arguments);setTimeout(draw,40);return r}}
-function badge(){
- document.querySelectorAll('[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-phone-test-build-v"]').forEach(e=>e.remove());
- let b=document.createElement('div');b.id='mongo-v128-phone-marker';b.textContent='PHONE TEST V128';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px Arial;box-shadow:0 4px 16px #0002;pointer-events:none';document.body.appendChild(b)
-}
-window.MONGO_PHONE_TEST_BUILD='V128';
-setTimeout(()=>{draw();badge()},10000);setInterval(()=>{draw();badge()},3000);
-})();
-</script>
-
-<style id="mongo-v129-asset-card-two-row-css">
-/* V129 — Asset card header: identity on row 1, actions on row 2. No horizontal overflow. */
-#invest-list .portfolio-group-head{
-  display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;min-width:0!important;
-}
-#invest-list .portfolio-group-title{
-  width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;gap:9px!important;
-}
-#invest-list .portfolio-group-title>div:last-child{min-width:0!important;flex:1 1 auto!important;display:block!important}
-#invest-list .portfolio-group-name{display:none!important}
-#invest-list .portfolio-group-meta{
-  margin:0!important;display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;
-  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:11px!important;
-}
-#invest-list .portfolio-group-head>div:last-child{
-  width:100%!important;max-width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;
-  justify-content:flex-start!important;gap:5px!important;flex-wrap:nowrap!important;overflow:hidden!important;
-}
-#invest-list .portfolio-group-head>div:last-child .mongo-v128-meta{display:none!important}
-#invest-list .portfolio-group-head>div:last-child .btn{
-  flex:0 1 auto!important;min-width:0!important;white-space:nowrap!important;padding:7px 9px!important;font-size:11px!important;
-}
-#invest-list .portfolio-group-head>div:last-child .asset-income-add-btn{flex:1 1 auto!important;max-width:132px!important}
-#invest-list .portfolio-group-head>div:last-child .mongo-inline-color{flex:0 0 38px!important;width:38px!important;height:38px!important}
-#invest-list .portfolio-group-head>div:last-child button:not(.asset-income-add-btn){min-width:38px!important}
-@media(max-width:430px){
- #invest-list .portfolio-group-head>div:last-child{gap:4px!important}
- #invest-list .portfolio-group-head>div:last-child .btn{padding:6px 7px!important;font-size:10.5px!important}
- #invest-list .portfolio-group-head>div:last-child .asset-income-add-btn{max-width:118px!important}
- #invest-list .portfolio-group-head>div:last-child .mongo-inline-color{flex-basis:34px!important;width:34px!important;height:34px!important}
-}
-</style>
-<script id="mongo-v129-asset-card-two-row-js">
-(function(){
-'use strict';
-function clean(){
- const root=document.getElementById('invest-list'); if(!root)return;
- root.querySelectorAll('.mongo-v128-meta').forEach(x=>x.remove());
-}
-const prior=window.rInvests;
-if(typeof prior==='function'&&!prior.__v129){
- const wrapped=function(){const r=prior.apply(this,arguments);setTimeout(clean,60);return r};wrapped.__v129=true;window.rInvests=wrapped;
-}
-function badge(){
- document.querySelectorAll('[id^="mongo-v12"][id$="-phone-marker"],[id^="mongo-phone-test-build-v"]').forEach(e=>e.remove());
- let b=document.createElement('div');b.id='mongo-v129-phone-marker';b.textContent='PHONE TEST V129';
- b.style.cssText='position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f8b7d;color:#fff;border-radius:18px;padding:8px 14px;font:800 13px Arial;box-shadow:0 4px 16px #0002;pointer-events:none';document.body.appendChild(b);
-}
-window.MONGO_PHONE_TEST_BUILD='V129';
-setTimeout(()=>{clean();badge();try{rInvests()}catch(_){}},10200);
-setInterval(()=>{clean();badge()},3000);
-})();
-</script>
-
-<!-- Möngö PHONE TEST V132 — active asset identity only.
-     Keeps V129 two-row card layout and V131 sold-card/Budget semantics untouched.
-     Active row becomes: Type · Asset name · Income-producing status. -->
-<style id="mongo-v132-active-asset-name-style">
-#invest-list .portfolio-group-meta.mongo-v132-active-identity{
- display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;
- white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
-}
-#invest-list .portfolio-group-meta.mongo-v132-active-identity .mongo-v132-name{
- color:#374151;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;
-}
-#invest-list .portfolio-group-meta.mongo-v132-active-identity .mongo-v132-income{font-weight:850;color:#08724F}
-</style>
-<script id="mongo-v132-active-asset-name-js">
-(function(){
-'use strict';
-const T={
- mn:['Орлого оруулдаг','Орлого оруулдаггүй'],en:['Income-producing','Not income-producing'],
- zh:['产生收入','不产生收入'],ja:['収入あり','収入なし'],ko:['수익 발생','수익 없음'],
- ru:['Приносит доход','Без дохода'],de:['Ertrag bringend','Ohne Ertrag']
-};
-function tt(){return T[(typeof lang!=='undefined'&&lang)||'mn']||T.en}
-function typeLabel(g){try{const a=INVEST_TYPES_ALL[(typeof lang!=='undefined'&&lang)||'mn']||INVEST_TYPES_ALL.mn||[];return a.find(x=>x.k===g.typeKey)?.label||g.typeKey||''}catch(_){return g?.typeKey||''}}
-function activeGroups(){try{return (typeof getInvestGroups==='function'?getInvestGroups():[]).sort((a,b)=>b.current-a.current)}catch(_){return []}}
-function draw(){
- const root=document.getElementById('invest-list');if(!root)return;
- const gs=activeGroups();
- const cards=[...root.children].filter(x=>x.classList.contains('inv-card')&&!x.classList.contains('mongo-sold-card'));
- cards.forEach((card,i)=>{
-   const g=gs[i];if(!g)return;
-   const meta=card.querySelector('.portfolio-group-meta');if(!meta)return;
-   let inc=false;try{inc=!!assetGroupIncomeProducing(g)}catch(_){}
-   meta.classList.add('mongo-v132-active-identity');
-   meta.replaceChildren();
-   const type=document.createElement('span');type.textContent=typeLabel(g);
-   const dot1=document.createElement('span');dot1.textContent='·';
-   const name=document.createElement('span');name.className='mongo-v132-name';name.textContent=String(g.name||'');
-   const dot2=document.createElement('span');dot2.textContent='·';
-   const state=document.createElement('span');state.className=inc?'mongo-v132-income':'';state.textContent=inc?tt()[0]:tt()[1];
-   meta.append(type,dot1,name,dot2,state);
- });
-}
-const old=window.rInvests;
-if(typeof old==='function'&&!old.__v132){const f=function(){const r=old.apply(this,arguments);setTimeout(draw,90);return r};f.__v132=true;window.rInvests=f;}
-window.MONGO_PHONE_TEST_BUILD='V132';
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(draw,11200),{once:true});else setTimeout(draw,11200);
-setInterval(draw,2500);
+window.MONGO_NEW_SAVINGS_SAMPLE_PREVIEW_GUARD='V134';
+function clean(){const el=document.getElementById('mongo-demand-v47a-card');if(el)el.remove();}
+document.addEventListener('DOMContentLoaded',clean);
+document.addEventListener('change',e=>{if(e.target&&(e.target.id==='account-deposit-term-type'||e.target.id==='account-type'))setTimeout(clean,0);});
+document.addEventListener('click',()=>setTimeout(clean,0));
 })();
 </script>
