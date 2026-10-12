@@ -19785,7 +19785,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V137</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V140</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
@@ -20233,7 +20233,7 @@ obs.observe(document.documentElement,{subtree:true,childList:true,characterData:
 <script id="mongo-v56-interest-income-month-plan">
 (function(){
 'use strict';
-window.MONGO_INTEREST_INCOME_MONTH_PLAN='V56';
+window.MONGO_INTEREST_INCOME_MONTH_PLAN='V140';
 const CAT='savings_interest_income_cat', DAY=86400000;
 const N=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const D=v=>{const d=new Date(String(v||'').slice(0,10)+'T00:00:00');return Number.isNaN(+d)?null:d};
@@ -20296,6 +20296,30 @@ function estimate(a,y,m){
  if(depositKind==='demand'){
   const engine=window.MongoDemandInterestPreviewV46?.calculate;
   if(typeof engine!=='function')return 0;
+  // V140: monthly payout anniversary is anchored to the account opening day.
+  // Clamp the day for short months, then restore the original anchor next month.
+  if((a.interestFrequency||'monthly')==='monthly'){
+   const anchor=st.getDate();
+   const payout=new Date(Number(y),Number(m)-1,
+     Math.min(anchor,new Date(Number(y),Number(m),0).getDate()));
+   if(payout<=st)return 0; // opening date is not a payout
+   const id=String(a.id);
+   const credits=(Array.isArray(txns)?txns:[])
+    .filter(t=>String(t.accountId)===id&&String(t.savingsAccountId||'')===id&&
+      t.type==='income'&&t.interestMode==='compound'&&D(t.date)&&D(t.date)<payout)
+    .sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+   const last=credits.length?D(credits[credits.length-1].date):null;
+   const prior=new Date(Number(y),Number(m)-2,
+     Math.min(anchor,new Date(Number(y),Number(m)-1,0).getDate()));
+   // Budget the latest monthly interest cycle. Historical interest credits
+   // are already reflected in the opening balance at cycleStart.
+   const cycleStart=last&&last>prior?last:(prior>st?prior:st);
+   if(cycleStart>=payout)return 0;
+   const opening=balanceAt(a,cycleStart);
+   const ev=events(a,payout).filter(x=>{const dt=D(x.date);return dt&&dt>=cycleStart&&dt<payout});
+   return Math.max(0,N(engine({openingBalance:opening,annualRate:rate,
+     startDate:YMD(cycleStart),endDate:YMD(payout),events:ev}).roundedInterest));
+  }
   const opening=balanceAt(a,from);
   const ev=events(a,e).filter(x=>{const dt=D(x.date);return dt&&dt>=from&&dt<e});
   return Math.max(0,N(engine({openingBalance:opening,annualRate:rate,startDate:YMD(from),endDate:YMD(e),events:ev}).roundedInterest));
