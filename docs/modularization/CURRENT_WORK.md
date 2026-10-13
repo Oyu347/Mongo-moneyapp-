@@ -144,3 +144,11 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Preserve cancellation math, staged rates, principal/prior interest/adjustment, receiver, payout, reconciliation and confirm/cancel actions. UI-text-only change; do not alter financial logic.
 - Not PHONE PASS until a new phone build is tested.
 - Also pending separately on V141: remove the literal `\\n\\n` visible at the bottom of Transactions without changing approved logic.
+
+
+## 2026-10-13 — V143 UI cleanup PHONE PASS
+- Visible phone build: `PHONE TEST V143`.
+- PHONE PASS: stray literal `\\n\\n` at the bottom of the app is removed. Root cause was the legacy `mongo-interest-receiver-persist-v11` block containing escaped newline text in HTML; the bounded legacy block was normalized without changing approved finance logic.
+- PHONE PASS: real term-deposit cancellation modal cleanup is visually confirmed. Removed the three implementation/debug-style explanations requested on V141 while preserving decision-critical account, cancellation, reconciliation, payout and staged-rate data.
+- Preserve: V141/V143 approved interest posting/date behavior, cancellation math, Budget, transfers, persistence, seven-language behavior and prior protected checkpoints. Do not reopen this UI cleanup unless regression is observed.
+- Status: **V143 PHONE PASS for these two bounded UI fixes.** This is not automatic production/main promotion.
