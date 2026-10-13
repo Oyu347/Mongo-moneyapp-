@@ -135,3 +135,12 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Preview-only invariant remains protected: no real account, transaction or Budget mutation.
 - **Cancellation-calculator preview cycle is CLOSED / PHONE PASS for the tested V121 scope.** V121 is a protected phone-test checkpoint, not an automatic production/main promotion and not proof of unrelated modules.
 - Next work should move to the remaining Savings backlog. Known separate candidate: opening-balance edit synchronization with linked goal/history. Do not alter the now-closed cancellation calculator unless a new regression is observed.
+
+
+## 2026-10-13 — V141 cancellation modal cleanup requested (PENDING)
+- Visible phone build is `PHONE TEST V141`.
+- User requested a cleaner real-cancellation confirmation modal: remove implementation/debug explanations while preserving all decision-critical amounts and cancellation conditions.
+- Remove/shorten candidates: top `Энэ шатанд апп зөвхөн бодит данс...` paragraph; principal-transfer reconciliation explanation; technical classification paragraph mentioning savings ID / receiver ID / interest form.
+- Preserve cancellation math, staged rates, principal/prior interest/adjustment, receiver, payout, reconciliation and confirm/cancel actions. UI-text-only change; do not alter financial logic.
+- Not PHONE PASS until a new phone build is tested.
+- Also pending separately on V141: remove the literal `\\n\\n` visible at the bottom of Transactions without changing approved logic.
