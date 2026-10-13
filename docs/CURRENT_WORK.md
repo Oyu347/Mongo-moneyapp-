@@ -165,3 +165,13 @@ The active Savings cancellation test cycle is **CLOSED / PHONE PASS for the inte
 - Preserve: never treat returned cost basis as income; never add realized profit to account balance twice.
 - Status: V123 PHONE PASS for tested profitable asset-sale cashflow/account/reconciliation behavior. Bounded checkpoint only; not automatic production/main promotion.
 - Next bounded work: align Transactions display with the approved full-proceeds view, then verify Budget month scoping and actual-profit presentation without changing approved cashflow math.
+
+
+## 2026-10-13 — V141 cancellation modal text cleanup requested (PENDING)
+- Visible phone build: `PHONE TEST V141`.
+- User reviewed the real term-deposit cancellation confirmation modal for `Хугацаатай тест` (opened 2025-12-31, contract annual rate 13%, staged cancellation rule, fee ₮3,000) and requested that unnecessary explanatory/debug-style text be removed to make the modal cleaner.
+- Current screenshots show useful decision data that must remain: account/current balance, opening date, contract rate, cancellation rule/fee, cancellation date, principal used for interest, prior/credited interest, calculated allowed interest/adjustment, receiving account, expected payout, reconciliation, and staged cancellation rates.
+- Cleanup candidates to remove/shorten because they are implementation/debug explanations rather than user decisions: the top paragraph beginning `Энэ шатанд апп зөвхөн бодит данс...`; the reconciliation explanation `Үндсэн мөнгөний эхлэл ба нэмэлт шилжүүлгүүд...`; and the technical classification paragraph mentioning savings ID / receiving-account ID / interest form.
+- Preserve the actual cancellation math, staged-rate values, receiver selection, reconciliation values, and confirmation action. This is a UI-text cleanup only; no financial logic/data mutation is approved.
+- IMPORTANT: this request is recorded immediately but is NOT PHONE PASS yet. Create/test a new phone-test build before promoting any cleanup.
+- Separate observed V141 regression remains pending: literal `\\n\\n` is visible at the bottom of the Transactions screen and should be removed without touching approved interest/cancellation logic.
