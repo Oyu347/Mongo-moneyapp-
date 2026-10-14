@@ -147,3 +147,23 @@ Instrument the authoritative lexical-scope Budget calculation path itself rather
 
 ### Protected behavior for the next fix
 Do not regress goal deletion undo, source-account restoration, savings-account retention/detachment, historical current-month Budget plans/actuals, manual Budget overrides, internal-transfer accounting, or total-money invariants. Do not touch `main` or change the verified V44.12.30 baseline.
+
+## Ledger balance-guard audit handoff — 2026-10-14
+Branch for journal: `feature/completed-cards-archive`. **Diagnostic source:** separately supplied monolithic HTML and local test artifact, not proven identical to this branch head. **Status: NEEDS TEST** (no phone/runtime/cloud validation; do not promote baseline).
+
+### Findings and evidence levels
+- **STATIC FINDING / NEEDS TEST:** Unified ledger transaction-entry path appears not to honor `skipAccountBalance` (and potentially `autoPaySelf`) consistently when computing account balances. For an asset bought at ₮10,000,000 and sold at ₮13,000,000, the ₮3,000,000 gain must appear in profit reporting but must **not** increase the bank balance beyond the ₮13,000,000 sale proceeds. The previously discussed ₮16,000,000 result is a **code-path risk**, not a confirmed phone observation.
+- **NEEDS TEST:** Review all synthetic/non-balance-affecting income and expense paths: asset sale gain, loan interest/reporting entries, loan-funded direct purchases, and savings cancellation interest adjustments. Preserve reporting entries; suppress only unintended account-balance effects. Existing special loan-interest exclusions must not be undone.
+- **NEEDS TEST:** `needsRebuild()` may not detect edits that preserve transaction IDs/counts; determine whether all editing paths invoke the existing rebuild/save mechanism.
+- **ARCHITECTURE RISK / NOT YET PROVEN FAILURE:** Cloud financial state is mirrored to five Firestore paths with non-atomic writes; offline queue has a 40-item cap (verify whether items are full snapshots); an internal ledger has a 5,000-row retention cap (verify whether it is authoritative). Review existing cloud-clear barrier and older regression protections before proposing changes.
+- **EXISTING PROTECTION:** Unified ledger, money audit checks, and separation of loan principal versus interest exist. No conclusion that all loan payments double-count.
+
+### Prepared artifact and validation limits
+- Local artifact previously supplied to user: `Mongo-Ledger-Balance-Guard-TEST.html`. Prior conversation reported a one-line guard patch and seven isolated calculation checks; **these results have not been independently reproduced against the exact GitHub branch head in this journal update**. Do not label `PHONE PASS` or `VERIFIED`.
+- No repository application code, Firebase data, deployment, or verified baseline was changed in this journal cycle.
+
+### Next controlled step
+1. Compare the local test artifact with the **exact current source** and determine affected ledger function(s), preserving prior savings cancellation, loan, investment, budget, backup/restore, localization, and archive behavior.
+2. Run read-only/synthetic tests for asset sale 10m→13m (bank +13m, profit +3m), skip-balance income/expense, normal income/expense, internal transfer, loan principal/interest, savings cancellation and loan-funded purchase; test edit/rebuild paths.
+3. Test on isolated phone/test data; confirm persistence after refresh and re-login, then record `PHONE PASS` or `PHONE FAIL` with exact artifact/commit. No merge, production deploy, or baseline promotion without user approval.
+4. Preserve earlier **Savings ↔ Budget V22 read-only diagnostic** as an open issue; do not overwrite its pending work or assume it was completed.
