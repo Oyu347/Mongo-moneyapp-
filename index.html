@@ -8389,8 +8389,32 @@ function updInvCur(id,v){
   saveData();rInvests();rDonut('inv');uDash();
 }
 async function delInvest(id){
+  const inv=invests.find(i=>String(i.id)===String(id));
+  if(!inv)return;
+  // Only reverse an account debit when its original transfer can be identified uniquely.
+  // An unlinked/manual investment has no account movement to reverse.
+  const groupKey=String(investGroupKey(inv));
+  const matches=(accountTransfers||[]).filter(t=>{
+    if(t.purpose!=='asset'&&t.purpose!=='investment')return false;
+    if(t.purpose==='asset'&&!inv.assetPurchase)return false;
+    if(String(t.targetId||'')!==groupKey)return false;
+    if(String(t.date||'')!==String(inv.date||''))return false;
+    if(Math.abs((Number(t.amount)||0)-(Number(inv.invested)||0))>0.001)return false;
+    // Asset purchases with an explicit item link must refer to this investment.
+    if(t.purpose==='asset'&&t.assetId!=null&&String(t.assetId)!==String(inv.id))return false;
+    return true;
+  });
+  if(matches.length>1){
+    showToast(lang==='mn'?'Холбогдох шилжүүлэг давхардсан байна. Дансны түүхээс шалгана уу.':'Multiple matching transfers found. Check account history.');
+    return;
+  }
   if(!await showConfirm(L.confirmDel))return;
-  invests=invests.filter(i=>i.id!==id);saveData();rInvests();rDonut('inv');uDash();
+  if(matches.length===1){
+    const transferId=String(matches[0].id);
+    accountTransfers=accountTransfers.filter(t=>String(t.id)!==transferId);
+  }
+  invests=invests.filter(i=>String(i.id)!==String(id));
+  saveData();rAll();rGoals();rBList();rBProg();renderMoneyAccounts();
 }
 
 function showTab(tab,btn){
