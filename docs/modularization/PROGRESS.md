@@ -167,3 +167,34 @@ Branch for journal: `feature/completed-cards-archive`. **Diagnostic source:** se
 2. Run read-only/synthetic tests for asset sale 10m→13m (bank +13m, profit +3m), skip-balance income/expense, normal income/expense, internal transfer, loan principal/interest, savings cancellation and loan-funded purchase; test edit/rebuild paths.
 3. Test on isolated phone/test data; confirm persistence after refresh and re-login, then record `PHONE PASS` or `PHONE FAIL` with exact artifact/commit. No merge, production deploy, or baseline promotion without user approval.
 4. Preserve earlier **Savings ↔ Budget V22 read-only diagnostic** as an open issue; do not overwrite its pending work or assume it was completed.
+
+## Phone test handoff — 2026-10-14 — Asset prices and money-input formatting (V145–V147)
+
+**Scope and provenance:** The V145–V147 artifacts were tested by the user on the phone through the test Vercel site. These results are **artifact-specific PHONE PASS**, not proof that the GitHub branch, production deployment, all app input fields, or core financial accounting are verified. Exact test artifacts were provided in chat; no corresponding source commit SHA was established. Do **not** promote any of these versions to the repository's verified baseline solely from these tests.
+
+### V145 — ASSET DUAL PRICE EDIT — PHONE PASS
+- The asset edit dialog independently edits **Худалдаж авсан үнэ** and **Одоогийн үнэ**, with live grouping separators.
+- User tested purchase cost **₮11,000,000** and current value **₮13,000,000**; asset card and summary showed gain **+₮2,000,000**, return **+18.2%**.
+- The V144 card layout was visually retained: asset name/type/income-producing status above the action buttons. The sold-asset name requirement was previously raised; do not infer that all sold-asset cases have passed this test.
+- Dialog says editing prices does not alter account money or earlier transactions; **this financial invariant has not been independently regression-tested on device**.
+- Artifact: `Mongo-PHONE-TEST-V145-ASSET-DUAL-PRICE-EDIT.html`.
+
+### V146 — AMOUNT INPUT BINDING — PARTIAL PHONE PASS / PHONE FAIL
+- **PHONE PASS:** live grouping separators observed when typing cancellation fee, asset prices, and asset income; initial balance showed `1,500,000`.
+- **PHONE FAIL:** reopening saved cancellation fields showed ungrouped `3000` and `30000` even though separators appeared during typing. Distinguish live-input formatting from saved-value rendering.
+- The reported code-level fix allowed `setupAmtInput()` to accept element IDs or DOM elements and avoid duplicate bindings. This is **not** an app-wide input-field audit.
+- Artifact: `Mongo-PHONE-TEST-V146-AMOUNT-INPUT-BINDING-TEST.html`.
+
+### V147 — CANCELLATION SAVED AMOUNT FORMAT — PHONE PASS
+- User explicitly confirmed the follow-up correction works on the phone.
+- Reopened cancellation fee renders **`3,000`**; bank actual total interest renders **`30,000`**; the previously ungrouped saved-value display issue from V146 is resolved for the tested fields.
+- Fix scope: display formatting of saved values in cancellation dialogs/preview; **do not alter** interest formulas, cancellation rules, stored numerical values, or bank balances while extending formatting.
+- Artifact: `Mongo-PHONE-TEST-V147-CANCELLATION-SAVED-AMOUNT-FORMAT.html`.
+- **Latest phone-confirmed artifact for these UI behaviors: V147.** This does not supersede the workbook's verified repository lineage or resolve the separate ledger audit.
+
+### Next controlled task — NEEDS TEST
+1. Audit all **money amount** inputs for live grouping and formatting when reopened, particularly newer savings, cancellation, loans, assets, budget and transfers. Exclude percentages, dates, durations and identifiers.
+2. Check that parsing `13,000,000` persists the intended numeric value, cursor editing works, and no double event binding occurs.
+3. Test edits, refresh, backup/restore and affected account/ledger totals on isolated data before labeling broader coverage PHONE PASS.
+4. Keep V145 asset two-price editing, V144 asset card arrangement, V147 cancellation formatting, 7 languages, and prior savings/loan rules protected.
+5. Continue the earlier ledger balance-guard audit and Savings ↔ Budget V22 diagnostic as **separate open work**; no code/deploy changes were made in this documentation update.
