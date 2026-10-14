@@ -51,6 +51,12 @@ Do not regress these areas while fixing another issue:
 
 ## 4. Current focus
 
+### Ledger audit handoff — 2026-10-14
+- **NEEDS TEST:** Asset-sale profit / `skipAccountBalance` ledger guard risk and isolated test artifact are documented in `docs/modularization/PROGRESS.md` under “Ledger balance-guard audit handoff — 2026-10-14”. This is **not** a new verified baseline or phone-confirmed fix.
+- Continue from that journal entry alongside the still-open Savings ↔ Budget V22 diagnostic; keep existing verified lineage and protected financial behavior unchanged.
+
+
+
 ### Recently handled
 - Restored verified V44.12.30 Vercel baseline.
 - Restored complete V44.12.30 runtime modules.
