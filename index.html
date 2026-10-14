@@ -8389,32 +8389,8 @@ function updInvCur(id,v){
   saveData();rInvests();rDonut('inv');uDash();
 }
 async function delInvest(id){
-  const inv=invests.find(i=>String(i.id)===String(id));
-  if(!inv)return;
-  // Only reverse an account debit when its original transfer can be identified uniquely.
-  // An unlinked/manual investment has no account movement to reverse.
-  const groupKey=String(investGroupKey(inv));
-  const matches=(accountTransfers||[]).filter(t=>{
-    if(t.purpose!=='asset'&&t.purpose!=='investment')return false;
-    if(t.purpose==='asset'&&!inv.assetPurchase)return false;
-    if(String(t.targetId||'')!==groupKey)return false;
-    if(String(t.date||'')!==String(inv.date||''))return false;
-    if(Math.abs((Number(t.amount)||0)-(Number(inv.invested)||0))>0.001)return false;
-    // Asset purchases with an explicit item link must refer to this investment.
-    if(t.purpose==='asset'&&t.assetId!=null&&String(t.assetId)!==String(inv.id))return false;
-    return true;
-  });
-  if(matches.length>1){
-    showToast(lang==='mn'?'Холбогдох шилжүүлэг давхардсан байна. Дансны түүхээс шалгана уу.':'Multiple matching transfers found. Check account history.');
-    return;
-  }
   if(!await showConfirm(L.confirmDel))return;
-  if(matches.length===1){
-    const transferId=String(matches[0].id);
-    accountTransfers=accountTransfers.filter(t=>String(t.id)!==transferId);
-  }
-  invests=invests.filter(i=>String(i.id)!==String(id));
-  saveData();rAll();rGoals();rBList();rBProg();renderMoneyAccounts();
+  invests=invests.filter(i=>i.id!==id);saveData();rInvests();rDonut('inv');uDash();
 }
 
 function showTab(tab,btn){
@@ -9765,6 +9741,25 @@ function legacySaveAssetIncomeBase(key){
   document.getElementById('asset-income-modal')?.remove();saveData();rAll();renderMoneyAccounts();showToast(t.title+' ✓');
 }
 
+function assetPurchaseLinkedTransfers(inv, groupKey){
+  // Prefer the purchase ID, but legacy transfers may only carry a group key.
+  const related=(accountTransfers||[]).filter(t=>(t.purpose==='asset'||t.purpose==='investment') && String(t.targetId||'')===String(groupKey));
+  const direct=related.filter(t=>t.assetId!=null&&String(t.assetId)===String(inv.id));
+  if(direct.length)return direct;
+  const candidates=related.filter(t=>!t.assetId && String(t.date||'')===String(inv.date||'') && Number(t.amount)===Number(inv.invested));
+  return candidates.length===1?candidates:[];
+}
+function assetPurchaseSourceLabel(inv,groupKey){
+  const ts=assetPurchaseLinkedTransfers(inv,groupKey);
+  const names=[...new Set(ts.map(t=>moneyAccounts.find(a=>String(a.id)===String(t.fromId))?.name).filter(Boolean))];
+  const labels={mn:'Данс',en:'Account',zh:'账户',ja:'口座',ko:'계좌',ru:'Счёт',de:'Konto'};
+  const manual={mn:'Дансны шилжүүлэггүй бүртгэл',en:'No linked account transfer',zh:'无关联账户转账',ja:'口座振替なし',ko:'연결된 계좌 이체 없음',ru:'Без перевода со счёта',de:'Keine verknüpfte Überweisung'};
+  const name=names.length===1?names[0]:(names.length>1?names.join(', '):null);
+  return name?`${labels[lang]||labels.en}: ${name}`:(manual[lang]||manual.en);
+}
+function assetGroupHasLinkedTransfers(key){
+  return (accountTransfers||[]).some(t=>(t.purpose==='asset'||t.purpose==='investment')&&String(t.targetId||'')===String(key));
+}
 function editInvestGroup(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const t=AFT();
   let m=document.getElementById('asset-edit-modal');if(m)m.remove();
@@ -9773,9 +9768,9 @@ function editInvestGroup(key){
     <label>${t.assetName}</label><input class="fi" id="ae-name" value="${String(g.name).replace(/"/g,'&quot;')}">
     <label>${t.assetType}</label><select class="fi" id="ae-type">${assetTypeOptions(g.typeKey)}</select>
     <label>${AIT().producing}</label><select class="fi" id="ae-income"><option value="no">${AIT().no}</option><option value="yes">${AIT().yes}</option></select>
-    <label>${t.purchasePrice}</label><input class="fi" id="ae-invested" inputmode="decimal" data-amt="1" value="${Math.round(g.invested).toLocaleString('en-US')}">
+    <label>${t.purchasePrice}</label><input class="fi" id="ae-invested" inputmode="decimal" data-amt="1" value="${Math.round(g.invested).toLocaleString('en-US')}" ${assetGroupHasLinkedTransfers(key)?'readonly aria-readonly="true" style="background:#f1f5f6;color:#637381"':''}>
     <label>${(L&&L.curval)||'Одоогийн үнэ'}</label><input class="fi" id="ae-current" inputmode="decimal" data-amt="1" value="${Math.round(g.current).toLocaleString('en-US')}">
-    <div class="flow-only-note" style="margin-top:8px">${({mn:'Эдгээр үнийг засахад дансны мөнгө болон өмнөх гүйлгээний дүн өөрчлөгдөхгүй.',en:'Editing these values does not change account balances or historical transaction amounts.',zh:'修改这些数值不会更改账户余额或历史交易金额。',ja:'これらの値を変更しても口座残高や過去の取引額は変わりません。',ko:'이 값을 수정해도 계좌 잔액이나 과거 거래 금액은 변경되지 않습니다.',ru:'Изменение этих значений не меняет остатки на счетах и суммы прошлых операций.',de:'Diese Änderungen beeinflussen weder Kontostände noch frühere Buchungsbeträge.'})[lang]||'Editing values does not change transaction amounts.'}</div>
+    <div class="flow-only-note" style="margin-top:8px">${assetGroupHasLinkedTransfers(key)?({mn:'Худалдан авсан үнэ нь дансны шилжүүлэгтэй холбогдсон тул зөвхөн дансны гүйлгээний түүхээс засна. Одоогийн үнэлгээг энд өөрчилж болно.',en:'Purchase cost is linked to account transfers. Edit it from account history; current value can be edited here.',zh:'购买成本关联账户转账，请在账户记录中修改；当前估值可在此修改。',ja:'購入額は口座振替と連動しています。口座履歴で編集してください。現在価値はここで変更できます。',ko:'매입 금액은 계좌 이체와 연결되어 있습니다. 계좌 내역에서 수정하고 현재 가치는 여기서 수정하세요.',ru:'Стоимость покупки связана с переводом. Изменяйте её в истории счёта; текущую стоимость можно менять здесь.',de:'Der Kaufpreis ist mit Kontoumsätzen verknüpft. Ändern Sie ihn im Kontoverlauf; den aktuellen Wert können Sie hier ändern.'})[lang]:({mn:'Эдгээр үнийг засахад дансны мөнгө болон өмнөх гүйлгээний дүн өөрчлөгдөхгүй.',en:'Editing these values does not change account balances or historical transaction amounts.',zh:'修改这些数值不会更改账户余额或历史交易金额。',ja:'これらの値を変更しても口座残高や過去の取引額は変わりません。',ko:'이 값을 수정해도 계좌 잔액이나 과거 거래 금액은 변경되지 않습니다.',ru:'Изменение этих значений не меняет остатки на счетах и суммы прошлых операций.',de:'Diese Änderungen beeinflussen weder Kontostände noch frühere Buchungsbeträge.'})[lang]||'Editing values does not change transaction amounts.'}</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-edit-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveInvestGroupEdit('${String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${t.save}</button></div></div>`;
   document.body.appendChild(m);
   const ae=document.getElementById('ae-income');if(ae)ae.value=g.items.some(x=>!!x.incomeProducing)?'yes':'no';
@@ -9800,7 +9795,7 @@ function saveInvestGroupEdit(key){
       items.forEach((x,i)=>{x[field]=i===0?target:0;});
     }
   }
-  if(Number.isFinite(iv)&&iv>=0)distributeAssetGroupValue('invested',iv);
+  if(!assetGroupHasLinkedTransfers(key)&&Number.isFinite(iv)&&iv>=0)distributeAssetGroupValue('invested',iv);
   if(Number.isFinite(cv)&&cv>=0)distributeAssetGroupValue('current',cv);
   document.getElementById('asset-edit-modal')?.remove();saveData();rAll();rDonut('inv');uDash();
 }
@@ -9845,7 +9840,7 @@ de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktuelle
       <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button type="button" class="btn btn-sm asset-income-add-btn" onclick="openAssetIncomeModal('${safeKey}')"><span class="asset-income-add-icon">＋</span><span>${String(AIT().add).replace(/^\s*＋\s*/, '')}</span></button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
-      <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div></div><div class="portfolio-lot-actions"><input type="text" value="${Math.round(inv.current).toLocaleString('en-US')}" class="fi" inputmode="decimal" data-amt="1" onchange="updInvCur(${inv.id},this.value)"><button class="btn btn-sm btn-d" onclick="delInvest(${inv.id})">✕</button></div></div>`).join('')}</div>
+      <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div><div class="portfolio-lot-date">🏦 ${assetPurchaseSourceLabel(inv,g.key)}</div></div></div>`).join('')}</div>
     </div>`;
   }).join('');
 }
@@ -16492,7 +16487,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V147: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V149: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -19905,7 +19900,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V147</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V149</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
