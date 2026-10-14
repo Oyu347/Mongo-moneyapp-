@@ -198,3 +198,16 @@ Branch for journal: `feature/completed-cards-archive`. **Diagnostic source:** se
 3. Test edits, refresh, backup/restore and affected account/ledger totals on isolated data before labeling broader coverage PHONE PASS.
 4. Keep V145 asset two-price editing, V144 asset card arrangement, V147 cancellation formatting, 7 languages, and prior savings/loan rules protected.
 5. Continue the earlier ledger balance-guard audit and Savings ↔ Budget V22 diagnostic as **separate open work**; no code/deploy changes were made in this documentation update.
+
+
+## PHONE FAIL — 2026-10-14 — Asset investment history deletion does not refund source account
+
+- **Artifact:** `PHONE TEST V147`, user tested on mobile Vercel and provided screenshots of the account card, transfer form, and investment history. No exact GitHub source commit is established.
+- **Reproduction:** Golomt test checking account held **₮8,500,000**; user transferred **₮250,000** to asset **Туршилт** via **Гүйлгээ → Хөрөнгө оруулалтад хийх**. Asset increased from **₮5,000,000** to **₮5,250,000**. User deleted the latest **₮250,000** investment purchase/history entry.
+- **PHONE PASS (partial):** Asset purchase/history reverted to **₮5,000,000**.
+- **PHONE FAIL:** Source account remained **₮8,250,000** rather than being refunded **₮250,000** to **₮8,500,000**. The screenshot displays Golomt test **₮8,250,000** and the original debit-side account history, indicating the two sides of deletion are not synchronized.
+- **Expected financial invariant:** Reversing a source-account-funded asset purchase must reverse its linked source-account debit exactly once, restore the asset invested amount, and remove or reverse the corresponding transaction/history consistently. No income/expense should be fabricated by the reversal.
+- **Root cause:** **NOT PROVEN.** Hypothesis: investment purchase-history delete updates asset purchase data but does not delete/reverse the corresponding transfer/ledger debit; alternatively linked transaction identifiers may not match. Verify both before changing code.
+- **Safety:** Do not delete or manually recreate financial entries in live data to compensate; preserve V145 dual price edit, V147 number formatting, asset income, asset sale gain, savings/loans/budget, seven languages and prior verified source lineage.
+- **NEXT / NEEDS TEST:** Trace `Хөрөнгө оруулалтад хийх` creation through asset purchase-history deletion and source-account ledger rebuild; inspect stable linkage IDs, undo semantics, cloud persistence, and repeated-delete idempotency. Test ₮8.5m → ₮8.25m → ₮8.5m, asset ₮5m → ₮5.25m → ₮5m, no false income/expense, account history and all-transactions consistency, refresh and relogin.
+- **Changes this cycle:** Documentation only; no application code, deployment, financial state or verified baseline changed.
