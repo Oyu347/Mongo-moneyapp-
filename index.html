@@ -9758,7 +9758,10 @@ function assetPurchaseSourceLabel(inv,groupKey){
   return name?`${labels[lang]||labels.en}: ${name}`:(manual[lang]||manual.en);
 }
 function assetGroupHasLinkedTransfers(key){
-  return (accountTransfers||[]).some(t=>(t.purpose==='asset'||t.purpose==='investment')&&String(t.targetId||'')===String(key));
+  const items=invests.filter(x=>investGroupKey(x)===key);
+  // A transfer for another purchase with the same group name must not lock
+  // a manually recorded purchase. Check actual purchase links per lot.
+  return items.length>0 && items.every(x=>assetPurchaseLinkedTransfers(x,key).length>0);
 }
 function editInvestGroup(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const t=AFT();
@@ -9795,7 +9798,21 @@ function saveInvestGroupEdit(key){
       items.forEach((x,i)=>{x[field]=i===0?target:0;});
     }
   }
-  if(!assetGroupHasLinkedTransfers(key)&&Number.isFinite(iv)&&iv>=0)distributeAssetGroupValue('invested',iv);
+  if(!assetGroupHasLinkedTransfers(key)&&Number.isFinite(iv)&&iv>=0){
+    const unlocked=items.filter(x=>assetPurchaseLinkedTransfers(x,key).length===0);
+    const lockedTotal=items.filter(x=>assetPurchaseLinkedTransfers(x,key).length>0).reduce((sum,x)=>sum+(Number(x.invested)||0),0);
+    // Preserve all linked purchase costs, even when a group has both linked
+    // and manually entered purchases. Only redistribute the editable portion.
+    if(unlocked.length && iv>=lockedTotal){
+      const previous=unlocked.reduce((sum,x)=>sum+(Number(x.invested)||0),0);
+      let assigned=0;
+      unlocked.forEach((x,i)=>{
+        const value=i===unlocked.length-1?iv-lockedTotal-assigned:
+          (previous>0?Math.round((iv-lockedTotal)*(Number(x.invested)||0)/previous):0);
+        x.invested=value;assigned+=value;
+      });
+    }
+  }
   if(Number.isFinite(cv)&&cv>=0)distributeAssetGroupValue('current',cv);
   document.getElementById('asset-edit-modal')?.remove();saveData();rAll();rDonut('inv');uDash();
 }
