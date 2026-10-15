@@ -9763,17 +9763,38 @@ function assetGroupHasLinkedTransfers(key){
   // a manually recorded purchase. Check actual purchase links per lot.
   return items.length>0 && items.every(x=>assetPurchaseLinkedTransfers(x,key).length>0);
 }
+// V151: show linked and manual purchase costs separately without changing ledger data.
+function assetCostBreakdown(key){
+  const lots=invests.filter(x=>investGroupKey(x)===key);
+  return lots.reduce((acc,lot)=>{
+    const amount=Number(lot.invested)||0;
+    if(assetPurchaseLinkedTransfers(lot,key).length)acc.linked+=amount;
+    else acc.manual+=amount;
+    return acc;
+  },{linked:0,manual:0});
+}
+const ASSET_V151_TEXT={
+  mn:{linked:'Дансны шилжүүлэгтэй худалдан авалт (засахгүй)',manual:'Гараар бүртгэсэн худалдан авалт',total:'Нийт худалдан авсан үнэ',cost:'Худалдан авсан үнэ',note:'Дансны шилжүүлэгтэй дүнг зөвхөн дансны гүйлгээний түүхээс засна. Энд нийт дүнг өөрчилбөл зөвхөн гараар бүртгэсэн хэсэг өөрчлөгдөнө. Дансны үлдэгдэл өөрчлөгдөхгүй.'},
+  en:{linked:'Linked account purchases (locked)',manual:'Manually recorded purchases',total:'Total purchase cost',cost:'Purchase cost',note:'Edit linked costs only in account transaction history. Changing the total here affects only manual purchases, not account balances.'},
+  zh:{linked:'账户转账购买（锁定）',manual:'手动记录的购买',total:'购买总成本',cost:'购买成本',note:'关联购买金额只能在账户交易记录中修改。此处修改总额仅影响手动记录，不影响账户余额。'},
+  ja:{linked:'口座振替の購入（固定）',manual:'手動登録の購入',total:'購入費用合計',cost:'購入費用',note:'口座振替の金額は口座履歴でのみ変更できます。ここでの合計変更は手動登録分のみで、口座残高には影響しません。'},
+  ko:{linked:'계좌 이체 구매(잠금)',manual:'수동 등록 구매',total:'총 매입 비용',cost:'매입 비용',note:'연결된 매입 비용은 계좌 거래 내역에서만 수정합니다. 여기서 총액을 변경하면 수동 등록분만 변경되며 계좌 잔액은 유지됩니다.'},
+  ru:{linked:'Покупки через счёт (заблокировано)',manual:'Покупки, внесённые вручную',total:'Общая стоимость покупки',cost:'Стоимость покупки',note:'Связанные суммы изменяются только в истории счёта. Здесь изменение общей суммы затрагивает только ручные записи, не баланс счёта.'},
+  de:{linked:'Kontogebundene Käufe (gesperrt)',manual:'Manuell erfasste Käufe',total:'Gesamter Kaufpreis',cost:'Kaufpreis',note:'Verknüpfte Beträge nur im Kontoverlauf ändern. Änderungen hier betreffen nur manuelle Käufe, nicht den Kontostand.'}
+};
 function editInvestGroup(key){
   const g=getInvestGroups().find(x=>x.key===key);if(!g)return;const t=AFT();
+  const bd=assetCostBreakdown(key),v151=ASSET_V151_TEXT[lang]||ASSET_V151_TEXT.en;
   let m=document.getElementById('asset-edit-modal');if(m)m.remove();
   m=document.createElement('div');m.id='asset-edit-modal';m.className='loan-modal-backdrop';
   m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">${t.editAsset}</div>
     <label>${t.assetName}</label><input class="fi" id="ae-name" value="${String(g.name).replace(/"/g,'&quot;')}">
     <label>${t.assetType}</label><select class="fi" id="ae-type">${assetTypeOptions(g.typeKey)}</select>
     <label>${AIT().producing}</label><select class="fi" id="ae-income"><option value="no">${AIT().no}</option><option value="yes">${AIT().yes}</option></select>
-    <label>${t.purchasePrice}</label><input class="fi" id="ae-invested" inputmode="decimal" data-amt="1" value="${Math.round(g.invested).toLocaleString('en-US')}" ${assetGroupHasLinkedTransfers(key)?'readonly aria-readonly="true" style="background:#f1f5f6;color:#637381"':''}>
+    ${bd.linked>0?`<div class="flow-only-note" style="margin:8px 0"><div>${v151.linked}: <strong>${fmt(bd.linked)}</strong></div><div>${v151.manual}: <strong>${fmt(bd.manual)}</strong></div></div>`:''}
+    <label>${bd.linked>0?v151.total:t.purchasePrice}</label><input class="fi" id="ae-invested" inputmode="decimal" data-amt="1" value="${Math.round(g.invested).toLocaleString('en-US')}" ${assetGroupHasLinkedTransfers(key)?'readonly aria-readonly="true" style="background:#f1f5f6;color:#637381"':''}>
     <label>${(L&&L.curval)||'Одоогийн үнэ'}</label><input class="fi" id="ae-current" inputmode="decimal" data-amt="1" value="${Math.round(g.current).toLocaleString('en-US')}">
-    <div class="flow-only-note" style="margin-top:8px">${assetGroupHasLinkedTransfers(key)?({mn:'Худалдан авсан үнэ нь дансны шилжүүлэгтэй холбогдсон тул зөвхөн дансны гүйлгээний түүхээс засна. Одоогийн үнэлгээг энд өөрчилж болно.',en:'Purchase cost is linked to account transfers. Edit it from account history; current value can be edited here.',zh:'购买成本关联账户转账，请在账户记录中修改；当前估值可在此修改。',ja:'購入額は口座振替と連動しています。口座履歴で編集してください。現在価値はここで変更できます。',ko:'매입 금액은 계좌 이체와 연결되어 있습니다. 계좌 내역에서 수정하고 현재 가치는 여기서 수정하세요.',ru:'Стоимость покупки связана с переводом. Изменяйте её в истории счёта; текущую стоимость можно менять здесь.',de:'Der Kaufpreis ist mit Kontoumsätzen verknüpft. Ändern Sie ihn im Kontoverlauf; den aktuellen Wert können Sie hier ändern.'})[lang]:({mn:'Эдгээр үнийг засахад дансны мөнгө болон өмнөх гүйлгээний дүн өөрчлөгдөхгүй.',en:'Editing these values does not change account balances or historical transaction amounts.',zh:'修改这些数值不会更改账户余额或历史交易金额。',ja:'これらの値を変更しても口座残高や過去の取引額は変わりません。',ko:'이 값을 수정해도 계좌 잔액이나 과거 거래 금액은 변경되지 않습니다.',ru:'Изменение этих значений не меняет остатки на счетах и суммы прошлых операций.',de:'Diese Änderungen beeinflussen weder Kontostände noch frühere Buchungsbeträge.'})[lang]||'Editing values does not change transaction amounts.'}</div>
+    <div class="flow-only-note" style="margin-top:8px">${bd.linked>0?v151.note:assetGroupHasLinkedTransfers(key)?({mn:'Худалдан авсан үнэ нь дансны шилжүүлэгтэй холбогдсон тул зөвхөн дансны гүйлгээний түүхээс засна. Одоогийн үнэлгээг энд өөрчилж болно.',en:'Purchase cost is linked to account transfers. Edit it from account history; current value can be edited here.',zh:'购买成本关联账户转账，请在账户记录中修改；当前估值可在此修改。',ja:'購入額は口座振替と連動しています。口座履歴で編集してください。現在価値はここで変更できます。',ko:'매입 금액은 계좌 이체와 연결되어 있습니다. 계좌 내역에서 수정하고 현재 가치는 여기서 수정하세요.',ru:'Стоимость покупки связана с переводом. Изменяйте её в истории счёта; текущую стоимость можно менять здесь.',de:'Der Kaufpreis ist mit Kontoumsätzen verknüpft. Ändern Sie ihn im Kontoverlauf; den aktuellen Wert können Sie hier ändern.'})[lang]:({mn:'Эдгээр үнийг засахад дансны мөнгө болон өмнөх гүйлгээний дүн өөрчлөгдөхгүй.',en:'Editing these values does not change account balances or historical transaction amounts.',zh:'修改这些数值不会更改账户余额或历史交易金额。',ja:'これらの値を変更しても口座残高や過去の取引額は変わりません。',ko:'이 값을 수정해도 계좌 잔액이나 과거 거래 금액은 변경되지 않습니다.',ru:'Изменение этих значений не меняет остатки на счетах и суммы прошлых операций.',de:'Diese Änderungen beeinflussen weder Kontostände noch frühere Buchungsbeträge.'})[lang]||'Editing values does not change transaction amounts.'}</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn btn-sm" onclick="document.getElementById('asset-edit-modal').remove()">${t.cancel}</button><button class="btn btn-p" onclick="saveInvestGroupEdit('${String(key).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${t.save}</button></div></div>`;
   document.body.appendChild(m);
   const ae=document.getElementById('ae-income');if(ae)ae.value=g.items.some(x=>!!x.incomeProducing)?'yes':'no';
@@ -9857,7 +9878,7 @@ de:{buys:'Käufe',history:'Kaufhistorie',invested:'Investiert',current:'Aktuelle
       <div style="display:flex;gap:6px;align-items:center">${assetGroupIncomeProducing(g)?`<button type="button" class="btn btn-sm asset-income-add-btn" onclick="openAssetIncomeModal('${safeKey}')"><span class="asset-income-add-icon">＋</span><span>${String(AIT().add).replace(/^\s*＋\s*/, '')}</span></button>`:''}<input type="color" class="mongo-color-input mongo-inline-color" value="${col}" onchange="updateInvestGroupColor('${safeKey}',this.value)"><button class="btn btn-sm" onclick="editInvestGroup('${safeKey}')">✎</button></div></div>
       <div class="portfolio-summary-grid"><div class="portfolio-stat"><div class="k">${investedLabel}</div><div class="v">${fmt(g.invested)}</div></div><div class="portfolio-stat"><div class="k">${T.current}</div><div class="v">${fmt(g.current)}</div></div><div class="portfolio-stat"><div class="k">${T.profit}</div><div class="v" style="color:${p>=0?'#08724F':'#B91C1C'}">${p>=0?'+':''}${fmt(p)} · ${fmtP(pct)}</div></div></div>
       <button class="portfolio-history-toggle" onclick="toggleInvestGroup('${safeKey}')">${T.history} (${g.items.length}) <span class="portfolio-chevron${isOpen?' open':''}">⌄</span></button>
-      <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${fmt(inv.invested)} → ${fmt(inv.current)}</div><div class="portfolio-lot-date">🏦 ${assetPurchaseSourceLabel(inv,g.key)}</div></div></div>`).join('')}</div>
+      <div class="portfolio-history${isOpen?' show':''}">${g.items.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(inv=>`<div class="portfolio-lot"><div class="portfolio-lot-main"><div class="portfolio-lot-date">${inv.date}${inv.autoAdded?` · ${L.automark}`:''}</div><div class="portfolio-lot-values">${T.invested}: ${fmt(inv.invested)}</div><div class="portfolio-lot-date">🏦 ${assetPurchaseSourceLabel(inv,g.key)}</div></div></div>`).join('')}</div>
     </div>`;
   }).join('');
 }
@@ -16504,7 +16525,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V149: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V151: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -19917,7 +19938,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V149</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V151</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
