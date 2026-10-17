@@ -17057,7 +17057,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V164 EXPERIMENTAL LOAD GUARD: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V165 COMPACT DIAGNOSTICS UI: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20470,7 +20470,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V164 EXPERIMENTAL LOAD GUARD</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V165 COMPACT DIAGNOSTICS UI</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
@@ -20505,6 +20505,40 @@ function show(){
 }
 function init(){if(document.getElementById('mongo-v159-intent-button'))return;const b=document.createElement('button');b.id='mongo-v159-intent-button';b.textContent='V159 ҮЙЛДЭЛ ЯЛГАХ';b.style.cssText='position:fixed;right:14px;bottom:230px;z-index:2147483000;background:#7650a4;color:white;border:2px solid white;border-radius:40px;padding:13px 16px;font:bold 14px sans-serif;box-shadow:0 3px 9px #0005';b.onclick=show;document.body.appendChild(b);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<!-- V165: Diagnostic controls UI only. Keep test functions intact; no persistence changes. -->
+<style id="mongo-v165-diagnostics-css">
+#mongo-v165-diagnostics-toggle{position:fixed;right:10px;bottom:82px;z-index:2147483646;background:#146b70;color:white;border:1px solid #fff;border-radius:999px;padding:9px 12px;font:700 12px system-ui;box-shadow:0 2px 9px #0004;max-width:155px}
+#mongo-v165-diagnostics-panel{position:fixed;right:10px;bottom:130px;z-index:2147483646;width:min(270px,calc(100vw - 24px));max-height:min(48vh,360px);overflow:auto;background:#fff;color:#374151;border:1px solid #cbd5e1;border-radius:14px;padding:10px;box-shadow:0 5px 20px #0004}
+#mongo-v165-diagnostics-panel[hidden]{display:none!important}
+#mongo-v165-diagnostics-panel button{display:block;width:100%;text-align:left;margin:5px 0;padding:8px 10px;font:600 12px system-ui;background:#e9f6f5;color:#175d61;border:1px solid #d3e9e7;border-radius:9px}
+#mongo-v165-diagnostics-panel .mongo-v165-close{width:auto;margin-left:auto;background:#f3f4f6;color:#374151}
+</style>
+<script id="mongo-v165-diagnostics-ui">
+(function(){'use strict';
+ const ids=['mongo-v153-readonly-test','mongo-v154-readonly-test','mongo-v155-observe','mongo-v157-source-audit','mongo-v158-preflight-audit','mongo-v160-provenance','mongo-v161-load-selection','mongo-v162-selection-risk','mongo-v163-policy-test','mongo-v159-intent-button'];
+ function init(){
+  if(document.getElementById('mongo-v165-diagnostics-toggle'))return;
+  const toggle=document.createElement('button');toggle.id='mongo-v165-diagnostics-toggle';toggle.type='button';toggle.textContent='🔎 Шалгалт ▴';
+  const panel=document.createElement('div');panel.id='mongo-v165-diagnostics-panel';panel.hidden=true;
+  const close=document.createElement('button');close.type='button';close.className='mongo-v165-close';close.textContent='✕ Хаах';close.onclick=()=>{panel.hidden=true;toggle.textContent='🔎 Шалгалт ▴'};panel.appendChild(close);
+  const title=document.createElement('div');title.textContent='Оношилгооны товчнууд';title.style.cssText='font:700 13px system-ui;margin:4px 0 8px';panel.appendChild(title);
+  const list=document.createElement('div');panel.appendChild(list);
+  toggle.onclick=()=>{panel.hidden=!panel.hidden;toggle.textContent=panel.hidden?'🔎 Шалгалт ▴':'🔎 Шалгалт ▾';};
+  document.body.appendChild(toggle);document.body.appendChild(panel);
+  function refresh(){
+   for(const id of ids){const old=document.getElementById(id);if(!old)continue;
+    old.style.setProperty('display','none','important');
+    if(list.querySelector('[data-for="'+id+'"]'))continue;
+    const b=document.createElement('button');b.type='button';b.dataset.for=id;b.textContent=old.textContent.trim();
+    b.onclick=()=>{panel.hidden=true;toggle.textContent='🔎 Шалгалт ▴';old.click();};list.appendChild(b);
+   }
+  }
+  refresh();let count=0;const timer=setInterval(()=>{refresh();if(++count>=20)clearInterval(timer)},500);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 </body>
