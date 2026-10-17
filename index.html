@@ -13088,6 +13088,59 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v155AttachButton);
   else v155AttachButton();
 
+  // V157 READ-ONLY SOURCE AUDIT: fetches five documents from Firestore server
+  // and compares them with the currently collected in-memory state.
+  // It does not write to Firebase, localStorage, or any financial state.
+  window.MONGO_V157_SOURCE_AUDIT=async function(){
+    const btn=document.getElementById('mongo-v157-source-audit');
+    if(btn)btn.disabled=true;
+    try{
+      const uid=currentUid();
+      if(!uid){alert('V157: Firebase хэрэглэгчээр нэвтрээгүй байна.');return;}
+      const ready=accountReadyForCloud();
+      const keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+      const fmt=d=>keys.map(k=>k+' '+safeArray(safeObj(d)[k]).length).join(', ');
+      const local=collectFinancialState();
+      const refs=[
+        [cloudDocRef(uid),false,'appState/main'],
+        [legacyCloudDocRef(uid),false,'financial/main'],
+        [settingsCloudDocRef(uid),true,'settings/main'],
+        [profileCloudDocRef(uid),true,'profile/main'],
+        [rootCloudDocRef(uid),true,'users/{uid}']
+      ].filter(x=>x[0]);
+      const lines=['V157 — ЭХ СУРВАЛЖИЙН ОНОШИЛГОО (ЗӨВХӨН УНШИНА)',
+        'Хэрэглэгчийн ID төгсгөл: …'+uid.slice(-6),
+        'Нэвтрэлтийн бэлэн байдал: '+(ready?'Тийм':'ҮГҮЙ'),
+        'Аппын санах ой: '+fmt(local),''];
+      for(const [ref,wrapped,name] of refs){
+        try{
+          const snap=await ref.get({source:'server'});
+          if(!snap.exists){lines.push(name+': баримт байхгүй');continue;}
+          const container=snap.data()||{};
+          const raw=wrapped?container.financialState:container;
+          if(!raw||!raw.data){lines.push(name+': өгөгдлийн хэсэг байхгүй');continue;}
+          const data=decodeCloudValue(raw.data);
+          const flags=[];
+          if(raw.clearedAt)flags.push('clearedAt байна');
+          if(container.ownerUid&&container.ownerUid!==uid)flags.push('ЭЗЭМШИГЧИЙН ID ЗӨРСӨН');
+          lines.push(name+': '+fmt(data)+(flags.length?' ⚠️ '+flags.join(', '):''));
+        }catch(e){lines.push(name+': серверээс уншихад алдаа ('+String(e&&e.code||'unknown')+')');}
+      }
+      lines.push('','ТАЙЛБАР: Энэ нь серверийн тухайн мөчийн өгөгдөл болон аппын санах ойг харьцуулна. Хадгалах гэж буй дараагийн төлөвийг батлахгүй.','Firebase болон утасны өгөгдөлд бичилт хийхгүй.');
+      alert(lines.join('\n'));
+    }catch(e){alert('V157 оношилгооны алдаа: '+String(e&&e.message||e));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function v157AttachButton(){
+    if(document.getElementById('mongo-v157-source-audit'))return;
+    const b=document.createElement('button');b.id='mongo-v157-source-audit';b.type='button';
+    b.textContent='V157 ЭХ СУРВАЛЖ ШАЛГАХ';
+    b.style.cssText='position:fixed;bottom:237px;right:12px;z-index:2147483646;background:#6b4e8c;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V157_SOURCE_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v157AttachButton);
+  else v157AttachButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -16720,7 +16773,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V156 DIFF BREAKDOWN: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V157 SOURCE AUDIT: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20133,7 +20186,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V156 DIFF BREAKDOWN</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V157 SOURCE AUDIT</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
