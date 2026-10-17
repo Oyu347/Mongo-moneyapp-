@@ -16834,7 +16834,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V158 PREFLIGHT AUDIT: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V159 INTENT SIMULATION: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20247,8 +20247,43 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V158 PREFLIGHT AUDIT</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V159 INTENT SIMULATION</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
+<script id="mongo-v159-authorized-intent-simulator">
+/* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
+(function(){'use strict';
+function classify(before,after,intent,baseRev,serverRev){
+ const a=new Map(before.map(x=>[x.id,x]));const b=new Map(after.map(x=>[x.id,x]));
+ const removed=[...a.keys()].filter(id=>!b.has(id));
+ const added=[...b.keys()].filter(id=>!a.has(id));
+ const changed=[...a.keys()].filter(id=>b.has(id)&&JSON.stringify(a.get(id))!==JSON.stringify(b.get(id)));
+ const ids=after.map(x=>x.id);
+ if(ids.some(id=>!id)||new Set(ids).size!==ids.length)return {ok:false,reason:'ID дутуу эсвэл давхардсан'};
+ if(baseRev!==serverRev)return {ok:false,reason:'Серверийн хувилбар өөрчлөгдсөн'};
+ if(!intent||!['add','edit','delete'].includes(intent.kind))return {ok:false,reason:'Баталгаатай үйлдлийн тэмдэглэгээ байхгүй'};
+ if(intent.kind==='add'&&added.length===1&&added[0]===intent.id&&!removed.length&&!changed.length)return {ok:true,reason:'Нэг шинэ бүртгэл нэмсэн'};
+ if(intent.kind==='edit'&&changed.length===1&&changed[0]===intent.id&&!removed.length&&!added.length)return {ok:true,reason:'Нэг бүртгэл зассан'};
+ if(intent.kind==='delete'&&removed.length===1&&removed[0]===intent.id&&!added.length&&!changed.length)return {ok:true,reason:'Нэг бүртгэл устгасан'};
+ return {ok:false,reason:'Үйлдэл ба өгөгдлийн өөрчлөлт таарахгүй'};
+}
+function show(){
+ const old=[{id:'a',amount:100},{id:'b',amount:200}];
+ const cases=[
+ ['Нэг бүртгэл нэмэх',old,[...old,{id:'c',amount:300}],{kind:'add',id:'c'},1,1,true],
+ ['Зөвшөөрсөн нэг устгал',old,[old[0]],{kind:'delete',id:'b'},1,1,true],
+ ['Зөвшөөрсөн нэг засвар',old,[{id:'a',amount:150},old[1]],{kind:'edit',id:'a'},1,1,true],
+ ['Тэмдэглэгээгүй алдагдал',old,[old[0]],null,1,1,false],
+ ['Устгах зөвшөөрөлтэй ч олон бүртгэл алга',old,[],{kind:'delete',id:'b'},1,1,false],
+ ['Өөр төхөөрөмжийн шинэ хувилбар',old,[...old,{id:'c',amount:300}],{kind:'add',id:'c'},1,2,false],
+ ['Давхардсан ID',old,[...old,{id:'a',amount:5}],{kind:'add',id:'a'},1,1,false],
+ ];
+ const lines=cases.map(([name,a,b,intent,br,sr,expected])=>{const r=classify(a,b,intent,br,sr);return (r.ok===expected?'✅':'❌')+' '+name+' — '+(r.ok?'ЗӨВШӨӨРӨХ':'ХОРИГЛОХ')+'\n   '+r.reason;});
+ alert('V159 — ҮЙЛДЛИЙН ЗӨВШӨӨРЛИЙН ХИЙСВЭР СОРИЛ\nЗӨВХӨН САНАХ ОЙД; FIREBASE-Д УНШИХ/БИЧИХГҮЙ\n\n'+lines.join('\n\n')+'\n\nАНХААР: Энэ нь бодит хадгалалтад холбогдоогүй загвар. Үйлдлийн тэмдэглэгээг сервер дээр баталгаажуулаагүй тул жинхэнэ хамгаалалт гэж үзэхгүй.');
+}
+function init(){if(document.getElementById('mongo-v159-intent-button'))return;const b=document.createElement('button');b.id='mongo-v159-intent-button';b.textContent='V159 ҮЙЛДЭЛ ЯЛГАХ';b.style.cssText='position:fixed;right:14px;bottom:230px;z-index:2147483000;background:#7650a4;color:white;border:2px solid white;border-radius:40px;padding:13px 16px;font:bold 14px sans-serif;box-shadow:0 3px 9px #0005';b.onclick=show;document.body.appendChild(b);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body>
 </html>
 <!-- Möngö V42.5 RC2 verification fixes applied -->
