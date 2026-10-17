@@ -12880,7 +12880,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   function enqueueSave(reason,data){
-    if(clearingFinancialData)return null;
+    if(clearingFinancialData||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)return null;
     const q=getQueue();
     const payload={id:opId(),type:'saveFinancialData',reason:reason||'auto',createdAt:nowIso(),tryCount:0,data:data||collectFinancialState()};
     const fp=fingerprint(payload.data);
@@ -13685,6 +13685,29 @@ auth.onAuthStateChanged(async user=>{
         const chosen=(MongoCloud.activeClearTombstone?MongoCloud.activeClearTombstone(raw):!!raw.clearedAt)
           ? {data:raw.data,source:'cloud-cleared'}
           : chooseCloudOrLocal(raw.data,raw.updatedAtClient);
+        // V164 EXPERIMENTAL: fail closed when a newer local snapshot is much
+        // smaller than an existing cloud state. Do not merge, restore, enqueue
+        // or write either copy. This protects the known 206-vs-11 scenario.
+        if(chosen.source==='local-newer'){
+          const tracked=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+          const localCounts=tracked.map(k=>Array.isArray(chosen.data&&chosen.data[k])?chosen.data[k].length:0);
+          const cloudCounts=tracked.map(k=>Array.isArray(raw.data&&raw.data[k])?raw.data[k].length:0);
+          const localTotal=localCounts.reduce((a,b)=>a+b,0);
+          const cloudTotal=cloudCounts.reduce((a,b)=>a+b,0);
+          const missingLarge=tracked.some((k,i)=>cloudCounts[i]>=3&&localCounts[i]===0);
+          if((cloudTotal>=3&&localTotal<cloudTotal&&localTotal*2<=cloudTotal)||missingLarge){
+            window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+            window.MONGO_V164_CONFLICT={localTotal,cloudTotal,localCounts,cloudCounts,source:sourceRef};
+            clearTimeout(cloudSaveTimer);
+            clearTimeout(retryTimer);
+            window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
+            updateSyncStatus('error','V164: Дутуу local / Cloud зөрчил — хадгалалт хаагдсан');
+            let box=document.getElementById('mongo-v164-conflict-warning');
+            if(!box){box=document.createElement('div');box.id='mongo-v164-conflict-warning';box.className='loan-modal-backdrop';document.body.appendChild(box);}
+            box.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">V164 — Өгөгдлийн зөрчил илэрлээ</div><div style="font-size:14px;line-height:1.6">Төхөөрөмжийн шинэ огноотой мэдээлэл Cloud-ийн бүрэн мэдээллээс эрс дутуу байна. <b>Автомат сонголт, хадгалалтыг түр хориглов.</b><br><br>Өгөгдөл сэргээх, нэгтгэх, устгах үйлдэл хийгээгүй. Энэ туршилтын хувилбарт санхүүгийн өөрчлөлт хийхгүй, дэлгэцийн зургийг илгээнэ үү.<br><br>Cloud: '+cloudTotal+' · Төхөөрөмж: '+localTotal+'</div></div>';
+            return false;
+          }
+        }
         const ok=applyFinancialState(chosen.data,chosen.source);
 
         // Migrate legacy storage to appState/main so all future devices read the
@@ -17034,7 +17057,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V163 READONLY POLICY SIMULATION: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V164 EXPERIMENTAL LOAD GUARD: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20447,7 +20470,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V163 READONLY POLICY SIMULATION</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V164 EXPERIMENTAL LOAD GUARD</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
