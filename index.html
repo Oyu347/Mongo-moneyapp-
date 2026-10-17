@@ -12932,6 +12932,52 @@ auth.onAuthStateChanged(async user=>{
     }
     return value;
   }
+  // V152 DATA SAFETY GUARD: read-before-write protection against accidental
+  // replacement of an established financial history by a partial/empty shell.
+  // This is a safety stop, not a backup or a replacement for Firestore rules.
+  function v152Counts(data){
+    const d=safeObj(data), keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+    const out={};keys.forEach(k=>{out[k]=safeArray(d[k]).filter(x=>k!=='moneyAccounts'||!(x&&x.legacy)).length;});
+    return out;
+  }
+  function v152IsDestructiveShrink(previous,next){
+    const before=v152Counts(previous),after=v152Counts(next);
+    const keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+    const beforeTotal=keys.reduce((n,k)=>n+before[k],0),afterTotal=keys.reduce((n,k)=>n+after[k],0);
+    // A normal one-record deletion remains possible. A sudden loss of most
+    // records or of a populated major collection is quarantined for review.
+    return (beforeTotal>=3 && afterTotal<beforeTotal && afterTotal<=Math.floor(beforeTotal/2)) ||
+      keys.some(k=>before[k]>=3 && after[k]===0);
+  }
+  async function v152PreflightCloudWrite(uid,proposed){
+    if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
+    const refs=[
+      [cloudDocRef(uid),false,'appState'],
+      [legacyCloudDocRef(uid),false,'financial'],
+      [settingsCloudDocRef(uid),true,'settings'],
+      [profileCloudDocRef(uid),true,'profile'],
+      [rootCloudDocRef(uid),true,'user-root']
+    ].filter(x=>x[0]);
+    // Fail closed: without successful reads we cannot rule out an older,
+    // fuller cloud copy. Never let an unverified first write destroy one.
+    const snapshots=await Promise.all(refs.map(async([ref,wrapped,name])=>{
+      const snap=await ref.get({source:'server'});
+      if(!snap.exists)return null;
+      const container=snap.data()||{};
+      const raw=wrapped?container.financialState:container;
+      if(!raw||!raw.data)return null;
+      return {name,data:decodeCloudValue(raw.data),clearedAt:raw.clearedAt};
+    }));
+    for(const previous of snapshots){
+      if(previous&&!previous.clearedAt&&v152IsDestructiveShrink(previous.data,proposed)){
+        window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+        window.MONGO_V152_GUARD_REASON='Cloud history shrink detected at '+previous.name;
+        updateSyncStatus('error','Өмнөх санхүүгийн бүртгэлүүд гэнэт цөөрсөн тул хадгалалтыг зогсоов');
+        throw new Error('V152_DESTRUCTIVE_SHRINK_BLOCKED');
+      }
+    }
+  }
+
   async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
     const isExplicitRestore=!!(options&&options.explicitRestore);
@@ -12948,6 +12994,12 @@ auth.onAuthStateChanged(async user=>{
     // and the other compatible mirrors created automatically.
     if(window.MongoCloud.shouldSkipFingerprint(fp,lastCloudFingerprint,reason)) return {skipped:true};
     if(currentUid()!==uid || (!isClearTombstone&&(window._authUid!==uid||!accountReadyForCloud()))) throw new Error('AUTH_SWITCHED');
+    // Never skip the safety check for ordinary queued, login, or migration writes.
+    // Explicit user-initiated clear/restore have separate confirmation paths.
+    if(!isClearTombstone&&!isExplicitRestore){
+      await v152PreflightCloudWrite(uid,clean);
+      if(currentUid()!==uid || !accountReadyForCloud()) throw new Error('AUTH_SWITCHED');
+    }
 
     const updatedAtClient=nowIso();
     const cloudSafeData=encodeCloudValue(clean,false);
@@ -13030,7 +13082,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   async function processQueue(){
-    if(clearingFinancialData)return false;
+    if(clearingFinancialData||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)return false;
     if(processingQueue || !navigator.onLine || !hasFirebaseUser() || !accountReadyForCloud()) { updateSyncStatus(navigator.onLine?'waiting':'offline'); return false; }
     const sessionUid=currentUid();
     let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
@@ -16525,7 +16577,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V151: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V152 DATA SAFETY GUARD: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -19938,7 +19990,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V151</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V152 DATA SAFETY GUARD</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
