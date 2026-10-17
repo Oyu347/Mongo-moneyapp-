@@ -13262,6 +13262,70 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v160AttachButton);
   else v160AttachButton();
 
+  // V162 — Read-only reproduction of the current load-selection decision.
+  // This button NEVER calls applyFinancialState, save, queue or migration.
+  window.MONGO_V162_SELECTION_RISK_AUDIT=async function(){
+    const btn=document.getElementById('mongo-v162-selection-risk');if(btn)btn.disabled=true;
+    try{
+      const uid=currentUid();if(!uid){alert('V162: Эхлээд нэвтэрнэ үү.');return;}
+      const local=collectFinancialState(), localAt=getLocalUpdatedAt();
+      const names=['txns','moneyLedger','moneyAccounts','invests','goals','accountTransfers'];
+      const summary=x=>names.map(k=>k+'='+safeArray(x&&x[k]).length).join(', ');
+      const refs=[[cloudDocRef(uid),'appState',false],[legacyCloudDocRef(uid),'financial',false],
+        [settingsCloudDocRef(uid),'settings',true],[profileCloudDocRef(uid),'profile',true],
+        [rootCloudDocRef(uid),'user-root',true]].filter(x=>x[0]);
+      const candidates=[],errors=[];
+      for(const [ref,name,wrapped] of refs){
+        try{const snap=await ref.get({source:'server'});if(!snap.exists){errors.push(name+': байхгүй');continue;}
+          const raw=snap.data()||{};const c=wrapped?window.MongoCloud.unwrapFinancialState(raw,name):window.MongoCloud.makeCandidate(raw,name);
+          if(c)candidates.push(c);else errors.push(name+': өгөгдөлгүй');
+        }catch(e){errors.push(name+': '+String(e&&e.code||e&&e.message||e).slice(0,60));}
+      }
+      const lines=['V162 — АЧААЛАЛТЫН СОНГОЛТЫН ЭРСДЭЛ',
+        'ЗӨВХӨН УНШИХ / БОДИТ АЧААЛАЛТЫГ ӨӨРЧЛӨХГҮЙ',
+        'UID: …'+uid.slice(-6),'Орон нутгийн огноо: '+(localAt||'алга'),
+        'Санах ой: '+summary(local),'Cloud уншилт: '+candidates.length+'/5'];
+      if(candidates.length){
+        const sel=window.MongoCloud.selectSafeLoadCandidate(candidates);
+        const c=sel.selected;
+        lines.push('Cloud сонголт: '+(c?c.source:'байхгүй'), 'Cloud blocked: '+!!sel.blocked);
+        if(c){
+          const cloud=decodeCloudValue(c.raw.data||{}),cloudAt=c.raw.updatedAtClient||'';
+          const decision=window.MongoCloud.chooseCloudOrLocal({local,cloud,
+            localHas:hasMeaningfulFinancialData(local),cloudHas:hasMeaningfulFinancialData(cloud),
+            localUpdatedAt:localAt,cloudUpdatedAt:cloudAt});
+          const localTotal=names.reduce((n,k)=>n+safeArray(local[k]).length,0);
+          const cloudTotal=names.reduce((n,k)=>n+safeArray(cloud[k]).length,0);
+          const danger=decision.winner==='local'&&cloudTotal>localTotal;
+          lines.push('Cloud огноо: '+(cloudAt||'алга'),'Cloud: '+summary(cloud),
+            'Одоогийн сонголтын дүрэм: '+decision.winner+' ('+decision.source+')',
+            'Cloud бүртгэлийн тоо: '+cloudTotal+'; санах ой: '+localTotal,
+            danger?'⛔ ЭРСДЭЛ: ШИНЭ ОГНООТОЙ ДУТУУ LOCAL СОНГОГДОХ БОЛОМЖТОЙ':'Сонголтоос дангаар нь өгөгдөл алдагдсан гэж дүгнэхгүй',
+            'Тайлбар: Энэ нь одоогийн төлөв дээрх шийдвэрийн ДАВТАН ТООЦОО.');
+        }
+      }
+      if(errors.length)lines.push('Уншилтын тайлбар: '+errors.join(' | '));
+      lines.push('','ЭХ КОДЫН ШАЛГАЛТ:',
+        'loadCloudFinancialData дотор chooseCloudOrLocal() дуудагдана.',
+        'Local огноо Cloud-оос шинэ үед local-newer сонгож болох дүрэм бий.',
+        'Дараа нь applyFinancialState(chosen.data) ажилладаг.',
+        'local-newer үед enqueueSave() хийх зам бий.',
+        'Энэ товч эдгээр үйлдлийн АЛИЙГ Ч АЖИЛЛУУЛАХГҮЙ.',
+        'Одоогийн guard төлөв: '+(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED?'идэвхтэй':'идэвхгүй'),
+        'Бодит өгөгдөл засах, нэмэх, устгахгүй байхыг зөвлөж байна.');
+      alert(lines.join('\n'));
+    }catch(e){alert('V162 алдаа: '+String(e&&e.message||e));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function v162AttachButton(){
+    if(document.getElementById('mongo-v162-selection-risk'))return;
+    const b=document.createElement('button');b.type='button';b.id='mongo-v162-selection-risk';
+    b.textContent='V162 СОНГОЛТЫН ЭРСДЭЛ';
+    b.style.cssText='position:fixed;bottom:462px;right:12px;z-index:2147483646;background:#7b3f61;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V162_SELECTION_RISK_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v162AttachButton);else v162AttachButton();
+
   // V161 — Read-only selection tracing. No calls to load/apply/save/queue APIs.
   window.MONGO_V161_LOAD_SELECTION_AUDIT=async function(){
     const button=document.getElementById('mongo-v161-load-selection');
@@ -16970,7 +17034,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V161 READONLY LOAD SELECTION: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V162 READONLY SELECTION RISK: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20383,7 +20447,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V161 READONLY LOAD SELECTION</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V162 READONLY SELECTION RISK</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
