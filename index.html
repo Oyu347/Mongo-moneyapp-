@@ -12949,6 +12949,39 @@ auth.onAuthStateChanged(async user=>{
     return (beforeTotal>=3 && afterTotal<beforeTotal && afterTotal<=Math.floor(beforeTotal/2)) ||
       keys.some(k=>before[k]>=3 && after[k]===0);
   }
+  // V153 READ-ONLY guard diagnostics. No Firebase writes, no local state changes.
+  function v153RunGuardDiagnostics(){
+    const account=n=>Array.from({length:n},(_,i)=>({id:'test-account-'+i,type:'checking'}));
+    const txns=n=>Array.from({length:n},(_,i)=>({id:'test-txn-'+i,amount:1000}));
+    const tests=[
+      ['Олон бүртгэл бүрэн хоосрох', {moneyAccounts:account(3),txns:txns(4)}, {moneyAccounts:[],txns:[]}, true],
+      ['Ердийн шинэ гүйлгээ нэмэх', {moneyAccounts:account(2),txns:txns(2)}, {moneyAccounts:account(2),txns:txns(3)}, false],
+      ['Цөөн бүртгэлтэй үед нэг гүйлгээ алга болох', {moneyAccounts:account(1),txns:txns(2)}, {moneyAccounts:account(1),txns:txns(1)}, true],
+      ['Гүйлгээний тоо хэвээр, агуулга солигдох', {moneyAccounts:account(1),txns:txns(2)}, {moneyAccounts:account(1),txns:[{id:'other-1'},{id:'other-2'}]}, true]
+    ];
+    return tests.map(([name,before,after,shouldBlock])=>{
+      const blocked=v152IsDestructiveShrink(before,after);
+      return {name,shouldBlock,blocked,passed:blocked===shouldBlock};
+    });
+  }
+  window.MONGO_V153_READONLY_TEST=function(){
+    const results=v153RunGuardDiagnostics();
+    const lines=results.map(x=>(x.passed?'✅':'⚠️')+' '+x.name+'\n   Хүлээлт: '+(x.shouldBlock?'Хориглох':'Зөвшөөрөх')+' | V152: '+(x.blocked?'Хориглосон':'Зөвшөөрсөн'));
+    const message='V153 — ӨГӨГДЛИЙН ХАМГААЛАЛТЫН ОНОШИЛГОО\n\n'+lines.join('\n\n')+'\n\nЭнэ шалгалт Firebase болон утасны өгөгдөлд ЮУ Ч БИЧИХГҮЙ.\nАнхаар: энэ нь V152 логикийн сул талыг илрүүлэх тест, бүрэн хамгаалалт биш.';
+    alert(message);
+    return results;
+  };
+  function v153AttachDiagnosticButton(){
+    if(document.getElementById('mongo-v153-readonly-test'))return;
+    const b=document.createElement('button');
+    b.id='mongo-v153-readonly-test';b.type='button';b.textContent='V153 ХАМГААЛАЛТ ШАЛГАХ';
+    b.style.cssText='position:fixed;bottom:76px;right:12px;z-index:2147483646;background:#176f73;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004;max-width:230px';
+    b.onclick=window.MONGO_V153_READONLY_TEST;
+    document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v153AttachDiagnosticButton);
+  else v153AttachDiagnosticButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -16577,7 +16610,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V152 DATA SAFETY GUARD: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V153 READ-ONLY GUARD TEST: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -19990,7 +20023,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V152 DATA SAFETY GUARD</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V153 READ-ONLY GUARD TEST</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
