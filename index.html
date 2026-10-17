@@ -13202,6 +13202,66 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v158AttachButton);
   else v158AttachButton();
 
+  // V160: read-only provenance comparison. No persistence, restore, or state mutation.
+  window.MONGO_V160_PROVENANCE_AUDIT=async function(){
+    const button=document.getElementById('mongo-v160-provenance');
+    if(button)button.disabled=true;
+    try{
+      const uid=currentUid();
+      if(!uid){alert('V160: Firebase хэрэглэгчээр нэвтэрнэ үү.');return;}
+      const keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+      const memory=collectFinancialState();
+      const refs=[
+        [cloudDocRef(uid),false,'appState/main'],
+        [legacyCloudDocRef(uid),false,'financial/main'],
+        [settingsCloudDocRef(uid),true,'settings/main'],
+        [profileCloudDocRef(uid),true,'profile/main'],
+        [rootCloudDocRef(uid),true,'users/{uid}']
+      ].filter(x=>x[0]);
+      const lines=['V160 — ӨГӨГДЛИЙН ГАРАЛ ҮҮСЛИЙН ОНОШИЛГОО',
+        'ЗӨВХӨН УНШИХ; ӨӨРЧЛӨЛТ ХИЙХГҮЙ',
+        'UID: …'+uid.slice(-6),'Нэвтрэлт: '+(accountReadyForCloud()?'бэлэн':'бэлэн биш'),
+        'Хамгаалалтын төлөв: '+(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED?'идэвхтэй':'идэвхгүй'),
+        'Санах ой: '+keys.map(k=>k+'='+safeArray(memory[k]).length).join(', '),''];
+      let errors=0;
+      for(const [ref,wrapped,name] of refs){
+        try{
+          const snap=await ref.get({source:'server'});
+          if(!snap.exists){lines.push(name+': баримт байхгүй');continue;}
+          const outer=snap.data()||{};
+          const raw=wrapped?outer.financialState:outer;
+          if(!raw||!raw.data){lines.push(name+': financialState/data байхгүй');continue;}
+          const state=decodeCloudValue(raw.data);
+          const detail=keys.map(k=>{
+            const server=safeArray(state[k]),app=safeArray(memory[k]);
+            const ids=new Set(server.filter(x=>x&&x.id!=null).map(x=>String(x.id)));
+            const overlap=app.filter(x=>x&&x.id!=null&&ids.has(String(x.id))).length;
+            return k+': '+server.length+'→'+app.length+' (ID давхцал '+overlap+')';
+          });
+          lines.push(name+':',...detail,'  meta: '+[
+            'clearedAt='+(raw.clearedAt?'тийм':'үгүй'),
+            'updatedAt='+(raw.updatedAt!=null?'байна':'алга'),
+            'version='+(raw.version!=null?String(raw.version).slice(0,40):'алга')
+          ].join(', '),'');
+        }catch(e){errors++;lines.push(name+': УНШИХ АЛДАА '+String(e&&e.code||e&&e.message||'unknown'));}
+      }
+      lines.push('ДҮГНЭЛТ: '+(errors?'⚠️ Серверийн уншилтын алдаа байна.':'Сервер ба санах ойн тоо/ID давхцлыг харьцуулсан.'),
+        'Энэ сорил ачаалах үеийн аль функц өгөгдөл сонгосныг шууд тогтоохгүй.',
+        'Данс, гүйлгээ, Firebase, localStorage-д бичихгүй.');
+      alert(lines.join('\n'));
+    }catch(e){alert('V160 оношилгооны алдаа: '+String(e&&e.message||e));}
+    finally{if(button)button.disabled=false;}
+  };
+  function v160AttachButton(){
+    if(document.getElementById('mongo-v160-provenance'))return;
+    const b=document.createElement('button');b.id='mongo-v160-provenance';b.type='button';
+    b.textContent='V160 ЭХ ҮҮСВЭР ОНОШЛОХ';
+    b.style.cssText='position:fixed;bottom:350px;right:12px;z-index:2147483646;background:#146b70;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V160_PROVENANCE_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v160AttachButton);
+  else v160AttachButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -16834,7 +16894,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V159 INTENT SIMULATION: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V160 READONLY PROVENANCE: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20247,7 +20307,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V159 INTENT SIMULATION</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V160 READONLY PROVENANCE</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
