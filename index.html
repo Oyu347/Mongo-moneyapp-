@@ -13262,6 +13262,82 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v160AttachButton);
   else v160AttachButton();
 
+  // V161 — Read-only selection tracing. No calls to load/apply/save/queue APIs.
+  window.MONGO_V161_LOAD_SELECTION_AUDIT=async function(){
+    const button=document.getElementById('mongo-v161-load-selection');
+    if(button)button.disabled=true;
+    try{
+      const uid=currentUid();
+      if(!uid){alert('V161: Нэвтэрсэн хэрэглэгч шаардлагатай.');return;}
+      const keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+      const counts=x=>keys.map(k=>k+'='+safeArray(x&&x[k]).length).join(', ');
+      const local=collectFinancialState();
+      const localStamp=getLocalUpdatedAt();
+      const lines=['V161 — АЧААЛАХ ЭХ ҮҮСВЭР СОНГОЛТЫН ОНОШИЛГОО',
+        'ЗӨВХӨН УНШИХ — БОДИТ АЧААЛАЛТЫГ ДАХИН АЖИЛЛУУЛАХГҮЙ',
+        'UID: …'+uid.slice(-6),
+        'Одоогийн санах ой: '+counts(local),
+        'Орон нутгийн шинэчлэлийн тэмдэг: '+(localStamp?String(localStamp).slice(0,60):'алга'),
+        'Хамгаалалт: '+(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED?'идэвхтэй':'идэвхгүй'),
+        'Ачаалалт явагдаж буй: '+!!window.MONGO_CLOUD_LOAD_IN_PROGRESS,''];
+      const refs=[[cloudDocRef(uid),'appState',false],[legacyCloudDocRef(uid),'legacy-financial',false],
+        [settingsCloudDocRef(uid),'settings-fallback',true],[profileCloudDocRef(uid),'profile-fallback',true],
+        [rootCloudDocRef(uid),'user-root-fallback',true]].filter(x=>x[0]);
+      const candidates=[];
+      for(const [ref,name,wrapped] of refs){
+        try{
+          const snap=await ref.get({source:'server'});
+          if(!snap.exists){lines.push(name+': байхгүй');continue;}
+          const outer=snap.data()||{};
+          const candidate=wrapped?window.MongoCloud.unwrapFinancialState(outer,name):window.MongoCloud.makeCandidate(outer,name);
+          if(!candidate){lines.push(name+': хүчинтэй хувилбаргүй');continue;}
+          candidates.push(candidate);
+          const raw=candidate.raw||{};
+          const state=decodeCloudValue(raw.data||{});
+          lines.push(name+': '+counts(state),
+            '  updatedAtClient='+(raw.updatedAtClient?String(raw.updatedAtClient).slice(0,45):'алга')+
+            '; clearedAt='+(raw.clearedAt?'байна':'алга'));
+        }catch(e){lines.push(name+': УНШИХ АЛДАА '+String(e&&e.code||e&&e.message||e).slice(0,100));}
+      }
+      if(candidates.length){
+        try{
+          const selection=window.MongoCloud.selectSafeLoadCandidate(candidates);
+          const selected=selection.selected;
+          lines.push('', 'Эх үүсвэр сонгох дүрмийн үр дүн:',
+            '  blocked='+!!selection.blocked,
+            '  newest='+(selection.newest&&selection.newest.source||'алга'),
+            '  selected='+(selected&&selected.source||'алга'),
+            '  quarantined='+((selection.quarantined||[]).map(x=>x.source).join(', ')||'байхгүй'));
+          if(selected&&selected.raw&&selected.raw.data){
+            const cloudData=decodeCloudValue(selected.raw.data);
+            const decision=window.MongoCloud.chooseCloudOrLocal({
+              local,cloud:cloudData,localHas:hasMeaningfulFinancialData(local),
+              cloudHas:hasMeaningfulFinancialData(cloudData),
+              localUpdatedAt:localStamp,cloudUpdatedAt:selected.raw.updatedAtClient
+            });
+            lines.push('  cloud-vs-local winner='+(decision.winner||'тодорхойгүй'),
+              '  source='+(decision.source||'тодорхойгүй'),
+              '  selectedCloud='+counts(cloudData));
+          }
+        }catch(e){lines.push('СОНГОЛТЫН ТООЦООНЫ АЛДАА: '+String(e&&e.message||e).slice(0,100));}
+      }
+      lines.push('', 'АНХААР: Энэ бол ОДООГИЙН төлөв дээрх хийсвэр сонголт.',
+        'Апп эхлэх үеийн бодит дарааллыг батлахгүй.',
+        'Энэ товч Firestore/localStorage-д бичихгүй, сэргээхгүй.');
+      alert(lines.join('\n'));
+    }catch(e){alert('V161 алдаа: '+String(e&&e.message||e));}
+    finally{if(button)button.disabled=false;}
+  };
+  function v161AttachButton(){
+    if(document.getElementById('mongo-v161-load-selection'))return;
+    const b=document.createElement('button');b.type='button';b.id='mongo-v161-load-selection';
+    b.textContent='V161 АЧААЛАЛТЫН СОНГОЛТ';
+    b.style.cssText='position:fixed;bottom:405px;right:12px;z-index:2147483646;background:#2b5575;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V161_LOAD_SELECTION_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v161AttachButton);
+  else v161AttachButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -16894,7 +16970,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V160 READONLY PROVENANCE: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V161 READONLY LOAD SELECTION: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20307,7 +20383,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V160 READONLY PROVENANCE</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V161 READONLY LOAD SELECTION</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
