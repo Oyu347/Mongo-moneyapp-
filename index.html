@@ -17034,7 +17034,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V162 READONLY SELECTION RISK: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V163 READONLY POLICY SIMULATION: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20447,7 +20447,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V162 READONLY SELECTION RISK</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V163 READONLY POLICY SIMULATION</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 <script id="mongo-v159-authorized-intent-simulator">
 /* V159: isolated, read-only decision simulator. No Firestore access and no mutation. */
@@ -21236,5 +21236,55 @@ if(typeof openExternal137==='function')window.openMongoSavingsExternalInterestV9
   if(a)setTimeout(()=>bind137('mongo-savings-interest-income-v9','mongo-si-v9-date','mongo-si-v9-amount',a),0);
   return r;
 };
+})();
+</script>
+
+<script>
+/* V163: read-only decision laboratory. No cloud reads, writes, queue or state mutations. */
+(function(){
+ const collections=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+ const counts=x=>collections.reduce((n,k)=>n+(Array.isArray(x[k])?x[k].length:0),0);
+ const make=(n,tag)=>({txns:Array.from({length:n},(_,i)=>({id:tag+'-'+i}))});
+ function assess(cloud,local,ctx){
+   if(!ctx.cloudReadOk)return 'BLOCK';
+   if(!ctx.authenticated)return 'BLOCK';
+   if(ctx.serverVersionChanged)return 'BLOCK';
+   if(ctx.authorizedOperation && ctx.authorizedOperation.type==='delete' && ctx.authorizedOperation.ids.length===1){
+     const id=ctx.authorizedOperation.ids[0];
+     const oldIds=new Set((cloud.txns||[]).map(x=>x.id)),newIds=new Set((local.txns||[]).map(x=>x.id));
+     const missing=[...oldIds].filter(x=>!newIds.has(x));
+     if(missing.length===1 && missing[0]===id)return 'REVIEW';
+   }
+   if(counts(local)<counts(cloud))return 'BLOCK';
+   if(counts(local)===counts(cloud) && JSON.stringify(local)!==JSON.stringify(cloud))return 'REVIEW';
+   return 'REVIEW';
+ }
+ const tests=[
+  ['Дутуу шинэ local',make(36,'old'),make(4,'new'),{},'BLOCK'],
+  ['Cloud уншилт алдаа',make(36,'old'),make(4,'new'),{cloudReadOk:false},'BLOCK'],
+  ['Нэвтрэлт баталгаагүй',make(36,'old'),make(36,'old'),{authenticated:false},'BLOCK'],
+  ['Серверийн хувилбар өөрчлөгдсөн',make(36,'old'),make(36,'old'),{serverVersionChanged:true},'BLOCK'],
+  ['Зөвшөөрөлгүй нэг устгал',make(5,'old'),make(4,'old'),{},'BLOCK'],
+  ['Зөвшөөрсөн нэг устгал (баталгаажуулах шаардлагатай)',make(5,'old'),make(4,'old'),{authorizedOperation:{type:'delete',ids:['old-4']}},'REVIEW'],
+  ['Ижил тоотой боловч агуулга өөр',make(4,'old'),make(4,'new'),{},'REVIEW'],
+  ['Ижил мэдээлэл',make(4,'old'),make(4,'old'),{},'REVIEW']
+ ];
+ window.MONGO_V163_READONLY_POLICY_TEST=function(){
+  const lines=['V163 — ХАМГААЛАЛТЫН ШИЙДВЭРИЙН ХИЙСВЭР СОРИЛ','ЗӨВХӨН САНАХ ОЙД. FIREBASE УНШИХГҮЙ / БИЧИХГҮЙ.','BLOCK = бичилтийг хориглох санал; REVIEW = нэмэлт баталгаажуулалт шаардлагатай.','ЭНЭ НЬ БОДИТ ХАДГАЛАЛТЫН ХАМГААЛАЛТ БИШ.',''];
+  let ok=0;
+  tests.forEach(([label,cloud,local,extra,expected])=>{
+    const got=assess(cloud,local,Object.assign({cloudReadOk:true,authenticated:true,serverVersionChanged:false},extra));
+    const pass=got===expected;if(pass)ok++;
+    lines.push((pass?'✅':'❌')+' '+label+' → '+got+' (хүлээсэн '+expected+')');
+  });
+  lines.push('',`ДҮН: ${ok}/${tests.length}`,'','Анхаар: Одоогийн V152 хамгаалалт бүх бичилтийн замыг хамгаалж байгаа эсэх батлагдаагүй.','Өгөгдөл нэмэх, засах, устгахгүй.');
+  alert(lines.join('\n'));
+ };
+ function attach(){if(document.getElementById('mongo-v163-policy-test'))return;
+  const b=document.createElement('button');b.id='mongo-v163-policy-test';b.type='button';b.textContent='V163 ХАМГААЛАЛТЫН СОРИЛ';
+  b.style.cssText='position:fixed;right:12px;bottom:512px;z-index:2147483646;background:#225e58;color:white;border:2px solid white;border-radius:22px;padding:10px 12px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+  b.onclick=window.MONGO_V163_READONLY_POLICY_TEST;document.body.appendChild(b);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach);else attach();
 })();
 </script>
