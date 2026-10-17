@@ -13041,6 +13041,40 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v153AttachDiagnosticButton);
   else v153AttachDiagnosticButton();
 
+  // V155 SAFE WRITE OBSERVER — diagnostic only, NOT a write blocker.
+  // Findings may include intentional edits/deletions, older mirror differences,
+  // or data-format migration; never interpret them as confirmed corruption.
+  function v155ObserveCloudDiff(uid,snapshots,proposed){
+    const sources=(snapshots||[]).filter(x=>x&&!x.clearedAt&&x.data);
+    const reports=sources.map(source=>{
+      const findings=v154CompareRecords(source.data,proposed);
+      const counts={added:0,removed:0,changed:0,'duplicate-id':0,'missing-id':0};
+      findings.forEach(f=>{counts[f.kind]=(counts[f.kind]||0)+1;});
+      return {source:source.name,counts,examples:findings.slice(0,8).map(f=>({collection:f.collection,kind:f.kind}))};
+    });
+    window.MONGO_V155_LAST_REPORT={at:new Date().toISOString(),mode:'OBSERVE_ONLY',sourceCount:sources.length,reports};
+    // No sensitive transaction amounts, IDs, or full records in diagnostic output.
+    console.info('V155 safe-write observation (non-blocking)',window.MONGO_V155_LAST_REPORT);
+  }
+  window.MONGO_V155_SHOW_REPORT=function(){
+    const r=window.MONGO_V155_LAST_REPORT;
+    if(!r){alert('V155: Энэ нэвтрэлтэд хадгалалтын өмнөх шалгалт хараахан хийгдээгүй байна.\nГүйлгээ нэмэх эсвэл зассаны дараа дахин шалгана уу.');return;}
+    const lines=r.reports.map(x=>x.source+': нэмэгдсэн '+x.counts.added+', хасагдсан '+x.counts.removed+', өөрчлөгдсөн '+x.counts.changed+', давхардсан '+x.counts['duplicate-id']+', ID дутуу '+x.counts['missing-id']);
+    alert('V155 — ХАДГАЛАЛТЫН АЖИГЛАЛТ (ХОРИГЛОХГҮЙ)\n'+
+      'Шалгасан үүлэн хуулбар: '+r.sourceCount+'\n'+
+      (lines.join('\n')||'Өмнөх мэдээлэл олдсонгүй')+'\n\n'+
+      'Анхаар: Эдгээр нь зөвшөөрөгдсөн засвар/устгал байж болно. V152-ийн одоогийн хамгаалалт хэвээр.');
+  };
+  function v155AttachButton(){
+    if(document.getElementById('mongo-v155-observe'))return;
+    const b=document.createElement('button');b.id='mongo-v155-observe';b.type='button';
+    b.textContent='V155 ХАДГАЛАЛТ АЖИГЛАХ';
+    b.style.cssText='position:fixed;bottom:181px;right:12px;z-index:2147483646;background:#22577a;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V155_SHOW_REPORT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v155AttachButton);
+  else v155AttachButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -13060,6 +13094,10 @@ auth.onAuthStateChanged(async user=>{
       if(!raw||!raw.data)return null;
       return {name,data:decodeCloudValue(raw.data),clearedAt:raw.clearedAt};
     }));
+    // V155 monitor-only: inspect the same server snapshots already fetched by V152.
+    // This does not change the allow/deny decision or add any Firestore writes.
+    try{ v155ObserveCloudDiff(uid,snapshots,proposed); }
+    catch(err){ console.warn('V155 monitor unavailable:',err); }
     for(const previous of snapshots){
       if(previous&&!previous.clearedAt&&v152IsDestructiveShrink(previous.data,proposed)){
         window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
@@ -16669,7 +16707,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V154 READ-ONLY INTEGRITY TEST: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V155 SAFE WRITE OBSERVER: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20082,7 +20120,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V154 READ-ONLY INTEGRITY TEST</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V155 SAFE WRITE OBSERVER</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
