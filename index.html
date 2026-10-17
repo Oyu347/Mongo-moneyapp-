@@ -13141,6 +13141,67 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v157AttachButton);
   else v157AttachButton();
 
+  // V158 READ-ONLY preflight rehearsal. No writes, no guard changes.
+  // It reports whether the CURRENT V152 rule would block the in-memory state.
+  window.MONGO_V158_PREFLIGHT_AUDIT=async function(){
+    const btn=document.getElementById('mongo-v158-preflight-audit');
+    if(btn)btn.disabled=true;
+    try{
+      const uid=currentUid();
+      if(!uid){alert('V158: Нэвтэрсэн Firebase хэрэглэгч алга.');return;}
+      const local=collectFinancialState();
+      const keys=['txns','moneyLedger','moneyAccounts','invests','goals','debts','accountTransfers'];
+      const refs=[
+        [cloudDocRef(uid),false,'appState/main'],
+        [legacyCloudDocRef(uid),false,'financial/main'],
+        [settingsCloudDocRef(uid),true,'settings/main'],
+        [profileCloudDocRef(uid),true,'profile/main'],
+        [rootCloudDocRef(uid),true,'users/{uid}']
+      ].filter(x=>x[0]);
+      const lines=['V158 — ХАДГАЛАЛТЫН ӨМНӨХ ХАМГААЛАЛТЫН СУРГУУЛИЛАЛТ',
+        'ЗӨВХӨН УНШИНА — ХАДГАЛАЛТ ХИЙХГҮЙ',
+        'Хэрэглэгчийн ID: …'+uid.slice(-6),
+        'Нэвтрэлт бэлэн: '+(accountReadyForCloud()?'тийм':'үгүй'),
+        'Одоогийн хоригийн төлөв: '+(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED?'ИДЭВХТЭЙ':'идэвхгүй'),
+        '','Аппын санах ой: '+keys.map(k=>k+'='+safeArray(local[k]).length).join(', '),''];
+      let severe=0,readErrors=0,missing=0;
+      for(const [ref,wrapped,name] of refs){
+        try{
+          const snap=await ref.get({source:'server'});
+          if(!snap.exists){lines.push(name+': баримт байхгүй');missing++;continue;}
+          const container=snap.data()||{};
+          const raw=wrapped?container.financialState:container;
+          if(!raw||!raw.data){lines.push(name+': өгөгдөл байхгүй');missing++;continue;}
+          const previous=decodeCloudValue(raw.data);
+          const shrinking=!raw.clearedAt&&v152IsDestructiveShrink(previous,local);
+          if(shrinking)severe++;
+          const deltas=keys.map(k=>{
+            const a=safeArray(previous[k]).length,b=safeArray(local[k]).length;
+            return a>b?k+': '+a+'→'+b:null;
+          }).filter(Boolean);
+          lines.push(name+': '+(shrinking?'⛔ V152 ХОРИГЛОНО':'V152 хориглохгүй')+
+            (raw.clearedAt?' (clearedAt тэмдэглэгээтэй)':'')+
+            (deltas.length?'\n  Цөөрсөн: '+deltas.join(', '):''));
+        }catch(e){readErrors++;lines.push(name+': УНШИХ АЛДАА ('+String(e&&e.code||'unknown')+')');}
+      }
+      lines.push('', 'ДҮГНЭЛТ: '+(readErrors?'⚠️ Серверийн уншилт алдаатай — хадгалж болохгүй.':severe?'⛔ Одоогийн V152 дүрмээр '+severe+' хуулбарт хориг үүснэ.':'⚠️ V152 томоохон алдагдал илрүүлээгүй; энэ нь хадгалахад аюулгүй гэсэн баталгаа биш.'),
+        'Байхгүй/өгөгдөлгүй хуулбар: '+missing,
+        'Энэ шалгалт нь бодит бичилт, олон төхөөрөмжийн хувилбарын зөрчил, зөвшөөрсөн устгалыг баталгаажуулахгүй.',
+        'Firebase болон утасны санах ойд юу ч бичихгүй.');
+      alert(lines.join('\n'));
+    }catch(e){alert('V158 шалгалтын алдаа: '+String(e&&e.message||e));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function v158AttachButton(){
+    if(document.getElementById('mongo-v158-preflight-audit'))return;
+    const b=document.createElement('button');b.id='mongo-v158-preflight-audit';b.type='button';
+    b.textContent='V158 ХАМГААЛАЛТ ШАЛГАХ';
+    b.style.cssText='position:fixed;bottom:294px;right:12px;z-index:2147483646;background:#8b3f57;color:white;border:2px solid white;border-radius:22px;padding:10px 13px;font-size:12px;font-weight:700;box-shadow:0 2px 9px #0004';
+    b.onclick=window.MONGO_V158_PREFLIGHT_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v158AttachButton);
+  else v158AttachButton();
+
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -16773,7 +16834,7 @@ installInvestLifecycle();
 </script>
 
 
-<!-- PHONE TEST V157 SOURCE AUDIT: restore two-row investment card layout; visual-only -->
+<!-- PHONE TEST V158 PREFLIGHT AUDIT: restore two-row investment card layout; visual-only -->
 <style id="mongo-asset-card-layout-v144">
 #invest-list .portfolio-group-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 #invest-list .portfolio-group-title{width:100%;min-width:0;align-items:center}
@@ -20186,7 +20247,7 @@ accountInlineDetail=function(a){
 
 <!-- Möngö PHONE TEST V136 — goal-free savings transfer support. -->
 <style id="mongo-v136-phone-badge-style">#mongo-v136-phone-badge{position:fixed;left:18px;bottom:18px;z-index:2147483647;background:#0f9488;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1.2 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.16);pointer-events:none}</style>
-<div id="mongo-v136-phone-badge">PHONE TEST V157 SOURCE AUDIT</div>
+<div id="mongo-v136-phone-badge">PHONE TEST V158 PREFLIGHT AUDIT</div>
 <script>window.MONGO_SAVINGS_GOAL_OPTIONAL_TRANSFER='V136';</script>
 </body>
 </html>
