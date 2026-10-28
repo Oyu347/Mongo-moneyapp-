@@ -47,3 +47,11 @@ Prevent data loss, cross-user exposure, incorrect balances, silent overwrite, an
 
 ## Next action
 Build a source-of-truth audit matrix for PATCH01–PATCH14 + Termux sessions, then map actual branch code paths; do not claim completion before evidence.
+
+
+## 2026-10-28 — V16 resume pointer (documentation only)
+- **NEXT READ:** [MONGO_V16_INTEGRATION_READINESS.md](MONGO_V16_INTEGRATION_READINESS.md).
+- Uploaded canonical history: `TERMUX-ISOLATED-TEST-JOURNAL-V15.md` and `TERMUX-V15-V295-V516-MASTER-REGISTER.csv` (222 rows, V295–V516); original uploads are in the conversation, not automatically committed to this repo.
+- Other evidence: [MONGO_PATCH_AUDIT_MATRIX.md](MONGO_PATCH_AUDIT_MATRIX.md), [MONGO_CLOUD_LOCAL_AUDIT_01.md](MONGO_CLOUD_LOCAL_AUDIT_01.md), [MONGO_V511_V513_ARCHIVE_VERIFICATION.md](MONGO_V511_V513_ARCHIVE_VERIFICATION.md).
+- **CURRENT TASK:** read-only verification of V295 save/mutation path and V359/V360 Firebase rules against exact current branch commit; resolve full index.html retrieval before production-code claims.
+- **NO INTEGRATION:** no application code, Firebase rules, live data or deployments changed. V15/Termux/PATCH PASS reports are isolated/historical until independently reproduced and integrated.
