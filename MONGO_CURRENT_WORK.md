@@ -55,3 +55,11 @@ Build a source-of-truth audit matrix for PATCH01–PATCH14 + Termux sessions, th
 - Other evidence: [MONGO_PATCH_AUDIT_MATRIX.md](MONGO_PATCH_AUDIT_MATRIX.md), [MONGO_CLOUD_LOCAL_AUDIT_01.md](MONGO_CLOUD_LOCAL_AUDIT_01.md), [MONGO_V511_V513_ARCHIVE_VERIFICATION.md](MONGO_V511_V513_ARCHIVE_VERIFICATION.md).
 - **CURRENT TASK:** read-only verification of V295 save/mutation path and V359/V360 Firebase rules against exact current branch commit; resolve full index.html retrieval before production-code claims.
 - **NO INTEGRATION:** no application code, Firebase rules, live data or deployments changed. V15/Termux/PATCH PASS reports are isolated/historical until independently reproduced and integrated.
+
+
+## 2026-10-28 — Source identity and Termux history reconciliation
+- GitHub index.html blob SHA: `3770e27523c71745d53c33e68bd813bd3d36398c`. A direct blob read returned full text (1,853,524 JS string characters); prior empty fetch_file content was a retrieval limitation, not missing source.
+- Earlier comparison identified uploaded `index (4).html` with the same Git blob SHA; this establishes byte identity for the compared artifact at that revision. Recheck SHA against branch HEAD before later edits.
+- Recovered `Mongo-CURRENT-WORK.md` (2026-10-21) and `Mongo-Termux-Inventory.txt` (2026-10-27) from Library: V358–V362 84/84 historical static checks; V364–V367 emulator screenshots and V365 4/4, V366 8/8, V367 6/6 historical; V368 was pending at the 2026-10-21 checkpoint, but later inventory includes tests through V510. Do NOT treat V368 as current pending work without consulting V15 master.
+- V15 master journal + CSV: 222 versions V295–V516, categories 179 source-only, 13 historical PASS, 1 partial/conflicting, 1 HTTP outcome, 28 missing evidence. V516 is integration review, NOT merged app code.
+- Highest-priority next action: verify actual branch index source paths and V295 save/overwrite mechanisms against V15, then verify V359/V360 rules and backend integration evidence. No production changes or tests re-run in this documentation update.
