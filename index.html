@@ -10253,9 +10253,11 @@ function saveData(){
       expCatsCustom:expCats.filter(c=>!c.key),
       bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[],
       clientUpdatedAt:window.MONGO_LOCAL_DATA_UPDATED_AT});
-    window.MongoStorage.setJSON(getDBKey(),data);
+    const persisted=window.MongoStorage.setJSON(getDBKey(),data);
+    if(persisted!==true) return false;
     showSaveIndicator();
-  }catch(e){console.warn('Save error:',e);}
+    return true;
+  }catch(e){console.warn('Save error:',e);return false;}
 }
 
 function loadData(){
@@ -13747,7 +13749,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
-  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); scheduleCloudSave('saveData'); return res; }; try{saveData=window.saveData;}catch(e){} }
+  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); if(res===true) scheduleCloudSave('saveData'); else updateSyncStatus('error','Local save failed'); return res; }; try{saveData=window.saveData;}catch(e){} }
   const originalImportData=window.importData || (typeof importData==='function'?importData:null);
   if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
 
