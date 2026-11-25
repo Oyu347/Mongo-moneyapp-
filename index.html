@@ -2524,6 +2524,16 @@ body.mongo-readonly [data-mongo-write="1"]{opacity:.58}
 #maturityRequiredV65 h3{margin:0 0 10px;font-size:20px}#maturityRequiredV65 p{margin:0 0 22px;line-height:1.6}
 #maturityRequiredV65 button{display:block;margin-left:auto;border:0;border-radius:14px;padding:11px 20px;background:#49B0B6;color:#fff;font-weight:700}
 </style>
+<style id="mongo-patch13-cloud-colors">
+/* PATCH13: Cloud color reflects persistence, not network reachability. */
+#mongo-sync-status.synced .mongo-sync-cloud{color:#16A34A!important}
+#mongo-sync-status.pending .mongo-sync-cloud,
+#mongo-sync-status.waiting .mongo-sync-cloud,
+#mongo-sync-status.offline .mongo-sync-cloud{color:#D97706!important}
+#mongo-sync-status.error .mongo-sync-cloud{color:#DC2626!important}
+#mongo-sync-status.waiting #mongo-sync-dot,
+#mongo-sync-status.offline #mongo-sync-dot{background:#F59E0B!important}
+</style>
 </head>
 <body>
 <!-- ── Möngö V30 Premium Splash ── -->
@@ -8124,9 +8134,12 @@ function addTransaction(){
         const cat=bCatsExp.find(c=>String(c.key||c.name)===String(ck));
         if(!cat){showToast(AFT().selectCat);return;}
         const sub=(cat.subs||[]).find(x=>String(x.key||x.name)===String(sk));
+        const patch53BeforeExpense=txns.slice();
         txns.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tx_'+Date.now()),type:'expense',catKey:cat.key||null,catName:cN(cat),subcatKey:sub?.key||null,subcatName:sub?cN(sub):'',desc:sub?cN(sub):cN(cat),amount,date,accountId:fromId,createdAt:new Date().toISOString()});
-        document.getElementById('t-amount').value='';saveData();rAll();renderMoneyAccounts();return;
+        if(saveData()!==true){txns=patch53BeforeExpense;showToast(lang==='mn'?'Худалдан авалт хадгалагдсангүй. Дахин оролдоно уу.':'Purchase was not saved. Please retry.');return;}
+        document.getElementById('t-amount').value='';rAll();renderMoneyAccounts();return;
       }
+      const patch53BeforeAssets=invests.slice(),patch53BeforeAssetTransfers=accountTransfers.slice();
       let assetKey=targetId;
       if(targetId==='__new__'){
         const nm=(document.getElementById('t-asset-name')||{}).value?.trim(),tk=(document.getElementById('t-asset-type')||{}).value||'other';
@@ -8140,11 +8153,14 @@ function addTransaction(){
       }
       const boughtGroup=getInvestGroups().find(x=>String(x.key)===String(assetKey));
       accountTransfers.unshift({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId:null,amount,date,purpose:'asset',targetId:assetKey,assetId:boughtGroup?.items?.[0]?.id||null,updatedAt:new Date().toISOString()});
-      document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';saveData();rAll();renderMoneyAccounts();return;
+      if(saveData()!==true){invests=patch53BeforeAssets;accountTransfers=patch53BeforeAssetTransfers;showToast(lang==='mn'?'Хөрөнгийн худалдан авалт хадгалагдсангүй. Дахин оролдоно уу.':'Asset purchase was not saved. Please retry.');return;}
+      document.getElementById('t-amount').value='';const an=document.getElementById('t-asset-name');if(an)an.value='';rAll();renderMoneyAccounts();return;
     }
     const invalidDestination=purpose==='internal'?(!toId||fromId===toId):purpose==='savings'?(!toId||fromId===toId):purpose==='investment'?!targetId:true;
     if(!amount||amount<=0||!fromId||invalidDestination){showToast(lang==='mn'?'Шилжүүлгийн төрөл, данс болон очих газраа шалгана уу':'Check the transfer type, account and destination');return;}
     if(rejectInsufficientBalance(fromId,amount))return;
+    // PATCH52: snapshot both sides before investment contribution mutates holdings.
+    const patch52BeforeInvests=purpose==='investment'?invests.map(x=>({...x})):null;
     if(purpose==='investment'){
       const group=getInvestGroups().find(g=>String(g.key)===String(targetId));
       if(!group){showToast(lang==='mn'?'Хөрөнгө оруулалтын очих газар олдсонгүй':'Investment destination was not found');return;}
@@ -8152,8 +8168,28 @@ function addTransaction(){
       if(!madeContribution.ok)return;
       invests.unshift(madeContribution.investment);
     }
-    const madeTransfer=window.MongoTransactions.makeTransfer({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId,amount,date,purpose,targetId});if(!madeTransfer.ok){showToast(lang==='mn'?'Шилжүүлгийн данс болон дүнгээ зөв оруулна уу':'Please check the transfer accounts and amount');return;}accountTransfers.unshift(madeTransfer.transfer);
-    document.getElementById('t-amount').value='';saveData();rAll();renderMoneyAccounts();return;
+    const madeTransfer=window.MongoTransactions.makeTransfer({id:(crypto.randomUUID?crypto.randomUUID():'tr_'+Date.now()),fromId,toId,amount,date,purpose,targetId});if(!madeTransfer.ok){showToast(lang==='mn'?'Шилжүүлгийн данс болон дүнгээ зөв оруулна уу':'Please check the transfer accounts and amount');return;}
+    // PATCH49: a plain internal transfer must not disappear from the form or
+    // remain in memory if local persistence rejects the change.
+    const patch49BeforeTransfers=purpose==='internal'?accountTransfers.slice():null;
+    accountTransfers.unshift(madeTransfer.transfer);
+    if(purpose==='internal'&&saveData()!==true){
+      accountTransfers=patch49BeforeTransfers;
+      showToast(lang==='mn'?'Шилжүүлэг хадгалагдсангүй. Дахин оролдоно уу.':'Transfer was not saved. Please retry.');
+      return;
+    }
+    if(purpose==='investment'&&saveData()!==true){
+      invests=patch52BeforeInvests;
+      accountTransfers=accountTransfers.filter(x=>String(x.id)!==String(madeTransfer.transfer.id));
+      showToast(lang==='mn'?'Хөрөнгө оруулалтын шилжүүлэг хадгалагдсангүй. Дахин оролдоно уу.':'Investment transfer was not saved. Please retry.');
+      return;
+    }
+    if(purpose==='savings'&&saveData()!==true){
+      accountTransfers=accountTransfers.filter(x=>String(x.id)!==String(madeTransfer.transfer.id));
+      showToast(lang==='mn'?'Хуримтлалын шилжүүлэг хадгалагдсангүй. Дахин оролдоно уу.':'Savings transfer was not saved. Please retry.');
+      return;
+    }
+    document.getElementById('t-amount').value='';rAll();renderMoneyAccounts();return;
   }
   const descRaw=document.getElementById('t-desc').value.trim();
   const amount=parseAmt(document.getElementById('t-amount').value);
@@ -8180,6 +8216,16 @@ function addTransaction(){
     if(rejectInsufficientBalance(accountId,amount,creditBack))return;
   }
 
+  // PATCH50: snapshot every collection touched by transaction create/edit.
+  // Restore in-memory state and keep the form open if persistence is rejected.
+  const patch50Before={
+    txns:txns.map(x=>({...x})),
+    invests:invests.map(x=>({...x})),
+    accountTransfers:accountTransfers.map(x=>({...x})),
+    pendingPayPlan:typeof pendingPayPlan==='undefined'?null:pendingPayPlan,
+    editingTxnId,selSubcat,subDropOpen
+  };
+  let patch50CreatedTxn=null;
   if(editingTxnId){
     const t=txns.find(x=>String(x.id)===String(editingTxnId));
     if(t){
@@ -8194,7 +8240,7 @@ function addTransaction(){
         // Зээлийн засвар дээр давхар хасалт хийхгүй — хэрэглэгч үндсэн зээлийн хэсгээс удирдана.
       }
     }
-    editingTxnId=null;resetTxnEditUi();
+    // PATCH50: edit UI is reset only after durable local acknowledgement.
   }else{
     const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('txn_'+Date.now()+'_'+Math.random().toString(36).slice(2,9));
     const made=window.MongoTransactions.makeTransaction({id,desc,amount,catName,catKey,subcatKey,subcatName:subcatKey,investTypeKey,date,type:curType,accountId});if(!made.ok)return;
@@ -8203,10 +8249,8 @@ function addTransaction(){
     // Preserve the new row before saveData can start any asynchronous cloud
     // reconciliation. This prevents an older cloud snapshot from erasing the
     // transaction between its creation and the post-save journal wrapper.
-    if(typeof window.mongoRememberTxnImmediate==='function')window.mongoRememberTxnImmediate(txn);
-    if(curType==='income'){
-      preparePayAssistant(amount,date,accountId,txn.id);
-    }
+    patch50CreatedTxn=txn;
+    // PATCH50: show the pay-self assistant only after local save succeeds.
     if(curType==='expense'){
       // Loan balances are derived from matching transactions; do not mutate the opening balance here.
       const cat=expCats.find(c=>cN(c)===catName);
@@ -8214,21 +8258,45 @@ function addTransaction(){
     }
   }
 
+  if(saveData()!==true){
+    txns=patch50Before.txns;
+    invests=patch50Before.invests;
+    accountTransfers=patch50Before.accountTransfers;
+    pendingPayPlan=patch50Before.pendingPayPlan;
+    editingTxnId=patch50Before.editingTxnId;
+    selSubcat=patch50Before.selSubcat;
+    subDropOpen=patch50Before.subDropOpen;
+    showToast(lang==='mn'?'Гүйлгээ хадгалагдсангүй. Дахин оролдоно уу.':'Transaction was not saved. Please retry.');
+    return;
+  }
+  if(editingTxnId){editingTxnId=null;resetTxnEditUi();}
+  if(patch50CreatedTxn){
+    if(typeof window.mongoRememberTxnImmediate==='function')window.mongoRememberTxnImmediate(patch50CreatedTxn);
+    if(curType==='income')preparePayAssistant(amount,date,accountId,patch50CreatedTxn.id);
+  }
   document.getElementById('t-desc').value='';
   document.getElementById('t-amount').value='';
   selSubcat=null;subDropOpen=false;
   const subLabel=document.getElementById('t-subcat-label'); if(subLabel)subLabel.textContent=L.subcatPh||'Дэд ангилал сонгох';
   const subWrap=document.getElementById('t-subcat-wrap'); if(subWrap)subWrap.classList.remove('has-selection');
   const list=document.getElementById('t-subcat-list'); if(list)list.style.display='none';
-  saveData();rAll();
+  rAll();
 }
 async function delTxn(id){
   if(!await showConfirm(L.confirmDel))return;
+  // PATCH48: preserve all three arrays changed by transaction deletion helpers.
+  // Never claim deletion or close edit UI before local persistence ACK/readback.
+  const beforeTxns=txns.slice(), beforeInvests=invests.slice(), beforeTransfers=accountTransfers.slice();
   removeLinkedInvestmentForTxn(id);
   if(typeof removePaySelfTransfersForIncome==='function')removePaySelfTransfersForIncome(id);
   txns=window.MongoTransactions.removeById(txns,id);
+  if(saveData()!==true){
+    txns=beforeTxns;invests=beforeInvests;accountTransfers=beforeTransfers;
+    showToast(lang==='mn'?'Гүйлгээ устгагдсангүй. Дахин оролдоно уу.':'Transaction was not deleted. Please retry.');
+    return;
+  }
   if(String(editingTxnId)===String(id)){editingTxnId=null;resetTxnEditUi();}
-  saveData();rAll();rInvests();rDonut('inv');uDash();
+  rAll();rInvests();rDonut('inv');uDash();
 }
 
 // ── Goals ────────────────────────────────────────────────────────────────
@@ -8237,24 +8305,44 @@ function addGoal(){
   const target=parseAmt(document.getElementById('g-target').value);
   const saved=parseAmt(document.getElementById('g-saved').value);
   const dead=document.getElementById('g-dead').value.trim();
-  if(!name||!target)return;
+  if(!name||!target)return false;
+  const ids=['g-name','g-target','g-saved','g-dead','g-color'];
+  const prior=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?.value]));
+  const before=JSON.parse(JSON.stringify(goals));
   const color=mongoColor(document.getElementById('g-color')?.value,mongoNextColor(goals.length,'goal'));
   goals.push({id:Date.now(),name,target,saved,dead,color,createdAt:new Date().toISOString().substring(0,10),history:[]});
-  document.getElementById('g-name').value='';document.getElementById('g-target').value='';
-  document.getElementById('g-saved').value='';document.getElementById('g-dead').value='';if(document.getElementById('g-color'))document.getElementById('g-color').value=mongoNextColor(goals.length,'goal');
-  saveData();rGoals();rDonut('gls');
+  let ok=false;try{ok=saveData()===true;}catch(e){}
+  if(!ok){
+    goals.splice(0,goals.length,...before);
+    for(const id of ids){const el=document.getElementById(id);if(el&&prior[id]!==undefined)el.value=prior[id];}
+    return false;
+  }
+  for(const id of ids.slice(0,4))document.getElementById(id).value='';
+  if(document.getElementById('g-color'))document.getElementById('g-color').value=mongoNextColor(goals.length,'goal');
+  rGoals();rDonut('gls');
+  return true;
 }
 function updGoal(id,v){
-  const g=goals.find(x=>x.id===id);if(!g)return;
-  const newVal=parseAmt(v);if(!g.history)g.history=[];
+  const index=goals.findIndex(x=>x.id===id);if(index<0)return false;
+  const before=JSON.parse(JSON.stringify(goals));
+  const g=goals[index],newVal=parseAmt(v);if(!g.history)g.history=[];
   const ym=new Date().toISOString().substring(0,7);
   const last=g.history[g.history.length-1];
   if(!last||last.ym!==ym)g.history.push({ym,saved:newVal});else last.saved=newVal;
-  g.saved=newVal;saveData();rGoals();rDonut('gls');
+  g.saved=newVal;
+  let ok=false;try{ok=saveData()===true;}catch(e){}
+  if(!ok){goals.splice(0,goals.length,...before);return false;}
+  rGoals();rDonut('gls');
+  return true;
 }
 async function delGoal(id){
-  if(!await showConfirm(L.confirmDel))return;
-  goals=goals.filter(g=>g.id!==id);saveData();rGoals();rDonut('gls');
+  if(!await showConfirm(L.confirmDel))return false;
+  const before=JSON.parse(JSON.stringify(goals));
+  goals=goals.filter(g=>g.id!==id);
+  let ok=false;try{ok=saveData()===true;}catch(e){}
+  if(!ok){goals.splice(0,goals.length,...before);return false;}
+  rGoals();rDonut('gls');
+  return true;
 }
 
 
@@ -8884,7 +8972,10 @@ function addMoneyAccount(){
   const n=document.getElementById('account-name'),ty=document.getElementById('account-type'),dt=document.getElementById('account-start-date'),op=document.getElementById('account-opening');
   const name=(n.value||'').trim();if(!name)return;
   const made=window.MongoAccounts.makeAccount({name,type:ty.value,startDate:dt.value,openingBalance:parseAmt(op.value)},(crypto.randomUUID?crypto.randomUUID():'acc_'+Date.now()),new Date().toISOString().slice(0,10));if(!made.ok)return;moneyAccounts.push(made.account);
-  openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);n.value='';op.value='';saveData();renderMoneyAccounts();renderOpeningBalance();uDash();
+  openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);
+  // PATCH47: rollback this scoped account mutation when local persistence fails.
+  if(saveData()!==true){moneyAccounts.pop();openingBalance=moneyAccounts.reduce((s,a)=>s+(Number(a.openingBalance)||0),0);showToast(lang==='mn'?'Данс хадгалагдсангүй. Дахин оролдоно уу.':'Account was not saved. Please retry.');return;}
+  n.value='';op.value='';renderMoneyAccounts();renderOpeningBalance();uDash();
 }
 async function editMoneyAccount(id){
   const a=moneyAccounts.find(x=>x.id===id);if(!a)return;
@@ -8912,14 +9003,20 @@ async function editMoneyAccount(id){
   document.getElementById('account-edit-cancel').onclick=()=>modal.remove();
   document.getElementById('account-edit-save').onclick=()=>{
     const name=document.getElementById('account-edit-name').value.trim();if(!name)return;
-    const edited=window.MongoAccounts.editMetadata(a,{name,type:document.getElementById('account-edit-type').value});if(!edited.ok)return;saveData();modal.remove();renderMoneyAccounts();
+    const before={...a};
+    const edited=window.MongoAccounts.editMetadata(a,{name,type:document.getElementById('account-edit-type').value});if(!edited.ok)return;
+    if(saveData()!==true){Object.keys(a).forEach(k=>{if(!(k in before))delete a[k]});Object.assign(a,before);showToast(lang==='mn'?'Өөрчлөлт хадгалагдсангүй.':'Changes were not saved.');return;}
+    modal.remove();renderMoneyAccounts();
   };
 }
 async function archiveMoneyAccount(id){
   const a=moneyAccounts.find(x=>x.id===id);if(!a)return;
   if(!window.MongoAccounts.canDeactivate(id,moneyAccounts,moneyLedger)){showToast(lang==='mn'?'Үлдэгдэлтэй дансыг эхлээд өөр данс руу шилжүүлнэ үү':'Transfer the remaining balance first');return;}
   const ok=await showConfirm(lang==='mn'?`“${a.name}” дансыг идэвхгүй болгох уу?`:`Deactivate “${a.name}”?`);if(!ok)return;
-  window.MongoAccounts.deactivateMetadata(id,moneyAccounts,moneyLedger);saveData();renderMoneyAccounts();const d=document.getElementById('account-detail');if(d)d.classList.remove('show');
+  const before={...a};
+  window.MongoAccounts.deactivateMetadata(id,moneyAccounts,moneyLedger);
+  if(saveData()!==true){Object.keys(a).forEach(k=>{if(!(k in before))delete a[k]});Object.assign(a,before);showToast(lang==='mn'?'Данс идэвхгүй болгох өөрчлөлт хадгалагдсангүй.':'Account change was not saved.');return;}
+  renderMoneyAccounts();const d=document.getElementById('account-detail');if(d)d.classList.remove('show');
 }
 function moneyAccountsTotal(){ensureMoneyAccounts();return window.MongoAccounts.accountTotal(moneyAccounts,moneyLedger);}
 function isSpendableAccount(a){return window.MongoAccounts.isSpendable(a);}
@@ -10140,15 +10237,19 @@ function secDate(value){
   return /^\d{4}[-.]\d{2}[-.]\d{2}$/.test(s) ? s.replace(/\./g,'-') : new Date().toISOString().slice(0,10);
 }
 function secCleanDeep(value, depth=0){
-  if(depth>8) return null;
+  if(depth>8) throw new Error('Data limit exceeded: nesting depth');
   if(value===null || value===undefined) return value;
   if(typeof value==='string') return secPlain(value, 220);
   if(typeof value==='number') return Number.isFinite(value) ? value : 0;
   if(typeof value==='boolean') return value;
-  if(Array.isArray(value)) return value.slice(0,1000).map(v=>secCleanDeep(v,depth+1));
+  if(Array.isArray(value)){
+    if(value.length>1000) throw new Error('Data limit exceeded: nested array');
+    return value.map(v=>secCleanDeep(v,depth+1));
+  }
   if(typeof value==='object'){
     const out={};
-    Object.keys(value).slice(0,80).forEach(k=>{
+    if(Object.keys(value).length>80) throw new Error('Data limit exceeded: object fields');
+    Object.keys(value).forEach(k=>{
       const safeKey=secPlain(k,60);
       if(safeKey) out[safeKey]=secCleanDeep(value[k],depth+1);
     });
@@ -10158,7 +10259,17 @@ function secCleanDeep(value, depth=0){
 }
 function secNormalizeData(data){
   if(!data || typeof data!=='object') throw new Error('Invalid backup');
-  const clean=secCleanDeep(data);
+  // MONGO SAFE-PATCH 01: Never silently discard financial records.
+  // Reject oversized inputs until a lossless, paginated storage design exists.
+  const limits={txns:1000,goals:300,debts:300,invests:500,moneyAccounts:100,accountTransfers:1000,moneyLedger:1000,moneyLedgerTombstones:1000,lockedCats:200,netWorthSnapshots:730};
+  for(const [field,max] of Object.entries(limits)){
+    if(Array.isArray(data[field]) && data[field].length>max){
+      throw new Error('Data limit exceeded: '+field+' ('+data[field].length+' > '+max+')');
+    }
+  }
+  if(data.budgets && typeof data.budgets==='object' && !Array.isArray(data.budgets) && Object.keys(data.budgets).length>5000) throw new Error('Data limit exceeded: budgets');
+  // Budgets have their own validated, higher key limit; sanitize separately.
+  const clean=secCleanDeep({...data,budgets:{}});
   // V76: Budget is a year/month keyed map and can legitimately exceed the
   // generic 80-property security cap. Rebuild only this bounded map from the
   // original input so newer manual Income/Expense budgets are not truncated
@@ -10166,7 +10277,8 @@ function secNormalizeData(data){
   // the existing deep sanitizer.
   if(data.budgets && typeof data.budgets==='object' && !Array.isArray(data.budgets)){
     const safeBudgets={};
-    Object.keys(data.budgets).slice(0,5000).forEach(k=>{
+    if(Object.keys(data.budgets).length>5000) throw new Error('Data limit exceeded: budgets');
+    Object.keys(data.budgets).forEach(k=>{
       const safeKey=secPlain(k,220);
       if(safeKey) safeBudgets[safeKey]=secCleanDeep(data.budgets[k],1);
     });
@@ -10253,18 +10365,64 @@ function saveData(){
       expCatsCustom:expCats.filter(c=>!c.key),
       bCatsExpSave,bCatsIncSave,paySettings,netWorthSnapshots:window.netWorthSnapshots||[],
       clientUpdatedAt:window.MONGO_LOCAL_DATA_UPDATED_AT});
-    const persisted=window.MongoStorage.setJSON(getDBKey(),data);
-    if(persisted!==true) return false;
+    // PATCH55: preserve a verified prior payload before replacing the active key.
+    // This is a best-effort local protection, not a cross-key atomic transaction.
+    const savedKey=getDBKey();
+    const previousRaw=window.MongoStorage.get(savedKey,null);
+    const backupKey=savedKey+'__p55_last_good';
+    const stageKey=savedKey+'__p55_stage';
+    const storage=window.MongoStorage;
+    const same=(x,y)=>JSON.stringify(x)===JSON.stringify(y);
+    // Never overwrite a previously recoverable snapshot with invalid JSON.
+    if(previousRaw!==null && previousRaw!==undefined){
+      let prior;
+      try{prior=secParseBackup(previousRaw);}catch(err){throw new Error('Existing local data invalid; refusing overwrite');}
+      if(storage.setJSON(backupKey,prior)!==true || !same(storage.getJSON(backupKey,null),prior))
+        throw new Error('Prior local data backup not verified');
+    }
+    if(storage.setJSON(stageKey,data)!==true || !same(storage.getJSON(stageKey,null),data))
+      throw new Error('Staged local data not verified');
+    if(storage.setJSON(savedKey,data)!==true || !same(storage.getJSON(savedKey,null),data)){
+      // Restore only from verified backup. Keep backup intact if restoration fails.
+      if(previousRaw!==null && previousRaw!==undefined){
+        const recover=storage.getJSON(backupKey,null);
+        if(recover!==null && storage.setJSON(savedKey,recover)===true && same(storage.getJSON(savedKey,null),recover)){
+          throw new Error('Active local write failed; prior data restored');
+        }
+      }
+      throw new Error('Active local write failed; recovery may be required');
+    }
+    // The stage is intentionally retained until the next verified write.
     showSaveIndicator();
     return true;
-  }catch(e){console.warn('Save error:',e);return false;}
+  }catch(e){
+    console.warn('Save error:',e);
+    return false;
+  }
 }
 
 function loadData(){
   try{
-    const raw=window.MongoStorage.get(getDBKey(),null);
+    const activeKey=getDBKey();
+    const raw=window.MongoStorage.get(activeKey,null);
+    // PATCH56: missing active data is not proof of corruption. In particular,
+    // do not resurrect a deliberately cleared account from an old shadow copy.
     if(!raw)return false;
-    const data=secParseBackup(raw);
+    let data;
+    try{data=secParseBackup(raw);}catch(activeError){
+      // Recover only a demonstrably invalid active payload, from the same UID's
+      // verified previous snapshot. Never fall back to uncommitted stage data.
+      const backupKey=activeKey+'__p55_last_good';
+      const backupRaw=window.MongoStorage.get(backupKey,null);
+      if(!backupRaw)throw activeError;
+      const recovered=secParseBackup(backupRaw);
+      const storage=window.MongoStorage;
+      const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+      if(storage.setJSON(activeKey,recovered)!==true || !same(storage.getJSON(activeKey,null),recovered))
+        throw new Error('PATCH56: recovery write/readback failed; backup retained');
+      data=recovered;
+      console.warn('PATCH56: invalid active data recovered from same-key last-good snapshot');
+    }
     if(data.txns)txns=data.txns;
     if(data.goals)goals=data.goals.map(g=>({...g,history:g.history||[]}));
     if(data.debts)debts=data.debts;
@@ -11302,12 +11460,12 @@ requestAnimationFrame(()=>{
 // V42 Phase 1 — Firebase тохиргоог нэг төвлөрсөн хэсэгт хадгалав.
 // Энэ үе шат UI/UX болон одоогийн localStorage логикт өөрчлөлт хийхгүй.
 const firebaseConfig={
-  apiKey:"AIzaSyCRo7NqiN4D0VU-rPERjLkFEoE-3ieXb6A",
-  authDomain:"mongo-money-app.firebaseapp.com",
-  projectId:"mongo-money-app",
-  storageBucket:"mongo-money-app.firebasestorage.app",
-  messagingSenderId:"655482072646",
-  appId:"1:655482072646:web:16bb4fc31200ca83ef6447"
+  apiKey:"AIzaSyAigAJ66RYFb9iBW0_M9OY7q-Tr1iGju84",
+  authDomain:"mongo-patch32-test.firebaseapp.com",
+  projectId:"mongo-patch32-test",
+  storageBucket:"mongo-patch32-test.firebasestorage.app",
+  messagingSenderId:"816793319651",
+  appId:"1:816793319651:web:d65ce3bf5432022c51add6"
 };
 
 const firebaseApp = firebase.apps && firebase.apps.length
@@ -12298,6 +12456,9 @@ async function doRegister(){
 async function doLogout(){
   if(!await showConfirm(L.logoutConfirm))return;
   sessionStorage.removeItem('pendingLang');
+  ++mongoPatch34AuthEpoch;
+  document.getElementById('app-root').style.display='none';
+  mongoPatch34ClearFinancialMemory();
   window._authUid=null;
   window._authEmail='';
   window.MONGO_BILLING_STATE=null;
@@ -12310,8 +12471,31 @@ document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus();});
 document.getElementById('reg-pass2').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
 
+// PATCH34: A new auth event invalidates every earlier asynchronous bootstrap.
+let mongoPatch34AuthEpoch=0;
+function mongoPatch34ClearFinancialMemory(){
+  txns=[]; goals=[]; debts=[]; invests=[]; budgets={};
+  openingBalance=0; moneyAccounts=[]; accountTransfers=[];
+  moneyLedger=[]; moneyLedgerRevision=0; moneyLedgerTombstones=[];
+  lockedCats=new Set(); window.netWorthSnapshots=[];
+  window.MONGO_LOCAL_DATA_UPDATED_AT='';
+  window.MONGO_ACCOUNT_READY_UID=null;
+}
 // Auth төлөв хянах — нэвтэрсэн эсэхийг автоматаар мэдэгдэнэ
 auth.onAuthStateChanged(async user=>{
+  const patch34Epoch=++mongoPatch34AuthEpoch;
+  const patch34Uid=user&&user.uid;
+  // Hide previous user's financial view BEFORE any asynchronous profile calls.
+  const patch34Root=document.getElementById('app-root');
+  if(patch34Root)patch34Root.style.display='none';
+  window.MONGO_ACCOUNT_READY_UID=null;
+  const patch34StillCurrent=()=>mongoPatch34AuthEpoch===patch34Epoch &&
+    (auth.currentUser&&auth.currentUser.uid||null)===(patch34Uid||null);
+  if(window._authUid!==patch34Uid){
+    mongoPatch34ClearFinancialMemory();
+    window._authUid=null;
+  }
+
   const appRoot=document.getElementById('app-root');
   const loginPage=document.getElementById('auth-login');
   const regPage=document.getElementById('auth-register');
@@ -12335,7 +12519,12 @@ auth.onAuthStateChanged(async user=>{
       }catch(e){ console.warn('Account isolation pre-reset failed',e); }
     }
     let cloudPrefs={};
-    try{await ensureUserProfile(user); cloudPrefs=await loadCloudProfileSettings(user);}catch(e){console.warn('Möngö profile bootstrap failed',e);}
+    try{
+      await ensureUserProfile(user);
+      if(!patch34StillCurrent())return;
+      cloudPrefs=await loadCloudProfileSettings(user);
+      if(!patch34StillCurrent())return;
+    }catch(e){console.warn('Möngö profile bootstrap failed',e);if(!patch34StillCurrent())return;}
     loginPage.classList.remove('show');
     regPage.classList.remove('show');
     appRoot.style.display='block';
@@ -12354,6 +12543,7 @@ auth.onAuthStateChanged(async user=>{
 
     if(prevUid!==user.uid){
       // Өөр хэрэглэгч нэвтэрсэн — өгөгдлийг цэвэрлэж дахин ачаална
+      mongoPatch34ClearFinancialMemory();
       txns=[];goals=[];debts=[];invests=[];budgets={};
       lockedCats=new Set();
       incCats=[{key:'salary',icon:'💰',color:'#22C55E'},{key:'bonus',icon:'🎁',color:'#06B6D4'},{key:'business',icon:'💼',color:'#49B0B6'},assetIncomeDefaultCat(),{key:'other_inc',icon:'📈',color:'#64748B'}];
@@ -12387,7 +12577,9 @@ auth.onAuthStateChanged(async user=>{
       renderMongoTrialCard();
       refreshMongoTrialAccess();
     }catch(e){console.warn('Billing refresh after auth bootstrap failed',e);}
+    if(!patch34StillCurrent())return;
   } else {
+    mongoPatch34ClearFinancialMemory();
     appRoot.style.display='none';
     loginPage.classList.add('show');
     regPage.classList.remove('show');
@@ -12577,7 +12769,7 @@ auth.onAuthStateChanged(async user=>{
   const META_KEY_PREFIX='mongo_sync_meta_';
   const LOCAL_UPDATED_KEY_PREFIX='mongo_local_updated_';
   const CLEAR_BARRIER_KEY_PREFIX='mongo_clear_barrier_';
-  const MAX_QUEUE=40;
+  const MAX_QUEUE=40; // Diagnostic threshold only; never discard queued saves.
   const MAX_RETRY=5;
   const BASE_RETRY_MS=1200;
   let cloudSaveTimer=null;
@@ -12596,6 +12788,76 @@ auth.onAuthStateChanged(async user=>{
     const uid=currentUid();
     return !!uid && window._authUid===uid && window.MONGO_ACCOUNT_READY_UID===uid;
   }
+  // PATCH07: durable, UID-scoped fail-closed incident marker. No financial data stored here.
+  const PATCH07_PREFIX='mongo_cloud_incident_v1_';
+  function patch07Key(uid){return PATCH07_PREFIX+uid;}
+  // PATCH18: sessionStorage is a second, same-tab safety marker when localStorage
+  // cannot be written. It survives reload in the same tab, NOT browser closure.
+  // Server-side durable incident tracking remains required for full protection.
+  function patch18SessionRead(uid){
+    try{return sessionStorage.getItem(patch07Key(uid));}
+    catch(e){window.MONGO_PATCH07_SESSION_ERROR=String(e&&e.message||e);return '__STORAGE_UNAVAILABLE__';}
+  }
+  function patch07Persist(uid,reason,detail){
+    if(!uid)return false;
+    const marker={schema:1,uid,at:nowIso(),reason:String(reason||'UNKNOWN').slice(0,100),
+      detail:detail&&typeof detail==='object'?detail:null};
+    window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+    window.MONGO_PATCH07_INCIDENT=marker;
+    const serialized=JSON.stringify(marker);
+    let durable=false;
+    try{localStorage.setItem(patch07Key(uid),serialized);durable=true;}
+    catch(e){window.MONGO_PATCH07_STORAGE_ERROR=String(e&&e.message||e);}
+    // Keep a tab-scoped copy even if durable storage succeeds, to detect
+    // localStorage being cleared while the same tab is still open.
+    try{sessionStorage.setItem(patch07Key(uid),serialized);}
+    catch(e){window.MONGO_PATCH07_SESSION_ERROR=String(e&&e.message||e);}
+    if(!durable)window.MONGO_PATCH18_DURABILITY_WARNING=true;
+    return durable;
+  }
+  function patch07HasIncident(uid){
+    if(!uid)return false;
+    if(window.MONGO_PATCH07_INCIDENT&&window.MONGO_PATCH07_INCIDENT.uid===uid)return true;
+    try{
+      const durable=localStorage.getItem(patch07Key(uid));
+      const tab=patch18SessionRead(uid);
+      return durable!==null || tab!==null;
+    }catch(e){window.MONGO_PATCH07_STORAGE_ERROR=String(e&&e.message||e);return true;}
+  }
+  function patch07Restore(uid){
+    if(!uid)return false;
+    // Never carry another account's in-memory incident into this account.
+    window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=false;
+    window.MONGO_PATCH05_REPAIR_REQUIRED=null;
+    window.MONGO_PATCH07_INCIDENT=null;
+    try{
+      const durable=localStorage.getItem(patch07Key(uid));
+      const tab=patch18SessionRead(uid);
+      const raw=durable || tab;
+      if(raw===null)return false;
+      let marker;
+      try{marker=JSON.parse(raw);}catch(e){marker={schema:1,uid,reason:'INVALID_PERSISTED_INCIDENT'};}
+      if(!marker||marker.uid!==uid)marker={schema:1,uid,reason:'INVALID_PERSISTED_INCIDENT'};
+      window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+      window.MONGO_PATCH07_INCIDENT=marker;
+      if(!durable)window.MONGO_PATCH18_DURABILITY_WARNING=true;
+      updateSyncStatus('error','Өмнөх хадгалалтын зөрчил илэрсэн: шалгах хүртэл хадгалалтыг зогсоов');
+      return true;
+    }catch(e){
+      // Storage read failure means the previous incident state cannot be ruled out.
+      window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+      window.MONGO_PATCH07_INCIDENT={schema:1,uid,reason:'INCIDENT_STORAGE_UNAVAILABLE'};
+      window.MONGO_PATCH07_STORAGE_ERROR=String(e&&e.message||e);
+      return true;
+    }
+  }
+  window.MONGO_PATCH07_INCIDENT_STATUS=function(){
+    const uid=currentUid();
+    return {uid,blocked:!!window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED,
+      incident:window.MONGO_PATCH07_INCIDENT||null,
+      storageError:window.MONGO_PATCH07_STORAGE_ERROR||null};
+  };
+  // PATCH07 intentionally has no automatic unlock or clear method.
   function cloudDocRef(uidOverride){
     const uid=uidOverride||currentUid(); if(!uid) return null;
     // V43.32: use the app's established user-scoped appState/main path as the
@@ -12664,11 +12926,44 @@ auth.onAuthStateChanged(async user=>{
     try{localStorage.setItem(uidKey(LOCAL_UPDATED_KEY_PREFIX),v);}catch(e){}
     return v;
   }
+  // PATCH65: a damaged or unreadable deletion barrier must NEVER mean no barrier.
   function getClearBarrier(){
-    try{return JSON.parse(localStorage.getItem(uidKey(CLEAR_BARRIER_KEY_PREFIX))||'null');}catch(e){return null;}
+    const uid=currentUid();
+    if(!uid)throw new Error('PATCH65_BARRIER_UID_REQUIRED');
+    try{
+      const raw=localStorage.getItem(uidKey(CLEAR_BARRIER_KEY_PREFIX));
+      if(raw===null)return null;
+      const value=JSON.parse(raw);
+      if(!value || typeof value!=='object' || Array.isArray(value) ||
+         typeof value.clearedAt!=='string' || !Number.isFinite(Date.parse(value.clearedAt)) ||
+         !value.data || typeof value.data!=='object' || Array.isArray(value.data) ||
+         (value.ownerUid && value.ownerUid!==uid) || !clearPayloadIsEmpty(value.data))
+        throw new Error('PATCH65_BARRIER_INVALID');
+      return value;
+    }catch(e){
+      updateSyncStatus('error','Устгалын хамгаалалтыг уншиж чадсангүй');
+      throw new Error('PATCH65_BARRIER_READ_BLOCKED');
+    }
   }
+  // PATCH88: fail closed if the deletion barrier cannot be durably persisted.
   function saveClearBarrier(clearedAt,data){
-    try{localStorage.setItem(uidKey(CLEAR_BARRIER_KEY_PREFIX),JSON.stringify({clearedAt,data}));}catch(e){}
+    const uid=currentUid();
+    if(!uid)throw new Error('PATCH88_BARRIER_UID_REQUIRED');
+    const key=uidKey(CLEAR_BARRIER_KEY_PREFIX);
+    const payload={clearedAt,data,ownerUid:uid};
+    try{
+      const serialized=JSON.stringify(payload);
+      localStorage.setItem(key,serialized);
+      const stored=localStorage.getItem(key);
+      if(stored!==serialized)throw new Error('PATCH88_BARRIER_READBACK_MISMATCH');
+      const verified=getClearBarrier();
+      if(!verified || verified.clearedAt!==clearedAt || verified.ownerUid!==uid)
+        throw new Error('PATCH88_BARRIER_VERIFY_FAILED');
+      return true;
+    }catch(e){
+      updateSyncStatus('error','Устгалын хамгаалалтыг хадгалж чадсангүй');
+      throw new Error('PATCH88_BARRIER_SAVE_BLOCKED');
+    }
   }
 
   function clearPayloadIsEmpty(data){
@@ -12706,44 +13001,105 @@ auth.onAuthStateChanged(async user=>{
     return {verified:issues.length===0,issues};
   }
 
+  // PATCH08: queue reads must never silently turn a damaged or inaccessible
+  // queue into an empty one. Reading must not delete pending entries either.
   function getQueue(){
+    const uid=currentUid();
     try{
-      const raw=JSON.parse(localStorage.getItem(uidKey(QUEUE_KEY_PREFIX))||'[]').filter(Boolean);
-      const barrier=getClearBarrier();
-      const filtered=window.MongoCloud.filterQueueAfterClear(raw,barrier);
-      if(filtered.length!==raw.length)localStorage.setItem(uidKey(QUEUE_KEY_PREFIX),JSON.stringify(filtered.slice(-MAX_QUEUE)));
-      return filtered;
-    }catch(e){ return []; }
+      const stored=localStorage.getItem(uidKey(QUEUE_KEY_PREFIX));
+      const parsed=stored===null?[]:JSON.parse(stored);
+      if(!Array.isArray(parsed)||parsed.some(item=>!item||typeof item!=='object'))
+        throw new Error('QUEUE_INVALID_STRUCTURE');
+      // Do not apply a clear barrier destructively while reading. Reconciliation
+      // must account for every original pending item, including old tombstones.
+      return parsed;
+    }catch(e){
+      patch07Persist(uid,'QUEUE_READ_FAILED',{message:safeStr(e&&e.message||String(e),100)});
+      updateSyncStatus('error','Хүлээгдэж буй өгөгдлийг уншиж чадсангүй');
+      throw new Error('PATCH08_QUEUE_READ_BLOCKED');
+    }
+  }
+  // PATCH11: A green Cloud status requires a confirmed write/read for this UID,
+  // no unresolved local persistence error and no pending safety incident.
+  let patch11ConfirmedUid='';
+  function patch11ConfirmCloud(uid){
+    if(uid && uid===currentUid()) patch11ConfirmedUid=uid;
+  }
+  // PATCH12: A confirmed Cloud write is not sufficient for a green indicator
+  // while another local change is pending. Inspect the UID-scoped queue without
+  // calling getQueue(), which updates the status and would recurse here.
+  function patch12PendingQueueState(uid){
+    if(!uid) return 'unknown';
+    try{
+      const raw=localStorage.getItem(QUEUE_KEY_PREFIX+uid);
+      if(raw===null) return 'empty';
+      const items=JSON.parse(raw);
+      if(!Array.isArray(items)||items.some(item=>!item||typeof item!=='object')) return 'invalid';
+      return items.length?'pending':'empty';
+    }catch(e){return 'invalid';}
+  }
+  function patch11SafeStatus(status){
+    if(status!=='synced') return status;
+    const uid=currentUid();
+    if(window.MONGO_LOCAL_PERSIST_ERROR || window.MONGO_QUEUE_PERSIST_ERROR ||
+       window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED || patch07HasIncident(uid)) return 'error';
+    if(!uid || patch11ConfirmedUid!==uid) return 'waiting';
+    const queueState=patch12PendingQueueState(uid);
+    if(queueState==='invalid'||queueState==='unknown') return 'error';
+    if(queueState==='pending') return 'pending';
+    if(!navigator.onLine) return 'pending';
+    return 'synced';
   }
   function setQueue(q){
-    try{ localStorage.setItem(uidKey(QUEUE_KEY_PREFIX), JSON.stringify(safeArray(q).slice(-MAX_QUEUE))); }catch(e){}
+    try{ localStorage.setItem(uidKey(QUEUE_KEY_PREFIX), JSON.stringify(safeArray(q))); }catch(e){ window.MONGO_QUEUE_PERSIST_ERROR=(e&&e.message)||String(e); updateSyncStatus('error'); throw new Error('QUEUE_PERSIST_FAILED'); }
     updateSyncStatus(q&&q.length?'pending':(navigator.onLine?'synced':'offline'));
+  }
+  // PATCH10: Do not silently report a successful local snapshot if storage
+  // rejected it. Diagnostics contain no financial data or user identifiers.
+  function patch10LocalPersistFailure(kind,e){
+    const diagnostic={kind:kind,code:safeStr(e&&e.name||'STORAGE_ERROR',60),
+      message:safeStr(e&&e.message||String(e),160),at:nowIso()};
+    window.MONGO_LOCAL_PERSIST_ERROR=diagnostic;
+    try{console.error('[Möngö] Local persistence failed:',diagnostic);}catch(_e){}
+    try{updateSyncStatus('error','Төхөөрөмжид хадгалж чадсангүй');}catch(_e){}
+    return false;
   }
   function saveSnapshot(data,cloudMeta){
     try{
       localStorage.setItem(uidKey(SNAP_KEY_PREFIX), JSON.stringify({version:CLOUD_FINANCIAL_VERSION,savedAt:nowIso(),cloudMeta:cloudMeta||{},data:data||collectFinancialState()}));
-    }catch(e){}
+      return true;
+    }catch(e){return patch10LocalPersistFailure('snapshot',e);}
   }
   function getSnapshot(){
     try{ return JSON.parse(localStorage.getItem(uidKey(SNAP_KEY_PREFIX))||'null'); }catch(e){ return null; }
   }
-  function saveMeta(meta){ try{ localStorage.setItem(uidKey(META_KEY_PREFIX), JSON.stringify(Object.assign({updatedAt:nowIso()},meta||{}))); }catch(e){} }
+  function saveMeta(meta){ try{ localStorage.setItem(uidKey(META_KEY_PREFIX), JSON.stringify(Object.assign({updatedAt:nowIso()},meta||{}))); return true; }catch(e){return patch10LocalPersistFailure('metadata',e);} }
 
   function updateSyncStatus(status, detail){
-    syncStatus=status||syncStatus;
+    // PATCH14: errors/incident locks always outrank pending/offline status.
+    // Network loss alone is yellow; a failed local persistence or safety incident is red.
+    const patch14Uid=currentUid();
+    const patch14Unsafe=!!(window.MONGO_LOCAL_PERSIST_ERROR || window.MONGO_QUEUE_PERSIST_ERROR ||
+      window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED || (patch14Uid && patch07HasIncident(patch14Uid)));
+    if(patch14Unsafe) status='error';
+    else if(status==='offline') status='pending';
+    syncStatus=patch11SafeStatus(status||syncStatus);
     const el=document.getElementById('mongo-sync-status');
     const dot=document.getElementById('mongo-sync-dot');
     const txt=document.getElementById('mongo-sync-text');
     if(!el) return;
     const map={
-      synced:{label:{mn:'Cloud хадгалсан',en:'Cloud saved',zh:'已云端保存',ja:'クラウド保存済み',ko:'클라우드 저장됨',ru:'Сохранено в облаке',de:'Cloud gespeichert'},icon:'●',cls:'synced'},
-      pending:{label:{mn:'Sync хүлээгдэж байна',en:'Sync pending',zh:'等待同步',ja:'同期待ち',ko:'동기화 대기',ru:'Ожидает синхронизации',de:'Sync wartet'},icon:'●',cls:'pending'},
+      synced:{label:{mn:'Үүлэнд хадгалагдсан',en:'Cloud saved',zh:'已云端保存',ja:'クラウド保存済み',ko:'클라우드 저장됨',ru:'Сохранено в облаке',de:'Cloud gespeichert'},icon:'●',cls:'synced'},
+      pending:{label:{mn:'Хадгалалт хүлээгдэж байна',en:'Sync pending',zh:'等待同步',ja:'同期待ち',ko:'동기화 대기',ru:'Ожидает синхронизации',de:'Sync wartet'},icon:'●',cls:'pending'},
       offline:{label:{mn:'Offline — түр хадгалсан',en:'Offline — saved locally',zh:'离线—本地保存',ja:'オフライン—端末保存',ko:'오프라인—로컬 저장',ru:'Офлайн — сохранено локально',de:'Offline — lokal gespeichert'},icon:'●',cls:'offline'},
-      error:{label:{mn:'Cloud алдаа — дахин оролдоно',en:'Cloud error — retrying',zh:'云端错误—重试中',ja:'クラウドエラー—再試行',ko:'클라우드 오류—재시도',ru:'Ошибка облака — повтор',de:'Cloud-Fehler — erneuter Versuch'},icon:'●',cls:'error'},
-      waiting:{label:{mn:'Sync бэлдэж байна',en:'Preparing sync',zh:'准备同步',ja:'同期準備中',ko:'동기화 준비 중',ru:'Подготовка синхронизации',de:'Sync wird vorbereitet'},icon:'●',cls:'waiting'}
+      error:{label:{mn:'Хадгалагдаагүй — алдаа гарсан',en:'Cloud error — retrying',zh:'云端错误—重试中',ja:'クラウドエラー—再試行',ko:'클라우드 오류—재시도',ru:'Ошибка облака — повтор',de:'Cloud-Fehler — erneuter Versuch'},icon:'●',cls:'error'},
+      waiting:{label:{mn:'Хадгалалт хүлээгдэж байна',en:'Preparing sync',zh:'准备同步',ja:'同期準備中',ko:'동기화 준비 중',ru:'Подготовка синхронизации',de:'Sync wird vorbereitet'},icon:'●',cls:'waiting'}
     };
     const m=map[syncStatus]||map.waiting; const l=(typeof lang!=='undefined'?lang:'mn');
-    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon; if(txt)txt.textContent=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
+    el.className='mongo-sync-status '+m.cls; if(dot)dot.textContent=m.icon;
+    const accessible=(m.label[l]||m.label.mn)+(detail?(' · '+detail):'');
+    el.setAttribute('aria-label',accessible); el.setAttribute('title',accessible);
+    if(txt)txt.textContent=accessible;
   }
 
   function ensureSyncStatusUI(){
@@ -12751,7 +13107,7 @@ auth.onAuthStateChanged(async user=>{
     const style=document.createElement('style');
     style.textContent=`
       .mongo-sync-status{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:7px 10px;border-radius:999px;border:1px solid rgba(73,176,182,.18);background:rgba(255,255,255,.72);color:#6B7280;font-size:10.5px;font-weight:900;box-shadow:0 6px 16px rgba(31,127,134,.07);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
-      .mongo-sync-status #mongo-sync-dot{font-size:12px;line-height:1}.mongo-sync-status.synced{color:#08724F;background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.18)}.mongo-sync-status.synced #mongo-sync-dot{color:#16A34A}.mongo-sync-status.pending{color:#B7791F;background:rgba(247,210,74,.13);border-color:rgba(183,121,31,.18)}.mongo-sync-status.pending #mongo-sync-dot{color:#F59E0B}.mongo-sync-status.offline,.mongo-sync-status.error{color:#B91C1C;background:rgba(252,235,235,.78);border-color:rgba(185,28,28,.18)}.mongo-sync-status.offline #mongo-sync-dot,.mongo-sync-status.error #mongo-sync-dot{color:#EF4444}.mongo-sync-status.waiting #mongo-sync-dot{color:#49B0B6}
+      .mongo-sync-status #mongo-sync-dot{font-size:12px;line-height:1}.mongo-sync-status.synced{color:#08724F;background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.18)}.mongo-sync-status.synced #mongo-sync-dot{color:#16A34A}.mongo-sync-status.pending{color:#B7791F;background:rgba(247,210,74,.13);border-color:rgba(183,121,31,.18)}.mongo-sync-status.pending #mongo-sync-dot{color:#F59E0B}.mongo-sync-status.offline{color:#B7791F;background:rgba(247,210,74,.13);border-color:rgba(183,121,31,.18)}.mongo-sync-status.offline #mongo-sync-dot{color:#F59E0B}.mongo-sync-status.error{color:#B91C1C;background:rgba(252,235,235,.78);border-color:rgba(185,28,28,.18)}.mongo-sync-status.error #mongo-sync-dot{color:#EF4444}.mongo-sync-status.waiting #mongo-sync-dot{color:#F59E0B}
       @media(max-width:520px){.mongo-sync-status{max-width:118px;padding:7px 8px;font-size:9.5px}.mongo-sync-status #mongo-sync-text{overflow:hidden;text-overflow:ellipsis}}
       @media(max-width:0px){.mongo-sync-status{background:rgba(255,255,255,.06);border-color:rgba(116,215,220,.14)}}`;
     document.head.appendChild(style);
@@ -12792,13 +13148,13 @@ auth.onAuthStateChanged(async user=>{
   function sanitizeFinancialData(payload){
     const p=safeObj(payload);
     const out={
-      txns:safeArray(p.txns).map(sanitizeTxn).filter(t=>t.amount>=0).slice(-5000),
-      goals:safeArray(p.goals).map(sanitizeMoneyItem).slice(-500),
-      debts:safeArray(p.debts).map(sanitizeMoneyItem).slice(-500),
-      invests:safeArray(p.invests).map(sanitizeMoneyItem).slice(-500),
+      txns:safeArray(p.txns).map(sanitizeTxn).filter(t=>t.amount>=0),
+      goals:safeArray(p.goals).map(sanitizeMoneyItem),
+      debts:safeArray(p.debts).map(sanitizeMoneyItem),
+      invests:safeArray(p.invests).map(sanitizeMoneyItem),
       budgets:safeObj(p.budgets),
       openingBalance:Math.max(0,safeNum(p.openingBalance)),
-      moneyAccounts:safeArray(p.moneyAccounts).slice(0,100),accountTransfers:safeArray(p.accountTransfers).slice(-5000),moneyLedger:safeArray(p.moneyLedger).slice(-12000),moneyLedgerRevision:Math.max(0,Math.round(safeNum(p.moneyLedgerRevision))),moneyLedgerTombstones:safeArray(p.moneyLedgerTombstones).slice(-12000),
+      moneyAccounts:safeArray(p.moneyAccounts),accountTransfers:safeArray(p.accountTransfers),moneyLedger:safeArray(p.moneyLedger),moneyLedgerRevision:Math.max(0,Math.round(safeNum(p.moneyLedgerRevision))),moneyLedgerTombstones:safeArray(p.moneyLedgerTombstones),
       lang:safeStr(p.lang||'mn',5),
       budgetMonth:Math.min(12,Math.max(1,parseInt(p.budgetMonth||new Date().getMonth()+1,10)||1)),
       budgetYear:Math.min(2100,Math.max(2020,parseInt(p.budgetYear||new Date().getFullYear(),10)||new Date().getFullYear())),
@@ -12883,8 +13239,17 @@ auth.onAuthStateChanged(async user=>{
 
   function enqueueSave(reason,data){
     if(clearingFinancialData||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)return null;
+    // PATCH65: blocked writes are not added to a retry queue either.
+    try{if(getClearBarrier())return null;}
+    catch(e){updateSyncStatus('error');return null;}
+    // PATCH94: bind every newly queued snapshot to the trusted epoch at creation.
+    // Missing or untrusted epoch is not safe to replay after a remote clear.
+    const uid=currentUid();
+    const originEpoch=patch69ReadPin(uid);
+    if(originEpoch===null)throw new Error('PATCH94_UNPINNED_QUEUE_CREATION_BLOCKED');
     const q=getQueue();
-    const payload={id:opId(),type:'saveFinancialData',reason:reason||'auto',createdAt:nowIso(),tryCount:0,data:data||collectFinancialState()};
+    const payload={id:opId(),type:'saveFinancialData',reason:reason||'auto',createdAt:nowIso(),tryCount:0,
+      ownerUid:uid,originClearEpoch:originEpoch,data:data||collectFinancialState()};
     const fp=fingerprint(payload.data);
     const exists=q.some(x=>x.fp===fp);
     if(!exists) q.push(Object.assign(payload,{fp}));
@@ -13264,6 +13629,178 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v160AttachButton);
   else v160AttachButton();
 
+  // PATCH38 — read-only account ID comparison, no state application or persistence.
+  window.MONGO_PATCH38_ACCOUNT_DIFF=async function(){
+    const btn=document.getElementById('mongo-patch38-account-diff');if(btn)btn.disabled=true;
+    const uidAtStart=currentUid();
+    if(!uidAtStart){alert('PATCH38: Эхлээд нэвтэрнэ үү.');if(btn)btn.disabled=false;return;}
+    try{
+      const local=collectFinancialState();
+      const ref=cloudDocRef(uidAtStart);
+      if(!ref)throw new Error('Cloud эх сурвалж олдсонгүй');
+      const snap=await ref.get({source:'server'});
+      if(currentUid()!==uidAtStart){alert('PATCH38: Хэрэглэгч солигдсон тул үр дүнг харуулахгүй.');return;}
+      if(!snap.exists){alert('PATCH38: appState/main Cloud баримт байхгүй.');return;}
+      const raw=snap.data()||{};
+      if(!raw.data||!Array.isArray(raw.data.moneyAccounts))throw new Error('Cloud moneyAccounts массив байхгүй');
+      const cloud=decodeCloudValue(raw.data);
+      const a=Array.isArray(local.moneyAccounts)?local.moneyAccounts:[];
+      const b=Array.isArray(cloud.moneyAccounts)?cloud.moneyAccounts:[];
+      const key=x=>String(x&&x.id!=null?x.id:'');
+      const map=(items)=>{const m=new Map();items.forEach(x=>{const k=key(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x);});return m;};
+      const am=map(a),bm=map(b);
+      const fmt=x=>{if(!x)return '—';const id=key(x);return String(x.name||'(нэргүй)').slice(0,60)+' | ID: '+(id||'(байхгүй)').slice(-16)+' | эхний ₮'+Number(x.openingBalance||0).toLocaleString('en-US')+' | '+(x.legacy?'legacy ':'')+(x.active===false?'идэвхгүй':'идэвхтэй');};
+      const keys=[...new Set([...am.keys(),...bm.keys()])].sort();
+      const out=['PATCH38 — ДАНСНЫ ID ХАРЬЦУУЛАЛТ','ЗӨВХӨН УНШИХ. FIRESTORE-Д БИЧИХГҮЙ.','UID: …'+uidAtStart.slice(-6),'Cloud: appState/main (server)','Локал данс: '+a.length+'; Cloud данс: '+b.length,''];
+      let same=0,diff=0;
+      for(const k of keys){const la=am.get(k)||[],cb=bm.get(k)||[];
+        const l=la[0],c=cb[0];
+        const fields=['name','openingBalance','type','active','legacy','startDate'];
+        const changes=l&&c?fields.filter(f=>String(l[f]??'')!==String(c[f]??'')):[];
+        const status=!k?'ID БАЙХГҮЙ':la.length>1||cb.length>1?'ДАВХАРДСАН ID':!l?'ЗӨВХӨН CLOUD':!c?'ЗӨВХӨН ЛОКАЛ':changes.length?'ТАЛБАР ЗӨРСӨН: '+changes.join(', '):'ИЖИЛ';
+        if(status==='ИЖИЛ')same++;else diff++;
+        out.push(status,'  LOCAL: '+fmt(l),'  CLOUD: '+fmt(c),'');
+      }
+      out.push('Ижил ID/талбар: '+same+'; зөрүүтэй: '+diff,'Анхаар: ID-ийн сүүлийн 16 тэмдэгтийг л харуулсан.','Энэ нь хадгалалтын хориг тайлахгүй, өгөгдөл нэгтгэхгүй.');
+      if(currentUid()===uidAtStart)alert(out.join('\n'));
+    }catch(e){if(currentUid()===uidAtStart)alert('PATCH38 алдаа: '+String(e&&e.message||e).slice(0,180));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function patch38Attach(){if(document.getElementById('mongo-patch38-account-diff'))return;
+    const b=document.createElement('button');b.id='mongo-patch38-account-diff';b.type='button';b.textContent='PATCH38 ДАНСНЫ ID ХАРЬЦУУЛАХ';
+    b.style.cssText='position:fixed;right:12px;bottom:560px;z-index:2147483646;background:#215a64;color:#fff;border:2px solid #fff;border-radius:20px;padding:8px 10px;font-size:11px;font-weight:700';
+    b.onclick=window.MONGO_PATCH38_ACCOUNT_DIFF;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',patch38Attach);else patch38Attach();
+
+  // PATCH39 — read-only pre-merge risk audit. Never applies state or changes persistence.
+  window.MONGO_PATCH39_PREMERGE_AUDIT=async function(){
+    const btn=document.getElementById('mongo-patch39-premerge');if(btn)btn.disabled=true;
+    const start=currentUid();if(!start){alert('PATCH39: Эхлээд нэвтэрнэ үү.');if(btn)btn.disabled=false;return;}
+    try{
+      const local=collectFinancialState();const ref=cloudDocRef(start);
+      if(!ref)throw new Error('Cloud баримтын холбоос байхгүй');
+      const snap=await ref.get({source:'server'});
+      if(currentUid()!==start)return;
+      if(!snap.exists)throw new Error('Cloud appState/main баримт байхгүй');
+      const raw=snap.data()||{};
+      if(!raw.data||!Array.isArray(raw.data.moneyAccounts))throw new Error('Cloud өгөгдлийн бүтэц буруу');
+      const cloud=decodeCloudValue(raw.data);
+      const id=x=>String(x&&x.id!=null?x.id:'');
+      const arr=(s,k)=>Array.isArray(s[k])?s[k]:[];
+      const keys=['moneyAccounts','txns','accountTransfers','moneyLedger','moneyLedgerTombstones','goals','debts','invests'];
+      const lines=['PATCH39 — НЭГТГЭХЭЭС ӨМНӨХ ЭРСДЭЛ','ЗӨВХӨН УНШИХ — НЭГТГЭХГҮЙ, ХАДГАЛАХГҮЙ','UID: …'+start.slice(-6),'Cloud: appState/main (server)',''];
+      let conflicts=0;
+      for(const k of keys){
+        const a=arr(local,k),b=arr(cloud,k);
+        const idsA=new Set(a.map(id).filter(Boolean)),idsB=new Set(b.map(id).filter(Boolean));
+        const onlyA=[...idsA].filter(x=>!idsB.has(x)).length,onlyB=[...idsB].filter(x=>!idsA.has(x)).length;
+        const duplicates=x=>x.length-new Set(x.map(id).filter(Boolean)).size-x.filter(v=>!id(v)).length;
+        const missingA=a.filter(x=>!id(x)).length,missingB=b.filter(x=>!id(x)).length;
+        if(onlyA||onlyB||duplicates(a)||duplicates(b)||missingA||missingB)conflicts++;
+        lines.push(k+': локал '+a.length+', Cloud '+b.length+' | зөвхөн локал '+onlyA+', зөвхөн Cloud '+onlyB+' | давхар ID '+duplicates(a)+'/'+duplicates(b)+' | ID үгүй '+missingA+'/'+missingB);
+      }
+      const audit=(label,state)=>{
+        const accounts=new Set(arr(state,'moneyAccounts').map(id).filter(Boolean));
+        const refs=[];
+        const check=(kind,x,field)=>{const v=x&&x[field];if(v==null||v==='')return;
+          const value=String(v);if(value.startsWith('asset:')||value.startsWith('goal:')||value.startsWith('loan:')||value.startsWith('investment:'))return;
+          if(!accounts.has(value))refs.push(kind+'.'+field);
+        };
+        arr(state,'txns').forEach(x=>check('txns',x,'accountId'));
+        arr(state,'accountTransfers').forEach(x=>{check('accountTransfers',x,'fromId');check('accountTransfers',x,'toId');});
+        arr(state,'moneyLedger').forEach(x=>{check('moneyLedger',x,'accountId');check('moneyLedger',x,'fromAccountId');check('moneyLedger',x,'toAccountId');});
+        lines.push(label+': шалгасан дансны холбоосын олдоогүй лавлагаа '+refs.length+(refs.length?' ('+[...new Set(refs)].slice(0,8).join(', ')+')':''));
+      };
+      lines.push('');audit('Локал',local);audit('Cloud',cloud);
+      const allIds=(s)=>new Set(arr(s,'moneyLedger').map(id).filter(Boolean));
+      const tomb=(s)=>arr(s,'moneyLedgerTombstones').map(id).filter(Boolean);
+      lines.push('Локал: устгасан тэмдэглэгээ ба идэвхтэй ledger ID давхцал '+tomb(local).filter(x=>allIds(local).has(x)).length);
+      lines.push('Cloud: устгасан тэмдэглэгээ ба идэвхтэй ledger ID давхцал '+tomb(cloud).filter(x=>allIds(cloud).has(x)).length);
+      lines.push('','Зөрүүтэй/анхаарах цуглуулга: '+conflicts+' / '+keys.length,
+        'Энэ шалгалт бүх төрлийн холбоос, үлдэгдлийн тооцоог бүрэн баталгаажуулахгүй.',
+        'Дансны тоо ижил байсан ч ID зөрвөл автомат дарж бичих АЮУЛТАЙ.',
+        'ЯМАР Ч НЭГТГЭЛ, БИЧИЛТ, ХОРИГ ТАЙЛАЛТ ХИЙГЭЭГҮЙ.');
+      if(currentUid()===start)alert(lines.join('\n'));
+    }catch(e){if(currentUid()===start)alert('PATCH39 алдаа: '+String(e&&e.message||e).slice(0,180));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function patch39Attach(){if(document.getElementById('mongo-patch39-premerge'))return;
+    const b=document.createElement('button');b.id='mongo-patch39-premerge';b.type='button';b.textContent='PATCH39 НЭГТГЭХ ЭРСДЭЛ';
+    b.style.cssText='position:fixed;right:12px;bottom:605px;z-index:2147483646;background:#215a64;color:#fff;border:2px solid #fff;border-radius:20px;padding:8px 10px;font-size:11px;font-weight:700';
+    b.onclick=window.MONGO_PATCH39_PREMERGE_AUDIT;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',patch39Attach);else patch39Attach();
+
+  // PATCH40 — dry-run only. Computes a temporary projection; no mutation or persistence.
+  window.MONGO_PATCH40_DRY_RUN=async function(){
+    const btn=document.getElementById('mongo-patch40-dry-run');if(btn)btn.disabled=true;
+    const uid=currentUid();if(!uid){alert('PATCH40: Эхлээд нэвтэрнэ үү.');if(btn)btn.disabled=false;return;}
+    try{
+      const local=collectFinancialState(),ref=cloudDocRef(uid);
+      if(!ref)throw new Error('Cloud баримтын холбоос байхгүй');
+      const snap=await ref.get({source:'server'});
+      if(currentUid()!==uid)return;
+      if(!snap.exists)throw new Error('appState/main Cloud баримт байхгүй');
+      const raw=snap.data()||{};
+      if(!raw.data||!Array.isArray(raw.data.moneyAccounts))throw new Error('Cloud өгөгдлийн бүтэц буруу');
+      const cloud=decodeCloudValue(raw.data);
+      const collections=['moneyAccounts','txns','accountTransfers','moneyLedger','moneyLedgerTombstones','goals','debts','invests'];
+      const arr=(x,k)=>Array.isArray(x&&x[k])?x[k]:[];
+      const id=x=>x&&x.id!=null?String(x.id):'';
+      const lines=['PATCH40 — НЭГТГЭЛИЙН ХУУРАЙ ТУРШИЛТ','ЗӨВХӨН УНШИНА. БИЧИЛТ / НЭГТГЭЛ / ХОРИГ ТАЙЛАЛТ ХИЙХГҮЙ.','UID: …'+uid.slice(-6),'Cloud: appState/main (server)',''];
+      let blockers=0;
+      for(const k of collections){
+        const a=arr(local,k),b=arr(cloud,k),am=new Map(),bm=new Map();
+        for(const x of a){const key=id(x);if(key)am.set(key,(am.get(key)||0)+1);}
+        for(const x of b){const key=id(x);if(key)bm.set(key,(bm.get(key)||0)+1);}
+        const missA=a.filter(x=>!id(x)).length,missB=b.filter(x=>!id(x)).length;
+        const dupA=[...am.values()].filter(n=>n>1).length,dupB=[...bm.values()].filter(n=>n>1).length;
+        const onlyA=[...am.keys()].filter(x=>!bm.has(x)).length;
+        const onlyB=[...bm.keys()].filter(x=>!am.has(x)).length;
+        const both=[...am.keys()].filter(x=>bm.has(x)).length;
+        const projectedUnique=new Set([...am.keys(),...bm.keys()]).size;
+        if(missA||missB||dupA||dupB)blockers++;
+        lines.push(k+': локал '+a.length+' / Cloud '+b.length+' → боломжит давтагдахгүй ID '+projectedUnique,
+          '  зөвхөн локал '+onlyA+', зөвхөн Cloud '+onlyB+', хоёр талд '+both,
+          '  ID үгүй '+missA+'/'+missB+', давхардсан ID '+dupA+'/'+dupB);
+      }
+      const aa=arr(local,'moneyAccounts'),bb=arr(cloud,'moneyAccounts');
+      const accountMap=new Map();
+      for(const x of bb){if(id(x))accountMap.set(id(x),x);}
+      for(const x of aa){if(id(x)&&!accountMap.has(id(x)))accountMap.set(id(x),x);}
+      const opening=x=>{const v=Number(x&&x.openingBalance);return Number.isFinite(v)?v:NaN;};
+      const display=x=>Number.isFinite(x)?'₮'+x.toLocaleString('en-US'):'ТООН АЛДАА';
+      const sum=x=>x.reduce((total,v)=>total+opening(v),0);
+      const sumLocal=sum(aa.filter(x=>x&&x.active!==false&&!x.legacy));
+      const sumCloud=sum(bb.filter(x=>x&&x.active!==false&&!x.legacy));
+      const unionAccounts=[...accountMap.values()].filter(x=>x&&x.active!==false&&!x.legacy);
+      const sumUnion=sum(unionAccounts);
+      lines.push('','ДАНСНЫ ТҮР ТӨСӨӨЛӨЛ (зөвхөн ID-аар, Cloud ижил ID давуу):',
+        'Идэвхтэй, legacy бус данс: локал '+aa.filter(x=>x&&x.active!==false&&!x.legacy).length+', Cloud '+bb.filter(x=>x&&x.active!==false&&!x.legacy).length+', боломжит нийлбэр '+unionAccounts.length,
+        'Эхний үлдэгдлийн нийлбэр: локал '+display(sumLocal)+' / Cloud '+display(sumCloud)+' / түр төсөөлөл '+display(sumUnion),
+        'АНХААР: Энэ нь бодит мөнгөн үлдэгдэл биш. Ижил мөнгө давхар тоологдсон байж болно.');
+      const aIds=new Set(aa.map(id).filter(Boolean)),bIds=new Set(bb.map(id).filter(Boolean));
+      const onlyLocal=aa.filter(x=>id(x)&&!bIds.has(id(x))),onlyCloud=bb.filter(x=>id(x)&&!aIds.has(id(x)));
+      for(const [label,items] of [['Зөвхөн локал данс',onlyLocal],['Зөвхөн Cloud данс',onlyCloud]]){
+        for(const x of items.slice(0,8))lines.push(label+': '+String(x.name||'(нэргүй)').slice(0,40)+' | ID …'+id(x).slice(-12)+' | '+display(opening(x)));
+      }
+      lines.push('','ID/давхардлын хориг шалгах цуглуулга: '+blockers,
+        'Энэ төсөөлөл санхүүгийн семантик, ижил мөнгө, ижил ID-ийн талбарын зөрүү, төсөв, бусад Cloud mirror, бүх холбоосыг шийдээгүй.',
+        'БОДИТ НЭГТГЭЛ ХИЙХЭД БЭЛЭН ГЭСЭН ҮГ БИШ.',
+        'ЯМАР Ч ӨГӨГДӨЛ ӨӨРЧЛӨӨГҮЙ.');
+      if(currentUid()===uid)alert(lines.join('\n'));
+    }catch(e){if(currentUid()===uid)alert('PATCH40 алдаа: '+String(e&&e.message||e).slice(0,200));}
+    finally{if(btn)btn.disabled=false;}
+  };
+  function patch40Attach(){
+    if(document.getElementById('mongo-patch40-dry-run'))return;
+    const b=document.createElement('button');b.id='mongo-patch40-dry-run';b.type='button';b.textContent='PATCH40 ХУУРАЙ НЭГТГЭЛ';
+    b.style.cssText='position:fixed;right:12px;bottom:650px;z-index:2147483646;background:#215a64;color:#fff;border:2px solid #fff;border-radius:20px;padding:8px 10px;font-size:11px;font-weight:700';
+    b.onclick=window.MONGO_PATCH40_DRY_RUN;document.body.appendChild(b);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',patch40Attach);else patch40Attach();
+
   // V162 — Read-only reproduction of the current load-selection decision.
   // This button NEVER calls applyFinancialState, save, queue or migration.
   window.MONGO_V162_SELECTION_RISK_AUDIT=async function(){
@@ -13404,6 +13941,15 @@ auth.onAuthStateChanged(async user=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v161AttachButton);
   else v161AttachButton();
 
+  // PATCH04: compare the primary document's server-observed version immediately
+  // before a transaction writes. This is optimistic concurrency control, not a
+  // multi-document transaction. A conflict is quarantined, never auto-merged.
+  function patch04Version(snap){
+    if(!snap || !snap.exists)return 'ABSENT';
+    const d=snap.data()||{};
+    return JSON.stringify([d.ownerUid||'',d.updatedAtClient||'',d.lastOperationId||'',
+      snap.updateTime&&snap.updateTime.toMillis?snap.updateTime.toMillis():null]);
+  }
   async function v152PreflightCloudWrite(uid,proposed){
     if(!navigator.onLine) throw new Error('V152_PREFLIGHT_OFFLINE');
     const refs=[
@@ -13429,19 +13975,77 @@ auth.onAuthStateChanged(async user=>{
     catch(err){ console.warn('V155 monitor unavailable:',err); }
     for(const previous of snapshots){
       if(previous&&!previous.clearedAt&&v152IsDestructiveShrink(previous.data,proposed)){
-        window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+        patch07Persist(uid,'DESTRUCTIVE_SHRINK',{path:previous.name});
         window.MONGO_V152_GUARD_REASON='Cloud history shrink detected at '+previous.name;
         updateSyncStatus('error','Өмнөх санхүүгийн бүртгэлүүд гэнэт цөөрсөн тул хадгалалтыг зогсоов');
         throw new Error('V152_DESTRUCTIVE_SHRINK_BLOCKED');
       }
     }
+    // Capture a primary baseline from the same server read as the shrink guard.
+    const primarySnapshot=await refs[0][0].get({source:'server'});
+    return {primaryVersion:patch04Version(primarySnapshot),
+      serverClearEpoch:patch68ReadEpoch(primarySnapshot)};
+  }
+
+  // PATCH68: deletion epoch is authoritative on the primary Firestore document.
+  // Missing legacy field means generation zero; malformed values fail closed.
+  function patch68ReadEpoch(snapshot){
+    const record=snapshot&&snapshot.exists&&typeof snapshot.data==='function'?snapshot.data():{};
+    const epoch=record&&record.clearEpoch;
+    if(epoch===undefined)return 0;
+    if(!Number.isSafeInteger(epoch)||epoch<0)throw new Error('PATCH68_INVALID_SERVER_CLEAR_EPOCH');
+    return epoch;
+  }
+
+  // PATCH69: A server epoch first observed during a write is NOT trusted.
+  // The pin is established only from a successful, read-only Cloud load.
+  const PATCH69_EPOCH_PREFIX='mongo_patch69_observed_epoch_';
+  function patch69EpochKey(uid){return PATCH69_EPOCH_PREFIX+uid;}
+  function patch69ReadPin(uid){
+    if(!uid || currentUid()!==uid)throw new Error('PATCH69_PIN_UID_MISMATCH');
+    let raw;
+    try{raw=localStorage.getItem(patch69EpochKey(uid));}
+    catch(e){throw new Error('PATCH69_PIN_STORAGE_UNAVAILABLE');}
+    if(raw===null)return null;
+    let value;
+    try{value=JSON.parse(raw);}catch(e){throw new Error('PATCH69_PIN_CORRUPT');}
+    if(!value || value.uid!==uid || !Number.isSafeInteger(value.epoch) || value.epoch<0)
+      throw new Error('PATCH69_PIN_INVALID');
+    return value.epoch;
+  }
+  function patch69StorePin(uid,epoch){
+    if(!uid || currentUid()!==uid || !Number.isSafeInteger(epoch) || epoch<0)
+      throw new Error('PATCH69_PIN_INVALID_WRITE');
+    const existing=patch69ReadPin(uid);
+    // Never silently adopt a remotely advanced epoch over a stale local pin.
+    if(existing!==null && existing!==epoch)throw new Error('PATCH69_REMOTE_EPOCH_RECONCILIATION_REQUIRED');
+    try{localStorage.setItem(patch69EpochKey(uid),JSON.stringify({uid,epoch}));}
+    catch(e){throw new Error('PATCH69_PIN_PERSIST_FAILED');}
+    if(patch69ReadPin(uid)!==epoch)throw new Error('PATCH69_PIN_READBACK_FAILED');
+  }
+  async function patch69ObserveCloudEpoch(uid){
+    if(currentUid()!==uid)throw new Error('PATCH69_OBSERVE_AUTH_CHANGED');
+    const snap=await cloudDocRef(uid).get({source:'server'});
+    if(currentUid()!==uid)throw new Error('PATCH69_OBSERVE_AUTH_CHANGED');
+    const epoch=patch68ReadEpoch(snap);
+    patch69StorePin(uid,epoch);
+    return epoch;
   }
 
   async function writeCloud(data,reason,expectedUid,options){
     const isClearTombstone=reason==='clear-tombstone';
     const isExplicitRestore=!!(options&&options.explicitRestore);
-    if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
+    if((window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED||patch07HasIncident(currentUid()))&&!isClearTombstone&&!isExplicitRestore) throw new Error('CLOUD_PARTIAL_STATE_QUARANTINED');
     const uid=expectedUid||currentUid();
+    // PATCH69: never learn the deletion generation from a stale write preflight.
+    // Existing installations with no trusted pin must sync/reconcile first.
+    const observedEpoch=isClearTombstone?null:patch69ReadPin(uid);
+    if(!isClearTombstone && observedEpoch===null)
+      throw new Error('PATCH69_UNPINNED_DEVICE_WRITE_BLOCKED');
+    // PATCH65: enforce the same barrier for direct, queued, and delayed writes.
+    const activeClearBarrier=getClearBarrier();
+    if(activeClearBarrier && (!isClearTombstone || !clearPayloadIsEmpty(data)))
+      throw new Error('PATCH65_CLEAR_BARRIER_BLOCKS_FINANCIAL_WRITE');
     if(!uid || currentUid()!==uid || (!isClearTombstone&&!accountReadyForCloud())) throw new Error('ACCOUNT_NOT_READY');
     const ref=cloudDocRef(uid); if(!ref) throw new Error('NO_REF');
     const clean=pruneUndefinedDeep(sanitizeFinancialData(data));
@@ -13455,10 +14059,21 @@ auth.onAuthStateChanged(async user=>{
     if(currentUid()!==uid || (!isClearTombstone&&(window._authUid!==uid||!accountReadyForCloud()))) throw new Error('AUTH_SWITCHED');
     // Never skip the safety check for ordinary queued, login, or migration writes.
     // Explicit user-initiated clear/restore have separate confirmation paths.
+    let patch04Baseline=null;
     if(!isClearTombstone&&!isExplicitRestore){
-      await v152PreflightCloudWrite(uid,clean);
+      patch04Baseline=await v152PreflightCloudWrite(uid,clean);
       if(currentUid()!==uid || !accountReadyForCloud()) throw new Error('AUTH_SWITCHED');
     }
+
+    // Explicit restores also need an epoch baseline; they cannot bypass a
+    // deletion performed on another device during the preflight-to-commit gap.
+    if(isExplicitRestore&&!patch04Baseline){
+      const epochSnapshot=await ref.get({source:'server'});
+      patch04Baseline={serverClearEpoch:patch68ReadEpoch(epochSnapshot)};
+    }
+
+    if(!isClearTombstone && patch04Baseline.serverClearEpoch!==observedEpoch)
+      throw new Error('PATCH69_STALE_DEVICE_EPOCH_BLOCKED');
 
     const updatedAtClient=nowIso();
     const cloudSafeData=encodeCloudValue(clean,false);
@@ -13467,102 +14082,307 @@ auth.onAuthStateChanged(async user=>{
     });
     payload.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
 
-    // V43.34: save the same user-scoped state to every already-established
-    // Firestore surface that this deployment is allowed to write. Some older
-    // Firebase rulesets permit profile/settings but not a newly-added appState
-    // subcollection. Mirroring prevents a second device from appearing empty.
-    const attempts=[];
-    const savedPaths=[];
-
+    // PATCH24 EXPERIMENT: all five compatibility mirrors commit atomically.
+    // This candidate must be tested with Firebase Emulator before deployment.
     const primaryRef=cloudDocRef(uid);
-    if(primaryRef) attempts.push(
-      primaryRef.set(payload,{merge:true})
-        .then(()=>savedPaths.push('appState'))
-        .catch(e=>console.warn('appState mirror write skipped:',e))
-    );
-
     const legacyRef=legacyCloudDocRef(uid);
-    if(legacyRef) attempts.push(
-      legacyRef.set(payload,{merge:true})
-        .then(()=>savedPaths.push('financial'))
-        .catch(e=>{ window.MONGO_LAST_FINANCIAL_WRITE_ERROR=(e&&e.message)||String(e); console.warn('financial mirror write skipped:',e); })
-    );
-
     const settingsRef=settingsCloudDocRef(uid);
-    if(settingsRef) attempts.push(
-      settingsRef.set({
-        financialState:payload,
-        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-        financialStateUpdatedAtClient:payload.updatedAtClient
-      },{merge:true})
-        .then(()=>savedPaths.push('settings'))
-        .catch(e=>console.warn('settings mirror write skipped:',e))
-    );
-
     const profileRef=profileCloudDocRef(uid);
-    if(profileRef) attempts.push(
-      profileRef.set({
-        financialState:payload,
-        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-        financialStateUpdatedAtClient:payload.updatedAtClient
-      },{merge:true})
-        .then(()=>savedPaths.push('profile'))
-        .catch(e=>console.warn('profile mirror write skipped:',e))
-    );
-
     const rootRef=rootCloudDocRef(uid);
-    if(rootRef) attempts.push(
-      rootRef.set({
-        uid:uid,
-        financialState:payload,
-        financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-        financialStateUpdatedAtClient:payload.updatedAtClient
-      },{merge:true})
-        .then(()=>savedPaths.push('user-root'))
-        .catch(e=>console.warn('user-root mirror write skipped:',e))
-    );
-
-    await Promise.all(attempts);
-    if(!savedPaths.length){ const err=new Error('ALL_CLOUD_WRITES_FAILED'); err.detail=window.MONGO_LAST_FINANCIAL_WRITE_ERROR||''; throw err; }
-    const mirrorCheck=window.MongoCloud.completeMirrorWrite(savedPaths);
-    if(!mirrorCheck.complete){
-      const err=new Error('PARTIAL_CLOUD_MIRROR_WRITE');
-      err.code='PARTIAL_CLOUD_MIRROR_WRITE';err.paths=savedPaths;err.missingPaths=mirrorCheck.missing;
-      throw err;
+    if(!primaryRef||!legacyRef||!settingsRef||!profileRef||!rootRef)
+      throw new Error('PATCH24_MISSING_MIRROR_REFERENCE');
+    const expected=['appState','financial','settings','profile','user-root'];
+    const settingsPayload={financialState:payload,
+      financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      financialStateUpdatedAtClient:payload.updatedAtClient};
+    const profilePayload={financialState:payload,
+      financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      financialStateUpdatedAtClient:payload.updatedAtClient};
+    const rootPayload={uid:uid,financialState:payload,
+      financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      financialStateUpdatedAtClient:payload.updatedAtClient};
+    try{
+      await firebase.firestore().runTransaction(async transaction=>{
+        // All reads must precede every write. Transaction retries recheck version.
+        const latest=await transaction.get(primaryRef);
+        if(currentUid()!==uid||(!isClearTombstone&&!accountReadyForCloud()))
+          throw new Error('PATCH24_AUTH_SWITCHED');
+        // PATCH66: re-evaluate the persisted deletion barrier inside every
+        // Firestore transaction attempt, including retries after preflight.
+        // A newly created or damaged barrier must block ordinary writes.
+        const commitBarrier=getClearBarrier();
+        if(commitBarrier && (!isClearTombstone || !clearPayloadIsEmpty(clean)))
+          throw new Error('PATCH66_CLEAR_BARRIER_CHANGED_BEFORE_COMMIT');
+        if(currentUid()!==uid)throw new Error('PATCH66_AUTH_CHANGED_BEFORE_COMMIT');
+        // Server-side epoch check is repeated for every Firestore transaction
+        // retry. A remote clear invalidates an earlier device's preflight.
+        const serverEpoch=patch68ReadEpoch(latest);
+        if(!isClearTombstone && serverEpoch!==observedEpoch)
+          throw new Error('PATCH69_REMOTE_CLEAR_SINCE_TRUSTED_LOAD');
+        if(!isClearTombstone && (!patch04Baseline ||
+           patch04Baseline.serverClearEpoch!==serverEpoch))
+          throw new Error('PATCH68_REMOTE_CLEAR_EPOCH_CHANGED');
+        if(isClearTombstone){
+          if(serverEpoch===Number.MAX_SAFE_INTEGER)throw new Error('PATCH68_CLEAR_EPOCH_OVERFLOW');
+          payload.clearEpoch=serverEpoch+1;
+        }else payload.clearEpoch=serverEpoch;
+        if(patch04Baseline && patch04Version(latest)!==patch04Baseline.primaryVersion){
+          window.MONGO_PATCH04_CONFLICT={at:nowIso(),uid,reason:'PRIMARY_VERSION_CHANGED'};
+          patch07Persist(uid,'PRIMARY_CONFLICT');
+          throw new Error('PATCH04_CONCURRENT_PRIMARY_WRITE_BLOCKED');
+        }
+        transaction.set(primaryRef,payload,{merge:true});
+        transaction.set(legacyRef,payload,{merge:true});
+        transaction.set(settingsRef,settingsPayload,{merge:true});
+        transaction.set(profileRef,profilePayload,{merge:true});
+        transaction.set(rootRef,rootPayload,{merge:true});
+      });
+    }catch(error){
+      window.MONGO_LAST_MIRROR_WRITE_REPORT={savedPaths:[],
+        failedPaths:[{path:'atomic-transaction',error:safeStr(error&&error.message||String(error),160)}],
+        expected,at:nowIso()};
+      updateSyncStatus('error','Үүлэн хадгалалтын атом ажиллагаа амжилтгүй');
+      throw error;
     }
+    if(currentUid()!==uid)throw new Error('PATCH24_AUTH_SWITCHED_AFTER_COMMIT');
+    if(isClearTombstone){
+      // Clear was committed. Reconcile the previous pin only for our own clear.
+      // A failed pin persistence leaves subsequent ordinary writes blocked.
+      const committedEpoch=payload.clearEpoch;
+      try{
+        localStorage.setItem(patch69EpochKey(uid),JSON.stringify({uid,epoch:committedEpoch}));
+        if(patch69ReadPin(uid)!==committedEpoch)throw new Error('PATCH69_CLEAR_PIN_READBACK_FAILED');
+      }catch(e){throw new Error('PATCH69_CLEAR_PIN_PERSIST_FAILED');}
+    }
+    const savedPaths=expected.slice();
+    window.MONGO_LAST_MIRROR_WRITE_REPORT={savedPaths:savedPaths.slice(),failedPaths:[],expected,at:nowIso()};
+    window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
+    // Keep legacy success metadata and snapshot behavior below unchanged.
 
+    patch11ConfirmCloud(uid);
     lastCloudFingerprint=fp;
     window.MONGO_LAST_CLOUD_SAVE_AT=Date.now();
     window.MONGO_LAST_CLOUD_PATH=savedPaths.join('+');
     if(savedPaths.includes('financial')) window.MONGO_LAST_FINANCIAL_WRITE_ERROR='';
-    saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
-    saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    const metaStored=saveMeta({lastSaveAt:nowIso(),lastReason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    const snapshotStored=saveSnapshot(clean,{savedToCloud:true,reason:reason||'auto',ownerUid:uid,savedPaths:savedPaths});
+    if(metaStored && snapshotStored) window.MONGO_LOCAL_PERSIST_ERROR=null;
+    else updateSyncStatus('error','Cloud бичигдсэн боловч төхөөрөмжийн нөөц хадгалалт амжилтгүй');
     return {ok:true,paths:savedPaths,partial:false};
   }
 
+  // PATCH28 EXPERIMENT: repair mirrors in one atomic Firestore transaction.
+  // No primary write; a changed primary aborts the entire repair.
+  // Keep quarantine in place until readback and queue reconciliation.
+  window.MONGO_PATCH05_REPAIR_MIRRORS=async function(){
+    const pending=window.MONGO_PATCH05_REPAIR_REQUIRED;
+    const uid=currentUid();
+    if(!pending||!uid||uid!==pending.uid||!accountReadyForCloud()||!navigator.onLine)
+      throw new Error('PATCH05_REPAIR_NOT_READY');
+    const primaryRef=cloudDocRef(uid);
+    if(!primaryRef)throw new Error('PATCH28_NO_PRIMARY');
+    const available={
+      financial:legacyCloudDocRef(uid),
+      settings:settingsCloudDocRef(uid),
+      profile:profileCloudDocRef(uid),
+      'user-root':rootCloudDocRef(uid)
+    };
+    const missing=Array.isArray(pending.missing)?pending.missing.slice():[];
+    if(!missing.length||missing.some(name=>name==='appState'||!available[name]))
+      throw new Error('PATCH28_UNSAFE_REPAIR_TARGET');
+    let payload;
+    try{
+      await firebase.firestore().runTransaction(async tx=>{
+        const snap=await tx.get(primaryRef);
+        if(currentUid()!==uid||!accountReadyForCloud())throw new Error('PATCH28_AUTH_SWITCHED');
+        if(!snap.exists||patch04Version(snap)!==pending.primaryVersion)
+          throw new Error('PATCH05_PRIMARY_CHANGED_ABORT');
+        payload=snap.data();
+        if(!payload||!payload.data||payload.ownerUid!==uid)
+          throw new Error('PATCH05_INVALID_PRIMARY');
+        for(const name of missing){
+          const ref=available[name];
+          if(name==='financial')tx.set(ref,payload,{merge:true});
+          else tx.set(ref,{
+            ...(name==='user-root'?{uid}:{}),
+            financialState:payload,
+            financialStateUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+            financialStateUpdatedAtClient:payload.updatedAtClient
+          },{merge:true});
+        }
+      });
+    }catch(e){
+      window.MONGO_PATCH05_REPAIR_REPORT={at:nowIso(),atomic:true,ok:false,
+        attempted:missing,error:safeStr(e&&e.message||String(e),160)};
+      throw e;
+    }
+    if(currentUid()!==uid)throw new Error('PATCH28_AUTH_SWITCHED_AFTER_COMMIT');
+    window.MONGO_PATCH05_REPAIR_REPORT={at:nowIso(),atomic:true,ok:true,
+      results:missing.map(name=>({name,ok:true}))};
+    window.MONGO_PATCH05_REPAIR_REPORT.verification=await window.MONGO_PATCH06_VERIFY_MIRRORS();
+    // Never release quarantine automatically.
+    return window.MONGO_PATCH05_REPAIR_REPORT;
+  };
+
+  // SAFE PATCH 06: read-only server verification of every established mirror.
+  // No writes and no automatic quarantine release: queued local changes require
+  // separate reconciliation before normal syncing can safely resume.
+  window.MONGO_PATCH06_VERIFY_MIRRORS=async function(){
+    const uid=currentUid();
+    if(!uid||!accountReadyForCloud()||!navigator.onLine)
+      throw new Error('PATCH06_VERIFY_NOT_READY');
+    const paths=[
+      ['appState',cloudDocRef(uid),false],
+      ['financial',legacyCloudDocRef(uid),false],
+      ['settings',settingsCloudDocRef(uid),true],
+      ['profile',profileCloudDocRef(uid),true],
+      ['user-root',rootCloudDocRef(uid),true]
+    ];
+    const results=[];
+    for(const [name,ref,wrapped] of paths){
+      if(currentUid()!==uid)throw new Error('PATCH06_AUTH_SWITCHED');
+      try{
+        if(!ref){results.push({path:name,ok:false,reason:'MISSING_REFERENCE'});continue;}
+        const snap=await ref.get({source:'server'});
+        if(!snap.exists){results.push({path:name,ok:false,reason:'MISSING_DOCUMENT'});continue;}
+        const container=snap.data()||{};
+        const payload=wrapped?container.financialState:container;
+        if(!payload||payload.ownerUid!==uid||!payload.data){
+          results.push({path:name,ok:false,reason:'INVALID_PAYLOAD_OR_OWNER'});continue;
+        }
+        results.push({path:name,ok:true,operationId:payload.lastOperationId||'',
+          clientId:payload.clientId||'',updatedAtClient:payload.updatedAtClient||'',
+          signature:fingerprint(decodeCloudValue(payload.data))});
+      }catch(e){results.push({path:name,ok:false,reason:'SERVER_READ_FAILED',error:safeStr(e&&e.message||String(e),160)});}
+    }
+    if(currentUid()!==uid)throw new Error('PATCH06_AUTH_SWITCHED');
+    const primary=results[0];
+    const mismatched=results.filter(item=>!item.ok||!primary.ok||
+      item.signature!==primary.signature||item.operationId!==primary.operationId||
+      item.clientId!==primary.clientId||item.updatedAtClient!==primary.updatedAtClient)
+      .map(item=>({path:item.path,reason:item.reason||'CONTENT_OR_VERSION_MISMATCH'}));
+    const report={at:nowIso(),uid,consistent:mismatched.length===0,
+      checkedPaths:results.map(item=>item.path),mismatched};
+    window.MONGO_PATCH06_VERIFY_REPORT=report;
+    if(!report.consistent){
+      patch07Persist(uid,'MIRROR_READBACK_MISMATCH',{paths:mismatched.map(x=>x.path)});
+      updateSyncStatus('error','Үүлэн хадгалалтын замууд зөрүүтэй: автомат бичилтийг зогсоов');
+    }
+    // A consistent snapshot is observational only. Do not clear PATCH05
+    // quarantine or replay queued changes automatically.
+    return report;
+  };
+
+  // PATCH08: read-only, UID-scoped queue reconciliation report. It does not
+  // replay, merge, clear, or acknowledge queued financial changes.
+  window.MONGO_PATCH08_RECONCILE_PENDING=async function(){
+    const uid=currentUid();
+    if(!uid||!accountReadyForCloud())throw new Error('PATCH08_ACCOUNT_NOT_READY');
+    if(!navigator.onLine)throw new Error('PATCH08_SERVER_REQUIRED');
+    const queue=getQueue(); // Throws and quarantines on damaged storage.
+    const primaryRef=cloudDocRef(uid);
+    const primary=await primaryRef.get({source:'server'});
+    if(currentUid()!==uid||!accountReadyForCloud())throw new Error('PATCH08_AUTH_SWITCHED');
+    if(!primary.exists)throw new Error('PATCH08_PRIMARY_MISSING');
+    const payload=primary.data()||{};
+    if(payload.ownerUid!==uid||!payload.data)throw new Error('PATCH08_PRIMARY_INVALID');
+    const cloudData=decodeCloudValue(payload.data);
+    const cloudSignature=fingerprint(cloudData);
+    const localData=collectFinancialState();
+    const localSignature=fingerprint(localData);
+    const barrier=getClearBarrier();
+    const items=queue.map((item,index)=>{
+      const owner=item.ownerUid||item.uid||uid;
+      const valid=!!item.data && owner===uid;
+      const allowed=window.MongoCloud.queueItemAllowedAfterClear
+        ?window.MongoCloud.queueItemAllowedAfterClear(item,barrier):null;
+      return {index,valid,reason:safeStr(item.reason||'',60),
+        createdAt:safeStr(item.createdAt||'',60),
+        allowedAfterClear:allowed,
+        matchesCloud:valid?fingerprint(item.data)===cloudSignature:false,
+        matchesLocal:valid?fingerprint(item.data)===localSignature:false};
+    });
+    const report={at:nowIso(),uid,readOnly:true,queueCount:items.length,
+      cloudMatchesLocal:cloudSignature===localSignature,
+      allQueueItemsMatchCloud:items.every(item=>item.valid&&item.matchesCloud),
+      requiresManualReview:items.some(item=>!item.valid||!item.matchesCloud)||cloudSignature!==localSignature,
+      items};
+    window.MONGO_PATCH08_RECONCILE_REPORT=report;
+    // Deliberately never remove incident markers or queue entries here.
+    return report;
+  };
+
+  // PATCH64: A persisted clear barrier blocks replay of pre-clear finance data.
+  // Never discard blocked entries: preserve them for explicit reconciliation.
   async function processQueue(){
-    if(clearingFinancialData||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED)return false;
+    if(clearingFinancialData||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED||patch07HasIncident(currentUid()))return false;
     if(processingQueue || !navigator.onLine || !hasFirebaseUser() || !accountReadyForCloud()) { updateSyncStatus(navigator.onLine?'waiting':'offline'); return false; }
     const sessionUid=currentUid();
+    if(!sessionUid)return false;
     let q=getQueue(); if(!q.length){ updateSyncStatus('synced'); return true; }
     processingQueue=true; updateSyncStatus('pending',String(q.length));
     try{
       while(q.length && navigator.onLine && hasFirebaseUser() && accountReadyForCloud() && currentUid()===sessionUid){
+        const barrier=getClearBarrier();
+        // Fail closed when a barrier is unreadable, incomplete or belongs to another user.
+        if(barrier){
+          if(!barrier.clearedAt || !barrier.data ||
+             (barrier.ownerUid && barrier.ownerUid!==sessionUid)){
+            updateSyncStatus('error','Устгалын хамгаалалтыг баталгаажуулж чадсангүй');return false;
+          }
+          // Only the verified empty tombstone may pass while the barrier exists.
+          // Old and post-clear financial writes require explicit reconciliation.
+          const tombIndex=q.findIndex(item=>item && item.reason==='clear-tombstone' &&
+            (!item.ownerUid || item.ownerUid===sessionUid) &&
+            item.data && clearPayloadIsEmpty(item.data));
+          if(tombIndex<0){updateSyncStatus('pending','Устгалын хамгаалалт: хуучин бичилтийг зогсоов');return false;}
+          if(tombIndex>0){q=[q[tombIndex],...q.slice(0,tombIndex),...q.slice(tombIndex+1)];setQueue(q);}
+        }
         const item=q[0];
-        try{ await writeCloud(item.data,item.reason||'queue',sessionUid); q.shift(); setQueue(q); }
-        catch(e){ item.tryCount=(item.tryCount||0)+1; item.lastError=safeStr(e&&e.message,120); item.nextRetryAt=Date.now()+Math.min(60000,BASE_RETRY_MS*Math.pow(2,Math.min(item.tryCount,MAX_RETRY))); q[0]=item; setQueue(q); updateSyncStatus(item.tryCount>=MAX_RETRY?'error':'pending'); scheduleRetry(item.nextRetryAt-Date.now()); break; }
+        if(!item || (item.ownerUid && item.ownerUid!==sessionUid)){
+          updateSyncStatus('error','Дарааллын хэрэглэгч зөрсөн');return false;
+        }
+        try{
+          if(currentUid()!==sessionUid || !accountReadyForCloud())return false;
+          // PATCH94: old queue formats are quarantined, not silently upgraded.
+          // A refreshed trusted pin must never relabel an old snapshot as new.
+          if(item.reason!=='clear-tombstone'){
+            const trustedEpoch=patch69ReadPin(sessionUid);
+            if(!Number.isSafeInteger(item.originClearEpoch) || item.originClearEpoch<0 ||
+               item.ownerUid!==sessionUid || trustedEpoch===null ||
+               item.originClearEpoch!==trustedEpoch){
+              updateSyncStatus('error','Хуучин хүсэлтийг дахин бичихийг хориглов; тулгалт шаардлагатай');
+              return false;
+            }
+          }
+          await writeCloud(item.data,item.reason||'queue',sessionUid);
+          if(currentUid()!==sessionUid || !accountReadyForCloud()){
+            updateSyncStatus('error','Бичилтийн үеэр хэрэглэгч солигдсон');return false;
+          }
+          // Tombstone must be read-back verified before acknowledging the queue entry.
+          if(barrier){
+            const verification=await verifyCloudFinancialClear(sessionUid,barrier.clearedAt);
+            if(currentUid()!==sessionUid || !accountReadyForCloud() || !verification.verified)
+              throw new Error('PATCH64_CLEAR_READBACK_UNVERIFIED');
+          }
+          q.shift();setQueue(q);
+        }
+        catch(e){ item.tryCount=(item.tryCount||0)+1;item.lastError=safeStr(e&&e.message,120);item.nextRetryAt=Date.now()+Math.min(60000,BASE_RETRY_MS*Math.pow(2,Math.min(item.tryCount,MAX_RETRY)));q[0]=item;setQueue(q);updateSyncStatus(item.tryCount>=MAX_RETRY?'error':'pending');scheduleRetry(item.nextRetryAt-Date.now());break; }
       }
       if(!q.length) updateSyncStatus('synced');
       return !q.length;
-    }finally{ processingQueue=false; }
+    }finally{processingQueue=false;}
   }
   function scheduleRetry(delay){ clearTimeout(retryTimer); retryTimer=setTimeout(processQueue,Math.max(1000,delay||BASE_RETRY_MS)); }
   function scheduleQueueProcess(){ if(navigator.onLine) scheduleRetry(900); else updateSyncStatus('offline'); }
 
   async function saveCloudNow(reason){
-    if(window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return false;
+    if(window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED||patch07HasIncident(currentUid())) return false;
     if(applyingCloud || !hasFirebaseUser() || !accountReadyForCloud()){ updateSyncStatus('waiting'); return false; }
     const sessionUid=currentUid();
+    // PATCH65: do not enqueue a stale snapshot when clear is pending.
+    try{if(getClearBarrier()){updateSyncStatus('pending','Устгалын хамгаалалт идэвхтэй');return false;}}
+    catch(e){updateSyncStatus('error');return false;}
     const data=collectFinancialState();
     if(!accountReadyForCloud() || currentUid()!==sessionUid) return false;
     if(!navigator.onLine){ enqueueSave(reason||'offline',data); return false; }
@@ -13596,7 +14416,7 @@ auth.onAuthStateChanged(async user=>{
   }
 
   function scheduleCloudSave(reason){
-    if(applyingCloud||clearingFinancialData||window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED) return;
+    if(applyingCloud||clearingFinancialData||window.MONGO_CLOUD_LOAD_IN_PROGRESS||window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED||patch07HasIncident(currentUid())) return;
     clearTimeout(cloudSaveTimer);
     cloudSaveTimer=setTimeout(()=>saveCloudNow(reason||'auto'),650);
     if(!navigator.onLine) updateSyncStatus('offline'); else updateSyncStatus(getQueue().length?'pending':'waiting');
@@ -13611,15 +14431,50 @@ auth.onAuthStateChanged(async user=>{
     return {data:decision.winner==='local'?local:(cloudData||local),source:decision.source};
   }
 
+  // PATCH43: diagnostic ONLY. A persisted incident never authorizes a load, write, or unblock.
+  async function patch43ReadOnlyIncidentRecheck(uid){
+    if(!uid || currentUid()!==uid || !accountReadyForCloud())return false;
+    const paths=[
+      [cloudDocRef(uid),'appState',false],
+      [legacyCloudDocRef(uid),'legacy-financial',false],
+      [settingsCloudDocRef(uid),'settings-fallback',true],
+      [profileCloudDocRef(uid),'profile-fallback',true],
+      [rootCloudDocRef(uid),'user-root-fallback',true]
+    ];
+    const results=await Promise.all(paths.map(async ([ref,source,wrapped])=>{
+      if(!ref)return {source,status:'unavailable'};
+      try{
+        const snap=await ref.get();
+        if(!snap.exists)return {source,status:'missing'};
+        const c=wrapped?window.MongoCloud.unwrapFinancialState(snap.data(),source):window.MongoCloud.makeCandidate(snap.data(),source);
+        if(!c)return {source,status:'no-financial-state'};
+        const check=window.MongoCloud.stateCompleteness(c.raw&&c.raw.data);
+        return {source,status:check.complete?'complete':'partial',missing:check.missing};
+      }catch(err){return {source,status:'error',error:String(err&&err.code||err&&err.message||err)};}
+    }));
+    if(currentUid()!==uid || !accountReadyForCloud())return false;
+    window.MONGO_PATCH43_READONLY_RECHECK={uid,at:new Date().toISOString(),results};
+    // Explicitly retain the incident and its write block, regardless of read results.
+    window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+    updateSyncStatus('error','Өмнөх Cloud зөрчил: зөвхөн уншиж шалгасан, хадгалалт хаалттай');
+    return true;
+  }
+  window.MONGO_PATCH43_READONLY_RECHECK_NOW=function(){
+    const uid=currentUid();
+    if(!uid || !patch07HasIncident(uid))return Promise.resolve(false);
+    return patch43ReadOnlyIncidentRecheck(uid);
+  };
+
   async function loadCloudFinancialData(options){
     ensureSyncStatusUI();
     if(!hasFirebaseUser() || !accountReadyForCloud()) return false;
     window.MONGO_CLOUD_LOAD_IN_PROGRESS=true;
     const sessionUid=currentUid();
-    const ref=cloudDocRef(sessionUid); if(!ref) return false;
+    const patch35SessionValid=()=>Boolean(sessionUid && currentUid()===sessionUid && hasFirebaseUser() && accountReadyForCloud());
+    const ref=cloudDocRef(sessionUid); if(!ref) { window.MONGO_CLOUD_LOAD_IN_PROGRESS=false; return false; }
     try{
       updateSyncStatus(navigator.onLine?'waiting':'offline');
-      if(!navigator.onLine){ const snap=getSnapshot(); if(snap&&snap.data) applyFinancialState(snap.data,'local-snapshot'); window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;return false; }
+      if(!navigator.onLine){ if(!patch35SessionValid()){ window.MONGO_CLOUD_LOAD_IN_PROGRESS=false; return false; } const snap=getSnapshot(); if(patch35SessionValid() && snap&&snap.data) applyFinancialState(snap.data,'local-snapshot'); window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;return false; }
 
       // V43.32: canonical appState/main first. If an older build stored the
       // user's data in financial/main, load it once and migrate it automatically.
@@ -13633,6 +14488,9 @@ auth.onAuthStateChanged(async user=>{
       const settingsRef=settingsCloudDocRef(sessionUid);
       const profileRef=profileCloudDocRef(sessionUid);
       const rootRef=rootCloudDocRef(sessionUid);
+      // PATCH33: Distinguish a genuinely new empty account from incomplete
+      // financial mirrors and from Firestore read failures. Fail closed on
+      // errors; never treat permission-denied/offline as an empty database.
       const reads=[
         [ref,'appState',false],
         [legacyRef,'legacy-financial',false],
@@ -13641,19 +14499,45 @@ auth.onAuthStateChanged(async user=>{
         [rootRef,'user-root-fallback',true]
       ].filter(x=>x[0]).map(async([mirror,source,wrapped])=>{
         try{
-          const snap=await mirror.get();if(!snap.exists)return null;
-          return wrapped?window.MongoCloud.unwrapFinancialState(snap.data(),source):window.MongoCloud.makeCandidate(snap.data(),source);
-        }catch(err){console.warn(source+' cloud read skipped:',err);return null;}
+          const snap=await mirror.get();
+          if(!snap.exists)return {status:'missing',source};
+          const candidate=wrapped?window.MongoCloud.unwrapFinancialState(snap.data(),source):window.MongoCloud.makeCandidate(snap.data(),source);
+          return {status:candidate?'candidate':'no-financial-state',source,candidate};
+        }catch(err){console.warn(source+' cloud read skipped:',err);return {status:'error',source,error:String(err&&err.code||err&&err.message||err)};}
       });
-      (await Promise.all(reads)).filter(Boolean).forEach(c=>candidates.push(c));
+      const readResults=await Promise.all(reads);
+      if(!patch35SessionValid()){ window.MONGO_CLOUD_LOAD_IN_PROGRESS=false; return false; }
+      readResults.forEach(r=>{if(r.candidate)candidates.push(r.candidate);});
+      window.MONGO_PATCH33_READ_DIAGNOSTICS=readResults.map(r=>({source:r.source,status:r.status,error:r.error||''}));
+      // With no financial candidates, an account is empty only if every
+      // configured read succeeded. Otherwise protect against data loss.
+      // PATCH44: a successful mirror cannot prove consistency when another configured mirror failed.
+      // Fail closed without applying or writing any candidate. Keep incident evidence for diagnosis.
+      if(readResults.some(r=>r.status==='error')){
+        patch07Persist(sessionUid,'PATCH44_PARTIAL_MIRROR_READ_ERROR',{
+          failedSources:readResults.filter(r=>r.status==='error').map(r=>r.source)
+        });
+        window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
+        updateSyncStatus('error','Cloud-ийн зарим хуулбар уншигдсангүй — хадгалалт хаагдсан');
+        return false;
+      }
+      if(!candidates.length && readResults.some(r=>r.status==='error')){
+        window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
+        window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+        updateSyncStatus('error','Cloud уншилт амжилтгүй — хадгалалт хаагдсан');
+        return false;
+      }
       /* A clear marker is a real state, not an "empty candidate" to ignore.
          Sort every mirror first. If the newest write is a tombstone, older
          meaningful mirrors must never resurrect the deleted data. */
+      // PATCH42: preserve pre-filter count so all-partial Cloud mirrors fail closed.
+      // Zero candidates with successful reads is handled separately as empty bootstrap.
+      const candidateCountBeforeFilter=candidates.length;
       const candidateDecision=window.MongoCloud.selectSafeLoadCandidate(candidates);
       candidates.splice(0,candidates.length,...candidateDecision.ordered);
       const newestCandidate=candidateDecision.newest;
-      if(candidateDecision.blocked){
-        window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED=true;
+      if(candidateDecision.blocked && candidateCountBeforeFilter>0){
+        patch07Persist(sessionUid,'LOAD_CANDIDATE_QUARANTINE');
         window.MONGO_CLOUD_QUARANTINED_SOURCES=candidateDecision.quarantined.map(c=>c.source);
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
         updateSyncStatus('error','Дутуу Cloud төлөв хаагдлаа');
@@ -13662,6 +14546,14 @@ auth.onAuthStateChanged(async user=>{
         guard.innerHTML='<div class="loan-modal"><div style="font-size:19px;font-weight:900;color:#b42335;margin-bottom:12px">Дутуу Cloud өгөгдлийг хаалаа</div><div style="font-size:13px;line-height:1.6;color:var(--text2)">Данс, гүйлгээ, хуримтлал, зээл эсвэл хөрөнгийн багц дутуу байгаа тул апп түүнийг ачаалж, буцаан хадгалсангүй.<br><br><b>Энэ файл дээр шинэ бүртгэл хийхгүй, дэлгэцийн зургийг илгээнэ үү.</b></div></div>';
         return false;
       }
+      // PATCH69: compare against the authoritative primary, never a fallback mirror.
+      // An existing pin mismatch blocks even if another mirror contains stale data.
+      // If local finance data exists without a pin, block automatic adoption:
+      // it may be a stale device after a remote deletion.
+      const existingPin=patch69ReadPin(sessionUid);
+      if(existingPin===null && (hasMeaningfulFinancialData(collectFinancialState()) || getQueue().length>0))
+        throw new Error('PATCH69_UNPINNED_LOCAL_OR_QUEUE_REQUIRES_RECONCILIATION');
+      await patch69ObserveCloudEpoch(sessionUid);
       const clearBarrier=getClearBarrier();
       const barrierDecision=window.MongoCloud.chooseClearBarrier({
         barrier:clearBarrier,localUpdatedAt:getLocalUpdatedAt(),
@@ -13684,6 +14576,25 @@ auth.onAuthStateChanged(async user=>{
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
         if(raw.ownerUid && raw.ownerUid!==sessionUid) throw new Error('CLOUD_OWNER_MISMATCH');
         if(currentUid()!==sessionUid || !accountReadyForCloud()) return false;
+        // PATCH43: distinct Cloud/local account IDs must never be silently overwritten.
+        // Read-only conflict detection; do not merge, delete, enqueue or write.
+        if(!(MongoCloud.activeClearTombstone?MongoCloud.activeClearTombstone(raw):!!raw.clearedAt)){
+          const localState=collectFinancialState();
+          const cloudIds=new Set((Array.isArray(raw.data.moneyAccounts)?raw.data.moneyAccounts:[]).map(a=>a&&a.id).filter(Boolean));
+          const localIds=new Set((Array.isArray(localState.moneyAccounts)?localState.moneyAccounts:[]).map(a=>a&&a.id).filter(Boolean));
+          const cloudOnly=[...cloudIds].filter(id=>!localIds.has(id));
+          const localOnly=[...localIds].filter(id=>!cloudIds.has(id));
+          // PATCH44: local-only accounts are protected even if Cloud has zero accounts.
+          // A clean new device (no local IDs) may still load complete Cloud data.
+          if(localOnly.length){
+            window.MONGO_PATCH43_ACCOUNT_DIVERGENCE={cloudOnlyCount:cloudOnly.length,localOnlyCount:localOnly.length,source:sourceRef};
+            patch07Persist(sessionUid,'PATCH43_ACCOUNT_ID_DIVERGENCE',window.MONGO_PATCH43_ACCOUNT_DIVERGENCE);
+            clearTimeout(cloudSaveTimer);clearTimeout(retryTimer);
+            window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
+            updateSyncStatus('error','Дансны ID зөрчил: автомат дарж бичихийг хориглов');
+            return false;
+          }
+        }
         const chosen=(MongoCloud.activeClearTombstone?MongoCloud.activeClearTombstone(raw):!!raw.clearedAt)
           ? {data:raw.data,source:'cloud-cleared'}
           : chooseCloudOrLocal(raw.data,raw.updatedAtClient);
@@ -13710,6 +14621,7 @@ auth.onAuthStateChanged(async user=>{
             return false;
           }
         }
+        if(!patch35SessionValid()){ window.MONGO_CLOUD_LOAD_IN_PROGRESS=false; return false; }
         const ok=applyFinancialState(chosen.data,chosen.source);
 
         // Migrate legacy storage to appState/main so all future devices read the
@@ -13730,6 +14642,7 @@ auth.onAuthStateChanged(async user=>{
         return ok;
       }
 
+      if(!patch35SessionValid()){ window.MONGO_CLOUD_LOAD_IN_PROGRESS=false; return false; }
       const local=collectFinancialState();
       if(hasMeaningfulFinancialData(local)){
         window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
@@ -13743,42 +14656,59 @@ auth.onAuthStateChanged(async user=>{
     }catch(e){
       window.MONGO_CLOUD_LOAD_IN_PROGRESS=false;
       console.warn('Cross-device cloud load failed:',e);
-      const ss=getSnapshot(); if(ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot');
+      // PATCH35: stale A-session failures must not apply A's snapshot or schedule B-session retries.
+      if(!patch35SessionValid()) return false;
+      const ss=getSnapshot(); if(patch35SessionValid() && ss&&ss.data) applyFinancialState(ss.data,'fallback-snapshot');
+      if(!patch35SessionValid()) return false;
       updateSyncStatus('error'); scheduleRetry(BASE_RETRY_MS); return false;
     }
   }
 
   const originalSaveData=window.saveData || (typeof saveData==='function'?saveData:null);
-  if(originalSaveData){ window.saveData=function(){ if(!applyingCloud) markLocalUpdated(); const res=originalSaveData.apply(this,arguments); if(res===true) scheduleCloudSave('saveData'); else updateSyncStatus('error','Local save failed'); return res; }; try{saveData=window.saveData;}catch(e){} }
+  if(originalSaveData){ window.saveData=function(){
+    // PATCH46: provisional timestamp must not become a committed marker on failure.
+    const previousUpdatedAt=window.MONGO_LOCAL_DATA_UPDATED_AT;
+    const nextUpdatedAt=(!applyingCloud)?nowIso():previousUpdatedAt;
+    if(!applyingCloud) window.MONGO_LOCAL_DATA_UPDATED_AT=nextUpdatedAt;
+    let res=false;
+    try{res=originalSaveData.apply(this,arguments);}catch(e){console.warn('Local save wrapper error:',e);}
+    if(res===true){
+      if(!applyingCloud) markLocalUpdated(nextUpdatedAt);
+      scheduleCloudSave('saveData');
+    }else if(!applyingCloud){window.MONGO_LOCAL_DATA_UPDATED_AT=previousUpdatedAt;}
+    return res===true;
+  }; try{saveData=window.saveData;}catch(e){} }
   const originalImportData=window.importData || (typeof importData==='function'?importData:null);
   if(originalImportData){ window.importData=function(e){ markLocalUpdated(); return originalImportData.apply(this,arguments); }; try{importData=window.importData;}catch(e){} }
 
   async function clearCloudFinancialData(){
+    // PATCH59_SESSION_GUARD: pin the authenticated user before destructive work.
+    const pinnedUid=currentUid();
+    if(!pinnedUid || !hasFirebaseUser() || window.MONGO_FIREBASE?.auth?.currentUser?.uid!==pinnedUid)
+      return false;
+    const assertPinned=()=>{
+      if(!hasFirebaseUser() || currentUid()!==pinnedUid || window.MONGO_FIREBASE?.auth?.currentUser?.uid!==pinnedUid)
+        throw new Error('PATCH59_AUTH_SESSION_CHANGED');
+    };
     clearingFinancialData=true;
+    // PATCH92: guarantee lock release even if preflight, session guard, timer,
+    // or an unexpected cleanup operation throws before normal return.
+    try{
     clearTimeout(cloudSaveTimer);clearTimeout(retryTimer);
     // Let an already-running write finish before deleting every mirror, then
     // prevent any new queue item from recreating the deleted state.
     for(let i=0;i<30&&processingQueue;i++)await new Promise(resolve=>setTimeout(resolve,100));
-    try{localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));}catch(e){}
+    try{assertPinned();}catch(e){clearingFinancialData=false;return false;}
+    // PATCH61: do not destroy the original queue before verified cloud completion.
     // Deletion must not depend on the normal sync-ready gate. A signed-in user
     // must be able to delete stale cloud data even while sync is reconnecting.
-    if(!hasFirebaseUser()){
-      try{
-        localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
-        localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
-        localStorage.removeItem(uidKey(META_KEY_PREFIX));
-        localStorage.removeItem(uidKey(LOCAL_UPDATED_KEY_PREFIX));
-        localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
-        localStorage.removeItem(typeof DB_KEY_BASE!=='undefined'?DB_KEY_BASE:'mongo_v4');
-      }catch(e){}
-      resetDefaultFinanceShell();
-      return true;
-    }
-    const uid=currentUid();
+    try{assertPinned();}catch(e){clearingFinancialData=false;return false;}
+    const uid=pinnedUid;
     /* Use the exact same validated writer and payload shape as a normal save.
        Some Firestore rules reject a reduced tombstone document even though
        they allow the regular financial payload. */
-    resetDefaultFinanceShell();
+    assertPinned();
+    // PATCH61: retain the current in-memory state until cloud clear is verified.
     const clearedAt=nowIso();
     const emptyData=sanitizeFinancialData(Object.assign(collectFinancialState(),{
       txns:[],goals:[],debts:[],invests:[],budgets:{},openingBalance:0,
@@ -13789,14 +14719,23 @@ auth.onAuthStateChanged(async user=>{
     /* The device reset succeeds immediately. If Cloud is temporarily blocked,
        retain the empty state in the retry queue instead of restoring old data
        or telling the user that nothing was cleared. */
-    saveClearBarrier(clearedAt,emptyData);
+    try{
+      saveClearBarrier(clearedAt,emptyData);
+    }catch(e){
+      clearingFinancialData=false;
+      window.MONGO_LAST_CLEAR_FAILURE={code:e.message||'PATCH88_BARRIER_SAVE_BLOCKED'};
+      return false;
+    }
     let cloudClearSynced=false;
     window.MONGO_LAST_CLEAR_FAILURE=null;
     try{
       let firstPassError=null;
       try{
+        assertPinned();
         await writeCloud(emptyData,'clear-tombstone',uid);
+        assertPinned();
         const firstVerification=await verifyCloudFinancialClear(uid,clearedAt);
+        assertPinned();
         if(!firstVerification.verified){
           const err=new Error('CLEAR_VERIFICATION_FAILED');
           err.code='CLEAR_VERIFICATION_FAILED';err.verification=firstVerification;
@@ -13811,11 +14750,24 @@ auth.onAuthStateChanged(async user=>{
          wait for that stale write to settle, then overwrite and verify every
          Cloud mirror a second time before reporting success. */
       await new Promise(resolve=>setTimeout(resolve,4500));
-      resetDefaultFinanceShell();
-      saveClearBarrier(clearedAt,emptyData);
+      assertPinned();
+      // PATCH90: the second barrier persistence check is a mandatory gate.
+      // If it fails, the outer clear catch quarantines a retry tombstone;
+      // never continue with the second cloud write as though it succeeded.
+      try{
+        saveClearBarrier(clearedAt,emptyData);
+      }catch(barrierError){
+        const err=new Error('PATCH90_SECOND_BARRIER_SAVE_BLOCKED');
+        err.code='PATCH90_SECOND_BARRIER_SAVE_BLOCKED';
+        err.cause=barrierError;
+        throw err;
+      }
       lastCloudFingerprint='';
+      assertPinned();
       await writeCloud(emptyData,'clear-tombstone',uid);
+      assertPinned();
       const finalVerification=await verifyCloudFinancialClear(uid,clearedAt);
+      assertPinned();
       if(!finalVerification.verified){
         const err=new Error('CLEAR_VERIFICATION_FAILED');
         err.code='CLEAR_VERIFICATION_FAILED';err.verification=finalVerification;err.firstPassError=firstPassError;
@@ -13831,22 +14783,42 @@ auth.onAuthStateChanged(async user=>{
         missingPaths:safeArray(e&&e.missingPaths),
         issues:safeArray(e&&e.verification&&e.verification.issues).map(x=>({path:safeStr(x&&x.path,40),reason:safeStr(x&&x.reason,80)}))
       };
-      clearingFinancialData=false;enqueueSave('clear-tombstone',emptyData);clearingFinancialData=true;
+      if(currentUid()!==pinnedUid || window.MONGO_FIREBASE?.auth?.currentUser?.uid!==pinnedUid){clearingFinancialData=false;return false;}
+      // PATCH89: queue persistence may fail (quota/security); never leave the
+      // destructive clear flag stuck or report a recoverable queued clear.
+      clearingFinancialData=false;
+      try{
+        enqueueSave('clear-tombstone',emptyData);
+      }catch(queueError){
+        window.MONGO_LAST_CLEAR_FAILURE={
+          code:'PATCH89_TOMBSTONE_QUEUE_FAILED',
+          detail:safeStr(queueError&&queueError.message,180)
+        };
+        updateSyncStatus('error','Устгалын дахин оролдох хүсэлтийг хадгалж чадсангүй');
+        return false;
+      }
+      clearingFinancialData=true;
     }
+    try{assertPinned();}catch(e){clearingFinancialData=false;return false;}
     try{
       if(cloudClearSynced)localStorage.removeItem(uidKey(QUEUE_KEY_PREFIX));
       localStorage.removeItem(uidKey(SNAP_KEY_PREFIX));
       localStorage.removeItem(uidKey(META_KEY_PREFIX));
       localStorage.removeItem(typeof getDBKey==='function'?getDBKey():'');
-      localStorage.removeItem(typeof DB_KEY_BASE!=='undefined'?DB_KEY_BASE:'mongo_v4');
+      // Shared legacy mongo_v4 is intentionally preserved for other users.
     }catch(e){}
     lastCloudFingerprint='';
     window.MONGO_LOCAL_DATA_UPDATED_AT='';
-    resetDefaultFinanceShell();
+    if(cloudClearSynced)resetDefaultFinanceShell();
     updateSyncStatus(cloudClearSynced?'synced':'pending');
+    // PATCH91: always release the in-memory clear lock after a completed
+    // verified clear or a durably queued retry. Otherwise all future queue
+    // processing and financial saves remain blocked for this session.
+    clearingFinancialData=false;
     // Never report success or restart while any Cloud mirror rejected the
     // tombstone. The queued tombstone must remain available for retry.
     return cloudClearSynced;
+    }finally{clearingFinancialData=false;}
   }
 
   window.CloudDataService={
@@ -13873,14 +14845,14 @@ auth.onAuthStateChanged(async user=>{
   ensureSyncStatusUI();
   if(window.MONGO_FIREBASE && window.MONGO_FIREBASE.auth){
     window.MONGO_FIREBASE.auth.onAuthStateChanged(user=>{
-      clearTimeout(cloudSaveTimer); clearTimeout(retryTimer); lastCloudFingerprint='';
+      clearTimeout(cloudSaveTimer); clearTimeout(retryTimer); lastCloudFingerprint=''; patch11ConfirmedUid=''; window.MONGO_LOCAL_PERSIST_ERROR=null; window.MONGO_QUEUE_PERSIST_ERROR='';
       if(user){
         ensureSyncStatusUI(); updateSyncStatus('waiting');
         const uid=user.uid;
         let tries=0;
         const waitReady=()=>{
           if(currentUid()!==uid) return;
-          if(accountReadyForCloud()){ Promise.resolve(loadCloudFinancialData({silent:false})).finally(()=>window.dispatchEvent(new Event('mongo:cloud-load-complete'))); return; }
+          if(accountReadyForCloud()){ patch07Restore(uid); if(window.MONGO_CLOUD_PARTIAL_STATE_BLOCKED){Promise.resolve(patch43ReadOnlyIncidentRecheck(uid)).finally(()=>window.dispatchEvent(new Event('mongo:cloud-load-complete')));return;} Promise.resolve(loadCloudFinancialData({silent:false})).finally(()=>window.dispatchEvent(new Event('mongo:cloud-load-complete'))); return; }
           if(++tries<80) setTimeout(waitReady,100);
         };
         setTimeout(waitReady,60);
@@ -16235,7 +17207,7 @@ select.fi{touch-action:pan-y;cursor:pointer}
   const priorSave=saveData;saveData=function(){syncLedgerFromViews();const out=priorSave.apply(this,arguments);return out;};
   // From V44.11 onward every balance is the sum of the unified ledger entries.
   accountBalanceRaw=function(id){return ledgerBalance(id);};accountBalance=function(id){return ledgerBalance(id);};
-  function clearLegacyLoanJournals(){try{const keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('mongo_loan_payment_journal_v4403_'))keys.push(k);}keys.forEach(k=>localStorage.removeItem(k));}catch(e){console.warn('Legacy loan journal cleanup failed',e);}}
+  function clearLegacyLoanJournals(){try{const uid=window._authUid || window.MONGO_FIREBASE?.auth?.currentUser?.uid;if(!uid)return;localStorage.removeItem('mongo_loan_payment_journal_v4403_'+uid);}catch(e){console.warn('Legacy loan journal cleanup failed',e);}}
   function refreshLoanMoneyViews(){try{rDebts();}catch(e){}try{rTxns();}catch(e){}try{rRecent();}catch(e){}try{rBList();updateBudgetTotal();}catch(e){}try{rDonut('dbt');}catch(e){}try{uDash();}catch(e){}try{renderOpeningBalance();renderMoneyAccounts();}catch(e){}}
   function verifyAccountMutation(accountId,before,expectedDelta){const after=Number(accountBalance(accountId))||0,expected=before+expectedDelta,ok=Math.abs(after-expected)<=1;window.lastLoanMutationCheck={accountId,before,after,expected,ok,at:now()};if(!ok)showToast(`Дансны үлдэгдлийн зөрүү: ${fmt(after)} / ${fmt(expected)}`);return ok;}
   saveDebtPayment=function(id){
@@ -16447,30 +17419,42 @@ select.fi{touch-action:pan-y;cursor:pointer}
   function emptyMemory(){
     txns=[];goals=[];debts=[];invests=[];budgets={};openingBalance=0;moneyAccounts=[];accountTransfers=[];moneyLedger=[];moneyLedgerRevision=0;moneyLedgerTombstones=[];lockedCats=new Set();window.netWorthSnapshots=[];
   }
+  // PATCH57: Only the signed-in user's exact keys may be removed.
+  // If authentication is not resolved, fail closed rather than erase other users.
   function purgeLocalFinance(){
-    try{
-      const keys=[];
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k&&(
-          /^mongo_v4(?:_|$)/.test(k)||
-          /^mongo_cloud_snapshot_/.test(k)||
-          /^mongo_sync_meta_/.test(k)||
-          /^mongo_local_updated_/.test(k)||
-          /^mongo_txn_commit_journal_/.test(k)||
-          /^mongo_transaction_ledger_v4398_/.test(k)||
-          /^mongo_loan_payment_journal_v4403_/.test(k)
-        ))keys.push(k);
-      }
-      keys.forEach(k=>localStorage.removeItem(k));
-    }catch(e){}
+    const uid=window._authUid || (window.MONGO_FIREBASE?.auth?.currentUser?.uid);
+    if(!uid || typeof uid!=='string') throw new Error('PATCH57_UID_REQUIRED_FOR_PURGE');
+    const prefixes=[
+      'mongo_cloud_snapshot_', 'mongo_sync_meta_', 'mongo_local_updated_',
+      'mongo_txn_commit_journal_', 'mongo_transaction_ledger_v4398_',
+      'mongo_loan_payment_journal_v4403_'
+    ];
+    const db='mongo_v4_'+uid;
+    const exact=new Set([db,db+'__p55_last_good',db+'__p55_stage',
+      ...prefixes.map(prefix=>prefix+uid)]);
+    // The clear barrier is intentionally retained until cloud tombstones are verified.
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);
+      if(exact.has(key)) keys.push(key);
+    }
+    for(const key of keys) localStorage.removeItem(key);
+    for(const key of keys) if(localStorage.getItem(key)!==null)
+      throw new Error('PATCH57_PURGE_READBACK_FAILED');
+    return true;
   }
   function resetOverlay(text){
     let m=document.getElementById('mongo-hard-reset-overlay');if(!m){m=document.createElement('div');m.id='mongo-hard-reset-overlay';m.className='loan-modal-backdrop';document.body.appendChild(m);}
     m.innerHTML=`<div class="loan-modal"><div style="font-size:19px;font-weight:900;margin-bottom:12px">Туршилтын өгөгдөл бүрэн цэвэрлэж байна</div><div style="font-size:13px;line-height:1.55;color:var(--text2)">${text}</div><div style="margin-top:14px;height:8px;border-radius:999px;background:#DFF3F3;overflow:hidden"><div style="width:100%;height:100%;background:var(--brand);animation:pulse 1s infinite"></div></div></div>`;
   }
   window.clearData=async function(){
-    if(hardResetRunning)return;if(!await showConfirm(L.confirmDel))return;hardResetRunning=true;window.MONGO_HARD_RESET_ACTIVE=true;resetOverlay('Хуучин үүлэн хуулбар буцааж ачаалагдахаас хамгаалж байна…');
+    // PATCH59_RESET_UID_GUARD: require one stable authenticated identity.
+    const pinnedUid=window.MONGO_FIREBASE?.auth?.currentUser?.uid;
+    if(!pinnedUid || window._authUid!==pinnedUid){showToast('Нэвтрэлт баталгаажаагүй тул устгал зогслоо.');return;}
+    if(hardResetRunning)return;if(!await showConfirm(L.confirmDel))return;
+    const assertResetUid=()=>{if(window._authUid!==pinnedUid || window.MONGO_FIREBASE?.auth?.currentUser?.uid!==pinnedUid)throw new Error('PATCH59_RESET_SESSION_CHANGED');};
+    try{assertResetUid();}catch(e){showToast('Хэрэглэгч солигдсон тул устгал зогслоо.');return;}
+    hardResetRunning=true;window.MONGO_HARD_RESET_ACTIVE=true;resetOverlay('Хуучин үүлэн хуулбар буцааж ачаалагдахаас хамгаалж байна…');
     const svc=window.CloudDataService,originalApply=svc&&typeof svc.applyFinancialState==='function'?svc.applyFinancialState.bind(svc):null;
     if(svc&&originalApply)svc.applyFinancialState=function(raw,source){const has=(raw?.txns||[]).length+(raw?.accountTransfers||[]).length+(raw?.debts||[]).length+(raw?.goals||[]).length;if(window.MONGO_HARD_RESET_ACTIVE&&has>0)return false;return originalApply(raw,source);};
     try{
@@ -16479,18 +17463,21 @@ select.fi{touch-action:pan-y;cursor:pointer}
         : async ops=>{ops.emptyMemory();ops.purgeLocal();await ops.clearFinancialData();ops.emptyMemory();ops.purgeLocal();if(ops.reload)ops.reload();};
       resetOverlay('Дотоод бүртгэл болон үндсэн мөнгөний бүртгэлийг цэвэрлэж байна…');await wait(300);
       await runReset({
-        emptyMemory,
-        purgeLocal:purgeLocalFinance,
+        emptyMemory:()=>{assertResetUid();emptyMemory();},
+        purgeLocal:()=>{assertResetUid();return purgeLocalFinance();},
         clearFinancialData:async()=>{
+          assertResetUid();
           resetOverlay('Үүлэн хадгалалтын бүх хуулбарыг хоосолж байна…');
           if(!svc||typeof svc.clearFinancialData!=='function')throw new Error('cloud-clear-unavailable');
           const cleared=await svc.clearFinancialData();
+          assertResetUid();
           if(cleared===false)throw new Error('cloud-clear-failed');
           const uid=window._authUid||(window.MONGO_FIREBASE&&window.MONGO_FIREBASE.auth&&window.MONGO_FIREBASE.auth.currentUser&&window.MONGO_FIREBASE.auth.currentUser.uid);
           if(uid&&!localStorage.getItem('mongo_clear_barrier_'+uid))throw new Error('clear-barrier-missing');
           return true;
         },
         reload:()=>{
+          assertResetUid();
           resetOverlay('Цэвэрлэгээ дууслаа. Аппыг дахин нээж байна…');
           window.MONGO_HARD_RESET_ACTIVE=false;
           setTimeout(()=>{
@@ -20510,6 +21497,77 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<!-- PATCH36: read-only incident status diagnostic; no Firebase or storage writes. -->
+<script id="mongo-patch36-incident-readonly">
+(function(){'use strict';
+ function show(){
+  if(typeof window.MONGO_PATCH07_INCIDENT_STATUS!=='function'){
+   alert('PATCH36: Өмнөх зөрчлийн оношилгоо олдсонгүй.');return;
+  }
+  const x=window.MONGO_PATCH07_INCIDENT_STATUS();
+  const m=x&&x.incident||null;
+  const lines=['PATCH36 — ХАДГАЛАЛТЫН ЗӨРЧЛИЙН ОНОШИЛГОО','ЗӨВХӨН УНШИНА — ӨГӨГДӨЛ ӨӨРЧЛӨХГҮЙ',
+   'Хэрэглэгч: '+(x&&x.uid?'…'+String(x.uid).slice(-6):'нэвтрээгүй'),
+   'Хадгалалтын хориг: '+(x&&x.blocked?'ИДЭВХТЭЙ':'идэвхгүй'),
+   'Зөрчлийн тэмдэглэгээ: '+(m?'байна':'байхгүй'),
+   'Шалтгаан: '+(m?String(m.reason||'тодорхойгүй').slice(0,100):'—'),
+   'Үүссэн цаг: '+(m?String(m.at||'тодорхойгүй').slice(0,60):'—'),
+   'Нэмэлт мэдээллийн талбарууд: '+(m&&m.detail&&typeof m.detail==='object'?Object.keys(m.detail).slice(0,15).join(', ')||'хоосон':'байхгүй'),
+   'Хадгалалтын санах ойн алдаа: '+(x&&x.storageError?'байгаа (дэлгэрэнгүйг нууцлав)':'илрээгүй'),
+   '','Анхаар: Энэ нь зөрчлийн тэмдэглэгээг харуулна. Cloud өгөгдлийн үнэн зөв байдлыг батлахгүй.'];
+  alert(lines.join('\n'));
+ }
+ function init(){if(document.getElementById('mongo-patch36-incident-readonly-button'))return;
+  const b=document.createElement('button');b.id='mongo-patch36-incident-readonly-button';b.type='button';
+  b.textContent='PATCH36 ЗӨРЧЛИЙН ШАЛТГААН';b.onclick=show;
+  b.style.cssText='position:fixed;right:12px;bottom:566px;z-index:2147483646;background:#225e58;color:white;border:2px solid white;border-radius:22px;padding:10px 12px;font-size:12px;font-weight:700';
+  document.body.appendChild(b);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<!-- PATCH37: read-only per-UID five-mirror structural diagnostics. -->
+<script id="mongo-patch37-mirror-readonly">
+(function(){'use strict';
+ const required=['txns','goals','debts','invests','moneyAccounts','accountTransfers','moneyLedger','moneyLedgerTombstones'];
+ const names=['appState/main','financial/main','settings/main','profile/main','users/{uid}'];
+ let running=false;
+ function uid(){const f=window.MONGO_FIREBASE;return f&&f.auth&&f.auth.currentUser&&f.auth.currentUser.uid||null;}
+ function linesFor(source,snap,wrapped){
+  if(!snap.exists)return source+': баримт байхгүй';
+  const raw=snap.data()||{};const container=wrapped?raw.financialState:raw;
+  if(!container||typeof container!=='object'||!container.data||typeof container.data!=='object')return source+': financialState.data байхгүй / буруу бүтэцтэй';
+  const data=container.data;
+  const missing=required.filter(k=>!Array.isArray(data[k]));
+  if(!data.budgets||typeof data.budgets!=='object'||Array.isArray(data.budgets))missing.push('budgets');
+  const counts=required.map(k=>k+'='+ (Array.isArray(data[k])?data[k].length:'—')).join(', ');
+  return source+': '+(missing.length?'БҮРЭН БУС':'бүтцийн шалгалт PASS')+'\n  Дутуу/буруу: '+(missing.join(', ')||'байхгүй')+'\n  Тоо: '+counts+'; budgets='+(data.budgets&&typeof data.budgets==='object'&&!Array.isArray(data.budgets)?Object.keys(data.budgets).length:'—');
+ }
+ async function show(){
+  if(running)return;
+  const f=window.MONGO_FIREBASE;const start=uid();
+  if(!start||!f||!f.db){alert('PATCH37: Firebase-д нэвтэрсэн хэрэглэгч олдсонгүй.');return;}
+  running=true;
+  const b=document.getElementById('mongo-patch37-mirror-button');if(b)b.textContent='PATCH37 УНШИЖ БАЙНА…';
+  try{
+   const user=f.db.collection('users').doc(start);
+   const refs=[user.collection('appState').doc('main'),user.collection('financial').doc('main'),user.collection('settings').doc('main'),user.collection('profile').doc('main'),user];
+   const results=await Promise.all(refs.map(async(ref,i)=>{try{return {i,snap:await ref.get()};}catch(e){return {i,error:String(e&&e.code||e&&e.message||e).slice(0,100)};}}));
+   if(uid()!==start){alert('PATCH37: Хэрэглэгч солигдсон тул оношилгоог харуулахгүй.');return;}
+   const lines=['PATCH37 — CLOUD 5 ЭХ СУРВАЛЖ','ЗӨВХӨН УНШИНА. ӨГӨГДӨЛ ХАДГАЛАХГҮЙ.','Хэрэглэгч: …'+start.slice(-6),''];
+   for(const r of results){lines.push(r.error?names[r.i]+': УНШИХ АЛДАА '+r.error:linesFor(names[r.i],r.snap,r.i>=2));lines.push('');}
+   lines.push('Энэ нь талбарын бүтцийг л шалгана. Өгөгдлийн үнэн зөв, бүрэн хадгалалтыг батлахгүй.');
+   alert(lines.join('\n'));
+  }catch(e){if(uid()===start)alert('PATCH37 оношилгооны алдаа: '+String(e&&e.message||e).slice(0,180));}
+  finally{running=false;if(b)b.textContent='PATCH37 CLOUD 5 ЭХ СУРВАЛЖ';}
+ }
+ function init(){if(document.getElementById('mongo-patch37-mirror-button'))return;
+  const b=document.createElement('button');b.id='mongo-patch37-mirror-button';b.type='button';b.textContent='PATCH37 CLOUD 5 ЭХ СУРВАЛЖ';b.onclick=show;
+  b.style.cssText='position:fixed;right:12px;bottom:615px;z-index:2147483646;background:#225e58;color:white;border:2px solid white;border-radius:22px;padding:9px 12px;font-size:11px;font-weight:700';document.body.appendChild(b);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 <!-- V165: Diagnostic controls UI only. Keep test functions intact; no persistence changes. -->
 <style id="mongo-v165-diagnostics-css">
 #mongo-v165-diagnostics-toggle{position:fixed;right:10px;bottom:82px;z-index:2147483646;background:#146b70;color:white;border:1px solid #fff;border-radius:999px;padding:9px 12px;font:700 12px system-ui;box-shadow:0 2px 9px #0004;max-width:155px}
@@ -20520,7 +21578,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </style>
 <script id="mongo-v165-diagnostics-ui">
 (function(){'use strict';
- const ids=['mongo-v153-readonly-test','mongo-v154-readonly-test','mongo-v155-observe','mongo-v157-source-audit','mongo-v158-preflight-audit','mongo-v160-provenance','mongo-v161-load-selection','mongo-v162-selection-risk','mongo-v163-policy-test','mongo-v159-intent-button'];
+ const ids=['mongo-v153-readonly-test','mongo-v154-readonly-test','mongo-v155-observe','mongo-v157-source-audit','mongo-v158-preflight-audit','mongo-v160-provenance','mongo-v161-load-selection','mongo-v162-selection-risk','mongo-v163-policy-test','mongo-v159-intent-button','mongo-patch36-incident-readonly-button','mongo-patch37-mirror-button','mongo-patch38-account-diff','mongo-patch39-premerge'];
  function init(){
   if(document.getElementById('mongo-v165-diagnostics-toggle'))return;
   const toggle=document.createElement('button');toggle.id='mongo-v165-diagnostics-toggle';toggle.type='button';toggle.textContent='🔎 Шалгалт ▴';
